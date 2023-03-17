@@ -23,6 +23,12 @@ export async function liquidatorHandleArbSwap(
   const maxAmountOut = await liquidator.maxAmountOut(); // yield token max reserve
   const amountOut = relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut 
 
+
+  // Very unclear about what we need to pass as the 3rd arg to swapExactAmountIn
+  // I'm guessing this is slippage related, and is the limit we are willing to lose (or gain)
+  // in the trade
+  const amountOutMax = maxAmountOut // ?
+
   // unclear which one of these I need to use just yet
   // const amountOut = await liquidator.computeExactAmountOut(amountIn);
   const amountIn = await liquidator.computeExactAmountIn(amountOut);
