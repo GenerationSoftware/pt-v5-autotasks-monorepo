@@ -10,14 +10,14 @@ export async function testnetPrizePoolHandleCompletePrize(
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
-  const prizePool = getContract('TestNet PrizePool', chainId, provider, contracts);
+  const prizePool = getContract('PrizePool', chainId, provider, contracts);
 
   if (!prizePool) {
     throw new Error('TestNet PrizePool: Contract Unavailable');
   }
 
   const nextDrawStartsAt = await prizePool.nextDrawStartsAt();
-  const canCompleteDraw = (Date.now() / 1000) > nextDrawStartsAt;
+  const canCompleteDraw = Date.now() / 1000 > nextDrawStartsAt;
 
   // Debug Contract Request Parameters
   debug('Next draw starts at:', nextDrawStartsAt);
@@ -27,8 +27,9 @@ export async function testnetPrizePoolHandleCompletePrize(
   let transactionPopulated: PopulatedTransaction | undefined;
 
   if (canCompleteDraw) {
-    const randNum = Math.floor(Math.random()*10**10)
     console.log('TestNet PrizePool: Starting Draw');
+
+    const randNum = Math.floor(Math.random() * 10 ** 10);
     transactionPopulated = await prizePool.populateTransaction.completeAndStartNextDraw(randNum);
   } else {
     console.log(

@@ -89,6 +89,7 @@ npm run tsc
 ```
 
 If you wish to compile all packages, you can run the following command in the root directory of this project:
+
 ```
 lerna run tsc
 ```
@@ -102,6 +103,7 @@ npm run publish
 ```
 
 If it's the first time you publish this package, you will need to pass `--access public`:
+
 ```
 npm run publish --access public
 ```
@@ -123,3 +125,9 @@ lerna run format
 ```
 
 We also use [Husky](https://typicode.github.io/husky/#/) to run pre-commit hooks which are defined in [.husky/pre-commit](.husky/pre-commit).
+
+### Todo:
+
+Publish v5-pool-data then link each package back to that:
+
+- "@pooltogether/v5-pool-data": "0.0.1",

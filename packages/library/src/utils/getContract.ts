@@ -3,11 +3,8 @@ import { Contract } from 'ethers';
 
 import {
   ETHEREUM_MAINNET_CHAIN_ID,
-  OPTIMISM_CHAIN_ID,
-  ARBITRUM_GOERLI_CHAIN_ID,
   ETHEREUM_GOERLI_CHAIN_ID,
-  OPTIMISM_GOERLI_CHAIN_ID,
-  MUMBAI_CHAIN_ID,
+  ETHEREUM_SEPOLIA_CHAIN_ID,
 } from './network';
 import { ContractsBlob } from '../types';
 
