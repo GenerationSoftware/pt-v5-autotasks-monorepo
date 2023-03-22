@@ -27,8 +27,9 @@ export async function testnetPrizePoolHandleCompletePrize(
   let transactionPopulated: PopulatedTransaction | undefined;
 
   if (canCompleteDraw) {
+    const randNum = Math.floor(Math.random()*10**10)
     console.log('TestNet PrizePool: Starting Draw');
-    transactionPopulated = await prizePool.populateTransaction.completeAndStartNextDraw();
+    transactionPopulated = await prizePool.populateTransaction.completeAndStartNextDraw(randNum);
   } else {
     console.log(
       `TestNet PrizePool: Draw not ready to start.\nextDrawStartsAt: ${nextDrawStartsAt}`,
