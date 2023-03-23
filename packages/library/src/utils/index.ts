@@ -1,1 +1,1 @@
-export { getContract } from './getContract';
+export { getContract, getContracts } from './getContract';

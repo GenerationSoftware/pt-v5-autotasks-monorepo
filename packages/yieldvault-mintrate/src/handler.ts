@@ -27,23 +27,26 @@ export async function handler(event: RelayerParams) {
   const chainId = Number(process.env.CHAIN_ID);
   // const contracts = getContracts(chainId);
 
-  try {
-    const transactionPopulated = await yieldVaultHandleMintRate(contracts, {
-      chainId,
-      provider: signer,
-    });
+  const transactionsPopulated = await yieldVaultHandleMintRate(contracts, {
+    chainId,
+    provider: signer,
+  });
 
-    if (transactionPopulated) {
-      let transactionSentToNetwork = await relayer.sendTransaction({
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
-        gasLimit: 200000,
-      });
-      console.log('TransactionHash:', transactionSentToNetwork.hash);
-    } else {
-      console.log('TestNet PrizPool: Transaction not populated');
+  if (transactionsPopulated.length > 0) {
+    for (let i = 0; i < transactionsPopulated.length; i++) {
+      const transactionPopulated = transactionsPopulated[i];
+      try {
+        let transactionSentToNetwork = await relayer.sendTransaction({
+          data: transactionPopulated.data,
+          to: transactionPopulated.to,
+          gasLimit: 200000,
+        });
+        console.log('TransactionHash:', transactionSentToNetwork.hash);
+      } catch (error) {
+        throw new Error(error);
+      }
     }
-  } catch (error) {
-    throw new Error(error);
+  } else {
+    console.log('YieldVault: Transactions not populated');
   }
 }

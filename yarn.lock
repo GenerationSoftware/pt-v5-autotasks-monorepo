@@ -2151,6 +2151,14 @@
     defender-relay-client "1.39.0"
     ethers "5.7.2"
 
+"@pooltogether/v5-autotasks-library@0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@pooltogether/v5-autotasks-library/-/v5-autotasks-library-0.0.5.tgz#40041c14e786242ad3ca0ad15cbd04a9bca4166d"
+  integrity sha512-yiRyes1Jm7H7yZlTK01vLAqmdacne6e5nsldeHuCZPcs4fezroUTH6qj+HfE9yGmaHdA9lX4J469Z4qxMoNa/g==
+  dependencies:
+    defender-relay-client "1.39.0"
+    ethers "5.7.2"
+
 "@rollup/plugin-commonjs@23.0.2":
   version "23.0.2"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-23.0.2.tgz#3a3a5b7b1b1cb29037eb4992edcaae997d7ebd92"

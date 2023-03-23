@@ -1,6 +1,6 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, ProviderOptions } from './types';
-import { getContract } from './utils';
+import { getContract, getContracts } from './utils';
 
 const debug = require('debug')('pt-autotask-lib');
 
@@ -11,6 +11,8 @@ export async function testnetPrizePoolHandleCompletePrize(
   const { chainId, provider } = config;
 
   const prizePool = getContract('PrizePool', chainId, provider, contracts);
+  const prizePools = getContracts('PrizePool', chainId, provider, contracts);
+  console.log(prizePools);
 
   if (!prizePool) {
     throw new Error('TestNet PrizePool: Contract Unavailable');

@@ -6,6 +6,8 @@ import {
   ContractsBlob,
   isMainnet,
   isTestnet,
+  getContract,
+  getContracts,
 } from '@pooltogether/v5-autotasks-library';
 // import { mainnet, testnet } from '@pooltogether/v5-pool-data';
 
@@ -26,6 +28,8 @@ export async function handler(event: RelayerParams) {
 
   const chainId = Number(process.env.CHAIN_ID);
   // const contracts = getContracts(chainId);
+  const c = getContract('PrizePool', chainId, provider, contracts);
+  const cs = getContracts('PrizePool', chainId, provider, contracts);
 
   try {
     const transactionPopulated = await testnetPrizePoolHandleCompletePrize(contracts, {

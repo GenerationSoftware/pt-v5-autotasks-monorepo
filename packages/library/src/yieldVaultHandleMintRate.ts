@@ -1,26 +1,29 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, ProviderOptions } from './types';
-import { getContract } from './utils';
+import { getContracts } from './utils';
 
 const debug = require('debug')('pt-autotask-lib');
 
 export async function yieldVaultHandleMintRate(
   contracts: ContractsBlob,
   config: ProviderOptions,
-): Promise<PopulatedTransaction | undefined> {
+): Promise<PopulatedTransaction[] | undefined> {
   const { chainId, provider } = config;
 
-  const yieldVault = getContract('YieldVault', chainId, provider, contracts);
+  const yieldVaults = getContracts('YieldVault', chainId, provider, contracts);
 
-  if (!yieldVault) {
-    throw new Error('YieldVault: Contract Unavailable');
+  let transactionsPopulated: PopulatedTransaction[] | undefined = [];
+  for (let i = 0; i < yieldVaults.length; i++) {
+    const yieldVault = yieldVaults[i];
+
+    if (!yieldVault) {
+      throw new Error('YieldVault: Contract Unavailable');
+    }
+
+    console.log('YieldVault: mintRate()');
+
+    transactionsPopulated.push(await yieldVault.populateTransaction.mintRate());
   }
 
-  let transactionPopulated: PopulatedTransaction | undefined;
-
-  console.log('TestNet YieldVault: Completing Draw');
-
-  transactionPopulated = await yieldVault.populateTransaction.mintRate();
-
-  return transactionPopulated;
+  return transactionsPopulated;
 }
