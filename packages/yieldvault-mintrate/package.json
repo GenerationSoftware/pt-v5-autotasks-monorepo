@@ -1,9 +1,9 @@
 {
-  "name": "@pooltogether/v5-autotasks-testnet-prizepool",
+  "name": "@pooltogether/v5-autotasks-yieldvault-mintrate",
   "version": "0.0.1",
-  "description": "Autotask to start and complete a draw on a TestNet PrizePool.",
+  "description": "Autotask to poke each YieldVault's MintRate.",
   "author": "PoolTogether Inc.",
-  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/testnet-prizepool/README.md",
+  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/yieldvault-mintrate/README.md",
   "license": "ISC",
   "main": "lib/handler.js",
   "directories": {
