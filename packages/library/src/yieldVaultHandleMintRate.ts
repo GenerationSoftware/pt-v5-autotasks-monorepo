@@ -1,8 +1,7 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
+
 import { ContractsBlob, ProviderOptions } from './types';
 import { getContracts } from './utils';
-
-const debug = require('debug')('pt-autotask-lib');
 
 export async function yieldVaultHandleMintRate(
   contracts: ContractsBlob,

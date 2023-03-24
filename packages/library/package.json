@@ -1,6 +1,6 @@
 {
   "name": "@pooltogether/v5-autotasks-library",
-  "version": "0.0.8",
+  "version": "0.0.12",
   "description": "Library of shared utils to run PoolTogether hyperstructure (v5) autotasks.",
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/library/README.md",

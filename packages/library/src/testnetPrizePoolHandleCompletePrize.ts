@@ -2,8 +2,6 @@ import { PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, ProviderOptions } from './types';
 import { getContract, getContracts } from './utils';
 
-const debug = require('debug')('pt-autotask-lib');
-
 export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,
   config: ProviderOptions,
@@ -11,20 +9,18 @@ export async function testnetPrizePoolHandleCompletePrize(
   const { chainId, provider } = config;
 
   const prizePool = getContract('PrizePool', chainId, provider, contracts);
-  const prizePools = getContracts('PrizePool', chainId, provider, contracts);
-  console.log(prizePools);
 
   if (!prizePool) {
     throw new Error('TestNet PrizePool: Contract Unavailable');
   }
 
-  const nextDrawStartsAt = await prizePool.nextDrawStartsAt();
-  const canCompleteDraw = Date.now() / 1000 > nextDrawStartsAt;
+  const nextDrawEndsAt = await prizePool.nextDrawEndsAt();
+  const canCompleteDraw = Date.now() / 1000 > nextDrawEndsAt;
 
   // Debug Contract Request Parameters
-  debug('Next draw starts at:', nextDrawStartsAt);
-  debug('Date.now():', Date.now());
-  debug('Can Complete Draw:', canCompleteDraw);
+  console.log('Next draw ends at:', nextDrawEndsAt);
+  console.log('Date.now():', Date.now());
+  console.log('Can Complete Draw:', canCompleteDraw);
 
   let transactionPopulated: PopulatedTransaction | undefined;
 
@@ -35,7 +31,9 @@ export async function testnetPrizePoolHandleCompletePrize(
     transactionPopulated = await prizePool.populateTransaction.completeAndStartNextDraw(randNum);
   } else {
     console.log(
-      `TestNet PrizePool: Draw not ready to start.\nextDrawStartsAt: ${nextDrawStartsAt}`,
+      `TestNet PrizePool: Draw not ready to start.\nReady in ${
+        nextDrawEndsAt - Date.now() / 1000
+      } seconds`,
     );
   }
 

@@ -3,8 +3,8 @@ import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-clien
 import {
   liquidatorHandleArbSwap,
   ContractsBlob,
-  isMainnet,
-  isTestnet,
+  // isMainnet,
+  // isTestnet,
 } from '@pooltogether/v5-autotasks-library';
 // import { mainnet, testnet } from '@pooltogether/v5-pool-data';
 

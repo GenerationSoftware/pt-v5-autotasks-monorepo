@@ -4,8 +4,8 @@ import {
   testnetContractsBlob as contracts,
   testnetPrizePoolHandleCompletePrize,
   ContractsBlob,
-  isMainnet,
-  isTestnet,
+  // isMainnet,
+  // isTestnet,
   getContract,
   getContracts,
 } from '@pooltogether/v5-autotasks-library';
@@ -30,6 +30,7 @@ export async function handler(event: RelayerParams) {
   // const contracts = getContracts(chainId);
   const c = getContract('PrizePool', chainId, provider, contracts);
   const cs = getContracts('PrizePool', chainId, provider, contracts);
+  console.log(c);
 
   try {
     const transactionPopulated = await testnetPrizePoolHandleCompletePrize(contracts, {
@@ -45,7 +46,7 @@ export async function handler(event: RelayerParams) {
       });
       console.log('TransactionHash:', transactionSentToNetwork.hash);
     } else {
-      console.log('TestNet PrizPool: Transaction not populated');
+      console.log('TestNet PrizePool: Transaction not populated');
     }
   } catch (error) {
     throw new Error(error);
