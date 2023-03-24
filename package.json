@@ -10,10 +10,8 @@
     "publish": "npm run lerna publish --conventional-commits --exact --include-merged-tags"
   },
   "devDependencies": {
-    "@commitlint/config-conventional": "17.2.0",
     "@types/jest": "29.2.2",
     "@types/node": "18.11.9",
-    "commitlint": "17.2.0",
     "husky": "8.0.2",
     "jest": "29.3.0",
     "lerna": "6.0.3",
