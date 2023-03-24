@@ -30,7 +30,6 @@ export async function handler(event: RelayerParams) {
   // const contracts = getContracts(chainId);
   const c = getContract('PrizePool', chainId, provider, contracts);
   const cs = getContracts('PrizePool', chainId, provider, contracts);
-  console.log(c);
 
   try {
     const transactionPopulated = await testnetPrizePoolHandleCompletePrize(contracts, {
