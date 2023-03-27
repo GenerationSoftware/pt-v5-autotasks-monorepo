@@ -1982,18 +1982,18 @@
   dependencies:
     esquery "^1.0.1"
 
-"@pooltogether/v5-autotasks-library@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@pooltogether/v5-autotasks-library/-/v5-autotasks-library-0.0.2.tgz#4d023f47ee03a99f3b8837fde514c453d57548a9"
-  integrity sha512-a4TvP9EaopU/6JCuMTuDkbBOuJGn7pGY7JJTpijTmT5XPid4f0rquteQ/HnonK0Cp9dMgbuZ0eI1yEfyy0/6Dg==
+"@pooltogether/v5-autotasks-library@0.0.14":
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/@pooltogether/v5-autotasks-library/-/v5-autotasks-library-0.0.14.tgz#cf11e6cbf2c07896235bd09af22d88232da8fbd6"
+  integrity sha512-M2wbqIYO7t2GOMZidLoEsaB+PPgpdhDZODPdRig3h0L1YJjlJ7mBEfeJqKv5qyZqYL7Twk1Yp5VlpJkPwAQIig==
   dependencies:
     defender-relay-client "1.39.0"
     ethers "5.7.2"
 
-"@pooltogether/v5-autotasks-library@0.0.8":
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/@pooltogether/v5-autotasks-library/-/v5-autotasks-library-0.0.8.tgz#986f9360ed4123c3ce89dc00c7ea91b1c3009e44"
-  integrity sha512-bByDOAbcr29mV/Po6Cdli9y20YXsK1hXQOjmz5RQgzI8Oq2NncKyzgDp1qiDPDVdMSWp4SYfLpuzflZqr5u+IQ==
+"@pooltogether/v5-autotasks-library@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@pooltogether/v5-autotasks-library/-/v5-autotasks-library-0.0.2.tgz#4d023f47ee03a99f3b8837fde514c453d57548a9"
+  integrity sha512-a4TvP9EaopU/6JCuMTuDkbBOuJGn7pGY7JJTpijTmT5XPid4f0rquteQ/HnonK0Cp9dMgbuZ0eI1yEfyy0/6Dg==
   dependencies:
     defender-relay-client "1.39.0"
     ethers "5.7.2"
