@@ -1,3 +1,4 @@
+export { claimerHandlePrizeClaim } from './claimerHandlePrizeClaim';
 export { drawBeaconHandleDrawStartAndComplete } from './drawBeaconHandleDrawStartAndComplete';
 export { liquidatorHandleArbSwap } from './liquidatorHandleArbSwap';
 export { yieldVaultHandleMintRate } from './yieldVaultHandleMintRate';

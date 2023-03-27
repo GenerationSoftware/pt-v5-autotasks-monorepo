@@ -2,7 +2,7 @@ import { Relayer, RelayerParams } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import {
   testnetContractsBlob as contracts,
-  prizePoolHandleClaimPrize,
+  claimerHandleClaimPrize,
   ContractsBlob,
   // isMainnet,
   // isTestnet,
@@ -19,7 +19,6 @@ import {
 //   }
 // };
 
-const FEE_RECIPIENT = '0x5E6CC2397EcB33e6041C15360E17c777555A5E63'
 
 export async function handler(event: RelayerParams) {
   const provider = new DefenderRelayProvider(event);
@@ -27,19 +26,20 @@ export async function handler(event: RelayerParams) {
   const relayer = new Relayer(event);
 
   const chainId = Number(process.env.CHAIN_ID);
+  const feeRecipient = Number(process.env.CHAIN_ID);
   // const contracts = getContracts(chainId);
 
   try {
-    const transactionPopulated = await prizePoolHandleClaimPrize(contracts, {
+    const transactionPopulated = await claimerHandleClaimPrize(contracts, {
       chainId,
       provider: signer,
-    });
+    }, feeRecipient);
 
     if (transactionPopulated) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 200000,
+        gasLimit: 800000,
       });
       console.log('TransactionHash:', transactionSentToNetwork.hash);
     } else {

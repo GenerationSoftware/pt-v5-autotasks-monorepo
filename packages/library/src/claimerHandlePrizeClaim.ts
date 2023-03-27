@@ -4,32 +4,31 @@ import { getContract } from './utils';
 
 const debug = require('debug')('pt-autotask-lib');
 
-export async function prizePoolHandlePrizeClaim(
+export async function claimerHandlePrizeClaim(
   contracts: ContractsBlob,
   config: ProviderOptions,
+  feeRecipient: string
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
-  const prizePool = getContract('PrizePool', chainId, provider, contracts);
+  const claimer = getContract('Claimer', chainId, provider, contracts);
 
-  if (!prizePool) {
-    throw new Error('PrizePool: Contract Unavailable');
+  if (!claimer) {
+    throw new Error('Claimer: Contract Unavailable');
   }
 
-  // const beaconPeriodEndAt = await prizePool.beaconPeriodEndAt();
+  // const beaconPeriodEndAt = await claimer.beaconPeriodEndAt();
 
   // Debug Contract Request Parameters
-  // debug('PrizePool next Draw.drawId:', nextDrawId);
+  // debug('Claimer next Draw.drawId:', nextDrawId);
 
   let transactionPopulated: PopulatedTransaction | undefined;
 
   if (prizesToClaim.length > 0) {
-    console.log('PrizePool: Start Claim Prizes');
-    transactionPopulated = await prizePool.populateTransaction.claimPrize();
+    console.log('Claimer: Start Claim Prizes');
+    transactionPopulated = await claimer.populateTransaction.claimPrize();
   } else {
-    console.log(
-      `PrizePool: No Prizes found to claim.`,
-    );
+    console.log(`Claimer: No Prizes found to claim.`);
   }
 
   return transactionPopulated;

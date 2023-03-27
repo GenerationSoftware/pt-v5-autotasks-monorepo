@@ -5,3 +5,5 @@ export AUTOTASK_ID=
 export CHAIN_ID=
 export RELAYER_API_KEY=
 export RELAYER_API_SECRET=
+
+export FEE_RECIPIENT=
