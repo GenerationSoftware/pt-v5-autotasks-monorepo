@@ -1,5 +1,6 @@
 import { ContractsBlob } from './types';
 
+import { ClaimerAbi } from './abis/claimerAbi';
 import { PrizePoolAbi } from './abis/prizePoolAbi';
 import { YieldVaultAbi } from './abis/yieldVaultAbi';
 
@@ -70,7 +71,7 @@ export const testnetContractsBlob: ContractsBlob = {
       type: 'PrizePool',
     },
     {
-      abi: [],
+      abi: ClaimerAbi,
       chainId: 5,
       address: '0xe99c7c06CE3D2291474e3cD5ba777626476DAb5E',
       version: {

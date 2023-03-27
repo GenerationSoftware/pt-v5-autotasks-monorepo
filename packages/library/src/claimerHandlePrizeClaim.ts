@@ -40,7 +40,13 @@ export async function claimerHandlePrizeClaim(
 
     if (prizesToClaim > 0) {
       console.log('Claimer: Start Claim Prizes');
-      transactionsPopulated.push(await claimer.populateTransaction.claimPrize(vault.address));
+      transactionsPopulated.push(await claimer.populateTransaction.claimPrize(
+        vault.address,
+        winners,
+        tiers,
+        minFees,
+        feeRecipient
+      ));
     } else {
       console.log(`Claimer: No Prizes found to claim for Vault: ${vault.address}.`);
     }
