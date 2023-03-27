@@ -19,33 +19,35 @@ import {
 //   }
 // };
 
-
 export async function handler(event: RelayerParams) {
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: 'fast' });
   const relayer = new Relayer(event);
 
   const chainId = Number(process.env.CHAIN_ID);
-  const feeRecipient = Number(process.env.CHAIN_ID);
+  const feeRecipient = Number(process.env.FEE_RECIPIENT);
   // const contracts = getContracts(chainId);
 
-  try {
-    const transactionPopulated = await claimerHandleClaimPrize(contracts, {
-      chainId,
-      provider: signer,
-    }, feeRecipient);
+  const transactionsPopulated = await claimerHandleClaimPrize(contracts, {
+    chainId,
+    provider: signer,
+  }, feeRecipient);
 
-    if (transactionPopulated) {
-      let transactionSentToNetwork = await relayer.sendTransaction({
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
-        gasLimit: 800000,
-      });
-      console.log('TransactionHash:', transactionSentToNetwork.hash);
-    } else {
-      console.log('PrizeClaimer: Transaction not populated');
+  if (transactionsPopulated.length > 0) {
+    for (let i = 0; i < transactionsPopulated.length; i++) {
+      const transactionPopulated = transactionsPopulated[i];
+      try {
+        let transactionSentToNetwork = await relayer.sendTransaction({
+          data: transactionPopulated.data,
+          to: transactionPopulated.to,
+          gasLimit: 200000,
+        });
+        console.log('TransactionHash:', transactionSentToNetwork.hash);
+      } catch (error) {
+        throw new Error(error);
+      }
     }
-  } catch (error) {
-    throw new Error(error);
+  } else {
+    console.log('PrizeClaimer: No transactions populated');
   }
 }
