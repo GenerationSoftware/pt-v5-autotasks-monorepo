@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
 // import { Contract } from 'ethers';
 
 // import {
@@ -6,9 +6,9 @@ import { ethers } from 'ethers';
 //   ETHEREUM_GOERLI_CHAIN_ID,
 //   ETHEREUM_SEPOLIA_CHAIN_ID,
 // } from './network';
-import { ContractsBlob } from '../types';
+import { ContractsBlob } from "../types";
 
-const debug = require('debug')('pt-autotask-lib');
+const debug = require("debug")("pt-autotask-lib");
 
 // Returns all the contracts that match the params by name, chain, and contract version
 export function getContracts(
@@ -20,10 +20,10 @@ export function getContracts(
     major: 1,
     minor: 0,
     patch: 0,
-  },
+  }
 ): ethers.Contract[] {
-  debug('name:', name);
-  debug('chainId:', chainId);
+  debug("name:", name);
+  debug("chainId:", chainId);
 
   if (!name || !chainId) throw new Error(`Invalid Contract Parameters`);
 

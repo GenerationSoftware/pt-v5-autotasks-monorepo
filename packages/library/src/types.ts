@@ -1,6 +1,6 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
+import { BigNumber } from "@ethersproject/bignumber";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 // Config types
 export interface ContractData {
@@ -23,7 +23,7 @@ export interface Config {
   chainId: number;
   network: string;
   apiKey: string | undefined;
-  speed?: 'slow' | 'normal' | 'fast';
+  speed?: "slow" | "normal" | "fast";
   gasLimit?: number | string;
   execute?: Boolean;
 }

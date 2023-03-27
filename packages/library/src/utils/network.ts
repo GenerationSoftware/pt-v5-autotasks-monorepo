@@ -1,4 +1,4 @@
-import { ContractsBlob, ProviderUrlOptions, Secrets } from '../types';
+import { ContractsBlob, ProviderUrlOptions, Secrets } from "../types";
 
 // Mainnet chain ids
 export const ETHEREUM_MAINNET_CHAIN_ID = 1;
@@ -32,7 +32,7 @@ export const isTestnet = (chainId: number): boolean => {
 export const getContracts = (
   chainId: number,
   mainnet: ContractsBlob,
-  testnet: ContractsBlob,
+  testnet: ContractsBlob
 ): ContractsBlob => {
   if (isMainnet(chainId)) {
     return mainnet;

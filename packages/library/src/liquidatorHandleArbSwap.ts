@@ -1,29 +1,29 @@
-import { PopulatedTransaction } from '@ethersproject/contracts';
-import { ContractsBlob, ProviderOptions } from './types';
-import { getContract } from './utils';
+import { PopulatedTransaction } from "@ethersproject/contracts";
+import { ContractsBlob, ProviderOptions } from "./types";
+import { getContract } from "./utils";
 
-const debug = require('debug')('pt-autotask-lib');
+const debug = require("debug")("pt-autotask-lib");
 
 const MIN_PROFIT = 1; // $1.00
 const PRIZE_TOKEN_PRICE_USD = 1.02; // $1.02
 
 export async function liquidatorHandleArbSwap(
   contracts: ContractsBlob,
-  config: ProviderOptions,
+  config: ProviderOptions
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
-  const liquidator = getContract('Liquidator', chainId, provider, contracts);
+  const liquidator = getContract("Liquidator", chainId, provider, contracts);
 
   if (!liquidator) {
-    throw new Error('Liquidator: Contract Unavailable');
+    throw new Error("Liquidator: Contract Unavailable");
   }
 
   // replace with real data
-  const yieldToken = 'MOCK';
+  const yieldToken = "MOCK";
 
   // const relayerYieldTokenBalance = provider.balanceOf(yieldToken);
-  const relayerYieldTokenBalance = 'MOCK';
+  const relayerYieldTokenBalance = "MOCK";
   const maxAmountOut = await liquidator.maxAmountOut(); // yield token max reserve
   const amountOut =
     relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut;
@@ -39,7 +39,7 @@ export async function liquidatorHandleArbSwap(
   const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
 
   // Debug Contract Request Parameters
-  debug('Liquidator computed amount out:', amountOut);
+  debug("Liquidator computed amount out:", amountOut);
 
   let transactionPopulated: PopulatedTransaction | undefined;
 
@@ -48,15 +48,15 @@ export async function liquidatorHandleArbSwap(
   const profitable = profit > MIN_PROFIT;
 
   if (profitable) {
-    console.log('Liquidator: Swapping');
+    console.log("Liquidator: Swapping");
     transactionPopulated = await liquidator.populateTransaction.swapExactAmountIn(
       provider,
       amountIn,
-      amountOutMax,
+      amountOutMax
     );
   } else {
     console.log(
-      `Liquidator: Could not find a profitable trade.`,
+      `Liquidator: Could not find a profitable trade.`
       // `Liquidator: Could not find a profitable trade.\nCalculated ${n} attempts`,
     );
   }

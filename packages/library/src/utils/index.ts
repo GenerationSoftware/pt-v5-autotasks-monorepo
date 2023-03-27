@@ -1,2 +1,2 @@
-export { getContract } from './getContract';
-export { getContracts } from './getContracts';
+export { getContract } from "./getContract";
+export { getContracts } from "./getContracts";

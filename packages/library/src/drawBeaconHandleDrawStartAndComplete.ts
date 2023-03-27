@@ -1,19 +1,19 @@
-import { PopulatedTransaction } from '@ethersproject/contracts';
-import { ContractsBlob, ProviderOptions } from './types';
-import { getContract } from './utils';
+import { PopulatedTransaction } from "@ethersproject/contracts";
+import { ContractsBlob, ProviderOptions } from "./types";
+import { getContract } from "./utils";
 
-const debug = require('debug')('pt-autotask-lib');
+const debug = require("debug")("pt-autotask-lib");
 
 export async function drawBeaconHandleDrawStartAndComplete(
   contracts: ContractsBlob,
-  config: ProviderOptions,
+  config: ProviderOptions
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
-  const drawBeacon = getContract('DrawBeacon', chainId, provider, contracts);
+  const drawBeacon = getContract("DrawBeacon", chainId, provider, contracts);
 
   if (!drawBeacon) {
-    throw new Error('DrawBeacon: Contract Unavailable');
+    throw new Error("DrawBeacon: Contract Unavailable");
   }
 
   const nextDrawId = await drawBeacon.getNextDrawId();
@@ -27,31 +27,31 @@ export async function drawBeaconHandleDrawStartAndComplete(
   const canCompleteDraw = await drawBeacon.canCompleteDraw();
 
   // Debug Contract Request Parameters
-  debug('DrawBeacon next Draw.drawId:', nextDrawId);
-  debug('DrawBeacon Beacon PeriodStartedAt:', beaconPeriodStartedAt.toString());
-  debug('DrawBeacon Beacon PeriodSeconds:', beaconPeriodSeconds.toString());
-  debug('DrawBeacon Beacon PeriodOver:', isBeaconPeriodOver);
-  debug('Is RNG Requested:', isRngRequested);
-  debug('Can Start Draw:', canStartDraw);
-  debug('Can Complete Draw:', canCompleteDraw);
+  debug("DrawBeacon next Draw.drawId:", nextDrawId);
+  debug("DrawBeacon Beacon PeriodStartedAt:", beaconPeriodStartedAt.toString());
+  debug("DrawBeacon Beacon PeriodSeconds:", beaconPeriodSeconds.toString());
+  debug("DrawBeacon Beacon PeriodOver:", isBeaconPeriodOver);
+  debug("Is RNG Requested:", isRngRequested);
+  debug("Can Start Draw:", canStartDraw);
+  debug("Can Complete Draw:", canCompleteDraw);
 
   let transactionPopulated: PopulatedTransaction | undefined;
 
   if (canStartDraw) {
-    console.log('DrawBeacon: Starting Draw');
+    console.log("DrawBeacon: Starting Draw");
     transactionPopulated = await drawBeacon.populateTransaction.startDraw();
   } else if (!canCompleteDraw) {
     console.log(
-      `DrawBeacon: Draw ${nextDrawId} not ready to start.\nBeaconPeriodEndAt: ${beaconPeriodEndAt}`,
+      `DrawBeacon: Draw ${nextDrawId} not ready to start.\nBeaconPeriodEndAt: ${beaconPeriodEndAt}`
     );
   }
 
   if (canCompleteDraw) {
-    console.log('DrawBeacon: Completing Draw');
+    console.log("DrawBeacon: Completing Draw");
     transactionPopulated = await drawBeacon.populateTransaction.completeDraw();
   } else if (!canStartDraw) {
     console.log(
-      `DrawBeacon: Draw ${nextDrawId} not ready to complete.\nIsRngRequested: ${isRngRequested}\nIsRngCompleted: ${isRngCompleted}`,
+      `DrawBeacon: Draw ${nextDrawId} not ready to complete.\nIsRngRequested: ${isRngRequested}\nIsRngCompleted: ${isRngCompleted}`
     );
   }
 

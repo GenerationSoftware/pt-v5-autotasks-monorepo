@@ -1,6 +1,6 @@
-import esMain from 'es-main';
+import esMain from "es-main";
 
-import { handler } from './handler';
+import { handler } from "./handler";
 
 if (esMain(import.meta)) {
   const { RELAYER_API_KEY, RELAYER_API_SECRET } = process.env;
