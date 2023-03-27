@@ -28,10 +28,14 @@ export async function handler(event: RelayerParams) {
   const feeRecipient = Number(process.env.FEE_RECIPIENT);
   // const contracts = getContracts(chainId);
 
-  const transactionsPopulated = await claimerHandleClaimPrize(contracts, {
-    chainId,
-    provider: signer,
-  }, feeRecipient);
+  const transactionsPopulated = await claimerHandleClaimPrize(
+    contracts,
+    {
+      chainId,
+      provider: signer,
+    },
+    feeRecipient,
+  );
 
   if (transactionsPopulated.length > 0) {
     for (let i = 0; i < transactionsPopulated.length; i++) {

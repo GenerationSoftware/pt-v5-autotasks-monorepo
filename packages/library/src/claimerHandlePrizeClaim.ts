@@ -13,7 +13,7 @@ export async function claimerHandlePrizeClaim(
 
   const claimer = getContract('Claimer', chainId, provider, contracts);
   const vaults = getContracts('Vault', chainId, provider, contracts);
-  console.log(vaults)
+  console.log(vaults);
 
   if (!claimer) {
     throw new Error('Claimer: Contract Unavailable');
@@ -36,7 +36,7 @@ export async function claimerHandlePrizeClaim(
       throw new Error('Vault: Contract Unavailable');
     }
 
-    const prizesToClaim = 0
+    const prizesToClaim = 0;
 
     if (prizesToClaim > 0) {
       console.log('Claimer: Start Claim Prizes');
@@ -44,7 +44,6 @@ export async function claimerHandlePrizeClaim(
     } else {
       console.log(`Claimer: No Prizes found to claim for Vault: ${vault.address}.`);
     }
-
   }
 
   return transactionsPopulated;
