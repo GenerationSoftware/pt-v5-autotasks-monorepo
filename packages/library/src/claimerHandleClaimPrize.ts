@@ -102,4 +102,5 @@ const getFeeData = async (
 ): Promise<string> => {
   const feeData = await provider.getFeeData();
   return ethers.utils.formatUnits(feeData.maxFeePerGas, "gwei");
+  //You can use (await provider.getFeeData()).maxFeePerGas.mul(gasLimit) to compute the maximum fee in wei. So, close to what you have, but use getFeeData instead of getGasPrice.
 };

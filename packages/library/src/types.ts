@@ -3,6 +3,21 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 // Config types
+export interface TokenData {
+  chainId: number;
+  address: string;
+  name: string;
+  decimals: number;
+  symbol: string;
+  extensions: {
+    underlyingAsset: {
+      address: string;
+      symbol: string;
+      name: string;
+    };
+  };
+}
+
 export interface ContractData {
   address: string;
   chainId: number;
@@ -13,9 +28,17 @@ export interface ContractData {
     minor: number;
     patch: number;
   };
+  tokens?: TokenData[];
 }
 
 export interface ContractsBlob {
+  name: string;
+  version: {
+    major: number;
+    minor: number;
+    patch: number;
+  };
+  timestamp: string;
   contracts: ContractData[];
 }
 

@@ -1,6 +1,7 @@
 import { Relayer, RelayerParams } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {
+  testnetContractsBlob as contracts,
   drawBeaconHandleDrawStartAndComplete,
   ContractsBlob,
   // isMainnet,
