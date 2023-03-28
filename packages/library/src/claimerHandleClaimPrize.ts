@@ -16,7 +16,7 @@ type ClaimPrizeParams = {
   feeRecipient: string;
 };
 
-export async function claimerHandlePrizeClaim(
+export async function claimerHandleClaimPrize(
   contracts: ContractsBlob,
   config: ProviderOptions,
   feeRecipient: string
