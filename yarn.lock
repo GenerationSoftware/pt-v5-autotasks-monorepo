@@ -1982,6 +1982,14 @@
   dependencies:
     esquery "^1.0.1"
 
+"@pooltogether/v5-autotasks-library@0.0.16":
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/@pooltogether/v5-autotasks-library/-/v5-autotasks-library-0.0.16.tgz#9c212467149f10973fd5fa3c8d8993edbd809300"
+  integrity sha512-WxcffFvFYie75kOk4p8fAYcaiDjhM/uAHPfl4aafxPIaj31UjICpLpLast/I8xzpGCuSN+DywrU/2Kkzg3+jvg==
+  dependencies:
+    defender-relay-client "1.39.0"
+    ethers "5.7.2"
+
 "@rollup/plugin-commonjs@23.0.2":
   version "23.0.2"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-23.0.2.tgz#3a3a5b7b1b1cb29037eb4992edcaae997d7ebd92"
