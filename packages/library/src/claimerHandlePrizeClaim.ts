@@ -1,8 +1,20 @@
+import { ethers, BigNumber, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+
 import { ContractsBlob, ProviderOptions } from "./types";
 import { getContract, getContracts } from "./utils";
 
 const debug = require("debug")("pt-autotask-lib");
+
+type ClaimPrizeParams = {
+  vaultAddress: string;
+  winners: string[];
+  tiers: string[];
+  minFees: string;
+  feeRecipient: string;
+};
 
 export async function claimerHandlePrizeClaim(
   contracts: ContractsBlob,
@@ -32,9 +44,29 @@ export async function claimerHandlePrizeClaim(
     // Debug Contract Request Parameters
     // debug('Claimer next Draw.drawId:', nextDrawId);
 
-    if (!vault) {
-      throw new Error("Vault: Contract Unavailable");
-    }
+    // if (!vault) {
+    //   throw new Error("Vault: Contract Unavailable");
+    // }
+    const winners = [];
+    const tiers = [];
+    const minFees = "asdf";
+
+    const params: ClaimPrizeParams = {
+      vaultAddress: vault.address,
+      winners,
+      tiers,
+      minFees,
+      feeRecipient,
+    };
+
+    const feeData = await getFeeData(provider);
+    console.log("feeData ? ", feeData);
+
+    const earnedFees = await claimer.callStatic.claimPrize(params);
+    console.log("earnedFees ? ", earnedFees);
+
+    const gasEstimate = await getGasEstimate(claimer, params);
+    console.log("gasEstimate ? ", gasEstimate);
 
     const prizesToClaim = 0;
 
@@ -56,3 +88,18 @@ export async function claimerHandlePrizeClaim(
 
   return transactionsPopulated;
 }
+
+const getGasEstimate = async (claimer: Contract, params: ClaimPrizeParams): Promise<BigNumber> => {
+  let gasEstimate: BigNumber;
+
+  gasEstimate = await claimer.estimateGas.claimPrize(params);
+
+  return gasEstimate;
+};
+
+const getFeeData = async (
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+): Promise<string> => {
+  const feeData = await provider.getFeeData();
+  return ethers.utils.formatUnits(feeData.maxFeePerGas, "gwei");
+};
