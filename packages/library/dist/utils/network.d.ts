@@ -6,4 +6,8 @@ export declare const ETHEREUM_MAINNET_CHAIN_IDS: number[];
 export declare const TESTNET_CHAIN_IDS: number[];
 export declare const isMainnet: (chainId: number) => boolean;
 export declare const isTestnet: (chainId: number) => boolean;
-export declare const getContracts: (chainId: number, mainnet: ContractsBlob, testnet: ContractsBlob) => ContractsBlob;
+export declare const getContracts: (
+  chainId: number,
+  mainnet: ContractsBlob,
+  testnet: ContractsBlob
+) => ContractsBlob;
