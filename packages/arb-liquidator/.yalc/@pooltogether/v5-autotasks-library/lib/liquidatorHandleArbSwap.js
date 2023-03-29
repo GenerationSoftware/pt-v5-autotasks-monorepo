@@ -25,9 +25,7 @@ function liquidatorHandleArbSwap(contracts, config, swapRecipient) {
         const maxAmountOut = yield liquidationPair.callStatic.maxAmountOut();
         console.log("maxAmountOut ", maxAmountOut);
         console.log(swapRecipient);
-        const relayerYieldTokenBalance = "MOCK";
-        const amountOut = relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut;
-        const amountIn = yield liquidationPair.callStatic.computeExactAmountIn(amountOut);
+        const amountIn = yield liquidationPair.callStatic.computeExactAmountIn(maxAmountOut);
         console.log("amountIn:", amountIn);
         let transactionPopulated;
         const gasCosts = 0.1;

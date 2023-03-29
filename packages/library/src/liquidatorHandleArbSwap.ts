@@ -28,25 +28,9 @@ export async function liquidatorHandleArbSwap(
   console.log("maxAmountOut ", maxAmountOut);
   console.log(swapRecipient);
 
-  // _account
-  // _amountIn
-  // _amountOutMin
-  // const swapExactAmountInComputed = await liquidationPair.callStatic.swapExactAmountIn(
-  //   swapRecipient,
-  //   BigNumber.from(10),
-  //   BigNumber.from(0)
-  //   // maxAmountOut
-  // );
-  // console.log("swapExactAmountInComputed ", swapExactAmountInComputed);
-
-  // const relayerYieldTokenBalance = provider.balanceOf(yieldToken);
-  const relayerYieldTokenBalance = "MOCK";
-
-  const amountOut =
-    relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut;
-
-  const amountIn = await liquidationPair.callStatic.computeExactAmountIn(amountOut);
+  const amountIn = await liquidationPair.callStatic.computeExactAmountIn(maxAmountOut);
   console.log("amountIn:", amountIn);
+
   // const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
 
   let transactionPopulated: PopulatedTransaction | undefined;
@@ -64,10 +48,7 @@ export async function liquidatorHandleArbSwap(
     );
     console.log("LiquidationPair: Swapping");
   } else {
-    console.log(
-      `LiquidationPair: Could not find a profitable trade.`
-      // `LiquidationPair: Could not find a profitable trade.\nCalculated ${n} attempts`,
-    );
+    console.log(`LiquidationPair: Could not find a profitable trade.`);
   }
 
   return transactionPopulated;
