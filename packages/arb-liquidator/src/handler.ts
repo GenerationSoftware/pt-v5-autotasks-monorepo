@@ -3,6 +3,7 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import {
   liquidatorHandleArbSwap,
   ContractsBlob,
+  testnetContractsBlob as contracts,
   // isMainnet,
   // isTestnet,
 } from "@pooltogether/v5-autotasks-library";
@@ -18,7 +19,7 @@ import {
 //   }
 // };
 // replace with method above when lib is published
-const contracts: ContractsBlob = {};
+// const contracts: ContractsBlob = {};
 
 export async function handler(event: RelayerParams) {
   const provider = new DefenderRelayProvider(event);
@@ -42,7 +43,7 @@ export async function handler(event: RelayerParams) {
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {
-      console.log("Liquidator: Transaction not populated");
+      console.log("LiquidationPair: Transaction not populated");
     }
   } catch (error) {
     throw new Error(error);

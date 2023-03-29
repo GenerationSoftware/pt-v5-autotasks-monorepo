@@ -1,6 +1,8 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
+import { BigNumber } from "ethers";
+
 import { ContractsBlob, ProviderOptions } from "./types";
-import { getContract } from "./utils";
+import { getContracts } from "./utils";
 
 const debug = require("debug")("pt-autotask-lib");
 
@@ -13,18 +15,40 @@ export async function liquidatorHandleArbSwap(
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
-  const liquidator = getContract("Liquidator", chainId, provider, contracts);
+  const liquidationPairs = getContracts("LiquidationPair", chainId, provider, contracts);
 
-  if (!liquidator) {
-    throw new Error("Liquidator: Contract Unavailable");
+  if (liquidationPairs.length === 0) {
+    throw new Error("LiquidationPairs: Contracts Unavailable");
   }
+
+  const liquidationPair = liquidationPairs[0];
+
+  const maxAmountOut = await liquidationPair.callStatic.maxAmountOut();
+  console.log("maxAmountOut ", maxAmountOut);
+  console.log("hello!");
+
+  console.log(provider);
+  console.log(BigNumber.from(10));
+  console.log(maxAmountOut);
+
+  // _account
+  // _amountIn
+  // _amountOutMin
+  console.log(provider, BigNumber.from(10), maxAmountOut);
+  const swapExactAmountInComputed = await liquidationPair.callStatic.swapExactAmountIn(
+    provider,
+    BigNumber.from(10),
+    maxAmountOut
+  );
+  console.log("swapExactAmountInComputed ", swapExactAmountInComputed);
 
   // replace with real data
   const yieldToken = "MOCK";
 
   // const relayerYieldTokenBalance = provider.balanceOf(yieldToken);
   const relayerYieldTokenBalance = "MOCK";
-  const maxAmountOut = await liquidator.maxAmountOut(); // yield token max reserve
+  const maxAmountOutWrite = await liquidationPair.maxAmountOut(); // yield token max reserve
+  console.log(maxAmountOutWrite);
   const amountOut =
     relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut;
 
@@ -35,11 +59,11 @@ export async function liquidatorHandleArbSwap(
 
   // unclear which one of these I need to use just yet
   // const amountOut = await liquidator.computeExactAmountOut(amountIn);
-  const amountIn = await liquidator.computeExactAmountIn(amountOut);
+  const amountIn = await liquidationPair.computeExactAmountIn(amountOut);
   const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
 
   // Debug Contract Request Parameters
-  debug("Liquidator computed amount out:", amountOut);
+  debug("LiquidationPair computed amount out:", amountOut);
 
   let transactionPopulated: PopulatedTransaction | undefined;
 
@@ -48,16 +72,16 @@ export async function liquidatorHandleArbSwap(
   const profitable = profit > MIN_PROFIT;
 
   if (profitable) {
-    console.log("Liquidator: Swapping");
-    transactionPopulated = await liquidator.populateTransaction.swapExactAmountIn(
+    transactionPopulated = await liquidationPair.populateTransaction.swapExactAmountIn(
       provider,
       amountIn,
       amountOutMax
     );
+    console.log("LiquidationPair: Swapping");
   } else {
     console.log(
-      `Liquidator: Could not find a profitable trade.`
-      // `Liquidator: Could not find a profitable trade.\nCalculated ${n} attempts`,
+      `LiquidationPair: Could not find a profitable trade.`
+      // `LiquidationPair: Could not find a profitable trade.\nCalculated ${n} attempts`,
     );
   }
 
