@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "packages": {
+    "@pooltogether/v5-autotasks-library": {
+      "version": "0.0.1-beta.1",
+      "signature": "c61574441acdebf621d799bcee3cbde3",
+      "file": true,
+      "replaced": "^0.0.1-beta.1"
+    }
+  }
+}

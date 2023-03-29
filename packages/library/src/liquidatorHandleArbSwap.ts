@@ -11,7 +11,8 @@ const PRIZE_TOKEN_PRICE_USD = 1.02; // $1.02
 
 export async function liquidatorHandleArbSwap(
   contracts: ContractsBlob,
-  config: ProviderOptions
+  config: ProviderOptions,
+  swapRecipient: string
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
@@ -25,18 +26,13 @@ export async function liquidatorHandleArbSwap(
 
   const maxAmountOut = await liquidationPair.callStatic.maxAmountOut();
   console.log("maxAmountOut ", maxAmountOut);
-  console.log("hello!");
-
-  console.log(provider);
-  console.log(BigNumber.from(10));
-  console.log(maxAmountOut);
+  console.log(swapRecipient);
 
   // _account
   // _amountIn
   // _amountOutMin
-  console.log(provider, BigNumber.from(10), maxAmountOut);
   const swapExactAmountInComputed = await liquidationPair.callStatic.swapExactAmountIn(
-    provider,
+    swapRecipient,
     BigNumber.from(10),
     maxAmountOut
   );

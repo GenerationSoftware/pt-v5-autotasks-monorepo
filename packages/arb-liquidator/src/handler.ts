@@ -26,14 +26,19 @@ export async function handler(event: RelayerParams) {
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
   const relayer = new Relayer(event);
 
+  const swapRecipient = process.env.SWAP_RECIPIENT;
   const chainId = Number(process.env.CHAIN_ID);
   // const contracts = getContracts(chainId);
 
   try {
-    const transactionPopulated = await liquidatorHandleArbSwap(contracts, {
-      chainId,
-      provider: signer,
-    });
+    const transactionPopulated = await liquidatorHandleArbSwap(
+      contracts,
+      {
+        chainId,
+        provider: signer,
+      },
+      swapRecipient
+    );
 
     if (transactionPopulated) {
       let transactionSentToNetwork = await relayer.sendTransaction({
