@@ -31,47 +31,36 @@ export async function liquidatorHandleArbSwap(
   // _account
   // _amountIn
   // _amountOutMin
-  const swapExactAmountInComputed = await liquidationPair.callStatic.swapExactAmountIn(
-    swapRecipient,
-    BigNumber.from(10),
-    maxAmountOut
-  );
-  console.log("swapExactAmountInComputed ", swapExactAmountInComputed);
-
-  // replace with real data
-  const yieldToken = "MOCK";
+  // const swapExactAmountInComputed = await liquidationPair.callStatic.swapExactAmountIn(
+  //   swapRecipient,
+  //   BigNumber.from(10),
+  //   BigNumber.from(0)
+  //   // maxAmountOut
+  // );
+  // console.log("swapExactAmountInComputed ", swapExactAmountInComputed);
 
   // const relayerYieldTokenBalance = provider.balanceOf(yieldToken);
   const relayerYieldTokenBalance = "MOCK";
-  const maxAmountOutWrite = await liquidationPair.maxAmountOut(); // yield token max reserve
-  console.log(maxAmountOutWrite);
+
   const amountOut =
     relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut;
 
-  // Very unclear about what we need to pass as the 3rd arg to swapExactAmountIn
-  // I'm guessing this is slippage related, and is the limit we are willing to lose (or gain)
-  // in the trade
-  const amountOutMax = maxAmountOut; // ?
-
-  // unclear which one of these I need to use just yet
-  // const amountOut = await liquidator.computeExactAmountOut(amountIn);
-  const amountIn = await liquidationPair.computeExactAmountIn(amountOut);
-  const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
-
-  // Debug Contract Request Parameters
-  debug("LiquidationPair computed amount out:", amountOut);
+  const amountIn = await liquidationPair.callStatic.computeExactAmountIn(amountOut);
+  console.log("amountIn:", amountIn);
+  // const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
 
   let transactionPopulated: PopulatedTransaction | undefined;
 
   const gasCosts = 0.1; // Let's say gas is $0.10 for now ...
-  const profit = amountInUsd - gasCosts;
-  const profitable = profit > MIN_PROFIT;
+  const profitable = true;
+  // const profit = amountInUsd - gasCosts;
+  // const profitable = profit > MIN_PROFIT;
 
   if (profitable) {
     transactionPopulated = await liquidationPair.populateTransaction.swapExactAmountIn(
-      provider,
+      swapRecipient,
       amountIn,
-      amountOutMax
+      maxAmountOut
     );
     console.log("LiquidationPair: Swapping");
   } else {

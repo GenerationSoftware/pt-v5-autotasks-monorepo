@@ -3,7 +3,7 @@
   "packages": {
     "@pooltogether/v5-autotasks-library": {
       "version": "0.0.1-beta.1",
-      "signature": "c61574441acdebf621d799bcee3cbde3",
+      "signature": "0b3ea87c952e5e8be6c04cd2f3f1ed99",
       "file": true,
       "replaced": "^0.0.1-beta.1"
     }

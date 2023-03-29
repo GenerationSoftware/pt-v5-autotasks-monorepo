@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.liquidatorHandleArbSwap = void 0;
-const ethers_1 = require("ethers");
 const utils_1 = require("./utils");
 const debug = require("debug")("pt-autotask-lib");
 const MIN_PROFIT = 1;
@@ -26,23 +25,15 @@ function liquidatorHandleArbSwap(contracts, config, swapRecipient) {
         const maxAmountOut = yield liquidationPair.callStatic.maxAmountOut();
         console.log("maxAmountOut ", maxAmountOut);
         console.log(swapRecipient);
-        const swapExactAmountInComputed = yield liquidationPair.callStatic.swapExactAmountIn(swapRecipient, ethers_1.BigNumber.from(10), maxAmountOut);
-        console.log("swapExactAmountInComputed ", swapExactAmountInComputed);
-        const yieldToken = "MOCK";
         const relayerYieldTokenBalance = "MOCK";
-        const maxAmountOutWrite = yield liquidationPair.maxAmountOut();
-        console.log(maxAmountOutWrite);
         const amountOut = relayerYieldTokenBalance < maxAmountOut ? relayerYieldTokenBalance : maxAmountOut;
-        const amountOutMax = maxAmountOut;
-        const amountIn = yield liquidationPair.computeExactAmountIn(amountOut);
-        const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
-        debug("LiquidationPair computed amount out:", amountOut);
+        const amountIn = yield liquidationPair.callStatic.computeExactAmountIn(amountOut);
+        console.log("amountIn:", amountIn);
         let transactionPopulated;
         const gasCosts = 0.1;
-        const profit = amountInUsd - gasCosts;
-        const profitable = profit > MIN_PROFIT;
+        const profitable = true;
         if (profitable) {
-            transactionPopulated = yield liquidationPair.populateTransaction.swapExactAmountIn(provider, amountIn, amountOutMax);
+            transactionPopulated = yield liquidationPair.populateTransaction.swapExactAmountIn(swapRecipient, amountIn, maxAmountOut);
             console.log("LiquidationPair: Swapping");
         }
         else {
