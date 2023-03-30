@@ -1,6 +1,7 @@
+import { ethers, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
-import { BigNumber } from "ethers";
-import { ethers } from "ethers";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 import { ContractsBlob, ProviderOptions } from "./types";
 import { getContract, getContracts } from "./utils";
@@ -16,27 +17,9 @@ export async function liquidatorHandleArbSwap(
   config: ProviderOptions,
   swapRecipient: string
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, provider } = config;
+  const { provider } = config;
 
-  const contractsVersion = {
-    major: 1,
-    minor: 0,
-    patch: 0,
-  };
-  const liquidationRouter = getContract(
-    "LiquidationRouter",
-    chainId,
-    provider,
-    contracts,
-    contractsVersion
-  );
-  const liquidationPairs = getContracts(
-    "LiquidationPair",
-    chainId,
-    provider,
-    contracts,
-    contractsVersion
-  );
+  const { liquidationPairs, liquidationRouter } = getLiquidationContracts(contracts, config);
 
   // process the first (change this to loop)
   const liquidationPair = liquidationPairs[0];
@@ -64,40 +47,19 @@ export async function liquidatorHandleArbSwap(
   const exactAmountIn = liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
   const amountOutMin = liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
 
-  // Allowance
-  // Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's `tokenIn` (likely POOL)
-  // We will set allowance to max as we trust the security of the LiquidationRouter contract
-  // Only set allowance if there isn't one already set ...
+  // #3
+  await approve(liquidationPair, liquidationRouter, swapRecipient, provider);
 
-  const tokenInAddress = await liquidationPair.tokenIn();
-  console.log({ tokenInAddress });
-  const token = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
-  console.log("maxint", ethers.constants.MaxInt256);
-
-  let allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
-  console.log("allowanceResult", allowanceResult);
-
-  console.log(swapRecipient, liquidationRouter.address, ethers.constants.MaxInt256);
-
-  const approveResult = await token.functions.approve(
-    liquidationRouter.address,
-    ethers.constants.MaxInt256
-  );
-  console.log("approveResult", approveResult);
-
-  allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
-  console.log("allowanceResult", allowanceResult);
-
-  // const txWillSucceed = true;
-  const txWillSucceed = await liquidationRouter.callStatic.swapExactAmountIn(
+  // #4. Test tx and get estimated return of tokenOut
+  const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
     liquidationPair.address,
     swapRecipient,
     exactAmountIn,
     amountOutMin
   );
-  console.log("txWillSucceed", txWillSucceed);
+  console.log("amountOutEstimate", amountOutEstimate);
 
-  if (profitable && txWillSucceed) {
+  if (profitable) {
     console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
 
     transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
@@ -114,14 +76,64 @@ export async function liquidatorHandleArbSwap(
   return transactionPopulated;
 }
 
-// const approve = async () => {
-//   try {
-//     const token = new ethers.Contract(TOKEN_ADDRESS, erc20ABI, signer);
-//     // const decimals = await token.decimals()
-//     // const decimalAmount = ethers.utils.parseUnits(lockAmount, decimals)
-//     const tx = await token.approve(CONTRACT, ethers.constants.MaxInt256);
-//     await tx.wait();
-//   } catch (error) {
-//     console.log("error: ", error);
-//   }
-// };
+// Allowance
+// Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's `tokenIn` (likely POOL)
+// We will set allowance to max as we trust the security of the LiquidationRouter contract
+// Only set allowance if there isn't one already set ...
+const approve = async (
+  liquidationPair: Contract,
+  liquidationRouter: Contract,
+  swapRecipient: string,
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+) => {
+  try {
+    const tokenInAddress = await liquidationPair.tokenIn();
+    console.log({ tokenInAddress });
+    const token = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
+    console.log("maxint", ethers.constants.MaxInt256);
+
+    let allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
+    console.log("allowanceResult", allowanceResult);
+
+    console.log(swapRecipient, liquidationRouter.address, ethers.constants.MaxInt256);
+
+    const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
+    await tx.wait();
+    console.log("approve tx", tx);
+
+    allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
+    console.log("allowanceResult", allowanceResult);
+  } catch (error) {
+    console.log("error: ", error);
+  }
+};
+
+const getLiquidationContracts = (
+  contracts: ContractsBlob,
+  config: ProviderOptions
+): { liquidationPairs: Contract[]; liquidationRouter: Contract } => {
+  const { chainId, provider } = config;
+
+  const contractsVersion = {
+    major: 1,
+    minor: 0,
+    patch: 0,
+  };
+
+  const liquidationPairs = getContracts(
+    "LiquidationPair",
+    chainId,
+    provider,
+    contracts,
+    contractsVersion
+  );
+  const liquidationRouter = getContract(
+    "LiquidationRouter",
+    chainId,
+    provider,
+    contracts,
+    contractsVersion
+  );
+
+  return { liquidationPairs, liquidationRouter };
+};
