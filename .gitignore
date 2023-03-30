@@ -4,3 +4,5 @@ npm-debug.log
 packages/*/lib
 packages/*/.envrc
 .DS_Store
+.yalc
+yalc.lock

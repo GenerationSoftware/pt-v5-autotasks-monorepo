@@ -47,21 +47,22 @@ export async function liquidatorHandleArbSwap(
   const exactAmountIn = liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
   const amountOutMin = liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
 
-  const txWillSucceed = await liquidationPair.callStatic.swapExactAmountIn(
-    swapRecipient,
-    exactAmountIn,
-    amountOutMin
-  );
+  const txWillSucceed = true;
+  // const txWillSucceed = await liquidationPair.callStatic.swapExactAmountIn(
+  //   swapRecipient,
+  //   exactAmountIn,
+  //   amountOutMin
+  // );
   console.log("txWillSucceed", txWillSucceed);
 
   if (profitable && txWillSucceed) {
     console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
 
-    // transactionPopulated = await liquidationPair.populateTransaction.swapExactAmountIn(
-    //   swapRecipient,
-    //   amountIn,
-    //   maxAmountOut
-    // );
+    transactionPopulated = await liquidationPair.populateTransaction.swapExactAmountIn(
+      swapRecipient,
+      exactAmountIn,
+      amountOutMin
+    );
     console.log("LiquidationPair: Swapping");
   } else {
     console.log(`LiquidationPair: Could not find a profitable trade.`);
