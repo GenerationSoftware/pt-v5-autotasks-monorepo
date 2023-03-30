@@ -25,13 +25,19 @@ function liquidatorHandleArbSwap(contracts, config, swapRecipient) {
         const maxAmountOut = yield liquidationPair.callStatic.maxAmountOut();
         console.log("maxAmountOut ", maxAmountOut);
         console.log(swapRecipient);
-        const amountIn = yield liquidationPair.callStatic.computeExactAmountIn(maxAmountOut);
-        console.log("amountIn:", amountIn);
         let transactionPopulated;
         const gasCosts = 0.1;
         const profitable = true;
-        if (profitable) {
-            transactionPopulated = yield liquidationPair.populateTransaction.swapExactAmountIn(swapRecipient, amountIn, maxAmountOut);
+        const wantedAmountOut = maxAmountOut.div(10);
+        console.log("*************");
+        console.log(maxAmountOut.toString());
+        console.log(wantedAmountOut.toString());
+        const exactAmountIn = liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
+        const amountOutMin = liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
+        const txWillSucceed = yield liquidationPair.callStatic.swapExactAmountIn(swapRecipient, exactAmountIn, amountOutMin);
+        console.log("txWillSucceed", txWillSucceed);
+        if (profitable && txWillSucceed) {
+            console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
             console.log("LiquidationPair: Swapping");
         }
         else {

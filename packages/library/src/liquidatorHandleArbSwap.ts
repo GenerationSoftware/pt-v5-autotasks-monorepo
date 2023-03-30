@@ -28,8 +28,8 @@ export async function liquidatorHandleArbSwap(
   console.log("maxAmountOut ", maxAmountOut);
   console.log(swapRecipient);
 
-  const amountIn = await liquidationPair.callStatic.computeExactAmountIn(maxAmountOut);
-  console.log("amountIn:", amountIn);
+  // const amountIn = await liquidationPair.callStatic.computeExactAmountIn(maxAmountOut);
+  // console.log("amountIn:", amountIn);
 
   // const amountInUsd = amountIn * PRIZE_TOKEN_PRICE_USD;
 
@@ -40,12 +40,28 @@ export async function liquidatorHandleArbSwap(
   // const profit = amountInUsd - gasCosts;
   // const profitable = profit > MIN_PROFIT;
 
-  if (profitable) {
-    transactionPopulated = await liquidationPair.populateTransaction.swapExactAmountIn(
-      swapRecipient,
-      amountIn,
-      maxAmountOut
-    );
+  const wantedAmountOut = maxAmountOut.div(10);
+  console.log("*************");
+  console.log(maxAmountOut.toString());
+  console.log(wantedAmountOut.toString());
+  const exactAmountIn = liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
+  const amountOutMin = liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
+
+  const txWillSucceed = await liquidationPair.callStatic.swapExactAmountIn(
+    swapRecipient,
+    exactAmountIn,
+    amountOutMin
+  );
+  console.log("txWillSucceed", txWillSucceed);
+
+  if (profitable && txWillSucceed) {
+    console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
+
+    // transactionPopulated = await liquidationPair.populateTransaction.swapExactAmountIn(
+    //   swapRecipient,
+    //   amountIn,
+    //   maxAmountOut
+    // );
     console.log("LiquidationPair: Swapping");
   } else {
     console.log(`LiquidationPair: Could not find a profitable trade.`);
