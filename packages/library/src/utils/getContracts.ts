@@ -40,7 +40,9 @@ export function getContracts(
   }
 
   if (contractsArray.length === 0) {
-    throw new Error(`Multiple Contracts Unavailable: ${name} on chainId: ${chainId} `);
+    throw new Error(
+      `Multiple Contracts Unavailable: ${name} on chainId: ${chainId}. Contract version: ${version.major}.${version.minor}.${version.patch}`
+    );
   } else {
     return contractsArray;
   }
