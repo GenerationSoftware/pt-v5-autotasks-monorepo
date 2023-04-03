@@ -7,7 +7,7 @@ import {
   // isMainnet,
   // isTestnet,
   getContract,
-  getContracts,
+  getContracts
 } from "@pooltogether/v5-autotasks-library";
 // import { mainnet, testnet } from '@pooltogether/v5-pool-data';
 
@@ -34,14 +34,14 @@ export async function handler(event: RelayerParams) {
   try {
     const transactionPopulated = await testnetPrizePoolHandleCompletePrize(contracts, {
       chainId,
-      provider: signer,
+      provider: signer
     });
 
     if (transactionPopulated) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 200000,
+        gasLimit: 200000
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {

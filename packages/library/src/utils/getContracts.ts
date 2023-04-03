@@ -19,7 +19,7 @@ export function getContracts(
   version = {
     major: 1,
     minor: 0,
-    patch: 0,
+    patch: 0
   }
 ): ethers.Contract[] {
   debug("name:", name);
@@ -28,8 +28,8 @@ export function getContracts(
   if (!name || !chainId) throw new Error(`Invalid Contract Parameters`);
 
   const contracts = contractsBlob.contracts
-    .filter((cont) => cont.type === name && cont.chainId === chainId)
-    .filter((contract) => JSON.stringify(contract.version) === JSON.stringify(version));
+    .filter(cont => cont.type === name && cont.chainId === chainId)
+    .filter(contract => JSON.stringify(contract.version) === JSON.stringify(version));
 
   let contractsArray: ethers.Contract[] = [];
   for (let i = 0; i < contracts.length; i++) {

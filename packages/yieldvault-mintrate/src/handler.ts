@@ -3,7 +3,7 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import {
   testnetContractsBlob as contracts,
   yieldVaultHandleMintRate,
-  ContractsBlob,
+  ContractsBlob
   // isMainnet,
   // isTestnet,
 } from "@pooltogether/v5-autotasks-library";
@@ -29,7 +29,7 @@ export async function handler(event: RelayerParams) {
 
   const transactionsPopulated = await yieldVaultHandleMintRate(contracts, {
     chainId,
-    provider: signer,
+    provider: signer
   });
 
   if (transactionsPopulated.length > 0) {
@@ -39,7 +39,7 @@ export async function handler(event: RelayerParams) {
         let transactionSentToNetwork = await relayer.sendTransaction({
           data: transactionPopulated.data,
           to: transactionPopulated.to,
-          gasLimit: 70000,
+          gasLimit: 70000
         });
         console.log("TransactionHash:", transactionSentToNetwork.hash);
       } catch (error) {
