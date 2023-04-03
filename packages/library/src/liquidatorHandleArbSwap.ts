@@ -2,6 +2,7 @@ import { ethers, Contract, BigNumber } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import chalk from "chalk";
 
 import { ContractsBlob, ProviderOptions } from "./types";
 import { getContract, getContracts } from "./utils";
@@ -25,38 +26,41 @@ export async function liquidatorHandleArbSwap(
   );
 
   // TODO: change this to loop thru pairs
-  const liquidationPair = liquidationPairs[0];
+  const liquidationPair = liquidationPairs[5];
 
   // #2. Calculate amounts
   //
   const maxAmountOut = await liquidationPair.callStatic.maxAmountOut();
 
-  // Play with fraction or remove it ...
+  // TODO: Play with fraction (or remove it) ...
+  // ... likely needs to be based on how much the bot owner has of tokenIn
+  // as well as how big of a trade they're willing to do
   const wantedAmountOut = maxAmountOut.div(10);
-  const exactAmountIn = liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
-  const amountOutMin = liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
+  const exactAmountIn = await liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
+  console.log(chalk.yellow("ExactAmountIn", exactAmountIn.toString()));
+  const amountOutMin = await liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
 
   // prize token/pool
   const tokenInAssetRateUsd = await getTokenInAssetRateUsd(liquidationPair, marketRate);
-  console.log("tokenInAssetRateUsd", tokenInAssetRateUsd);
+  console.log(chalk.green.bold("TokenIn AssetRate USD:"), chalk.yellow(tokenInAssetRateUsd));
 
   // yield token/vault
   const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(liquidationPair, vaults, marketRate);
-  console.log("tokenOutAssetRateUsd", tokenOutAssetRateUsd);
+  console.log(chalk.green.bold("TokenOut AssetRate USD:"), chalk.yellow(tokenOutAssetRateUsd));
 
   // #3. Get allowance approval
   //
-  // await approve(liquidationPair, liquidationRouter, swapRecipient, provider);
+  await approve(exactAmountIn, liquidationPair, liquidationRouter, swapRecipient, provider);
 
   // #4. Test tx to get estimated return of tokenOut
   //
-  // const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
-  //   liquidationPair.address,
-  //   swapRecipient,
-  //   exactAmountIn,
-  //   amountOutMin
-  // );
-  // console.log("amountOutEstimate", amountOutEstimate);
+  const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
+    liquidationPair.address,
+    swapRecipient,
+    exactAmountIn,
+    amountOutMin
+  );
+  console.log("amountOutEstimate", amountOutEstimate);
 
   // #5. Decide if profitable or not
   //
@@ -76,7 +80,7 @@ export async function liquidatorHandleArbSwap(
     ethMarketRateUsd,
     provider
   );
-  console.log({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   const profit = 1234;
   // const profit = grossProfitUsd - avgFeeUsd;
@@ -108,24 +112,36 @@ export async function liquidatorHandleArbSwap(
 // We will set allowance to max as we trust the security of the LiquidationRouter contract
 // TODO: Only set allowance if there isn't one already set ...
 const approve = async (
+  exactAmountIn: BigNumber,
   liquidationPair: Contract,
   liquidationRouter: Contract,
   swapRecipient: string,
   provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
 ) => {
   try {
+    console.log(chalk.blue("******************"));
+    console.log(chalk.blue.bold("Checking 'tokenIn' ERC20 allowance..."));
+
     const tokenInAddress = await liquidationPair.tokenIn();
     const token = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
 
     let allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
+    allowanceResult = allowanceResult[0];
+    console.log(chalk.green("Existing allowance:"), chalk.yellow(allowanceResult.toString()));
 
-    const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
-    await tx.wait();
+    if (allowanceResult.lt(exactAmountIn)) {
+      const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
+      await tx.wait();
 
-    allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
-    console.log("allowanceResult", allowanceResult);
+      allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
+      logStringValue("New allowance:", allowanceResult[0].toString());
+    } else {
+      console.log(chalk.blue.bold("Existing allowance sufficient ✓"));
+    }
   } catch (error) {
-    console.log("error: ", error);
+    console.log(chalk.red("error: ", error));
+  } finally {
+    console.log(chalk.blue("******************"));
   }
 };
 
@@ -226,4 +242,8 @@ const getTokenOutAssetRateUsd = async (
   const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
 
   return testnetParseFloat(tokenOutAssetRate);
+};
+
+const logStringValue = (str: string, val: any) => {
+  console.log(chalk.green(str), chalk.yellow(val));
 };
