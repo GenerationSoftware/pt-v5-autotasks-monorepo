@@ -7,11 +7,8 @@ import { ContractsBlob, ProviderOptions } from "./types";
 import { getContract, getContracts } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
-const debug = require("debug")("pt-autotask-lib");
-
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
-const MIN_PROFIT = 1; // $1.00
-const PRIZE_TOKEN_PRICE_USD = 1.02; // $1.02
+const MIN_PROFIT_THRESHOLD = 5; // Only swap if we're going to make at least $5.00
 
 export async function liquidatorHandleArbSwap(
   contracts: ContractsBlob,
@@ -33,36 +30,19 @@ export async function liquidatorHandleArbSwap(
   // #2. Calculate amounts
   //
   const maxAmountOut = await liquidationPair.callStatic.maxAmountOut();
-  // console.log("maxAmountOut ", maxAmountOut);
-  // console.log(swapRecipient);
 
   // Play with fraction or remove it ...
   const wantedAmountOut = maxAmountOut.div(10);
   const exactAmountIn = liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
   const amountOutMin = liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
 
-  // console.log("liquidationPair", liquidationPair.address);
-
   // prize token/pool
-  const tokenInAddress = await liquidationPair.tokenIn();
-  // console.log("tokenInAddress", tokenInAddress);
-  const tokenInRateUsd = await marketRate.priceFeed(tokenInAddress, "USD");
-  // console.log("tokenInRateUsd", tokenInRateUsd);
-
-  // Bug in testnet contracts has POOL price at 18 decimals instead of 8 as defined in MarketRate contract
-  // const tokenInRateUsdFixed = tokenInRateUsd.div("10000000000");
-  // console.log("tokenInRateUsdFixed", tokenInRateUsdFixed);
-  // console.log("tokenInRateUsdFixed str", tokenInRateUsdFixed.toString());
+  const tokenInAssetRateUsd = await getTokenInAssetRateUsd(liquidationPair, marketRate);
+  console.log("tokenInAssetRateUsd", tokenInAssetRateUsd);
 
   // yield token/vault
-  const tokenOutAddress = await liquidationPair.tokenOut();
-
-  // underlying stablecoin we actually want
-  const vaultContract = vaults.find((contract) => contract.address === tokenOutAddress);
-  const tokenOutAsset = await vaultContract.functions.asset();
-  const tokenOutAssetAddress = tokenOutAsset[0];
-  const tokenOutAssetRateUsd = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
-  // console.log("tokenOutAssetRateUsd", tokenOutAssetRateUsd);
+  const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(liquidationPair, vaults, marketRate);
+  console.log("tokenOutAssetRateUsd", tokenOutAssetRateUsd);
 
   // #3. Get allowance approval
   //
@@ -91,17 +71,16 @@ export async function liquidatorHandleArbSwap(
     exactAmountIn,
     amountOutMin
   );
-  const { baseFeeUsd, maxFeeUsd } = await getBaseAndMaxFeeUsd(
+  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     estimatedGasLimit,
     ethMarketRateUsd,
     provider
   );
-  console.log({ baseFeeUsd, maxFeeUsd });
+  console.log({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
-  // const gasCosts = 0.1; // Let's say gas is $0.10 for now ...
-  const profitable = true;
-  // const profit = amountInUsd - gasCosts;
-  // const profitable = profit > MIN_PROFIT;
+  const profit = 1234;
+  // const profit = grossProfitUsd - avgFeeUsd;
+  const profitable = profit > MIN_PROFIT_THRESHOLD;
 
   // #6. Finally, populate tx when profitable
   let transactionPopulated: PopulatedTransaction | undefined;
@@ -127,7 +106,7 @@ export async function liquidatorHandleArbSwap(
 //
 // Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's `tokenIn` (likely POOL)
 // We will set allowance to max as we trust the security of the LiquidationRouter contract
-// Only set allowance if there isn't one already set ...
+// TODO: Only set allowance if there isn't one already set ...
 const approve = async (
   liquidationPair: Contract,
   liquidationRouter: Contract,
@@ -136,18 +115,12 @@ const approve = async (
 ) => {
   try {
     const tokenInAddress = await liquidationPair.tokenIn();
-    console.log({ tokenInAddress });
     const token = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
-    console.log("maxint", ethers.constants.MaxInt256);
 
     let allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
-    console.log("allowanceResult", allowanceResult);
-
-    console.log(swapRecipient, liquidationRouter.address, ethers.constants.MaxInt256);
 
     const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
     await tx.wait();
-    console.log("approve tx", tx);
 
     allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
     console.log("allowanceResult", allowanceResult);
@@ -208,16 +181,49 @@ const getEthMarketRate = async (contracts: ContractsBlob, marketRate: Contract) 
   return wethRate;
 };
 
-const getBaseAndMaxFeeUsd = async (
+const getFeesUsd = async (
   estimatedGasLimit: BigNumber,
   ethMarketRateUsd: number,
   provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
-): Promise<{ baseFeeUsd: number; maxFeeUsd: number }> => {
+): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
   const baseFeeWei = (await provider.getFeeData()).lastBaseFeePerGas.mul(estimatedGasLimit);
   const maxFeeWei = (await provider.getFeeData()).maxFeePerGas.mul(estimatedGasLimit);
 
   const baseFeeUsd = parseFloat(ethers.utils.formatEther(baseFeeWei)) * ethMarketRateUsd;
   const maxFeeUsd = parseFloat(ethers.utils.formatEther(maxFeeWei)) * ethMarketRateUsd;
 
-  return { baseFeeUsd, maxFeeUsd };
+  const avgFeeUsd = (baseFeeUsd + maxFeeUsd) / 2;
+
+  return { baseFeeUsd, maxFeeUsd, avgFeeUsd };
+};
+
+const testnetParseFloat = (amountBigNum: BigNumber): number => {
+  return parseFloat(ethers.utils.formatUnits(amountBigNum, MARKET_RATE_CONTRACT_DECIMALS));
+};
+
+const getTokenInAssetRateUsd = async (
+  liquidationPair: Contract,
+  marketRate: Contract
+): Promise<number> => {
+  const tokenInAddress = await liquidationPair.tokenIn();
+  const tokenInRate = await marketRate.priceFeed(tokenInAddress, "USD");
+
+  return testnetParseFloat(tokenInRate);
+};
+
+const getTokenOutAssetRateUsd = async (
+  liquidationPair: Contract,
+  vaults: Contract[],
+  marketRate: Contract
+): Promise<number> => {
+  // yield token/vault
+  const tokenOutAddress = await liquidationPair.tokenOut();
+
+  // underlying stablecoin we actually want
+  const vaultContract = vaults.find((contract) => contract.address === tokenOutAddress);
+  const tokenOutAsset = await vaultContract.functions.asset();
+  const tokenOutAssetAddress = tokenOutAsset[0];
+  const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
+
+  return testnetParseFloat(tokenOutAssetRate);
 };
