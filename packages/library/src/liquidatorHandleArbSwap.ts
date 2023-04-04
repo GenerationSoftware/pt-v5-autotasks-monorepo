@@ -228,7 +228,7 @@ const getLiquidationContracts = (
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0,
+    patch: 0
   };
 
   const liquidationPairs = getContracts(
@@ -255,9 +255,9 @@ const getLiquidationContracts = (
 // TODO: Coingecko/other on production for rates
 const getEthMarketRate = async (contracts: ContractsBlob, marketRate: Contract) => {
   const wethContract = contracts.contracts.find(
-    (contract) =>
+    contract =>
       contract.tokens &&
-      contract.tokens.find((token) => token.extensions.underlyingAsset.symbol === "WETH")
+      contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
   );
 
   const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
@@ -305,7 +305,7 @@ const getTokenOutAssetRateUsd = async (
   const tokenOutAddress = await liquidationPair.tokenOut();
 
   // underlying stablecoin we actually want
-  const vaultContract = vaults.find((contract) => contract.address === tokenOutAddress);
+  const vaultContract = vaults.find(contract => contract.address === tokenOutAddress);
   const tokenOutAsset = await vaultContract.functions.asset();
   const tokenOutAssetAddress = tokenOutAsset[0];
   const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
@@ -340,7 +340,7 @@ const getContext = async (
     address: tokenInAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol(),
+    symbol: await tokenInContract.symbol()
   };
 
   // 2. VAULT TOKEN
@@ -350,12 +350,12 @@ const getContext = async (
     address: tokenOutAddress,
     decimals: await tokenOutContract.decimals(),
     name: await tokenOutContract.name(),
-    symbol: await tokenOutContract.symbol(),
+    symbol: await tokenOutContract.symbol()
   };
 
   // 3. VAULT UNDERLYING ASSET TOKEN
   const vaultContract = contracts.contracts.find(
-    (contract) => contract.type === "Vault" && contract.address === tokenOutAddress
+    contract => contract.type === "Vault" && contract.address === tokenOutAddress
   );
   const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
 
@@ -369,13 +369,13 @@ const getContext = async (
     address: vaultUnderlyingAsset.address,
     decimals: await tokenOutUnderlyingAssetContract.decimals(),
     name: vaultUnderlyingAsset.name,
-    symbol: vaultUnderlyingAsset.symbol,
+    symbol: vaultUnderlyingAsset.symbol
   };
 
   return { tokenIn, tokenOut, tokenOutUnderlyingAsset };
 };
 
-const printContext = (context) => {
+const printContext = context => {
   printSpacer();
   console.log(
     chalk.blue.bold(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`)
