@@ -5,16 +5,30 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import chalk from "chalk";
 
 import { ContractsBlob, ProviderOptions } from "./types";
-import { getContract, getContracts } from "./utils";
+import { logStringValue, logBigNumber, getContract, getContracts } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
 const MIN_PROFIT_THRESHOLD = 5; // Only swap if we're going to make at least $5.00
 
+type Token = {
+  name: string;
+  decimals: string;
+  address: string;
+  symbol: string;
+};
+
+type Context = {
+  tokenIn: Token;
+  tokenOut: Token;
+  tokenOutUnderlyingAsset: Token;
+};
+
 export async function liquidatorHandleArbSwap(
   contracts: ContractsBlob,
   config: ProviderOptions,
-  swapRecipient: string
+  swapRecipient: string,
+  relayerAddress: string
 ): Promise<PopulatedTransaction | undefined> {
   const { provider } = config;
 
@@ -26,31 +40,59 @@ export async function liquidatorHandleArbSwap(
   );
 
   // TODO: change this to loop thru pairs
-  const liquidationPair = liquidationPairs[5];
+  const liquidationPair = liquidationPairs[6];
+  const context: Context = await getContext(liquidationPair, contracts, provider);
+  printContext(context);
 
   // #2. Calculate amounts
   //
   const maxAmountOut = await liquidationPair.callStatic.maxAmountOut();
+  logBigNumber(
+    `Max Amount tokenOut Available:`,
+    maxAmountOut,
+    context.tokenOut.decimals,
+    context.tokenOut.symbol
+  );
 
   // TODO: Play with fraction (or remove it) ...
   // ... likely needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
-  const wantedAmountOut = maxAmountOut.div(10);
+  const divisor = 10;
+  logStringValue("Dividing Max Amount tokenOut Available by:", divisor);
+
+  const wantedAmountOut = maxAmountOut.div(divisor);
+  logBigNumber(
+    "Wanted Amount tokenOut:",
+    wantedAmountOut,
+    context.tokenOut.decimals,
+    context.tokenOut.symbol
+  );
+
   const exactAmountIn = await liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
-  console.log(chalk.yellow("ExactAmountIn", exactAmountIn.toString()));
+  logBigNumber(
+    "Exact Amount tokenIn:",
+    exactAmountIn,
+    context.tokenIn.decimals,
+    context.tokenIn.symbol
+  );
+
   const amountOutMin = await liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
 
   // prize token/pool
   const tokenInAssetRateUsd = await getTokenInAssetRateUsd(liquidationPair, marketRate);
-  console.log(chalk.green.bold("TokenIn AssetRate USD:"), chalk.yellow(tokenInAssetRateUsd));
+  logStringValue("TokenIn AssetRate USD:", tokenInAssetRateUsd);
 
   // yield token/vault
   const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(liquidationPair, vaults, marketRate);
-  console.log(chalk.green.bold("TokenOut AssetRate USD:"), chalk.yellow(tokenOutAssetRateUsd));
+  logStringValue("TokenOut AssetRate USD:", tokenOutAssetRateUsd);
 
-  // #3. Get allowance approval
+  // #3. Print balanceOf tokenIn for relayer
   //
-  await approve(exactAmountIn, liquidationPair, liquidationRouter, swapRecipient, provider);
+  await printBalanceOf(context, liquidationPair, provider, relayerAddress);
+
+  // #4. Get allowance approval
+  //
+  await approve(exactAmountIn, liquidationPair, liquidationRouter, provider, relayerAddress);
 
   // #4. Test tx to get estimated return of tokenOut
   //
@@ -60,7 +102,12 @@ export async function liquidatorHandleArbSwap(
     exactAmountIn,
     amountOutMin
   );
-  console.log("amountOutEstimate", amountOutEstimate);
+  logBigNumber(
+    `Estimated amount of tokenOut to receive:`,
+    amountOutEstimate,
+    context.tokenOut.decimals,
+    context.tokenOut.symbol
+  );
 
   // #5. Decide if profitable or not
   //
@@ -80,16 +127,26 @@ export async function liquidatorHandleArbSwap(
     ethMarketRateUsd,
     provider
   );
-  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
+  console.log(chalk.blue("******************"));
+  console.log(chalk.blue("Current gas costs for transaction:"));
+  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+  // TODO: return this also in USD
+
+  console.log(chalk.blue("******************"));
+  console.log(chalk.blue("Profit/Loss:"));
   const profit = 1234;
+  // const grossProfitUsd = tokenOutUsd - tokenInUsd;
+
   // const profit = grossProfitUsd - avgFeeUsd;
   const profitable = profit > MIN_PROFIT_THRESHOLD;
+  console.table({ profit, profitable });
 
   // #6. Finally, populate tx when profitable
   let transactionPopulated: PopulatedTransaction | undefined;
 
   if (profitable) {
+    console.log("LiquidationPair: Populating swap transaction ...");
     // console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
 
     // transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
@@ -98,7 +155,6 @@ export async function liquidatorHandleArbSwap(
     //   exactAmountIn,
     //   amountOutMin
     // );
-    console.log("LiquidationPair: Swapping");
   } else {
     console.log(`LiquidationPair: Could not find a profitable trade.`);
   }
@@ -115,8 +171,8 @@ const approve = async (
   exactAmountIn: BigNumber,
   liquidationPair: Contract,
   liquidationRouter: Contract,
-  swapRecipient: string,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  relayerAddress: string
 ) => {
   try {
     console.log(chalk.blue("******************"));
@@ -125,18 +181,21 @@ const approve = async (
     const tokenInAddress = await liquidationPair.tokenIn();
     const token = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
 
-    let allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
+    let allowanceResult = await token.functions.allowance(
+      relayerAddress,
+      liquidationRouter.address
+    );
     allowanceResult = allowanceResult[0];
-    console.log(chalk.green("Existing allowance:"), chalk.yellow(allowanceResult.toString()));
+    logStringValue("Existing allowance:", allowanceResult.toString());
 
     if (allowanceResult.lt(exactAmountIn)) {
       const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
       await tx.wait();
 
-      allowanceResult = await token.functions.allowance(swapRecipient, liquidationRouter.address);
+      allowanceResult = await token.functions.allowance(relayerAddress, liquidationRouter.address);
       logStringValue("New allowance:", allowanceResult[0].toString());
     } else {
-      console.log(chalk.blue.bold("Existing allowance sufficient ✓"));
+      console.log(chalk.blue.bold("Sufficient allowance ✓"));
     }
   } catch (error) {
     console.log(chalk.red("error: ", error));
@@ -159,7 +218,7 @@ const getLiquidationContracts = (
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0
+    patch: 0,
   };
 
   const liquidationPairs = getContracts(
@@ -186,9 +245,9 @@ const getLiquidationContracts = (
 // TODO: Coingecko/other on production for rates
 const getEthMarketRate = async (contracts: ContractsBlob, marketRate: Contract) => {
   const wethContract = contracts.contracts.find(
-    contract =>
+    (contract) =>
       contract.tokens &&
-      contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
+      contract.tokens.find((token) => token.extensions.underlyingAsset.symbol === "WETH")
   );
 
   const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
@@ -236,7 +295,7 @@ const getTokenOutAssetRateUsd = async (
   const tokenOutAddress = await liquidationPair.tokenOut();
 
   // underlying stablecoin we actually want
-  const vaultContract = vaults.find(contract => contract.address === tokenOutAddress);
+  const vaultContract = vaults.find((contract) => contract.address === tokenOutAddress);
   const tokenOutAsset = await vaultContract.functions.asset();
   const tokenOutAssetAddress = tokenOutAsset[0];
   const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
@@ -244,6 +303,97 @@ const getTokenOutAssetRateUsd = async (
   return testnetParseFloat(tokenOutAssetRate);
 };
 
-const logStringValue = (str: string, val: any) => {
-  console.log(chalk.green(str), chalk.yellow(val));
+// const logStringValue = (str: string, val: any) => {
+//   console.log(chalk.green(str), chalk.yellow(val));
+// };
+
+// const logBigNumber = (title, bigNumber, decimals) => {
+//   const formatted = ethers.utils.formatUnits(bigNumber, decimals);
+
+//   logStringValue(title, `${formatted} (${bigNumber.toString()} wei)`);
+// };
+
+// Gather information about this specific liquidation pair
+// This is complicated because tokenIn is the token to supply (likely the prize token, which is probably POOL),
+// while tokenOut is the Vault/Yield token, not the underlying asset which is likely the desired token (ie. DAI, USDC)
+//
+const getContext = async (
+  liquidationPair: Contract,
+  contracts: ContractsBlob,
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+): Promise<Context> => {
+  // 1. IN TOKEN
+  const tokenInAddress = await liquidationPair.tokenIn();
+  const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
+
+  const tokenIn = {
+    address: tokenInAddress,
+    decimals: await tokenInContract.decimals(),
+    name: await tokenInContract.name(),
+    symbol: await tokenInContract.symbol(),
+  };
+
+  // 2. VAULT TOKEN
+  const tokenOutAddress = await liquidationPair.tokenOut();
+  const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, provider);
+  const tokenOut = {
+    address: tokenOutAddress,
+    decimals: await tokenOutContract.decimals(),
+    name: await tokenOutContract.name(),
+    symbol: await tokenOutContract.symbol(),
+  };
+
+  // 3. VAULT UNDERLYING ASSET TOKEN
+  const vaultContract = contracts.contracts.find(
+    (contract) => contract.type === "Vault" && contract.address === tokenOutAddress
+  );
+  const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
+
+  const tokenOutUnderlyingAssetContract = new ethers.Contract(
+    vaultUnderlyingAsset.address,
+    ERC20Abi,
+    provider
+  );
+
+  const tokenOutUnderlyingAsset = {
+    address: vaultUnderlyingAsset.address,
+    decimals: await tokenOutUnderlyingAssetContract.decimals(),
+    name: vaultUnderlyingAsset.name,
+    symbol: vaultUnderlyingAsset.symbol,
+  };
+
+  return { tokenIn, tokenOut, tokenOutUnderlyingAsset };
+};
+
+const printContext = (context) => {
+  console.log(chalk.blue("******************"));
+  console.log(
+    chalk.blue.bold(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`)
+  );
+  console.table(context);
+  console.log(chalk.blue("******************"));
+};
+
+const printBalanceOf = async (
+  context: Context,
+  liquidationPair: Contract,
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  relayerAddress: string
+) => {
+  console.log(chalk.blue("******************"));
+  console.log(chalk.blue.bold("Checking 'tokenIn' relayer balance ..."));
+
+  const tokenInAddress = await liquidationPair.tokenIn();
+  const tokenContract = new ethers.Contract(tokenInAddress, ERC20Abi, provider);
+
+  let allowanceResult = await tokenContract.functions.balanceOf(relayerAddress);
+  allowanceResult = allowanceResult[0];
+  logBigNumber(
+    `Relayer ${context.tokenIn.symbol} balance:`,
+    allowanceResult,
+    context.tokenIn.decimals,
+    context.tokenIn.symbol
+  );
+
+  console.log(chalk.blue.bold("Sufficient balance ✓"));
 };

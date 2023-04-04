@@ -6,4 +6,5 @@ export CHAIN_ID=
 export RELAYER_API_KEY=
 export RELAYER_API_SECRET=
 
+export RELAYER_ADDRESS=
 export SWAP_RECIPIENT=
