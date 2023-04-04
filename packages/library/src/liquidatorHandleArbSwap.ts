@@ -24,6 +24,13 @@ type Context = {
   tokenOutUnderlyingAsset: Token;
 };
 
+type SwapExactAmountInParams = {
+  liquidationPairAddress: string;
+  swapRecipient: string;
+  exactAmountIn: BigNumber;
+  amountOutMin: BigNumber;
+};
+
 export async function liquidatorHandleArbSwap(
   contracts: ContractsBlob,
   config: ProviderOptions,
@@ -102,11 +109,14 @@ export async function liquidatorHandleArbSwap(
 
   // #4. Test tx to get estimated return of tokenOut
   //
-  const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
-    liquidationPair.address,
+  const swapExactAmountInParams = {
+    liquidationPairAddress: liquidationPair.address,
     swapRecipient,
     exactAmountIn,
-    amountOutMin
+    amountOutMin,
+  };
+  const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
+    ...Object.values(swapExactAmountInParams)
   );
   logBigNumber(
     `Estimated amount of tokenOut to receive:`,
@@ -117,40 +127,16 @@ export async function liquidatorHandleArbSwap(
 
   // #5. Decide if profitable or not
   //
-  const ethMarketRate = await getEthMarketRate(contracts, marketRate);
-  const ethMarketRateUsd = parseFloat(
-    ethers.utils.formatUnits(ethMarketRate, MARKET_RATE_CONTRACT_DECIMALS)
+  const profitable = await calculateProfit(
+    contracts,
+    marketRate,
+    liquidationRouter,
+    swapExactAmountInParams,
+    provider,
+    context,
+    tokenOutAssetRateUsd,
+    tokenInAssetRateUsd
   );
-
-  const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
-    liquidationPair.address,
-    swapRecipient,
-    exactAmountIn,
-    amountOutMin
-  );
-  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
-    estimatedGasLimit,
-    ethMarketRateUsd,
-    provider
-  );
-
-  printSpacer();
-  console.log(chalk.blue("Current gas costs for transaction:"));
-  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
-
-  printSpacer();
-  console.log(chalk.magenta("Profit/Loss:"));
-  const tokenOutUsd =
-    parseFloat(ethers.utils.formatUnits(amountOutMin, context.tokenOut.decimals)) *
-    tokenOutAssetRateUsd;
-  const tokenInUsd =
-    parseFloat(ethers.utils.formatUnits(exactAmountIn, context.tokenIn.decimals)) *
-    tokenInAssetRateUsd;
-  const grossProfitUsd = tokenOutUsd - tokenInUsd;
-
-  const profit = grossProfitUsd - maxFeeUsd;
-  const profitable = profit > MIN_PROFIT_THRESHOLD;
-  console.table({ profit, profitable });
 
   // #6. Finally, populate tx when profitable
   let transactionPopulated: PopulatedTransaction | undefined;
@@ -160,10 +146,7 @@ export async function liquidatorHandleArbSwap(
     // console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
 
     // transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
-    //   liquidationPair.address,
-    //   swapRecipient,
-    //   exactAmountIn,
-    //   amountOutMin
+    // ...Object.values(swapExactAmountInParams)
     // );
   } else {
     console.log(`LiquidationPair: Could not find a profitable trade.`);
@@ -228,7 +211,7 @@ const getLiquidationContracts = (
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0
+    patch: 0,
   };
 
   const liquidationPairs = getContracts(
@@ -255,9 +238,9 @@ const getLiquidationContracts = (
 // TODO: Coingecko/other on production for rates
 const getEthMarketRate = async (contracts: ContractsBlob, marketRate: Contract) => {
   const wethContract = contracts.contracts.find(
-    contract =>
+    (contract) =>
       contract.tokens &&
-      contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
+      contract.tokens.find((token) => token.extensions.underlyingAsset.symbol === "WETH")
   );
 
   const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
@@ -305,23 +288,13 @@ const getTokenOutAssetRateUsd = async (
   const tokenOutAddress = await liquidationPair.tokenOut();
 
   // underlying stablecoin we actually want
-  const vaultContract = vaults.find(contract => contract.address === tokenOutAddress);
+  const vaultContract = vaults.find((contract) => contract.address === tokenOutAddress);
   const tokenOutAsset = await vaultContract.functions.asset();
   const tokenOutAssetAddress = tokenOutAsset[0];
   const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
 
   return testnetParseFloat(tokenOutAssetRate);
 };
-
-// const logStringValue = (str: string, val: any) => {
-//   console.log(chalk.green(str), chalk.yellow(val));
-// };
-
-// const logBigNumber = (title, bigNumber, decimals) => {
-//   const formatted = ethers.utils.formatUnits(bigNumber, decimals);
-
-//   logStringValue(title, `${formatted} (${bigNumber.toString()} wei)`);
-// };
 
 // Gather information about this specific liquidation pair
 // This is complicated because tokenIn is the token to supply (likely the prize token, which is probably POOL),
@@ -340,7 +313,7 @@ const getContext = async (
     address: tokenInAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol()
+    symbol: await tokenInContract.symbol(),
   };
 
   // 2. VAULT TOKEN
@@ -350,12 +323,12 @@ const getContext = async (
     address: tokenOutAddress,
     decimals: await tokenOutContract.decimals(),
     name: await tokenOutContract.name(),
-    symbol: await tokenOutContract.symbol()
+    symbol: await tokenOutContract.symbol(),
   };
 
   // 3. VAULT UNDERLYING ASSET TOKEN
   const vaultContract = contracts.contracts.find(
-    contract => contract.type === "Vault" && contract.address === tokenOutAddress
+    (contract) => contract.type === "Vault" && contract.address === tokenOutAddress
   );
   const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
 
@@ -369,13 +342,13 @@ const getContext = async (
     address: vaultUnderlyingAsset.address,
     decimals: await tokenOutUnderlyingAssetContract.decimals(),
     name: vaultUnderlyingAsset.name,
-    symbol: vaultUnderlyingAsset.symbol
+    symbol: vaultUnderlyingAsset.symbol,
   };
 
   return { tokenIn, tokenOut, tokenOutUnderlyingAsset };
 };
 
-const printContext = context => {
+const printContext = (context) => {
   printSpacer();
   console.log(
     chalk.blue.bold(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`)
@@ -411,4 +384,50 @@ const printBalanceOf = async (
 const printSpacer = () => {
   console.log("");
   console.log(chalk.blue("******************"));
+};
+
+const calculateProfit = async (
+  contracts: ContractsBlob,
+  marketRate: Contract,
+  liquidationRouter: Contract,
+  swapExactAmountInParams: SwapExactAmountInParams,
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  context: Context,
+  tokenOutAssetRateUsd: number,
+  tokenInAssetRateUsd: number
+): Promise<Boolean> => {
+  const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
+  const ethMarketRate = await getEthMarketRate(contracts, marketRate);
+  const ethMarketRateUsd = parseFloat(
+    ethers.utils.formatUnits(ethMarketRate, MARKET_RATE_CONTRACT_DECIMALS)
+  );
+
+  const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
+    ...Object.values(swapExactAmountInParams)
+  );
+  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+    estimatedGasLimit,
+    ethMarketRateUsd,
+    provider
+  );
+
+  printSpacer();
+  console.log(chalk.blue("Current gas costs for transaction:"));
+  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+
+  printSpacer();
+  console.log(chalk.magenta("Profit/Loss:"));
+  const tokenOutUsd =
+    parseFloat(ethers.utils.formatUnits(amountOutMin, context.tokenOut.decimals)) *
+    tokenOutAssetRateUsd;
+  const tokenInUsd =
+    parseFloat(ethers.utils.formatUnits(exactAmountIn, context.tokenIn.decimals)) *
+    tokenInAssetRateUsd;
+  const grossProfitUsd = tokenOutUsd - tokenInUsd;
+
+  const profit = grossProfitUsd - maxFeeUsd;
+  const profitable = profit > MIN_PROFIT_THRESHOLD;
+  console.table({ profit, profitable, MIN_PROFIT_THRESHOLD });
+
+  return profitable;
 };
