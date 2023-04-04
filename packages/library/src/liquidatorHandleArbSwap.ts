@@ -77,6 +77,12 @@ export async function liquidatorHandleArbSwap(
   );
 
   const amountOutMin = await liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
+  logBigNumber(
+    "Amount tokenOut Minimum:",
+    amountOutMin,
+    context.tokenOut.decimals,
+    context.tokenOut.symbol
+  );
 
   // prize token/pool
   const tokenInAssetRateUsd = await getTokenInAssetRateUsd(liquidationPair, marketRate);
@@ -128,17 +134,21 @@ export async function liquidatorHandleArbSwap(
     provider
   );
 
-  console.log(chalk.blue("******************"));
+  printSpacer();
   console.log(chalk.blue("Current gas costs for transaction:"));
   console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
-  // TODO: return this also in USD
 
-  console.log(chalk.blue("******************"));
-  console.log(chalk.blue("Profit/Loss:"));
-  const profit = 1234;
-  // const grossProfitUsd = tokenOutUsd - tokenInUsd;
+  printSpacer();
+  console.log(chalk.magenta("Profit/Loss:"));
+  const tokenOutUsd =
+    parseFloat(ethers.utils.formatUnits(amountOutMin, context.tokenOut.decimals)) *
+    tokenOutAssetRateUsd;
+  const tokenInUsd =
+    parseFloat(ethers.utils.formatUnits(exactAmountIn, context.tokenIn.decimals)) *
+    tokenInAssetRateUsd;
+  const grossProfitUsd = tokenOutUsd - tokenInUsd;
 
-  // const profit = grossProfitUsd - avgFeeUsd;
+  const profit = grossProfitUsd - maxFeeUsd;
   const profitable = profit > MIN_PROFIT_THRESHOLD;
   console.table({ profit, profitable });
 
@@ -175,7 +185,7 @@ const approve = async (
   relayerAddress: string
 ) => {
   try {
-    console.log(chalk.blue("******************"));
+    printSpacer();
     console.log(chalk.blue.bold("Checking 'tokenIn' ERC20 allowance..."));
 
     const tokenInAddress = await liquidationPair.tokenIn();
@@ -200,7 +210,7 @@ const approve = async (
   } catch (error) {
     console.log(chalk.red("error: ", error));
   } finally {
-    console.log(chalk.blue("******************"));
+    printSpacer();
   }
 };
 
@@ -366,12 +376,12 @@ const getContext = async (
 };
 
 const printContext = (context) => {
-  console.log(chalk.blue("******************"));
+  printSpacer();
   console.log(
     chalk.blue.bold(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`)
   );
   console.table(context);
-  console.log(chalk.blue("******************"));
+  printSpacer();
 };
 
 const printBalanceOf = async (
@@ -380,7 +390,7 @@ const printBalanceOf = async (
   provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
   relayerAddress: string
 ) => {
-  console.log(chalk.blue("******************"));
+  printSpacer();
   console.log(chalk.blue.bold("Checking 'tokenIn' relayer balance ..."));
 
   const tokenInAddress = await liquidationPair.tokenIn();
@@ -396,4 +406,9 @@ const printBalanceOf = async (
   );
 
   console.log(chalk.blue.bold("Sufficient balance ✓"));
+};
+
+const printSpacer = () => {
+  console.log("");
+  console.log(chalk.blue("******************"));
 };

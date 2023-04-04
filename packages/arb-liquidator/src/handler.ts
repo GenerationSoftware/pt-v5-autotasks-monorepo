@@ -21,14 +21,17 @@ import {
 // replace with method above when lib is published
 // const contracts: ContractsBlob = {};
 
-export async function handler(event: RelayerParams) {
+export async function handler(event) {
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
   const relayer = new Relayer(event);
 
-  const relayerAddress = process.env.RELAYER_ADDRESS;
-  const swapRecipient = process.env.SWAP_RECIPIENT;
   const chainId = Number(process.env.CHAIN_ID);
+
+  // TODO: Add a secrets lookup fxn based on chainId:
+  const relayerAddress = process.env.RELAYER_ADDRESS || event.secrets.arbGoerliRelayerAddress;
+  const swapRecipient = process.env.SWAP_RECIPIENT || event.secrets.arbGoerliSwapRecipient;
+
   // const contracts = getContracts(chainId);
 
   try {
