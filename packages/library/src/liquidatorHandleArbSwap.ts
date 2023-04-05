@@ -9,7 +9,7 @@ import { logStringValue, logBigNumber, getContract, getContracts } from "./utils
 import { ERC20Abi } from "./abis/ERC20Abi";
 
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
-const MIN_PROFIT_THRESHOLD = 5; // Only swap if we're going to make at least $5.00
+const MIN_PROFIT_THRESHOLD_USD = 5; // Only swap if we're going to make at least $5.00
 
 type Token = {
   name: string;
@@ -143,11 +143,10 @@ export async function liquidatorHandleArbSwap(
 
   if (profitable) {
     console.log("LiquidationPair: Populating swap transaction ...");
-    // console.log(swapRecipient, exactAmountIn.toString(), amountOutMin.toString());
 
-    // transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
-    // ...Object.values(swapExactAmountInParams)
-    // );
+    transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
+      ...Object.values(swapExactAmountInParams)
+    );
   } else {
     console.log(`LiquidationPair: Could not find a profitable trade.`);
   }
@@ -424,10 +423,20 @@ const calculateProfit = async (
     parseFloat(ethers.utils.formatUnits(exactAmountIn, context.tokenIn.decimals)) *
     tokenInAssetRateUsd;
   const grossProfitUsd = tokenOutUsd - tokenInUsd;
+  const netProfitUsd = grossProfitUsd - maxFeeUsd;
 
-  const profit = grossProfitUsd - maxFeeUsd;
-  const profitable = profit > MIN_PROFIT_THRESHOLD;
-  console.table({ profit, profitable, MIN_PROFIT_THRESHOLD });
+  console.log(chalk.magenta("grossProfitUsd = tokenOutUsd - tokenInUsd"));
+  console.log(chalk.green(grossProfitUsd, " = ", tokenOutUsd, " - ", tokenInUsd));
+
+  console.log(chalk.magenta("netProfitUsd = grossProfitUsd - maxFeeUsd"));
+  console.log(chalk.green(netProfitUsd, " = ", grossProfitUsd, " - ", maxFeeUsd));
+
+  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  console.table({
+    MIN_PROFIT_THRESHOLD_USD,
+    netProfitUsd: Math.round((netProfitUsd + Number.EPSILON) * 100) / 100,
+    profitable,
+  });
 
   return profitable;
 };

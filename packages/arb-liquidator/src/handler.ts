@@ -1,12 +1,13 @@
-import { Relayer, RelayerParams } from "defender-relay-client";
+import { Relayer } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {
   liquidatorHandleArbSwap,
   ContractsBlob,
-  testnetContractsBlob as contracts
+  testnetContractsBlob as contracts,
   // isMainnet,
   // isTestnet,
 } from "@pooltogether/v5-autotasks-library";
+import chalk from "chalk";
 // import { mainnet, testnet } from '@pooltogether/v5-pool-data';
 
 // const getContracts = (chainId: number): ContractsBlob => {
@@ -22,6 +23,8 @@ import {
 // const contracts: ContractsBlob = {};
 
 export async function handler(event) {
+  console.clear();
+
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
   const relayer = new Relayer(event);
@@ -39,7 +42,7 @@ export async function handler(event) {
       contracts,
       {
         chainId,
-        provider: signer
+        provider: signer,
       },
       relayerAddress,
       swapRecipient
@@ -49,11 +52,12 @@ export async function handler(event) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 800000
+        gasLimit: 800000,
       });
-      console.log("TransactionHash:", transactionSentToNetwork.hash);
+      console.log(chalk.green("Transaction sent! ✓"));
+      console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
     } else {
-      console.log("LiquidationPair: Transaction not populated");
+      console.log(chalk.red("LiquidationPair: Transaction not populated"));
     }
   } catch (error) {
     throw new Error(error);
