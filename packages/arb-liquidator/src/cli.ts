@@ -7,10 +7,10 @@ if (esMain(import.meta)) {
 
   handler({
     apiKey: RELAYER_API_KEY,
-    apiSecret: RELAYER_API_SECRET
+    apiSecret: RELAYER_API_SECRET,
   })
     .then(() => process.exit(0))
-    .catch(error => {
+    .catch((error) => {
       console.error(error);
       process.exit(1);
     });

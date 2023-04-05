@@ -124,8 +124,6 @@ lerna run test
 lerna run format
 ```
 
-We also use [Husky](https://typicode.github.io/husky/#/) to run pre-commit hooks which are defined in [.husky/pre-commit](.husky/pre-commit).
-
 ### Todo:
 
 Publish v5-pool-data then link each package back to that:

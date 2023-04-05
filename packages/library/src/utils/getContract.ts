@@ -21,7 +21,7 @@ export function getContract(
   version = {
     major: 1,
     minor: 0,
-    patch: 0
+    patch: 0,
   }
 ): Contract | undefined {
   return getContracts(name, chainId, providerOrSigner, contractsBlob, version)[0];

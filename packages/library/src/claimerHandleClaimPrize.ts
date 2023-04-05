@@ -56,7 +56,7 @@ export async function claimerHandleClaimPrize(
       winners,
       tiers,
       minFees,
-      feeRecipient
+      feeRecipient,
     };
 
     const feeData = await getFeeData(provider);

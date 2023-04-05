@@ -3,7 +3,7 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import {
   testnetContractsBlob as contracts,
   claimerHandleClaimPrize,
-  ContractsBlob
+  ContractsBlob,
   // isMainnet,
   // isTestnet,
 } from "@pooltogether/v5-autotasks-library";
@@ -32,7 +32,7 @@ export async function handler(event: RelayerParams) {
     contracts,
     {
       chainId,
-      provider: signer
+      provider: signer,
     },
     feeRecipient
   );
@@ -44,7 +44,7 @@ export async function handler(event: RelayerParams) {
         let transactionSentToNetwork = await relayer.sendTransaction({
           data: transactionPopulated.data,
           to: transactionPopulated.to,
-          gasLimit: 200000
+          gasLimit: 200000,
         });
         console.log("TransactionHash:", transactionSentToNetwork.hash);
       } catch (error) {

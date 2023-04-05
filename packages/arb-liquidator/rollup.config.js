@@ -15,7 +15,7 @@ export default {
   output: {
     file: "lib/handler.js",
     format: "cjs",
-    exports: "auto"
+    exports: "auto",
   },
   plugins: [
     resolve({ preferBuiltins: true }),
@@ -25,8 +25,8 @@ export default {
     injectProcessEnv({
       CHAIN_ID,
       RELAYER_ADDRESS,
-      SWAP_RECIPIENT
-    })
+      SWAP_RECIPIENT,
+    }),
   ],
-  external: [...builtins]
+  external: [...builtins],
 };

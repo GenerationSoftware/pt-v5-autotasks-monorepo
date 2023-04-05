@@ -15,7 +15,7 @@ export default {
   output: {
     file: "lib/handler.js",
     format: "cjs",
-    exports: "auto"
+    exports: "auto",
   },
   plugins: [
     resolve({ preferBuiltins: true }),
@@ -23,8 +23,8 @@ export default {
     json({ compact: true }),
     typescript(),
     injectProcessEnv({
-      CHAIN_ID
-    })
+      CHAIN_ID,
+    }),
   ],
-  external: [...builtins]
+  external: [...builtins],
 };

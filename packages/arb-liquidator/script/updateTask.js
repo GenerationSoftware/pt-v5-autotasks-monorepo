@@ -6,7 +6,7 @@ import fs from "fs";
 async function updateAutotask(autotaskId, file) {
   const client = new AutotaskClient({
     apiKey: process.env.DEFENDER_TEAM_API_KEY,
-    apiSecret: process.env.DEFENDER_TEAM_SECRET_KEY
+    apiSecret: process.env.DEFENDER_TEAM_SECRET_KEY,
   });
 
   const source = fs.readFileSync(file);
@@ -14,7 +14,7 @@ async function updateAutotask(autotaskId, file) {
   console.log(`Updating autotask ${autotaskId} with sourcefile ${file}`);
 
   await client.updateCodeFromSources(autotaskId, {
-    "index.js": source
+    "index.js": source,
   });
 }
 
