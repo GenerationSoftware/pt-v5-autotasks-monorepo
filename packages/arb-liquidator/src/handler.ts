@@ -32,8 +32,8 @@ export async function handler(event) {
   const chainId = Number(process.env.CHAIN_ID);
 
   // TODO: Add a secrets lookup fxn based on chainId:
-  const relayerAddress = process.env.RELAYER_ADDRESS || event.secrets.arbGoerliRelayerAddress;
-  const swapRecipient = process.env.SWAP_RECIPIENT || event.secrets.arbGoerliSwapRecipient;
+  const relayerAddress = process.env.RELAYER_ADDRESS;
+  const swapRecipient = process.env.SWAP_RECIPIENT;
 
   // const contracts = getContracts(chainId);
 

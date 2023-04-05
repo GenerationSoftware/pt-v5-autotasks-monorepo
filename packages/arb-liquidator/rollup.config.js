@@ -8,7 +8,7 @@ import injectProcessEnv from "rollup-plugin-inject-process-env";
 
 dotenv.config({ path: "./.envrc" });
 
-const { CHAIN_ID } = process.env;
+const { CHAIN_ID, RELAYER_ADDRESS, SWAP_RECIPIENT } = process.env;
 
 export default {
   input: "src/handler.ts",
@@ -23,7 +23,9 @@ export default {
     json({ compact: true }),
     typescript(),
     injectProcessEnv({
-      CHAIN_ID
+      CHAIN_ID,
+      RELAYER_ADDRESS,
+      SWAP_RECIPIENT
     })
   ],
   external: [...builtins]
