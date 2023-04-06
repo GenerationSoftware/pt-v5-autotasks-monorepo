@@ -14,6 +14,8 @@ import {
   getContracts,
   getFeesUsd,
   getEthMarketRateUsd,
+  getTwabControllerSubgraphClient,
+  getAccounts,
 } from "./utils";
 
 type ClaimPrizesParams = {
@@ -64,6 +66,9 @@ export async function claimerHandleClaimPrize(
     const winners = [];
     const tiers = [];
     const minFees = BigNumber.from(0);
+
+    const client = getTwabControllerSubgraphClient(chainId);
+    const accounts = getAccounts(client);
 
     const claimPrizesParams: ClaimPrizesParams = {
       vaultAddress: vault.address,
