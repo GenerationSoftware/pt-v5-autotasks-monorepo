@@ -5,6 +5,7 @@
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/draw-beacon/README.md",
   "license": "ISC",
+  "type": "module",
   "main": "lib/handler.js",
   "directories": {
     "lib": "lib",
@@ -18,7 +19,6 @@
     "url": "git+https://github.com/pooltogether/v5-autotasks.git"
   },
   "private": true,
-  "type": "module",
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
     "build": "rollup -c rollup.config.js",

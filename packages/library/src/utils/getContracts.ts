@@ -8,7 +8,7 @@ import { ethers } from "ethers";
 // } from './network';
 import { ContractsBlob } from "../types";
 
-const debug = require("debug")("pt-autotask-lib");
+// const debug = require("debug")("pt-autotask-lib");
 
 // Returns all the contracts that match the params by name, chain, and contract version
 export function getContracts(
@@ -22,8 +22,8 @@ export function getContracts(
     patch: 0,
   }
 ): ethers.Contract[] {
-  debug("name:", name);
-  debug("chainId:", chainId);
+  // debug("name:", name);
+  // debug("chainId:", chainId);
 
   if (!name || !chainId) throw new Error(`Invalid Contract Parameters`);
 

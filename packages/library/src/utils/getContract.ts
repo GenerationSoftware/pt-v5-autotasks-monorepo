@@ -10,7 +10,7 @@ import { getContracts } from "./getContracts";
 // } from './network';
 import { ContractsBlob } from "../types";
 
-const debug = require("debug")("pt-autotask-lib");
+// const debug = require("debug")("pt-autotask-lib");
 
 // Returns the first contract that matches the params by name, chain, and contract version
 export function getContract(

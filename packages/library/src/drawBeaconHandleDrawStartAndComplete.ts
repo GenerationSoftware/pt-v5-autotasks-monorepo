@@ -2,7 +2,7 @@ import { PopulatedTransaction } from "@ethersproject/contracts";
 import { ContractsBlob, ProviderOptions } from "./types";
 import { getContract } from "./utils";
 
-const debug = require("debug")("pt-autotask-lib");
+// const debug = require("debug")("pt-autotask-lib");
 
 export async function drawBeaconHandleDrawStartAndComplete(
   contracts: ContractsBlob,
@@ -27,13 +27,13 @@ export async function drawBeaconHandleDrawStartAndComplete(
   const canCompleteDraw = await drawBeacon.canCompleteDraw();
 
   // Debug Contract Request Parameters
-  debug("DrawBeacon next Draw.drawId:", nextDrawId);
-  debug("DrawBeacon Beacon PeriodStartedAt:", beaconPeriodStartedAt.toString());
-  debug("DrawBeacon Beacon PeriodSeconds:", beaconPeriodSeconds.toString());
-  debug("DrawBeacon Beacon PeriodOver:", isBeaconPeriodOver);
-  debug("Is RNG Requested:", isRngRequested);
-  debug("Can Start Draw:", canStartDraw);
-  debug("Can Complete Draw:", canCompleteDraw);
+  // debug("DrawBeacon next Draw.drawId:", nextDrawId);
+  // debug("DrawBeacon Beacon PeriodStartedAt:", beaconPeriodStartedAt.toString());
+  // debug("DrawBeacon Beacon PeriodSeconds:", beaconPeriodSeconds.toString());
+  // debug("DrawBeacon Beacon PeriodOver:", isBeaconPeriodOver);
+  // debug("Is RNG Requested:", isRngRequested);
+  // debug("Can Start Draw:", canStartDraw);
+  // debug("Can Complete Draw:", canCompleteDraw);
 
   let transactionPopulated: PopulatedTransaction | undefined;
 

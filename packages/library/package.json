@@ -5,6 +5,7 @@
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/library/README.md",
   "license": "ISC",
+  "type": "module",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib",
