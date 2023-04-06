@@ -2,30 +2,43 @@ import { ethers, BigNumber, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import chalk from "chalk";
 
 import { ContractsBlob, ProviderOptions } from "./types";
-import { getContract, getContracts } from "./utils";
+import {
+  logStringValue,
+  logBigNumber,
+  printAsterisks,
+  printSpacer,
+  getContract,
+  getContracts,
+  getFeesUsd,
+  getEthMarketRateUsd,
+} from "./utils";
 
-const debug = require("debug")("pt-autotask-lib");
-
-type ClaimPrizeParams = {
+type ClaimPrizesParams = {
   vaultAddress: string;
   winners: string[];
   tiers: string[];
-  minFees: string;
+  minFees: BigNumber;
   feeRecipient: string;
 };
 
 export async function claimerHandleClaimPrize(
   contracts: ContractsBlob,
-  config: ProviderOptions,
-  feeRecipient: string
+  feeRecipient: string,
+  config: ProviderOptions
 ): Promise<PopulatedTransaction[] | undefined> {
   const { chainId, provider } = config;
 
-  const claimer = getContract("Claimer", chainId, provider, contracts);
-  const vaults = getContracts("Vault", chainId, provider, contracts);
-  console.log(vaults);
+  const contractsVersion = {
+    major: 1,
+    minor: 0,
+    patch: 0,
+  };
+  const claimer = getContract("Claimer", chainId, provider, contracts, contractsVersion);
+  const vaults = getContracts("Vault", chainId, provider, contracts, contractsVersion);
+  const marketRate = getContract("MarketRate", chainId, provider, contracts, contractsVersion);
 
   if (!claimer) {
     throw new Error("Claimer: Contract Unavailable");
@@ -44,14 +57,15 @@ export async function claimerHandleClaimPrize(
     // Debug Contract Request Parameters
     // debug('Claimer next Draw.drawId:', nextDrawId);
 
-    // if (!vault) {
-    //   throw new Error("Vault: Contract Unavailable");
-    // }
+    if (!vault) {
+      throw new Error("Vault: Contract Unavailable");
+    }
+
     const winners = [];
     const tiers = [];
-    const minFees = "asdf";
+    const minFees = BigNumber.from(0);
 
-    const params: ClaimPrizeParams = {
+    const claimPrizesParams: ClaimPrizesParams = {
       vaultAddress: vault.address,
       winners,
       tiers,
@@ -59,21 +73,43 @@ export async function claimerHandleClaimPrize(
       feeRecipient,
     };
 
-    const feeData = await getFeeData(provider);
-    console.log("feeData ? ", feeData);
+    // const feeData = await provider.getFeeData();
+    // console.table(feeData);
 
-    const earnedFees = await claimer.callStatic.claimPrize(params);
+    const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+
+    let estimatedGasLimit;
+    try {
+      estimatedGasLimit = await claimer.estimateGas.claimPrizes(
+        ...Object.values(claimPrizesParams)
+      );
+      console.log("estimatedGasLimit ? ", estimatedGasLimit);
+    } catch (e) {
+      console.table(e);
+      console.log(chalk.red(e));
+    }
+    console.log(estimatedGasLimit);
+    console.log(ethMarketRateUsd);
+
+    const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+      estimatedGasLimit,
+      ethMarketRateUsd,
+      provider
+    );
+
+    printAsterisks();
+    console.log(chalk.blue("2. Current gas costs for transaction:"));
+    console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+
+    const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
     console.log("earnedFees ? ", earnedFees);
-
-    const gasEstimate = await getGasEstimate(claimer, params);
-    console.log("gasEstimate ? ", gasEstimate);
 
     const prizesToClaim = 0;
 
     if (prizesToClaim > 0) {
       console.log("Claimer: Start Claim Prizes");
       transactionsPopulated.push(
-        await claimer.populateTransaction.claimPrize(
+        await claimer.populateTransaction.claimPrizes(
           vault.address,
           winners,
           tiers,
@@ -89,18 +125,9 @@ export async function claimerHandleClaimPrize(
   return transactionsPopulated;
 }
 
-const getGasEstimate = async (claimer: Contract, params: ClaimPrizeParams): Promise<BigNumber> => {
-  let gasEstimate: BigNumber;
-
-  gasEstimate = await claimer.estimateGas.claimPrize(params);
-
-  return gasEstimate;
-};
-
-const getFeeData = async (
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
-): Promise<string> => {
-  const feeData = await provider.getFeeData();
-  return ethers.utils.formatUnits(feeData.maxFeePerGas, "gwei");
-  //You can use (await provider.getFeeData()).maxFeePerGas.mul(gasLimit) to compute the maximum fee in wei. So, close to what you have, but use getFeeData instead of getGasPrice.
+const getGasEstimate = async (
+  claimer: Contract,
+  claimPrizesParams: ClaimPrizesParams
+): Promise<BigNumber> => {
+  return await claimer.estimateGas.claimPrizes(...Object.values(claimPrizesParams));
 };

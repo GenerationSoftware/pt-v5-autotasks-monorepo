@@ -7,10 +7,18 @@ import chalk from "chalk";
 import ora from "ora";
 
 import { ContractsBlob, ProviderOptions } from "./types";
-import { logStringValue, logBigNumber, getContract, getContracts } from "./utils";
+import {
+  logStringValue,
+  logBigNumber,
+  printAsterisks,
+  printSpacer,
+  getContract,
+  getContracts,
+  getFeesUsd,
+  getEthMarketRateUsd,
+} from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
-const MARKET_RATE_CONTRACT_DECIMALS = 8;
 const MIN_PROFIT_THRESHOLD_USD = 5; // Only swap if we're going to make at least $5.00
 
 type Token = {
@@ -33,13 +41,15 @@ type SwapExactAmountInParams = {
   amountOutMin: BigNumber;
 };
 
+// Have this follow the same pattern as the other handlers and return populated transactions?
+// ): Promise<PopulatedTransaction | undefined> {
+//
 export async function liquidatorHandleArbSwap(
   contracts: ContractsBlob,
-  config: ProviderOptions,
   relayer: Relayer,
   swapRecipient: string,
-  relayerAddress: string
-  // ): Promise<PopulatedTransaction | undefined> {
+  relayerAddress: string,
+  config: ProviderOptions
 ) {
   const { provider } = config;
 
@@ -74,7 +84,7 @@ export async function liquidatorHandleArbSwap(
 
     // #3. Test tx to get estimated return of tokenOut
     //
-    const swapExactAmountInParams = {
+    const swapExactAmountInParams: SwapExactAmountInParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
       exactAmountIn,
@@ -178,7 +188,6 @@ export async function liquidatorHandleArbSwap(
 //
 // Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's `tokenIn` (likely POOL)
 // We will set allowance to max as we trust the security of the LiquidationRouter contract
-// TODO: Only set allowance if there isn't one already set ...
 const approve = async (
   exactAmountIn: BigNumber,
   liquidationPair: Contract,
@@ -253,55 +262,26 @@ const getLiquidationContracts = (
   return { liquidationPairs, liquidationRouter, marketRate, vaults };
 };
 
-// On testnet: Search testnet contract blob to get wETH contract then ask MarketRate contract
-// TODO: Coingecko/other on production for rates
-const getEthMarketRate = async (contracts: ContractsBlob, marketRate: Contract) => {
-  const wethContract = contracts.contracts.find(
-    (contract) =>
-      contract.tokens &&
-      contract.tokens.find((token) => token.extensions.underlyingAsset.symbol === "WETH")
-  );
-
-  const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
-  const wethRate = await marketRate.priceFeed(wethAddress, "USD");
-
-  return wethRate;
-};
-
-const getFeesUsd = async (
-  estimatedGasLimit: BigNumber,
-  ethMarketRateUsd: number,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
-): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
-  const baseFeeWei = (await provider.getFeeData()).lastBaseFeePerGas.mul(estimatedGasLimit);
-  const maxFeeWei = (await provider.getFeeData()).maxFeePerGas.mul(estimatedGasLimit);
-
-  const baseFeeUsd = parseFloat(ethers.utils.formatEther(baseFeeWei)) * ethMarketRateUsd;
-  const maxFeeUsd = parseFloat(ethers.utils.formatEther(maxFeeWei)) * ethMarketRateUsd;
-
-  const avgFeeUsd = (baseFeeUsd + maxFeeUsd) / 2;
-
-  return { baseFeeUsd, maxFeeUsd, avgFeeUsd };
-};
-
-const testnetParseFloat = (amountBigNum: BigNumber): number => {
-  return parseFloat(ethers.utils.formatUnits(amountBigNum, MARKET_RATE_CONTRACT_DECIMALS));
+const testnetParseFloat = (amountBigNum: BigNumber, decimals: string): number => {
+  return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
 };
 
 const getTokenInAssetRateUsd = async (
   liquidationPair: Contract,
-  marketRate: Contract
+  marketRate: Contract,
+  context: Context
 ): Promise<number> => {
   const tokenInAddress = await liquidationPair.tokenIn();
   const tokenInRate = await marketRate.priceFeed(tokenInAddress, "USD");
 
-  return testnetParseFloat(tokenInRate);
+  return testnetParseFloat(tokenInRate, context.tokenIn.decimals);
 };
 
 const getTokenOutAssetRateUsd = async (
   liquidationPair: Contract,
+  marketRate: Contract,
   vaults: Contract[],
-  marketRate: Contract
+  context: Context
 ): Promise<number> => {
   // yield token/vault
   const tokenOutAddress = await liquidationPair.tokenOut();
@@ -312,7 +292,7 @@ const getTokenOutAssetRateUsd = async (
   const tokenOutAssetAddress = tokenOutAsset[0];
   const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
 
-  return testnetParseFloat(tokenOutAssetRate);
+  return testnetParseFloat(tokenOutAssetRate, context.tokenOut.decimals);
 };
 
 // Gather information about this specific liquidation pair
@@ -405,13 +385,6 @@ const checkBalance = async (
   return { sufficientBalance, balanceResult };
 };
 
-const printAsterisks = () => {
-  printSpacer();
-  console.log(chalk.blue("******************"));
-};
-
-const printSpacer = () => console.log("");
-
 const calculateProfit = async (
   contracts: ContractsBlob,
   marketRate: Contract,
@@ -423,10 +396,8 @@ const calculateProfit = async (
   tokenInAssetRateUsd: number
 ): Promise<Boolean> => {
   const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
-  const ethMarketRate = await getEthMarketRate(contracts, marketRate);
-  const ethMarketRateUsd = parseFloat(
-    ethers.utils.formatUnits(ethMarketRate, MARKET_RATE_CONTRACT_DECIMALS)
-  );
+
+  const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
 
   const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
     ...Object.values(swapExactAmountInParams)
@@ -493,8 +464,7 @@ const calculateAmounts = async (
     context.tokenOut.symbol
   );
 
-  // TODO: Play with fraction (or remove it) ...
-  // ... likely needs to be based on how much the bot owner has of tokenIn
+  // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
   const divisor = 2;
   logStringValue("Divide max amount out by:", Math.round(divisor));
@@ -523,12 +493,17 @@ const calculateAmounts = async (
   console.log(chalk.blue.bold(`2. Market rates:`));
 
   // prize token/pool
-  const tokenInAssetRateUsd = await getTokenInAssetRateUsd(liquidationPair, marketRate);
+  const tokenInAssetRateUsd = await getTokenInAssetRateUsd(liquidationPair, marketRate, context);
 
   // yield token/vault
   // TODO: This will need to take into account the underlying asset instead and calculate
   // how much of that you can get for the amountOutMin of these shares
-  const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(liquidationPair, vaults, marketRate);
+  const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(
+    liquidationPair,
+    marketRate,
+    vaults,
+    context
+  );
 
   console.table({
     tokenIn: { symbol: context.tokenIn.symbol, "MarketRate USD": `$${tokenInAssetRateUsd}` },

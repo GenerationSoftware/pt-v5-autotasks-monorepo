@@ -13,3 +13,10 @@ export const logBigNumber = (title, bigNumber, decimals, symbol = null) => {
     `${formatted}${symbol !== null && ` ${symbol}`} (${bigNumber.toString()} wei)`
   );
 };
+
+export const printAsterisks = () => {
+  printSpacer();
+  console.log(chalk.blue("******************"));
+};
+
+export const printSpacer = () => console.log("");
