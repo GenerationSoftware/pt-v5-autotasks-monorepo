@@ -31,35 +31,49 @@ export async function handler(event) {
 
   const chainId = Number(process.env.CHAIN_ID);
 
-  // TODO: Add a secrets lookup fxn based on chainId:
   const relayerAddress = process.env.RELAYER_ADDRESS;
   const swapRecipient = process.env.SWAP_RECIPIENT;
 
   // const contracts = getContracts(chainId);
 
   try {
-    const transactionPopulated = await liquidatorHandleArbSwap(
+    await liquidatorHandleArbSwap(
       contracts,
       {
         chainId,
         provider: signer,
       },
+      relayer,
       relayerAddress,
       swapRecipient
     );
-
-    if (transactionPopulated) {
-      let transactionSentToNetwork = await relayer.sendTransaction({
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
-        gasLimit: 800000,
-      });
-      console.log(chalk.green("Transaction sent! ✓"));
-      console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
-    } else {
-      console.log(chalk.red("LiquidationPair: Transaction not populated"));
-    }
   } catch (error) {
     throw new Error(error);
   }
+
+  // try {
+  //   const transactionPopulated = await liquidatorHandleArbSwap(
+  //     contracts,
+  //     {
+  //       chainId,
+  //       provider: signer,
+  //     },
+  //     relayerAddress,
+  //     swapRecipient
+  //   );
+
+  //   if (transactionPopulated) {
+  //     let transactionSentToNetwork = await relayer.sendTransaction({
+  //       data: transactionPopulated.data,
+  //       to: transactionPopulated.to,
+  //       gasLimit: 800000,
+  //     });
+  //     console.log(chalk.greenBright.bold("Transaction sent! ✔"));
+  //     console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
+  //   } else {
+  //     console.log(chalk.red("LiquidationPair: Transaction not populated"));
+  //   }
+  // } catch (error) {
+  //   throw new Error(error);
+  // }
 }

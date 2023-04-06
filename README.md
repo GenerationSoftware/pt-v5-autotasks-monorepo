@@ -126,6 +126,4 @@ lerna run format
 
 ### Todo:
 
-Publish v5-pool-data then link each package back to that:
-
-- "@pooltogether/v5-pool-data": "0.0.1",
+- ArbLiquidator bot could likely benefit from multicall to speed it up
