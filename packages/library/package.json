@@ -31,7 +31,6 @@
     "ethers": "5.7.2",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
-    "ora": "^6.3.0",
     "yalc": "^1.0.0-pre.53"
   },
   "devDependencies": {}

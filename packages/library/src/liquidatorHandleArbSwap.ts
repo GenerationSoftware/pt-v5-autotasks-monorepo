@@ -4,7 +4,6 @@ import { PopulatedTransaction } from "@ethersproject/contracts";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import chalk from "chalk";
-import ora from "ora";
 
 import { ContractsBlob, ProviderOptions } from "./types";
 import {
@@ -68,9 +67,7 @@ export async function liquidatorHandleArbSwap(
     console.log("LiquidationPair #", i + 1);
     printSpacer();
 
-    const spinner = ora("Getting pair context...").start();
     const context: Context = await getContext(liquidationPair, contracts, provider);
-    spinner.stop();
 
     printContext(context);
     printAsterisks();
