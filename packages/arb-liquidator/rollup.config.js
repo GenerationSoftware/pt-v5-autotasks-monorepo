@@ -28,5 +28,5 @@ export default {
       SWAP_RECIPIENT,
     }),
   ],
-  external: [...builtins],
+  external: [...builtins, "ethers", "axios", "axios-retry"],
 };

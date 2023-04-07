@@ -26,5 +26,13 @@ export default {
       CHAIN_ID,
     }),
   ],
-  external: [...builtins],
+  external: [
+    ...builtins,
+    "ethers",
+    "axios",
+    "axios-retry",
+    /^defender-relay-client(\/.*)?$/,
+    "graphql",
+    "graphql-request",
+  ],
 };
