@@ -149,7 +149,8 @@ export async function liquidatorHandleArbSwap(
   // #7. Finally, populate tx when profitable
   try {
     let transactionPopulated: PopulatedTransaction | undefined;
-    console.log("LiquidationPair: Populating swap transaction ...");
+    console.log(chalk.blue("6. Populating swap transaction ..."));
+    printSpacer();
 
     transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
       ...Object.values(swapExactAmountInParams)
@@ -348,7 +349,7 @@ const checkBalance = async (
   exactAmountIn: BigNumber
 ): Promise<{ sufficientBalance: boolean; balanceResult: BigNumber }> => {
   printAsterisks();
-  console.log(chalk.blue.bold("3. Balance & Allowance"));
+  console.log(chalk.blue.bold("5. Balance & Allowance"));
   console.log("Checking 'tokenIn' relayer balance ...");
 
   const tokenInAddress = await liquidationPair.tokenIn();
@@ -382,6 +383,8 @@ const calculateProfit = async (
 
   const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
 
+  printAsterisks();
+  console.log(chalk.blue("3. Current gas costs for transaction:"));
   const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
     ...Object.values(swapExactAmountInParams)
   );
@@ -390,13 +393,13 @@ const calculateProfit = async (
     ethMarketRateUsd,
     provider
   );
+  printSpacer();
+  logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
 
-  printAsterisks();
-  console.log(chalk.blue("4. Current gas costs for transaction:"));
   console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   printAsterisks();
-  console.log(chalk.blue.bold("5. Profit/Loss (USD):"));
+  console.log(chalk.blue.bold("4. Profit/Loss (USD):"));
   printSpacer();
 
   const tokenOutUsd =
