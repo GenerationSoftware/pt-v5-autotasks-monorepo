@@ -60,125 +60,110 @@ export async function liquidatorHandleArbSwap(
   );
 
   // Loop through all liquidation pairs
-  for (let i = 0; i < liquidationPairs.length; i++) {
-    const liquidationPair = liquidationPairs[i];
+  const liquidationPair = liquidationPairs[5];
+  // for (let i = 0; i < liquidationPairs.length; i++) {
+  // const liquidationPair = liquidationPairs[i];
 
-    printAsterisks();
-    console.log("LiquidationPair #", i + 1);
-    printSpacer();
+  printAsterisks();
+  console.log("LiquidationPair #5");
+  // console.log("LiquidationPair #", i + 1);
+  printSpacer();
 
-    const context: Context = await getContext(liquidationPair, contracts, provider);
+  const context: Context = await getContext(liquidationPair, contracts, provider);
 
-    printContext(context);
-    printAsterisks();
+  printContext(context);
+  printAsterisks();
 
-    // #2. Calculate amounts
-    //
-    console.log(chalk.blue.bold(`1. Amounts:`));
+  // #2. Calculate amounts
+  //
+  console.log(chalk.blue.bold(`1. Amounts:`));
 
-    const { exactAmountIn, amountOutMin, tokenInAssetRateUsd, tokenOutAssetRateUsd } =
-      await calculateAmounts(liquidationPair, marketRate, vaults, context);
+  const { exactAmountIn, amountOutMin, tokenInAssetRateUsd, tokenOutAssetRateUsd } =
+    await calculateAmounts(liquidationPair, marketRate, vaults, context);
 
-    // #3. Test tx to get estimated return of tokenOut
-    //
-    const swapExactAmountInParams: SwapExactAmountInParams = {
-      liquidationPairAddress: liquidationPair.address,
-      swapRecipient,
-      exactAmountIn,
-      amountOutMin,
-    };
-    const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
-      ...Object.values(swapExactAmountInParams)
+  // #3. Test tx to get estimated return of tokenOut
+  //
+  const swapExactAmountInParams: SwapExactAmountInParams = {
+    liquidationPairAddress: liquidationPair.address,
+    swapRecipient,
+    exactAmountIn,
+    amountOutMin,
+  };
+  const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
+    ...Object.values(swapExactAmountInParams)
+  );
+  logBigNumber(
+    `Estimated amount of tokenOut to receive:`,
+    amountOutEstimate,
+    context.tokenOut.decimals,
+    context.tokenOut.symbol
+  );
+
+  // #4. Decide if profitable or not
+  //
+  const profitable = await calculateProfit(
+    contracts,
+    marketRate,
+    liquidationRouter,
+    swapExactAmountInParams,
+    provider,
+    context,
+    tokenOutAssetRateUsd,
+    tokenInAssetRateUsd
+  );
+  if (!profitable) {
+    console.log(
+      chalk.red(
+        `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`
+      )
     );
-    logBigNumber(
-      `Estimated amount of tokenOut to receive:`,
-      amountOutEstimate,
-      context.tokenOut.decimals,
-      context.tokenOut.symbol
-    );
-
-    // #4. Decide if profitable or not
-    //
-    const profitable = await calculateProfit(
-      contracts,
-      marketRate,
-      liquidationRouter,
-      swapExactAmountInParams,
-      provider,
-      context,
-      tokenOutAssetRateUsd,
-      tokenInAssetRateUsd
-    );
-    if (!profitable) {
-      console.log(
-        chalk.red(
-          `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`
-        )
-      );
-      continue;
-    }
-
-    // #5. Print balance of tokenIn for relayer
-    //
-    const { sufficientBalance, balanceResult } = await checkBalance(
-      context,
-      liquidationPair,
-      provider,
-      relayerAddress,
-      exactAmountIn
-    );
-
-    if (sufficientBalance) {
-      console.log(chalk.green("Sufficient balance ✔"));
-    } else {
-      console.log(chalk.red("Insufficient balance ✔"));
-
-      const diff = exactAmountIn.sub(balanceResult);
-      console.log(chalk.grey(`Increase balance by: ${diff}`));
-
-      continue;
-    }
-
-    // #6. Get allowance approval
-    //
-    await approve(exactAmountIn, liquidationPair, liquidationRouter, provider, relayerAddress);
-
-    // #7. Finally, populate tx when profitable
-    let transactionPopulated: PopulatedTransaction | undefined;
-    console.log("LiquidationPair: Populating swap transaction ...");
-
-    transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
-      ...Object.values(swapExactAmountInParams)
-    );
-
-    try {
-      // const transactionPopulated = await liquidatorHandleArbSwap(
-      //   contracts,
-      //   {
-      //     chainId,
-      //     provider: signer,
-      //   },
-      //   relayerAddress,
-      //   swapRecipient
-      // );
-
-      // if (transactionPopulated) {
-      let transactionSentToNetwork = await relayer.sendTransaction({
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
-        gasLimit: 800000,
-      });
-      console.log(chalk.greenBright.bold("Transaction sent! ✔"));
-      console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
-      // } else {
-      // console.log(chalk.red("LiquidationPair: Transaction not populated"));
-      // }
-    } catch (error) {
-      throw new Error(error);
-    }
+    // continue;
   }
 
-  // return transactionPopulated;
+  // #5. Print balance of tokenIn for relayer
+  //
+  const { sufficientBalance, balanceResult } = await checkBalance(
+    context,
+    liquidationPair,
+    provider,
+    relayerAddress,
+    exactAmountIn
+  );
+
+  if (sufficientBalance) {
+    console.log(chalk.green("Sufficient balance ✔"));
+  } else {
+    console.log(chalk.red("Insufficient balance ✔"));
+
+    const diff = exactAmountIn.sub(balanceResult);
+    console.log(chalk.grey(`Increase balance by: ${diff}`));
+
+    // continue;
+  }
+
+  // #6. Get allowance approval
+  //
+  await approve(exactAmountIn, liquidationPair, liquidationRouter, provider, relayerAddress);
+
+  // #7. Finally, populate tx when profitable
+  let transactionPopulated: PopulatedTransaction | undefined;
+  console.log("LiquidationPair: Populating swap transaction ...");
+
+  transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
+    ...Object.values(swapExactAmountInParams)
+  );
+
+  try {
+    let transactionSentToNetwork = await relayer.sendTransaction({
+      data: transactionPopulated.data,
+      to: transactionPopulated.to,
+      gasLimit: 800000,
+    });
+    console.log(chalk.greenBright.bold("Transaction sent! ✔"));
+    console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
+  } catch (error) {
+    throw new Error(error);
+  }
 }
 
 // Allowance
@@ -463,7 +448,7 @@ const calculateAmounts = async (
 
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
-  const divisor = 2;
+  const divisor = 1;
   logStringValue("Divide max amount out by:", Math.round(divisor));
 
   const wantedAmountOut = maxAmountOut.div(divisor);

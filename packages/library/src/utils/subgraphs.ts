@@ -26,24 +26,22 @@ export const getTwabControllerSubgraphClient = (chainId) => {
 export const getAccounts = async (
   client: GraphQLClient
 ): Promise<{
-  winners: any;
+  vaultsResponse: any;
 }> => {
-  const query = accountsQuery();
+  const query = vaultsQuery();
   // const variables = { id: address.toLowerCase() };
 
-  const accountsResponse = await client.request(query).catch((e) => {
+  const vaultsResponse: any = await client.request(query).catch((e) => {
     console.error(e.message);
     throw e;
   });
-  console.log(accountsResponse);
-  // const accountsResponse = await client.request(query, variables).catch((e) => {
-  //   console.error(e.message);
-  //   throw e;
-  // });
+  console.log(vaultsResponse.vaults[0]);
 
-  // const { accounts } = accountsResponse || {};
-  // const { account } = account || {};
-  const winners = accountsResponse;
+  const { vaults } = vaultsResponse || {};
+
+  vaults?.map((vault) => {
+    console.log(vault.id);
+  });
 
   // draws?.map((draw) => {
   //   claimedAmountsKeyedByDrawId[draw.id.split("-")[1]] = roundPrizeAmount(
@@ -53,15 +51,19 @@ export const getAccounts = async (
   // });
 
   return {
-    winners,
+    vaultsResponse,
+    // winners,
   };
 };
 
-const accountsQuery = () => {
+const vaultsQuery = () => {
   return gql`
-    query accountsQuery() {
-      accounts() {
+    {
+      vaults {
         id
+        accounts {
+          id
+        }
       }
     }
   `;
