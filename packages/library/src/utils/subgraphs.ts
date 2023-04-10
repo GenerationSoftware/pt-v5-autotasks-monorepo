@@ -52,7 +52,6 @@ export const getAccounts = async (
 
   return {
     vaultsResponse,
-    // winners,
   };
 };
 

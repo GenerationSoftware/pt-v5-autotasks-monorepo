@@ -60,13 +60,13 @@ export async function liquidatorHandleArbSwap(
   );
 
   // Loop through all liquidation pairs
-  const liquidationPair = liquidationPairs[5];
+  const i = 5;
+  const liquidationPair = liquidationPairs[i];
   // for (let i = 0; i < liquidationPairs.length; i++) {
   // const liquidationPair = liquidationPairs[i];
 
   printAsterisks();
-  console.log("LiquidationPair #5");
-  // console.log("LiquidationPair #", i + 1);
+  console.log(`LiquidationPair #${i + 1}`);
   printSpacer();
 
   const context: Context = await getContext(liquidationPair, contracts, provider);
@@ -118,6 +118,7 @@ export async function liquidatorHandleArbSwap(
       )
     );
     // continue;
+    throw new Error();
   }
 
   // #5. Print balance of tokenIn for relayer
@@ -146,18 +147,18 @@ export async function liquidatorHandleArbSwap(
   await approve(exactAmountIn, liquidationPair, liquidationRouter, provider, relayerAddress);
 
   // #7. Finally, populate tx when profitable
-  let transactionPopulated: PopulatedTransaction | undefined;
-  console.log("LiquidationPair: Populating swap transaction ...");
-
-  transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
-    ...Object.values(swapExactAmountInParams)
-  );
-
   try {
+    let transactionPopulated: PopulatedTransaction | undefined;
+    console.log("LiquidationPair: Populating swap transaction ...");
+
+    transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
+      ...Object.values(swapExactAmountInParams)
+    );
+
     let transactionSentToNetwork = await relayer.sendTransaction({
       data: transactionPopulated.data,
       to: transactionPopulated.to,
-      gasLimit: 800000,
+      gasLimit: 450000,
     });
     console.log(chalk.greenBright.bold("Transaction sent! ✔"));
     console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
@@ -449,8 +450,9 @@ const calculateAmounts = async (
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
   const divisor = 1;
-  logStringValue("Divide max amount out by:", Math.round(divisor));
-
+  if (divisor !== 1) {
+    logStringValue("Divide max amount out by:", Math.round(divisor));
+  }
   const wantedAmountOut = maxAmountOut.div(divisor);
   logBigNumber(
     "Wanted amount out:",
