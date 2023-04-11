@@ -7,3 +7,4 @@ export RELAYER_API_KEY=
 export RELAYER_API_SECRET=
 
 export FEE_RECIPIENT=
+export INFURA_API_KEY=

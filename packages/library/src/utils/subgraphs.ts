@@ -1,5 +1,7 @@
 import { gql, GraphQLClient } from "graphql-request";
 
+import { Vault } from "../types";
+
 const CHAIN_ID = {
   goerli: 5,
 };
@@ -23,35 +25,19 @@ export const getTwabControllerSubgraphClient = (chainId) => {
   });
 };
 
-export const getAccounts = async (
-  client: GraphQLClient
-): Promise<{
-  vaultsResponse: any;
-}> => {
+export const getVaults = async (client: GraphQLClient): Promise<{ vaults: Vault[] }> => {
   const query = vaultsQuery();
-  // const variables = { id: address.toLowerCase() };
 
   const vaultsResponse: any = await client.request(query).catch((e) => {
     console.error(e.message);
     throw e;
   });
-  console.log(vaultsResponse.vaults[0]);
 
-  const { vaults } = vaultsResponse || {};
-
-  vaults?.map((vault) => {
-    console.log(vault.id);
-  });
-
-  // draws?.map((draw) => {
-  //   claimedAmountsKeyedByDrawId[draw.id.split("-")[1]] = roundPrizeAmount(
-  //     BigNumber.from(draw.claimed),
-  //     ticket.decimals
-  //   );
-  // });
+  // const { vaults } = vaultsResponse || {};
+  const vaults = vaultsResponse?.vaults;
 
   return {
-    vaultsResponse,
+    vaults,
   };
 };
 

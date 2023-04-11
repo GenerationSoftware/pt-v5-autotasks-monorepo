@@ -116,3 +116,12 @@ export interface PrizeTier {
   prize: BigNumber;
   tiers: Array<number>;
 }
+
+export interface Vault {
+  id: string;
+  accounts: VaultAccount[];
+}
+
+export interface VaultAccount {
+  id: string;
+}
