@@ -125,3 +125,10 @@ export interface Vault {
 export interface VaultAccount {
   id: string;
 }
+
+export interface VaultWinners {
+  [vault: string]: {
+    tiers: number[];
+    winners: string[];
+  };
+}

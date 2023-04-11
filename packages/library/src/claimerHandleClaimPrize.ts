@@ -4,7 +4,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import chalk from "chalk";
 
-import { ContractsBlob, ProviderOptions, Vault, VaultAccount } from "./types";
+import { ContractsBlob, ProviderOptions, Vault, VaultAccount, VaultWinners } from "./types";
 import {
   logStringValue,
   logBigNumber,
@@ -20,17 +20,11 @@ import {
 } from "./utils";
 
 interface ClaimPrizesParams {
-  vaultAddress: string;
+  vault: string;
   winners: string[];
   tiers: number[];
   minFees: BigNumber;
   feeRecipient: string;
-}
-
-interface Winner {
-  vault: string;
-  user: string;
-  tier: number;
 }
 
 export async function claimerHandleClaimPrize(
@@ -65,72 +59,69 @@ export async function claimerHandleClaimPrize(
 
   let transactionsPopulated: PopulatedTransaction[] | undefined = [];
 
-  // Execute batched calls
   const infuraProvider = new ethers.providers.InfuraProvider("goerli", process.env.INFURA_API_KEY);
-  const vaultWinners: string[] = await getWinners(infuraProvider, contracts, vaults, tiersArray);
-  console.log({ vaultWinners });
+  const vaultWinners: VaultWinners = await getWinners(
+    infuraProvider,
+    contracts,
+    vaults,
+    tiersArray
+  );
 
-  Object.keys(vaultWinners).forEach((vault) => {
-    console.log(vault);
-  });
+  // TODO: Don't attempt to run tx unless we know for sure it will succeed
+  //
+  // TODO: Is profitable?
+  //
+  const vaultWinnerKeys = Object.keys(vaultWinners);
 
-  // for (let i = 0; i < vaults.length; i++) {
-  //   console.log(`Vault #${i + 1}`);
-  //   const vault: Vault = vaults[i];
-  //   const accounts = vault.accounts;
-  //   console.log(`${accounts.length + 1} accounts`);
-  //   console.log("");
+  for (let i = 0; i < vaultWinnerKeys.length; i++) {
+    const key = vaultWinnerKeys[i];
 
-  //   console.log("Determining winners:");
-  //   for (let x = 0; x < accounts.length; x++) {
-  //     const account: VaultAccount = accounts[x];
-  //     // console.log(`VaultAccount #${x + 1}`);
-  //     const address = account.id.split("-")[1];
-  //     // console.log(address);
+    console.log(chalk.blue(`Process vault '${key}'`));
 
-  //     for (let y = 0; y < tiersArray.length; y++) {
-  //       const tier = tiersArray[y];
-  //       // const isWinner = await prizePool.isWinner(vault.id, address, tier);
-  //       process.stdout.write(".");
-  //       console.log(tier);
-  //       console.log(address);
-  //       batchCalls.push(etherplexPrizePoolContract.isWinner(vault.id, address, tier));
+    const vault = vaultWinners[key];
+    const winners = vault.winners;
+    const tiers = vault.tiers;
 
-  //       // if (isWinner) {
-  //       //   console.log(isWinner);
-  //       //   const winner = {
-  //       //     vault: vault.id,
-  //       //     user: address,
-  //       //     tier,
-  //       //   };
-  //       //   winners.push(winner);
-  //       // }
-  //     }
-  //   }
+    const numWinners = winners.length;
+    console.log({ numWinners });
 
-  //   // const winners = [];
-  //   // const tiers = [];
-  // }
+    let minFees: BigNumber = BigNumber.from(0);
+    // try {
+    //   minFees = await claimer.callStatic.estimateFees(numWinners);
+    //   console.log("minFees");
+    //   console.log(minFees);
+    //   console.log(minFees.toString());
+    // } catch (e) {
+    //   console.error(chalk.red(e));
+    // }
 
-  // console.log(batchCalls);
-  // values = await batch(infuraProvider, ...batchCalls);
-  // console.log(values);
-  // console.log(batchCalls.length);
+    const claimPrizesParams: ClaimPrizesParams = {
+      vault: key,
+      winners,
+      tiers,
+      minFees,
+      feeRecipient,
+    };
+    // console.log(claimPrizesParams);
 
-  // const minFees = BigNumber.from(0);
-  // // TODO: Iterate based on tier
-  // for (let p = 0; p < winners.length; p++) {
-  //   const winner = winners[p];
-  //   console.log(winner);
-  //   const vault = winner.vault;
+    const feeData = await provider.getFeeData();
+    console.table(feeData);
 
-  //   const claimPrizesParams: ClaimPrizesParams = {
-  //     vaultAddress: vault,
-  //     winners: winners.map((winner) => winner.user),
-  //     tiers: winners.map((winner) => winner.tier),
-  //     minFees,
-  //     feeRecipient,
-  //   };
+    const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+    console.log(ethMarketRateUsd);
+
+    let estimatedGasLimit;
+    try {
+      estimatedGasLimit = await claimer.estimateGas.claimPrizes(
+        ...Object.values(claimPrizesParams)
+      );
+      console.log("estimatedGasLimit ? ", estimatedGasLimit);
+    } catch (e) {
+      console.log(chalk.red(e));
+    }
+
+    console.log(estimatedGasLimit);
+  }
 
   //   // const feeData = await provider.getFeeData();
   //   // console.table(feeData);

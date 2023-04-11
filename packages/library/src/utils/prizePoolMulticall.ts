@@ -1,20 +1,8 @@
-import { BigNumber, providers } from "ethers";
+import { providers } from "ethers";
 import { ContractCallContext } from "ethereum-multicall";
 
-import { ContractsBlob, Vault } from "../types";
+import { ContractsBlob, Vault, VaultWinners } from "../types";
 import { getComplexMulticallResults } from "../utils";
-
-// TODO: Have this take into account the contractsVersion from getContract()?
-// export const getPrizePoolEtherplexContract = (contracts) => {
-//   const prizePoolContractBlob = contracts.contracts.find(
-//     (contract) => contract.type === "PrizePool"
-//   );
-
-//   const prizePoolAddress = prizePoolContractBlob.address;
-//   const abi = prizePoolContractBlob.abi;
-
-//   return contract(prizePoolAddress, abi, prizePoolAddress);
-// };
 
 /**
  * Returns winners sorted by vault and tier
@@ -30,14 +18,13 @@ export const getWinners = async (
   contracts: ContractsBlob,
   vaults: Vault[],
   tiersArray: number[]
-): Promise<string[]> => {
-  const winners: string[] = [];
+): Promise<VaultWinners> => {
+  const vaultWinners: VaultWinners = {};
 
   const prizePoolContractBlob = contracts.contracts.find(
     (contract) => contract.type === "PrizePool"
   );
 
-  // const queries: ContractCallContext[] = [];
   const calls: ContractCallContext["calls"] = [];
 
   vaults.forEach((vault) => {
@@ -66,43 +53,25 @@ export const getWinners = async (
   ];
 
   const multicallResults = await getComplexMulticallResults(readProvider, queries);
-  console.log("multicallResults");
-  console.log(multicallResults);
 
-  console.log("filter");
   Object.entries(multicallResults[prizePoolAddress]).forEach((vaultUserTierResult) => {
     const key = vaultUserTierResult[0];
     const value = vaultUserTierResult[1];
+
+    const [vault, winner, tier] = key.split("-");
+
     if (value[0]) {
-      winners.push(key);
+      if (!vaultWinners[vault]) {
+        vaultWinners[vault] = {
+          tiers: [Number(tier)],
+          winners: [winner],
+        };
+      } else {
+        vaultWinners[vault].tiers.push(Number(tier));
+        vaultWinners[vault].winners.push(winner);
+      }
     }
   });
 
-  // const winners = Object.entries(multicallResults[prizePoolAddress]).map((index, entry) => {
-  //   const key = entry[0];
-  //   const value = entry[1];
-  //   console.log(index);
-  //   console.log(entry);
-  //   if (!!value[0]) {
-  //     return key;
-  //   }
-  // });
-  // const winners = Object.entries(multicallResults[prizePoolAddress]).filter(
-  //   (key, vaultAccountTier) => {
-  //     return vaultAccountTier[0] === true;
-  //   }
-  // );
-  console.log("winners");
-  console.log(winners);
-
-  // filteredVaults.forEach((vault) => {
-  //   const exchangeRate: string | undefined =
-  //     multicallResults[vault.address]["convertToAssets"]?.[0];
-  //   if (!!exchangeRate) {
-  //     const vaultId = getVaultId(vault);
-  //     vaultExchangeRates[vaultId] = BigNumber.from(exchangeRate);
-  //   }
-  // });
-
-  return winners;
+  return vaultWinners;
 };
