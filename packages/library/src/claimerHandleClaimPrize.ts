@@ -91,14 +91,14 @@ export async function claimerHandleClaimPrize(
   console.log({ numWinners });
 
   let minFees: BigNumber = BigNumber.from(0);
-  // try {
-  //   minFees = await claimer.callStatic.estimateFees(numWinners);
-  //   console.log("minFees");
-  //   console.log(minFees);
-  //   console.log(minFees.toString());
-  // } catch (e) {
-  //   console.error(chalk.red(e));
-  // }
+  try {
+    minFees = await claimer.callStatic.estimateFees(numWinners);
+    console.log("minFees");
+    console.log(minFees);
+    console.log(minFees.toString());
+  } catch (e) {
+    console.error(chalk.red(e));
+  }
 
   const claimPrizesParams: ClaimPrizesParams = {
     vault: key,
@@ -113,67 +113,44 @@ export async function claimerHandleClaimPrize(
   console.table(feeData);
 
   const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+  console.log("ethMarketRateUsd");
   console.log(ethMarketRateUsd);
+  console.log(ethMarketRateUsd.toString());
 
   let estimatedGasLimit;
   try {
     estimatedGasLimit = await claimer.estimateGas.claimPrizes(...Object.values(claimPrizesParams));
     console.log("estimatedGasLimit ? ", estimatedGasLimit);
+    console.log(estimatedGasLimit.toString());
   } catch (e) {
     console.log(chalk.red(e));
   }
 
-  console.log(estimatedGasLimit);
   // }
 
-  //   // const feeData = await provider.getFeeData();
-  //   // console.table(feeData);
+  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+    estimatedGasLimit,
+    ethMarketRateUsd,
+    provider
+  );
 
-  //   const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+  printAsterisks();
+  console.log(chalk.blue("2. Current gas costs for transaction:"));
+  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
-  //   let estimatedGasLimit;
-  //   try {
-  //     estimatedGasLimit = await claimer.estimateGas.claimPrizes(
-  //       ...Object.values(claimPrizesParams)
-  //     );
-  //     console.log("estimatedGasLimit ? ", estimatedGasLimit);
-  //   } catch (e) {
-  //     console.table(e);
-  //     console.log(chalk.red(e));
-  //   }
-  //   console.log(estimatedGasLimit);
-  //   console.log(ethMarketRateUsd);
+  const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
+  console.log("earnedFees ? ", earnedFees);
+  console.log("earnedFees ? ", earnedFees.toString());
 
-  //   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
-  //     estimatedGasLimit,
-  //     ethMarketRateUsd,
-  //     provider
-  //   );
+  const profitable = true;
 
-  //   printAsterisks();
-  //   console.log(chalk.blue("2. Current gas costs for transaction:"));
-  //   console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
-
-  //   const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
-  //   console.log("earnedFees ? ", earnedFees);
-
-  //   const prizesToClaim = 0;
-
-  //   if (prizesToClaim > 0) {
-  //     console.log("Claimer: Start Claim Prizes");
-  //     // transactionsPopulated.push(
-  //     //   await claimer.populateTransaction.claimPrizes(
-  //     //     vault.id,
-  //     //     winners,
-  //     //     tiers,
-  //     //     minFees,
-  //     //     feeRecipient
-  //     //   )
-  //     // );
-  //   } else {
-  //     console.log(`Claimer: No Prizes found to claim for Vault: ${vault}.`);
-  //   }
-  // }
+  if (profitable) {
+    console.log(chalk.yellow("Claimer: Add Populated Claim Tx"));
+    const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
+    transactionsPopulated.push(tx);
+  } else {
+    console.log(`Claimer: No Prizes found to claim for Vault: ${vault}.`);
+  }
 
   return transactionsPopulated;
 }
