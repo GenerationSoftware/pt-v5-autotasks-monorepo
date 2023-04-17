@@ -62,8 +62,7 @@ export async function liquidatorHandleArbSwap(
   // Loop through all liquidation pairs
   const i = 5;
   const liquidationPair = liquidationPairs[i];
-  // for (let i = 0; i < liquidationPairs.length; i++) {
-  // const liquidationPair = liquidationPairs[i];
+  // for (const liquidationPair of liquidationPairs) {
 
   printAsterisks();
   console.log(`LiquidationPair #${i + 1}`);

@@ -12,9 +12,7 @@ export async function yieldVaultHandleMintRate(
   const yieldVaults = getContracts("YieldVault", chainId, provider, contracts);
 
   let transactionsPopulated: PopulatedTransaction[] | undefined = [];
-  for (let i = 0; i < yieldVaults.length; i++) {
-    const yieldVault = yieldVaults[i];
-
+  for (const yieldVault of yieldVaults) {
     if (!yieldVault) {
       throw new Error("YieldVault: Contract Unavailable");
     }

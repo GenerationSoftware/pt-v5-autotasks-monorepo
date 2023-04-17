@@ -32,8 +32,8 @@ export function getContracts(
     .filter((contract) => JSON.stringify(contract.version) === JSON.stringify(version));
 
   let contractsArray: ethers.Contract[] = [];
-  for (let i = 0; i < contracts.length; i++) {
-    const contract = contracts[i];
+
+  for (const contract of contracts) {
     if (contract) {
       contractsArray.push(new ethers.Contract(contract.address, contract.abi, providerOrSigner));
     }

@@ -33,8 +33,7 @@ export async function handler(event: RelayerParams) {
   });
 
   if (transactionsPopulated.length > 0) {
-    for (let i = 0; i < transactionsPopulated.length; i++) {
-      const transactionPopulated = transactionsPopulated[i];
+    for (const transactionPopulated of transactionsPopulated) {
       try {
         let transactionSentToNetwork = await relayer.sendTransaction({
           data: transactionPopulated.data,

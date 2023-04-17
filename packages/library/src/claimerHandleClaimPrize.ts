@@ -48,6 +48,7 @@ export async function claimerHandleClaimPrize(
     throw new Error("Claimer: Contract Unavailable");
   }
 
+  console.log(chalk.blue(`Subgraph: Getting data ...`));
   const client = getTwabControllerSubgraphClient(chainId);
   const { vaults } = await getVaults(client);
   if (vaults.length === 0) {
@@ -59,6 +60,7 @@ export async function claimerHandleClaimPrize(
 
   let transactionsPopulated: PopulatedTransaction[] | undefined = [];
 
+  console.log(chalk.blue(`Multicall: Getting vault winners ...`));
   const infuraProvider = new ethers.providers.InfuraProvider("goerli", process.env.INFURA_API_KEY);
   const vaultWinners: VaultWinners = await getWinners(
     infuraProvider,
@@ -69,59 +71,60 @@ export async function claimerHandleClaimPrize(
 
   // TODO: Don't attempt to run tx unless we know for sure it will succeed
   //
+  // TODO: Make sure user has balance before adding them to the multicall
+  //
   // TODO: Is profitable?
   //
   const vaultWinnerKeys = Object.keys(vaultWinners);
 
-  for (let i = 0; i < vaultWinnerKeys.length; i++) {
-    const key = vaultWinnerKeys[i];
+  const key = vaultWinnerKeys[0];
+  // TODO: reinstate:
+  // for (const key of vaultWinnerKeys) {
 
-    console.log(chalk.blue(`Process vault '${key}'`));
+  console.log(chalk.blue(`Processing vault: '${key}'`));
 
-    const vault = vaultWinners[key];
-    const winners = vault.winners;
-    const tiers = vault.tiers;
+  const vault = vaultWinners[key];
+  const winners = vault.winners;
+  const tiers = vault.tiers;
 
-    const numWinners = winners.length;
-    console.log({ numWinners });
+  const numWinners = winners.length;
+  console.log({ numWinners });
 
-    let minFees: BigNumber = BigNumber.from(0);
-    // try {
-    //   minFees = await claimer.callStatic.estimateFees(numWinners);
-    //   console.log("minFees");
-    //   console.log(minFees);
-    //   console.log(minFees.toString());
-    // } catch (e) {
-    //   console.error(chalk.red(e));
-    // }
+  let minFees: BigNumber = BigNumber.from(0);
+  // try {
+  //   minFees = await claimer.callStatic.estimateFees(numWinners);
+  //   console.log("minFees");
+  //   console.log(minFees);
+  //   console.log(minFees.toString());
+  // } catch (e) {
+  //   console.error(chalk.red(e));
+  // }
 
-    const claimPrizesParams: ClaimPrizesParams = {
-      vault: key,
-      winners,
-      tiers,
-      minFees,
-      feeRecipient,
-    };
-    // console.log(claimPrizesParams);
+  const claimPrizesParams: ClaimPrizesParams = {
+    vault: key,
+    winners,
+    tiers,
+    minFees,
+    feeRecipient,
+  };
+  console.log(claimPrizesParams);
 
-    const feeData = await provider.getFeeData();
-    console.table(feeData);
+  const feeData = await provider.getFeeData();
+  console.table(feeData);
 
-    const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
-    console.log(ethMarketRateUsd);
+  const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+  console.log(ethMarketRateUsd);
 
-    let estimatedGasLimit;
-    try {
-      estimatedGasLimit = await claimer.estimateGas.claimPrizes(
-        ...Object.values(claimPrizesParams)
-      );
-      console.log("estimatedGasLimit ? ", estimatedGasLimit);
-    } catch (e) {
-      console.log(chalk.red(e));
-    }
-
-    console.log(estimatedGasLimit);
+  let estimatedGasLimit;
+  try {
+    estimatedGasLimit = await claimer.estimateGas.claimPrizes(...Object.values(claimPrizesParams));
+    console.log("estimatedGasLimit ? ", estimatedGasLimit);
+  } catch (e) {
+    console.log(chalk.red(e));
   }
+
+  console.log(estimatedGasLimit);
+  // }
 
   //   // const feeData = await provider.getFeeData();
   //   // console.table(feeData);
