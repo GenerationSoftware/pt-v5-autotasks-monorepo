@@ -16,6 +16,7 @@ import {
   getSubgraphVaults,
   getWinners,
 } from "./utils";
+import { ERC20Abi } from "./abis/ERC20Abi";
 
 interface ClaimPrizesParams {
   vault: string;
@@ -24,6 +25,19 @@ interface ClaimPrizesParams {
   minFees: BigNumber;
   feeRecipient: string;
 }
+
+// TODO: This must be defined somewhere else ...
+type Token = {
+  name: string;
+  decimals: string;
+  address: string;
+  symbol: string;
+};
+
+// TODO: Rename to ClaimPrizeContext, put in types, rename LiqArb one as well
+type ClaimPrizeContext = {
+  feeToken: Token;
+};
 
 const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
 
@@ -47,24 +61,30 @@ export async function claimerHandleClaimPrize(
     throw new Error("Claimer: Contract Unavailable");
   }
 
-  // #1. Get data about all user's with balances from the subgraph
+  // #1. Get context about the prize pool prize token, etc
+  const context: ClaimPrizeContext = await getContext(prizePool, provider);
+  printContext(context);
+
+  const { feeTokenRateUsd } = await getFeeTokenRateUsd(marketRate, context);
+
+  // #2. Get data about all user's with balances from the subgraph
   const vaults = await getVaults(chainId);
   if (vaults.length === 0) {
     throw new Error("Claimer: No vaults found in subgraph");
   }
 
-  // #2. Get more data about which users are winners from the contract
+  // #3. Get more data about which users are winners from the contract
   const vaultWinners: VaultWinners = await getVaultWinners(contracts, prizePool, vaults);
 
-  // #3. Start iterating through vaults
+  // #4. Start iterating through vaults
   printAsterisks();
-  console.log(chalk.blue(`3. Processing vaults ...`));
+  console.log(chalk.blue(`4. Processing vaults ...`));
   let transactionsPopulated: PopulatedTransaction[] | undefined = [];
-  for (const key of Object.keys(vaultWinners)) {
-    printSpacer();
-    console.log(chalk.green(`Vault: '${key}'`));
+  for (const vaultAddress of Object.keys(vaultWinners)) {
+    printAsterisks();
+    console.log(chalk.green(`Vault: '${vaultAddress}'`));
 
-    const vault = vaultWinners[key];
+    const vault = vaultWinners[vaultAddress];
     const winners = vault.winners;
     const tiers = vault.tiers;
     const numWinners = winners.length;
@@ -74,25 +94,26 @@ export async function claimerHandleClaimPrize(
     const minFees = await getMinFees(claimer, numWinners);
     if (!minFees || minFees.eq(0)) {
       console.error(chalk.yellow("Fees are 0 ..."));
-      continue;
+      // continue;
     }
 
     const claimPrizesParams: ClaimPrizesParams = {
-      vault: key,
+      vault: vaultAddress,
       winners,
       tiers,
       minFees,
       feeRecipient,
     };
 
-    // #4. Decide if profitable or not
-    //
+    // #5. Decide if profitable or not
     const profitable = await calculateProfit(
       contracts,
       marketRate,
       claimer,
       claimPrizesParams,
-      provider
+      provider,
+      context,
+      feeTokenRateUsd
     );
     if (profitable) {
       console.log(chalk.green("Claimer: Add Populated Claim Tx"));
@@ -100,7 +121,7 @@ export async function claimerHandleClaimPrize(
       const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
       transactionsPopulated.push(tx);
     } else {
-      console.log(chalk.yellow(`Claimer: Not profitable to claim for Vault: '${vault}'`));
+      console.log(chalk.yellow(`Claimer: Not profitable to claim for Vault: '${vaultAddress}'`));
     }
   }
 
@@ -127,8 +148,6 @@ const getEstimatedGasLimit = async (
   let estimatedGasLimit;
   try {
     estimatedGasLimit = await claimer.estimateGas.claimPrizes(...Object.values(claimPrizesParams));
-    console.log("estimatedGasLimit ? ", estimatedGasLimit);
-    logStringValue("estimatedGasLimit:", estimatedGasLimit.toString());
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -138,7 +157,7 @@ const getEstimatedGasLimit = async (
 
 const getVaults = async (chainId: number) => {
   printAsterisks();
-  console.log(chalk.blue(`1. Subgraph: Getting data ...`));
+  console.log(chalk.blue(`2. Subgraph: Getting data ...`));
   return await getSubgraphVaults(chainId);
 };
 
@@ -148,7 +167,7 @@ const getVaultWinners = async (
   vaults: Vault[]
 ): Promise<VaultWinners> => {
   printAsterisks();
-  console.log(chalk.blue(`2. Multicall: Getting vault winners ...`));
+  console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
   const numberOfTiers = await prizePool.numberOfTiers();
   const tiersArray = Array.from({ length: numberOfTiers + 1 }, (value, index) => index);
 
@@ -170,10 +189,12 @@ const calculateProfit = async (
   marketRate: Contract,
   claimer: Contract,
   claimPrizesParams: ClaimPrizesParams,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  context: ClaimPrizeContext,
+  feeTokenRateUsd: number
 ): Promise<boolean> => {
   printAsterisks();
-  console.log(chalk.blue("4. Current gas costs for transaction:"));
+  console.log(chalk.blue("4b. Current gas costs for transaction:"));
   const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
   logStringValue("ethMarketRateUsd:", ethMarketRateUsd);
 
@@ -192,14 +213,15 @@ const calculateProfit = async (
   console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   printAsterisks();
-  console.log(chalk.blue("5. Profitability:"));
+  console.log(chalk.blue("4c. Profit/Loss (USD):"));
+  printSpacer();
+
   // Get the exact amount of fees we'll get back
   const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
-  console.log("earnedFees ? ", earnedFees);
-  console.log("earnedFees ? ", earnedFees.toString());
 
-  const POOLUSD = "1.52";
-  const earnedFeesUsd = earnedFees.mul(POOLUSD);
+  const earnedFeesUsd =
+    parseFloat(ethers.utils.formatUnits(earnedFees, context.feeToken.decimals)) * feeTokenRateUsd;
+
   const netProfitUsd = earnedFeesUsd - maxFeeUsd;
 
   console.log(chalk.magenta("Net profit = Earned Fees - Gas fee (Max)"));
@@ -215,4 +237,63 @@ const calculateProfit = async (
   printSpacer();
 
   return profitable;
+};
+
+// Gather information about the prize pool's fee token
+//
+const getContext = async (
+  prizePool: Contract,
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+): Promise<ClaimPrizeContext> => {
+  // 1. IN TOKEN
+  const feeTokenAddress = await prizePool.prizeToken();
+  const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, provider);
+
+  const feeToken = {
+    address: feeTokenAddress,
+    decimals: await tokenInContract.decimals(),
+    name: await tokenInContract.name(),
+    symbol: await tokenInContract.symbol(),
+  };
+
+  return { feeToken };
+};
+
+const printContext = (context) => {
+  printAsterisks();
+  console.log(chalk.blue.bold(`1. Prize token: ${context.feeToken.symbol}`));
+  printSpacer();
+
+  console.table(context);
+};
+
+const getFeeTokenRateUsd = async (
+  marketRate: Contract,
+  context: ClaimPrizeContext
+): Promise<{
+  feeTokenRateUsd: number;
+}> => {
+  const feeTokenRateUsd = await getFeeTokenAssetRateUsd(marketRate, context);
+
+  console.table({
+    feeToken: { symbol: context.feeToken.symbol, "MarketRate USD": `$${feeTokenRateUsd}` },
+  });
+
+  return {
+    feeTokenRateUsd,
+  };
+};
+
+const testnetParseFloat = (amountBigNum: BigNumber, decimals: string): number => {
+  return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
+};
+
+const getFeeTokenAssetRateUsd = async (
+  marketRate: Contract,
+  context: ClaimPrizeContext
+): Promise<number> => {
+  const feeTokenAddress = context.feeToken.address;
+  const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
+
+  return testnetParseFloat(feeTokenRate, context.feeToken.decimals);
 };
