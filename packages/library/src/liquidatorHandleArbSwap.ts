@@ -15,6 +15,7 @@ import {
   getContracts,
   getFeesUsd,
   getEthMarketRateUsd,
+  roundTwoDecimalPlaces,
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
@@ -412,17 +413,29 @@ const calculateProfit = async (
   const netProfitUsd = grossProfitUsd - maxFeeUsd;
 
   console.log(chalk.magenta("Gross profit = tokenOut - tokenIn"));
-  console.log(chalk.greenBright(grossProfitUsd, " = ", tokenOutUsd, " - ", tokenInUsd));
+  console.log(
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
+        tokenOutUsd
+      )} - $${roundTwoDecimalPlaces(tokenInUsd)}`
+    )
+  );
   printSpacer();
 
   console.log(chalk.magenta("Net profit = Gross profit - Gas fee (Max)"));
-  console.log(chalk.greenBright(netProfitUsd, " = ", grossProfitUsd, " - ", maxFeeUsd));
+  console.log(
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
+        grossProfitUsd
+      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`
+    )
+  );
   printSpacer();
 
   const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
   console.table({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
-    "Net profit (USD)": `$${Math.round((netProfitUsd + Number.EPSILON) * 100) / 100}`,
+    "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     "Profitable?": profitable ? "✔" : "✗",
   });
   printSpacer();

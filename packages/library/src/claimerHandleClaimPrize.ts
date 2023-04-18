@@ -4,7 +4,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import chalk from "chalk";
 
-import { ContractsBlob, ProviderOptions, Vault, VaultAccount, VaultWinners } from "./types";
+import { ContractsBlob, Vault, VaultWinners } from "./types";
 import {
   logStringValue,
   logBigNumber,
@@ -15,6 +15,7 @@ import {
   getEthMarketRateUsd,
   getSubgraphVaults,
   getWinners,
+  roundTwoDecimalPlaces,
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
@@ -311,8 +312,4 @@ const getFeeTokenAssetRateUsd = async (
   const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
 
   return testnetParseFloat(feeTokenRate, context.feeToken.decimals);
-};
-
-const roundTwoDecimalPlaces = (value: number): number => {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
 };
