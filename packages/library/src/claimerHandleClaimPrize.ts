@@ -11,10 +11,8 @@ import {
   printAsterisks,
   printSpacer,
   getContract,
-  getContracts,
   getFeesUsd,
   getEthMarketRateUsd,
-  getTwabControllerSubgraphClient,
   getSubgraphVaults,
   getWinners,
 } from "./utils";
@@ -26,6 +24,8 @@ interface ClaimPrizesParams {
   minFees: BigNumber;
   feeRecipient: string;
 }
+
+const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
 
 export async function claimerHandleClaimPrize(
   contracts: ContractsBlob,
@@ -85,42 +85,22 @@ export async function claimerHandleClaimPrize(
       feeRecipient,
     };
 
-    const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
-    console.log("ethMarketRateUsd");
-    console.log(ethMarketRateUsd);
-
-    const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
-    if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
-      console.error(chalk.yellow("Estimated gas limit is 0 ..."));
-      continue;
-    }
-
-    const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
-      estimatedGasLimit,
-      ethMarketRateUsd,
+    // #4. Decide if profitable or not
+    //
+    const profitable = await calculateProfit(
+      contracts,
+      marketRate,
+      claimer,
+      claimPrizesParams,
       provider
     );
-
-    printAsterisks();
-    console.log(chalk.blue("4. Current gas costs for transaction:"));
-    console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
-
-    // #4. Ask for the exact amount of fees we'll get back, prob not needed?
-    const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
-    console.log("earnedFees ? ", earnedFees);
-    console.log("earnedFees ? ", earnedFees.toString());
-
-    // TODO: Is profitable?
-    //
-    const profitable = true;
-
     if (profitable) {
-      console.log(chalk.yellow("Claimer: Add Populated Claim Tx"));
+      console.log(chalk.green("Claimer: Add Populated Claim Tx"));
       // TODO: Don't attempt to run tx unless we know for sure it will succeed/ Flashbots?
       const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
       transactionsPopulated.push(tx);
     } else {
-      console.log(`Claimer: No Prizes found to claim for Vault: ${vault}.`);
+      console.log(chalk.yellow(`Claimer: Not profitable to claim for Vault: '${vault}'`));
     }
   }
 
@@ -132,7 +112,7 @@ const getMinFees = async (claimer: Contract, numWinners: number): Promise<BigNum
   try {
     minFees = await claimer.callStatic.estimateFees(numWinners);
     console.log(chalk.green(minFees));
-    console.log(minFees.toString());
+    logStringValue("MinFees:", minFees.toString());
   } catch (e) {
     console.error(chalk.red(e));
   }
@@ -148,7 +128,7 @@ const getEstimatedGasLimit = async (
   try {
     estimatedGasLimit = await claimer.estimateGas.claimPrizes(...Object.values(claimPrizesParams));
     console.log("estimatedGasLimit ? ", estimatedGasLimit);
-    console.log(estimatedGasLimit.toString());
+    logStringValue("estimatedGasLimit:", estimatedGasLimit.toString());
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -183,4 +163,56 @@ const getVaultWinners = async (
   );
 
   return vaultWinners;
+};
+
+const calculateProfit = async (
+  contracts: ContractsBlob,
+  marketRate: Contract,
+  claimer: Contract,
+  claimPrizesParams: ClaimPrizesParams,
+  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+): Promise<boolean> => {
+  printAsterisks();
+  console.log(chalk.blue("4. Current gas costs for transaction:"));
+  const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+  logStringValue("ethMarketRateUsd:", ethMarketRateUsd);
+
+  const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
+  logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
+  if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
+    console.error(chalk.yellow("Estimated gas limit is 0 ..."));
+    // continue;
+  }
+
+  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+    estimatedGasLimit,
+    ethMarketRateUsd,
+    provider
+  );
+  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+
+  printAsterisks();
+  console.log(chalk.blue("5. Profitability:"));
+  // Get the exact amount of fees we'll get back
+  const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
+  console.log("earnedFees ? ", earnedFees);
+  console.log("earnedFees ? ", earnedFees.toString());
+
+  const POOLUSD = "1.52";
+  const earnedFeesUsd = earnedFees.mul(POOLUSD);
+  const netProfitUsd = earnedFeesUsd - maxFeeUsd;
+
+  console.log(chalk.magenta("Net profit = Earned Fees - Gas fee (Max)"));
+  console.log(chalk.greenBright(`$${netProfitUsd} = $${earnedFeesUsd} - $${maxFeeUsd}`));
+  printSpacer();
+
+  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  console.table({
+    MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+    "Net profit (USD)": `$${Math.round((netProfitUsd + Number.EPSILON) * 100) / 100}`,
+    "Profitable?": profitable ? "✔" : "✗",
+  });
+  printSpacer();
+
+  return profitable;
 };
