@@ -91,7 +91,7 @@ export async function claimerHandleClaimPrize(
 
     console.table({ "# of winners: ": numWinners });
 
-    const minFees = await getMinFees(claimer, numWinners);
+    const minFees = await getMinFees(claimer, numWinners, context);
     if (!minFees || minFees.eq(0)) {
       console.error(chalk.yellow("Fees are 0 ..."));
       // continue;
@@ -128,12 +128,20 @@ export async function claimerHandleClaimPrize(
   return transactionsPopulated;
 }
 
-const getMinFees = async (claimer: Contract, numWinners: number): Promise<BigNumber> => {
+const getMinFees = async (
+  claimer: Contract,
+  numWinners: number,
+  context: ClaimPrizeContext
+): Promise<BigNumber> => {
   let minFees;
   try {
     minFees = await claimer.callStatic.estimateFees(numWinners);
-    console.log(chalk.green(minFees));
-    logStringValue("MinFees:", minFees.toString());
+    logBigNumber(
+      "MinFees:",
+      minFees.toString(),
+      context.feeToken.decimals,
+      context.feeToken.symbol
+    );
   } catch (e) {
     console.error(chalk.red(e));
   }
@@ -199,6 +207,7 @@ const calculateProfit = async (
   logStringValue("ethMarketRateUsd:", ethMarketRateUsd);
 
   const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
+  // TODO: Don't hardcode 18 and ETH here, depending on chain ...
   logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow("Estimated gas limit is 0 ..."));
@@ -225,13 +234,19 @@ const calculateProfit = async (
   const netProfitUsd = earnedFeesUsd - maxFeeUsd;
 
   console.log(chalk.magenta("Net profit = Earned Fees - Gas fee (Max)"));
-  console.log(chalk.greenBright(`$${netProfitUsd} = $${earnedFeesUsd} - $${maxFeeUsd}`));
+  console.log(
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
+        earnedFeesUsd
+      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`
+    )
+  );
   printSpacer();
 
   const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
   console.table({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
-    "Net profit (USD)": `$${Math.round((netProfitUsd + Number.EPSILON) * 100) / 100}`,
+    "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     "Profitable?": profitable ? "✔" : "✗",
   });
   printSpacer();
@@ -296,4 +311,8 @@ const getFeeTokenAssetRateUsd = async (
   const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
 
   return testnetParseFloat(feeTokenRate, context.feeToken.decimals);
+};
+
+const roundTwoDecimalPlaces = (value: number): number => {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 };
