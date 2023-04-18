@@ -15,25 +15,25 @@ export async function handler(event: RelayerParams) {
   const chainId = Number(process.env.CHAIN_ID);
   const feeRecipient = String(process.env.FEE_RECIPIENT);
 
-  const transactionsPopulated = await claimerHandleClaimPrize(contracts, feeRecipient, {
-    chainId,
-    provider: signer,
-  });
+  try {
+    const transactionsPopulated = await claimerHandleClaimPrize(contracts, feeRecipient, {
+      chainId,
+      provider: signer,
+    });
 
-  if (transactionsPopulated.length > 0) {
-    for (const transactionPopulated of transactionsPopulated) {
-      try {
+    if (transactionsPopulated.length > 0) {
+      for (const transactionPopulated of transactionsPopulated) {
         let transactionSentToNetwork = await relayer.sendTransaction({
           data: transactionPopulated.data,
           to: transactionPopulated.to,
-          gasLimit: 200000,
+          gasLimit: 3500000,
         });
         console.log("TransactionHash:", transactionSentToNetwork.hash);
-      } catch (error) {
-        throw new Error(error);
       }
+    } else {
+      console.log("Claimer: No transactions populated");
     }
-  } else {
-    console.log("PrizeClaimer: No transactions populated");
+  } catch (error) {
+    throw new Error(error);
   }
 }

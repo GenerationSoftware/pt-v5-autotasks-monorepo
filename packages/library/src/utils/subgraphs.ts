@@ -25,7 +25,9 @@ export const getTwabControllerSubgraphClient = (chainId) => {
   });
 };
 
-export const getVaults = async (client: GraphQLClient): Promise<{ vaults: Vault[] }> => {
+export const getSubgraphVaults = async (chainId: number): Promise<Vault[]> => {
+  const client = getTwabControllerSubgraphClient(chainId);
+
   const query = vaultsQuery();
 
   const vaultsResponse: any = await client.request(query).catch((e) => {
@@ -36,9 +38,7 @@ export const getVaults = async (client: GraphQLClient): Promise<{ vaults: Vault[
   // const { vaults } = vaultsResponse || {};
   const vaults = vaultsResponse?.vaults;
 
-  return {
-    vaults,
-  };
+  return vaults;
 };
 
 const vaultsQuery = () => {
