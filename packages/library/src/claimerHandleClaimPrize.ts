@@ -205,14 +205,15 @@ const calculateProfit = async (
   printAsterisks();
   console.log(chalk.blue("4b. Current gas costs for transaction:"));
   const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
-  logStringValue("ethMarketRateUsd:", ethMarketRateUsd);
+  logStringValue("ETH Market Rate (USD):", ethMarketRateUsd);
 
   const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
   // TODO: Don't hardcode 18 and ETH here, depending on chain ...
-  logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow("Estimated gas limit is 0 ..."));
     // continue;
+  } else {
+    logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
   }
 
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
