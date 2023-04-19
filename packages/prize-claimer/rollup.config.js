@@ -8,7 +8,7 @@ import injectProcessEnv from "rollup-plugin-inject-process-env";
 
 dotenv.config({ path: "./.envrc" });
 
-const { CHAIN_ID } = process.env;
+const { CHAIN_ID, FEE_RECIPIENT } = process.env;
 
 export default {
   input: "src/handler.ts",
@@ -24,6 +24,7 @@ export default {
     typescript(),
     injectProcessEnv({
       CHAIN_ID,
+      FEE_RECIPIENT,
     }),
   ],
   external: [
@@ -31,7 +32,6 @@ export default {
     "ethers",
     "axios",
     "axios-retry",
-    /^defender-relay-client(\/.*)?$/,
     "graphql",
     "graphql-request",
   ],

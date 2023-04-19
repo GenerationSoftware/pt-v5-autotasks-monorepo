@@ -1,7 +1,6 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import chalk from "chalk";
 
 import { ContractsBlob } from "../types";
 
@@ -17,15 +16,22 @@ export const getFeesUsd = async (
   ethMarketRateUsd: number,
   provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
 ): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
-  const baseFeeWei = (await provider.getFeeData()).lastBaseFeePerGas.mul(estimatedGasLimit);
-  const maxFeeWei = (await provider.getFeeData()).maxFeePerGas.mul(estimatedGasLimit);
+  const fees = { baseFeeUsd: null, maxFeeUsd: null, avgFeeUsd: null };
 
-  const baseFeeUsd = parseFloat(ethers.utils.formatEther(baseFeeWei)) * ethMarketRateUsd;
-  const maxFeeUsd = parseFloat(ethers.utils.formatEther(maxFeeWei)) * ethMarketRateUsd;
+  const feeData = await provider.getFeeData();
 
-  const avgFeeUsd = (baseFeeUsd + maxFeeUsd) / 2;
+  if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
+    return fees;
+  }
 
-  return { baseFeeUsd, maxFeeUsd, avgFeeUsd };
+  const baseFeeWei = feeData.lastBaseFeePerGas?.mul(estimatedGasLimit);
+  const maxFeeWei = feeData.maxFeePerGas?.mul(estimatedGasLimit);
+
+  fees.baseFeeUsd = parseFloat(ethers.utils.formatEther(baseFeeWei)) * ethMarketRateUsd;
+  fees.maxFeeUsd = parseFloat(ethers.utils.formatEther(maxFeeWei)) * ethMarketRateUsd;
+  fees.avgFeeUsd = (fees.baseFeeUsd + fees.maxFeeUsd) / 2;
+
+  return fees;
 };
 
 // On testnet: Search testnet contract blob to get wETH contract then ask MarketRate contract

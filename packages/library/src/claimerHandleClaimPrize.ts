@@ -94,7 +94,7 @@ export async function claimerHandleClaimPrize(
 
     const minFees = await getMinFees(claimer, numWinners, context);
     if (!minFees || minFees.eq(0)) {
-      console.error(chalk.yellow("Fees are 0 ..."));
+      console.error("MinFees are 0 ...");
       // continue;
     }
 
@@ -134,7 +134,7 @@ const getMinFees = async (
   numWinners: number,
   context: ClaimPrizeContext
 ): Promise<BigNumber> => {
-  let minFees;
+  let minFees = BigNumber.from(0);
   try {
     minFees = await claimer.callStatic.estimateFees(numWinners);
     logBigNumber(
@@ -228,19 +228,24 @@ const calculateProfit = async (
   printSpacer();
 
   // Get the exact amount of fees we'll get back
-  const earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
+  let earnedFees = BigNumber.from(0);
+  try {
+    earnedFees = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
+  } catch (e) {
+    console.error(e);
+  }
 
   const earnedFeesUsd =
     parseFloat(ethers.utils.formatUnits(earnedFees, context.feeToken.decimals)) * feeTokenRateUsd;
 
-  const netProfitUsd = earnedFeesUsd - maxFeeUsd;
-
-  console.log(chalk.magenta("Net profit = Earned Fees - Gas fee (Max)"));
+  const netProfitUsd = earnedFeesUsd - avgFeeUsd;
+  // const netProfitUsd = earnedFeesUsd - maxFeeUsd;
+  console.log(chalk.magenta("Net profit = (Earned fees - Gas [Avg])"));
   console.log(
     chalk.greenBright(
-      `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
+      `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
         earnedFeesUsd
-      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`
+      )} - $${roundTwoDecimalPlaces(avgFeeUsd)})`
     )
   );
   printSpacer();
