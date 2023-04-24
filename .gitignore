@@ -1,6 +1,7 @@
 node_modules/
 lerna-debug.log
 npm-debug.log
+packages/*/dist
 packages/*/lib
 packages/*/.envrc
 .DS_Store

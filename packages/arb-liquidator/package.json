@@ -29,7 +29,6 @@
     "url": "https://github.com/pooltogether/v5-autotasks/issues"
   },
   "dependencies": {
-    "@pooltogether/v5-autotasks-library": "file:.yalc/@pooltogether/v5-autotasks-library",
     "defender-relay-client": "1.39.0",
     "tsdx": "^0.14.1",
     "yalc": "^1.0.0-pre.53"
