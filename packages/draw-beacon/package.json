@@ -5,23 +5,23 @@
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/draw-beacon/README.md",
   "license": "ISC",
-  "main": "lib/handler.js",
+  "type": "module",
+  "main": "dist/handler.js",
   "directories": {
-    "lib": "lib",
+    "dist": "dist",
     "test": "__tests__"
   },
   "files": [
-    "lib"
+    "dist"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pooltogether/v5-autotasks.git"
   },
   "private": true,
-  "type": "module",
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "build": "rollup -c rollup.config.js",
+    "build": "tsup --env.CHAIN_ID 5",
     "start": "ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "update": "npm run build && ./script/updateTask.js"
   },

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "module": "ESNext",
-    "outDir": "./lib"
+    "outDir": "./dist"
   },
   "include": [
     "./src"
