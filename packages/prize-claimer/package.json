@@ -5,13 +5,13 @@
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/prize-claimer/README.md",
   "license": "ISC",
-  "main": "lib/handler.js",
+  "main": "dist/handler.js",
   "directories": {
-    "lib": "lib",
+    "dist": "dist",
     "test": "__tests__"
   },
   "files": [
-    "lib"
+    "dist"
   ],
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
   "type": "module",
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "build": "rollup -c rollup.config.js",
+    "build": "tsup --env.CHAIN_ID 5 --env.FEE_RECIPIENT 5E6CC2397EcB33e6041C15360E17c777555A5E63",
     "start": "ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "update": "npm run build && ./script/updateTask.js"
   },
@@ -29,22 +29,21 @@
     "url": "https://github.com/pooltogether/v5-autotasks/issues"
   },
   "dependencies": {
+    "@pooltogether/v5-autotasks-library": "file:.yalc/@pooltogether/v5-autotasks-library",
     "defender-relay-client": "1.39.0",
     "ethereum-multicall": "^2.16.1",
     "graphql-request": "^5.2.0",
     "tsdx": "^0.14.1"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "23.0.2",
-    "@rollup/plugin-json": "5.0.1",
-    "@rollup/plugin-node-resolve": "15.0.1",
-    "@rollup/plugin-typescript": "9.0.2",
+    "@swc/core": "^1.3.53",
+    "aws-sdk": "^2.1364.0",
     "builtin-modules": "3.3.0",
     "defender-autotask-client": "1.37.0",
     "dotenv": "16.0.3",
     "es-main": "1.2.0",
-    "rollup": "3.2.5",
-    "rollup-plugin-inject-process-env": "1.3.1",
-    "ts-node": "10.9.1"
+    "ts-node": "10.9.1",
+    "tsup": "^6.7.0",
+    "yalc": "^1.0.0-pre.53"
   }
 }

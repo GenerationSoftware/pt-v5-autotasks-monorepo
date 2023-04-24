@@ -13,7 +13,7 @@ export async function handler(event: RelayerParams) {
   const relayer = new Relayer(event);
 
   const chainId = Number(process.env.CHAIN_ID);
-  const feeRecipient = String(process.env.FEE_RECIPIENT);
+  const feeRecipient = `0x${process.env.FEE_RECIPIENT}`;
 
   try {
     const transactionsPopulated = await claimerHandleClaimPrize(contracts, feeRecipient, {

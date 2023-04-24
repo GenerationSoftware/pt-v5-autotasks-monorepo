@@ -4,29 +4,9 @@ Monorepo grouping OpenZeppelin Defender autotasks for the PoolTogether hyperstru
 
 ## Development
 
-### Installation
+### Caveats
 
-This repository uses [Lerna](https://lerna.js.org/) to handle packages.
-
-Install it globally or use `npx` to run `lerna` commands:
-
-```
-npm i -g lerna
-```
-
-Install and link dependencies across packages with:
-
-```
-lerna bootstrap
-```
-
-### Symlink all packages
-
-To symlink together all packages while developing, run the following command:
-
-```
-lerna link
-```
+When supplying EVM addresses via env vars leave out the `0x` or else some build systems will interpret it as a number instead of a string.
 
 ### Add a package
 

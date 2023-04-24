@@ -4,6 +4,8 @@ npm-debug.log
 packages/*/dist
 packages/*/lib
 packages/*/.envrc
+packages/*/yarn-error.log
+yarn-error.log
 .DS_Store
 .yalc
 yalc.lock

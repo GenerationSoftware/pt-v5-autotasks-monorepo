@@ -19,7 +19,7 @@ async function updateAutotask(autotaskId, file) {
 }
 
 async function run() {
-  await updateAutotask(process.env.AUTOTASK_ID, "./lib/handler.js");
+  await updateAutotask(process.env.AUTOTASK_ID, "./dist/handler.cjs");
 }
 
 run();
