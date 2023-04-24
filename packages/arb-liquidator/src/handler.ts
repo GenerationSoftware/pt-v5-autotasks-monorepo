@@ -14,8 +14,8 @@ export async function handler(event) {
 
   const chainId = Number(process.env.CHAIN_ID);
 
-  const relayerAddress = process.env.RELAYER_ADDRESS;
-  const swapRecipient = process.env.SWAP_RECIPIENT;
+  const relayerAddress = `0x${process.env.RELAYER_ADDRESS}`;
+  const swapRecipient = `0x${process.env.SWAP_RECIPIENT}`;
 
   try {
     await liquidatorHandleArbSwap(contracts, relayer, relayerAddress, swapRecipient, {
