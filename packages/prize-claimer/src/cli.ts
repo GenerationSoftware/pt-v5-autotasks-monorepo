@@ -51,11 +51,9 @@ if (esMain(import.meta)) {
   console.log(populatedTxs);
   printSpacer();
 
-  const { RELAYER_API_KEY, RELAYER_API_SECRET } = process.env;
-
   const fakeEvent = {
-    apiKey: RELAYER_API_KEY,
-    apiSecret: RELAYER_API_SECRET,
+    apiKey: config.get("RELAYER_API_KEY"),
+    apiSecret: config.get("RELAYER_API_SECRET"),
   };
   processPopulatedTransactions(fakeEvent, populatedTxs);
 }
