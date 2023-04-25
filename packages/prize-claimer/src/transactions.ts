@@ -1,14 +1,14 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import {
   testnetContractsBlob as contracts,
-  claimerHandleClaimPrize,
+  getProfitablePrizeTxs,
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 
 export const populateTransactions = async (params, readProvider) => {
   let populatedTxs: PopulatedTransaction[] = [];
   try {
-    populatedTxs = await claimerHandleClaimPrize(contracts, readProvider, params);
+    populatedTxs = await getProfitablePrizeTxs(contracts, readProvider, params);
   } catch (e) {
     console.error(e);
   }

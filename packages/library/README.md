@@ -1,9 +1,9 @@
 # @pooltogether/v5-autotasks-library
 
-Library of shared utils to run the PoolTogether hyperstructure (v5) autotasks.
+Functions to run the PoolTogether hyperstructure (v5) bots.
 
 ## Install
 
 ```
-npm i --save --save-exact @pooltogether/v5-autotasks-library
+yarn add --save-dev @pooltogether/v5-autotasks-library
 ```

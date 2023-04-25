@@ -41,7 +41,7 @@ type ClaimPrizeContext = {
 
 const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
 
-export async function claimerHandleClaimPrize(
+export async function getProfitablePrizeTxs(
   contracts: ContractsBlob,
   readProvider: Provider,
   config: any

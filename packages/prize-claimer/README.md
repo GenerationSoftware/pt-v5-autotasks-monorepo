@@ -1,57 +1,42 @@
 # @pooltogether/v5-autotasks-prize-claimer
 
-OpenZeppelin Defender autotask to auto-claim prizes on behalf of PoolTogether hyperstructure (v5) depositors.
+PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to claim prizes on behalf of depositors.
 
-## Development
+## Usage
 
-### Env
+This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
 
-We use [direnv](https://direnv.net) to manage environment variables. You'll likely need to install it.
+The bulk of determining if a claim is profitable is in the v5-autotasks-library#(/packages/library)#getProfitablePrizeTxs.
 
-Copy `.envrc.example` and write down the env variables needed to run this project.
-```
-cp .envrc.example .envrc
-```
+### 1. Run autotask
 
-Once your env variables are setup, load them with:
-```
-direnv allow
-```
-
-### Autotasks
-
-Depending on which autotask you wish to update, you need to set the following env variables:
+To run the autotask CLI locally:
 
 ```
-export AUTOTASK_ID=
-export CHAIN_ID=
-export RELAYER_API_KEY=
-export RELAYER_API_SECRET=
+yarn start
 ```
 
-Here are the currently deployed autotasks and their corresponding ID.
-
-#### Testnet
-##### Sepolia
+You will be prompted to fill in the following necessary variables:
 
 ```
-export AUTOTASK_ID=83...
-export CHAIN_ID=11155111
+DEFENDER_TEAM_API_KEY,
+DEFENDER_TEAM_SECRET_KEY,
+AUTOTASK_ID,
+RELAYER_API_KEY,
+RELAYER_API_SECRET,
+INFURA_API_KEY,
+CHAIN_ID,
+FEE_RECIPIENT,
 ```
 
+Once the config has been saved with all of those variables, the script will run `getProfitablePrizeTxs()` and attempt to send multicall batched transactions through Flashbots bundles.
 
-### Run autotask
+If everything looks good, you can upload the task to OZ Defender to be run periodically.
 
-To run the autotask locally, run:
+### 2. Update autotask
 
-```
-npm start
-```
-
-### Update autotask
-
-To update the autotask, run:
+To update the autotask on OZ Defender:
 
 ```
-npm run update
+yarn update
 ```

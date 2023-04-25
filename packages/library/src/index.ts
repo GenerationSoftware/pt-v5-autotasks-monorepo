@@ -1,4 +1,4 @@
-export { claimerHandleClaimPrize } from "./claimerHandleClaimPrize";
+export { getProfitablePrizeTxs } from "./getProfitablePrizeTxs";
 export { drawBeaconHandleDrawStartAndComplete } from "./drawBeaconHandleDrawStartAndComplete";
 export { liquidatorHandleArbSwap } from "./liquidatorHandleArbSwap";
 export { yieldVaultHandleMintRate } from "./yieldVaultHandleMintRate";

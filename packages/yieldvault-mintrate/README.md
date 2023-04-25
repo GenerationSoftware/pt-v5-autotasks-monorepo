@@ -1,6 +1,6 @@
 # @pooltogether/v5-autotasks-yieldvault-mintrate
 
-OpenZeppelin Defender autotask to poke the MintRate on each YieldVault for the PoolTogether hyperstructure (v5).
+PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
 
 ## Development
 
@@ -9,11 +9,13 @@ OpenZeppelin Defender autotask to poke the MintRate on each YieldVault for the P
 We use [direnv](https://direnv.net) to manage environment variables. You'll likely need to install it.
 
 Copy `.envrc.example` and write down the env variables needed to run this project.
+
 ```
 cp .envrc.example .envrc
 ```
 
 Once your env variables are setup, load them with:
+
 ```
 direnv allow
 ```
@@ -32,13 +34,13 @@ export RELAYER_API_SECRET=
 Here are the currently deployed autotasks and their corresponding ID.
 
 #### Testnet
+
 ##### Sepolia
 
 ```
 export AUTOTASK_ID=83...
 export CHAIN_ID=11155111
 ```
-
 
 ### Run autotask
 
