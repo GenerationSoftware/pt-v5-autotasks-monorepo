@@ -1,7 +1,6 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
-import { JsonRpcProvider, Provider } from "@ethersproject/providers";
-import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import { Provider } from "@ethersproject/providers";
 import chalk from "chalk";
 
 import { ContractsBlob, Vault, VaultWinners } from "./types";
@@ -44,28 +43,26 @@ const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at leas
 
 export async function claimerHandleClaimPrize(
   contracts: ContractsBlob,
-  feeRecipient: string,
+  readProvider: Provider,
   config: any
 ): Promise<PopulatedTransaction[] | undefined> {
-  const { chainId, provider, readProvider } = config;
-
-  console.clear();
+  const { chainId, feeRecipient } = config;
 
   const contractsVersion = {
     major: 1,
     minor: 0,
     patch: 0,
   };
-  const prizePool = getContract("PrizePool", chainId, provider, contracts, contractsVersion);
-  const claimer = getContract("Claimer", chainId, provider, contracts, contractsVersion);
-  const marketRate = getContract("MarketRate", chainId, provider, contracts, contractsVersion);
+  const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
+  const claimer = getContract("Claimer", chainId, readProvider, contracts, contractsVersion);
+  const marketRate = getContract("MarketRate", chainId, readProvider, contracts, contractsVersion);
 
   if (!claimer) {
     throw new Error("Claimer: Contract Unavailable");
   }
 
   // #1. Get context about the prize pool prize token, etc
-  const context: ClaimPrizeContext = await getContext(prizePool, provider);
+  const context: ClaimPrizeContext = await getContext(prizePool, readProvider);
   printContext(context);
 
   const { feeTokenRateUsd } = await getFeeTokenRateUsd(marketRate, context);
@@ -119,7 +116,7 @@ export async function claimerHandleClaimPrize(
       marketRate,
       claimer,
       claimPrizesParams,
-      provider,
+      readProvider,
       context,
       feeTokenRateUsd
     );
@@ -199,7 +196,7 @@ const calculateProfit = async (
   marketRate: Contract,
   claimer: Contract,
   claimPrizesParams: ClaimPrizesParams,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  readProvider: Provider,
   context: ClaimPrizeContext,
   feeTokenRateUsd: number
 ): Promise<boolean> => {
@@ -220,7 +217,7 @@ const calculateProfit = async (
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     estimatedGasLimit,
     ethMarketRateUsd,
-    provider
+    readProvider
   );
   console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
@@ -266,11 +263,11 @@ const calculateProfit = async (
 //
 const getContext = async (
   prizePool: Contract,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+  readProvider: Provider
 ): Promise<ClaimPrizeContext> => {
   // 1. IN TOKEN
   const feeTokenAddress = await prizePool.prizeToken();
-  const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, provider);
+  const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
   const feeToken = {
     address: feeTokenAddress,

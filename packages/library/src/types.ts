@@ -1,6 +1,5 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import { Provider } from "@ethersproject/providers";
 
 // Config types
 export interface TokenData {
@@ -53,7 +52,7 @@ export interface Config {
 
 export interface ProviderOptions {
   chainId: number;
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider;
+  provider: Provider;
 }
 
 export interface ProviderUrlOptions {

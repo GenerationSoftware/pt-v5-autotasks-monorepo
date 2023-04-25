@@ -1,43 +1,23 @@
 import { ethers } from "ethers";
-import { Relayer, RelayerParams } from "defender-relay-client";
-import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
-import {
-  testnetContractsBlob as contracts,
-  claimerHandleClaimPrize,
-} from "@pooltogether/v5-autotasks-library";
+import { RelayerParams } from "defender-relay-client";
+
+import { NETWORK_NAMES } from "./helpers/constants";
+import { populateTransactions, processPopulatedTransactions } from "./transactions";
+
+const handlerLoadParams = () => {
+  return { chainId: CHAIN_ID, feeRecipient: FEE_RECIPIENT };
+};
 
 // Docs
 export async function handler(event: RelayerParams) {
-  const provider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
-  const relayer = new Relayer(event);
+  const params = handlerLoadParams();
 
-  const chainId = Number(process.env.CHAIN_ID);
-  const feeRecipient = `0x${process.env.FEE_RECIPIENT}`;
+  const readProvider = new ethers.providers.InfuraProvider(
+    NETWORK_NAMES[params.chainId],
+    INFURA_API_KEY
+  );
 
-  // TODO: Don't hardcode goerli
-  const readProvider = new ethers.providers.InfuraProvider("goerli", process.env.INFURA_API_KEY);
+  const populatedTxs = populateTransactions(params, readProvider);
 
-  try {
-    const transactionsPopulated = await claimerHandleClaimPrize(contracts, feeRecipient, {
-      readProvider,
-      chainId,
-      provider: signer,
-    });
-
-    if (transactionsPopulated.length > 0) {
-      for (const transactionPopulated of transactionsPopulated) {
-        let transactionSentToNetwork = await relayer.sendTransaction({
-          data: transactionPopulated.data,
-          to: transactionPopulated.to,
-          gasLimit: 3500000,
-        });
-        console.log("TransactionHash:", transactionSentToNetwork.hash);
-      }
-    } else {
-      console.log("Claimer: No transactions populated");
-    }
-  } catch (error) {
-    throw new Error(error);
-  }
+  processPopulatedTransactions(event, populatedTxs);
 }

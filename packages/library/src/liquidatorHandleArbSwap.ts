@@ -1,8 +1,7 @@
 import { Relayer } from "defender-relay-client";
 import { ethers, Contract, BigNumber } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import { Provider } from "@ethersproject/providers";
 import chalk from "chalk";
 
 import { ContractsBlob, ProviderOptions } from "./types";
@@ -176,7 +175,7 @@ const approve = async (
   exactAmountIn: BigNumber,
   liquidationPair: Contract,
   liquidationRouter: Contract,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  provider: Provider,
   relayerAddress: string
 ) => {
   try {
@@ -286,7 +285,7 @@ const getTokenOutAssetRateUsd = async (
 const getContext = async (
   liquidationPair: Contract,
   contracts: ContractsBlob,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+  provider: Provider
 ): Promise<Context> => {
   // 1. IN TOKEN
   const tokenInAddress = await liquidationPair.tokenIn();
@@ -344,7 +343,7 @@ const printContext = (context) => {
 const checkBalance = async (
   context: Context,
   liquidationPair: Contract,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  provider: Provider,
   relayerAddress: string,
   exactAmountIn: BigNumber
 ): Promise<{ sufficientBalance: boolean; balanceResult: BigNumber }> => {
@@ -374,7 +373,7 @@ const calculateProfit = async (
   marketRate: Contract,
   liquidationRouter: Contract,
   swapExactAmountInParams: SwapExactAmountInParams,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider,
+  provider: Provider,
   context: Context,
   tokenOutAssetRateUsd: number,
   tokenInAssetRateUsd: number

@@ -21,7 +21,7 @@
   "private": true,
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "build": "tsup --env.CHAIN_ID 5 --env.FEE_RECIPIENT 5E6CC2397EcB33e6041C15360E17c777555A5E63",
+    "build": "tsup",
     "start": "ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "update": "npm run build && ./script/updateTask.js"
   },

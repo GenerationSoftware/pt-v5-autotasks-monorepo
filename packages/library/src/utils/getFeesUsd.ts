@@ -1,6 +1,5 @@
 import { ethers, BigNumber, Contract } from "ethers";
-import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
-import { JsonRpcProvider } from "@ethersproject/providers";
+import { Provider } from "@ethersproject/providers";
 
 import { ContractsBlob } from "../types";
 
@@ -14,7 +13,7 @@ const MARKET_RATE_CONTRACT_DECIMALS = 8;
 export const getFeesUsd = async (
   estimatedGasLimit: BigNumber,
   ethMarketRateUsd: number,
-  provider: DefenderRelayProvider | DefenderRelaySigner | JsonRpcProvider
+  provider: Provider
 ): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
   const fees = { baseFeeUsd: null, maxFeeUsd: null, avgFeeUsd: null };
 
