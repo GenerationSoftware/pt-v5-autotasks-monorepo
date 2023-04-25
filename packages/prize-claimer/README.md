@@ -1,5 +1,7 @@
 # @pooltogether/v5-autotasks-prize-claimer
 
+![PoolTogether Prize Claimer Bot title](https://github.com/@pooltogether/v5-autotasks/blob/main/packages/prize-claimer/prize-claim-img.png "wat")
+
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to claim prizes on behalf of depositors.
 
 ## Usage
