@@ -1,6 +1,6 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
-import { JsonRpcProvider } from "@ethersproject/providers";
+import { JsonRpcProvider, Provider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import chalk from "chalk";
 
@@ -47,7 +47,9 @@ export async function claimerHandleClaimPrize(
   feeRecipient: string,
   config: any
 ): Promise<PopulatedTransaction[] | undefined> {
-  const { chainId, provider } = config;
+  const { chainId, provider, readProvider } = config;
+
+  console.clear();
 
   const contractsVersion = {
     major: 1,
@@ -75,7 +77,12 @@ export async function claimerHandleClaimPrize(
   }
 
   // #3. Get more data about which users are winners from the contract
-  const vaultWinners: VaultWinners = await getVaultWinners(contracts, prizePool, vaults);
+  const vaultWinners: VaultWinners = await getVaultWinners(
+    readProvider,
+    contracts,
+    prizePool,
+    vaults
+  );
 
   // #4. Start iterating through vaults
   printAsterisks();
@@ -171,6 +178,7 @@ const getVaults = async (chainId: number) => {
 };
 
 const getVaultWinners = async (
+  readProvider: Provider,
   contracts: ContractsBlob,
   prizePool: Contract,
   vaults: Vault[]
@@ -180,15 +188,8 @@ const getVaultWinners = async (
   const numberOfTiers = await prizePool.numberOfTiers();
   const tiersArray = Array.from({ length: numberOfTiers + 1 }, (value, index) => index);
 
-  // TODO: Don't hardcode goerli
-  const infuraProvider = new ethers.providers.InfuraProvider("goerli", process.env.INFURA_API_KEY);
   // TODO: Make sure user has balance before adding them to the read multicall
-  const vaultWinners: VaultWinners = await getWinners(
-    infuraProvider,
-    contracts,
-    vaults,
-    tiersArray
-  );
+  const vaultWinners: VaultWinners = await getWinners(readProvider, contracts, vaults, tiersArray);
 
   return vaultWinners;
 };

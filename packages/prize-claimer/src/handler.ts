@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { Relayer, RelayerParams } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {
@@ -5,9 +6,8 @@ import {
   claimerHandleClaimPrize,
 } from "@pooltogether/v5-autotasks-library";
 
+// Docs
 export async function handler(event: RelayerParams) {
-  console.clear();
-
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
   const relayer = new Relayer(event);
@@ -15,8 +15,12 @@ export async function handler(event: RelayerParams) {
   const chainId = Number(process.env.CHAIN_ID);
   const feeRecipient = `0x${process.env.FEE_RECIPIENT}`;
 
+  // TODO: Don't hardcode goerli
+  const readProvider = new ethers.providers.InfuraProvider("goerli", process.env.INFURA_API_KEY);
+
   try {
     const transactionsPopulated = await claimerHandleClaimPrize(contracts, feeRecipient, {
+      readProvider,
       chainId,
       provider: signer,
     });
