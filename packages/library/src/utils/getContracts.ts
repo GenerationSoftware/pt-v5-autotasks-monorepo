@@ -1,14 +1,6 @@
 import { ethers } from "ethers";
-// import { Contract } from 'ethers';
 
-// import {
-//   ETHEREUM_MAINNET_CHAIN_ID,
-//   ETHEREUM_GOERLI_CHAIN_ID,
-//   ETHEREUM_SEPOLIA_CHAIN_ID,
-// } from './network';
 import { ContractsBlob } from "../types";
-
-// const debug = require("debug")("pt-autotask-lib");
 
 // Returns all the contracts that match the params by name, chain, and contract version
 export function getContracts(
