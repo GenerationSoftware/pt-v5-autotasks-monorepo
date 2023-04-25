@@ -3,7 +3,13 @@ import { PopulatedTransaction } from "@ethersproject/contracts";
 import { Provider } from "@ethersproject/providers";
 import chalk from "chalk";
 
-import { ContractsBlob, Vault, VaultWinners } from "./types";
+import {
+  ContractsBlob,
+  Vault,
+  VaultWinners,
+  ClaimPrizeContext,
+  GetClaimerProfitablePrizeTxsParams,
+} from "./types";
 import {
   logStringValue,
   logBigNumber,
@@ -26,27 +32,14 @@ interface ClaimPrizesParams {
   feeRecipient: string;
 }
 
-// TODO: This must be defined somewhere else ...
-type Token = {
-  name: string;
-  decimals: string;
-  address: string;
-  symbol: string;
-};
-
-// TODO: Rename to ClaimPrizeContext, put in types, rename LiqArb one as well
-type ClaimPrizeContext = {
-  feeToken: Token;
-};
-
 const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
 
-export async function getProfitablePrizeTxs(
+export async function getClaimerProfitablePrizeTxs(
   contracts: ContractsBlob,
   readProvider: Provider,
-  config: any
+  params: GetClaimerProfitablePrizeTxsParams
 ): Promise<PopulatedTransaction[] | undefined> {
-  const { chainId, feeRecipient } = config;
+  const { chainId, feeRecipient } = params;
 
   const contractsVersion = {
     major: 1,

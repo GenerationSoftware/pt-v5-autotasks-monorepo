@@ -6,7 +6,7 @@ PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to claim prizes 
 
 This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
 
-The bulk of determining if a claim is profitable is in the v5-autotasks-library#(/packages/library)#getProfitablePrizeTxs.
+The bulk of determining if a claim is profitable is in the v5-autotasks-library#(/packages/library)#getClaimerProfitablePrizeTxs.
 
 ### 1. Run autotask
 
@@ -29,7 +29,7 @@ CHAIN_ID,
 FEE_RECIPIENT,
 ```
 
-Once the config has been saved with all of those variables, the script will run `getProfitablePrizeTxs()` and attempt to send multicall batched transactions through Flashbots bundles.
+Once the config has been saved with all of those variables, the script will run `getClaimerProfitablePrizeTxs()` and attempt to send multicall batched transactions through Flashbots bundles.
 
 If everything looks good, you can upload the task to OZ Defender to be run periodically.
 

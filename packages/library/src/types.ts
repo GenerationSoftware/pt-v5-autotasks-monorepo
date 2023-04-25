@@ -131,3 +131,19 @@ export interface VaultWinners {
     winners: string[];
   };
 }
+
+type Token = {
+  name: string;
+  decimals: string;
+  address: string;
+  symbol: string;
+};
+
+export type ClaimPrizeContext = {
+  feeToken: Token;
+};
+
+export type GetClaimerProfitablePrizeTxsParams = {
+  chainId: number;
+  feeRecipient: string;
+};
