@@ -22,9 +22,6 @@ export function getContracts(
     patch: 0,
   }
 ): ethers.Contract[] {
-  // debug("name:", name);
-  // debug("chainId:", chainId);
-
   if (!name || !chainId) throw new Error(`Invalid Contract Parameters`);
 
   const contracts = contractsBlob.contracts

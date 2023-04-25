@@ -5,7 +5,7 @@ import { NETWORK_NAMES } from "./helpers/constants";
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 
 const handlerLoadParams = () => {
-  return { chainId: CHAIN_ID, feeRecipient: FEE_RECIPIENT };
+  return { chainId: Number(CHAIN_ID), feeRecipient: FEE_RECIPIENT };
 };
 
 // Docs
@@ -17,7 +17,7 @@ export async function handler(event: RelayerParams) {
     INFURA_API_KEY
   );
 
-  const populatedTxs = populateTransactions(params, readProvider);
+  const populatedTxs = await populateTransactions(params, readProvider);
 
   processPopulatedTransactions(event, populatedTxs);
 }
