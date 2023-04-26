@@ -1,6 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Provider } from "@ethersproject/providers";
-import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 // Config types
 export interface TokenData {
