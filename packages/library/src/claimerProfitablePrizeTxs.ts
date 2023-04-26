@@ -8,9 +8,10 @@ import {
   Vault,
   VaultWinners,
   ClaimPrizeContext,
-  GetClaimerProfitablePrizeTxsParams,
+  GetClaimerProfitablePrizeTxsParams
 } from "./types";
 import {
+  logTable,
   logStringValue,
   logBigNumber,
   printAsterisks,
@@ -20,7 +21,7 @@ import {
   getEthMarketRateUsd,
   getSubgraphVaults,
   getWinners,
-  roundTwoDecimalPlaces,
+  roundTwoDecimalPlaces
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
@@ -44,7 +45,7 @@ export async function getClaimerProfitablePrizeTxs(
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0,
+    patch: 0
   };
   const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
   const claimer = getContract("Claimer", chainId, readProvider, contracts, contractsVersion);
@@ -87,7 +88,7 @@ export async function getClaimerProfitablePrizeTxs(
     const tiers = vault.tiers;
     const numWinners = winners.length;
 
-    console.table({ "# of winners: ": numWinners });
+    logTable({ "# of winners: ": numWinners });
 
     const minFees = await getMinFees(claimer, numWinners, context);
     if (!minFees || minFees.eq(0)) {
@@ -100,7 +101,7 @@ export async function getClaimerProfitablePrizeTxs(
       winners,
       tiers,
       minFees,
-      feeRecipient,
+      feeRecipient
     };
 
     // #5. Decide if profitable or not
@@ -212,7 +213,7 @@ const calculateProfit = async (
     ethMarketRateUsd,
     readProvider
   );
-  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   printAsterisks();
   console.log(chalk.blue("4c. Profit/Loss (USD):"));
@@ -242,10 +243,10 @@ const calculateProfit = async (
   printSpacer();
 
   const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
-  console.table({
+  logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
     "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-    "Profitable?": profitable ? "✔" : "✗",
+    "Profitable?": profitable ? "✔" : "✗"
   });
   printSpacer();
 
@@ -266,18 +267,18 @@ const getContext = async (
     address: feeTokenAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol(),
+    symbol: await tokenInContract.symbol()
   };
 
   return { feeToken };
 };
 
-const printContext = (context) => {
+const printContext = context => {
   printAsterisks();
   console.log(chalk.blue.bold(`1. Prize token: ${context.feeToken.symbol}`));
   printSpacer();
 
-  console.table(context);
+  logTable(context);
 };
 
 const getFeeTokenRateUsd = async (
@@ -288,12 +289,12 @@ const getFeeTokenRateUsd = async (
 }> => {
   const feeTokenRateUsd = await getFeeTokenAssetRateUsd(marketRate, context);
 
-  console.table({
-    feeToken: { symbol: context.feeToken.symbol, "MarketRate USD": `$${feeTokenRateUsd}` },
+  logTable({
+    feeToken: { symbol: context.feeToken.symbol, "MarketRate USD": `$${feeTokenRateUsd}` }
   });
 
   return {
-    feeTokenRateUsd,
+    feeTokenRateUsd
   };
 };
 

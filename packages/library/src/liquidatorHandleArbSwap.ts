@@ -7,6 +7,7 @@ import chalk from "chalk";
 
 import { ContractsBlob, Token, ArbLiquidatorSwapParams } from "./types";
 import {
+  logTable,
   logStringValue,
   logBigNumber,
   printAsterisks,
@@ -53,7 +54,7 @@ export async function liquidatorHandleArbSwap(
 
   // Loop through all liquidation pairs
   // const i = 5;
-  console.log(liquidationPairs.length);
+  console.log(chalk.blackBright.bgWhite("# of Liquidation Pairs:", liquidationPairs.length));
   for (let i = 0; i < liquidationPairs.length; i++) {
     printAsterisks();
     const liquidationPair = liquidationPairs[i];
@@ -349,7 +350,7 @@ const printContext = context => {
   console.log(chalk.blue(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
   printSpacer();
 
-  console.table(context);
+  logTable(context);
 };
 
 const checkBalance = async (
@@ -407,7 +408,7 @@ const calculateProfit = async (
   printSpacer();
   logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
 
-  console.table({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   printAsterisks();
   console.log(chalk.blue("6. Profit/Loss (USD):"));
@@ -444,7 +445,7 @@ const calculateProfit = async (
   printSpacer();
 
   const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
-  console.table({
+  logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
     "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     "Profitable?": profitable ? "✔" : "✗"
@@ -515,7 +516,7 @@ const calculateAmounts = async (
     context
   );
 
-  console.table({
+  logTable({
     tokenIn: { symbol: context.tokenIn.symbol, "MarketRate USD": `$${tokenInAssetRateUsd}` },
     tokenOut: { symbol: context.tokenOut.symbol, "MarketRate USD": `$${tokenOutAssetRateUsd}` }
   });
