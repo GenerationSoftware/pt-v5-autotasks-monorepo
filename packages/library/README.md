@@ -5,7 +5,13 @@ PoolTogether hyperstructure (v5) supporting functions for the bots.
 ## Install
 
 ```
-yarn add --save-dev @pooltogether/v5-autotasks-library
+yarn add @pooltogether/v5-autotasks-library
+```
+
+or
+
+```
+npm install @pooltogether/v5-autotasks-library
 ```
 
 ## Usage
