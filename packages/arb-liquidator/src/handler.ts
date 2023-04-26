@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {
-  liquidatorHandleArbSwap,
+  liquidatorArbitrageSwap,
   testnetContractsBlob as contracts,
   ArbLiquidatorSwapParams,
   NETWORK_NAMES
@@ -33,7 +33,7 @@ export async function handler(event) {
   const params: ArbLiquidatorSwapParams = handlerLoadParams(signer);
 
   try {
-    await liquidatorHandleArbSwap(contracts, relayer, params);
+    await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
     throw new Error(error);
   }

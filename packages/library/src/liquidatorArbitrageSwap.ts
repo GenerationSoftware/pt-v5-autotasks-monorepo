@@ -49,7 +49,7 @@ interface SwapExactAmountInParams {
 // Curently this does not return PopulatedTransactions like the other bots as we want to send each swap transaction
 // the instant we know if it is profitable or not as we iterate through all LiquidityPairs
 //
-export async function liquidatorHandleArbSwap(
+export async function liquidatorArbitrageSwap(
   contracts: ContractsBlob,
   relayer: Relayer,
   params: ArbLiquidatorSwapParams

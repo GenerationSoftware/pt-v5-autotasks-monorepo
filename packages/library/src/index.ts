@@ -1,6 +1,6 @@
 export { getClaimerProfitablePrizeTxs } from "./claimerProfitablePrizeTxs";
 export { drawBeaconHandleDrawStartAndComplete } from "./drawBeaconHandleDrawStartAndComplete";
-export { liquidatorHandleArbSwap } from "./liquidatorHandleArbSwap";
+export { liquidatorArbitrageSwap } from "./liquidatorArbitrageSwap";
 export { yieldVaultHandleMintRate } from "./yieldVaultHandleMintRate";
 
 export { testnetPrizePoolHandleCompletePrize } from "./testnetPrizePoolHandleCompletePrize";

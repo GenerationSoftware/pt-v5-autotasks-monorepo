@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import {
   testnetContractsBlob as contracts,
-  liquidatorHandleArbSwap,
+  liquidatorArbitrageSwap,
   NETWORK_NAMES,
   ArbLiquidatorSwapParams
 } from "@pooltogether/v5-autotasks-library";
@@ -61,7 +61,7 @@ if (esMain(import.meta)) {
   const params: ArbLiquidatorSwapParams = cliLoadParams(signer);
 
   try {
-    await liquidatorHandleArbSwap(contracts, relayer, params);
+    await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
     throw new Error(error);
   }
