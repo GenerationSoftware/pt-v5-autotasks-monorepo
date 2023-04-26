@@ -12,7 +12,7 @@ The bulk of determining if a claim is profitable is in the v5-autotasks-library#
 
 ## Note:
 
-If you would rather use something other than OZ Defender/Infura, you can import the `v5-autotasks-library` into your own code. More info here: **[v5-autotasks-library](../yieldvault-mintrate)**
+If you would rather use something other than OZ Defender/Infura, you can import the `v5-autotasks-library` into your own code. More info here: **[v5-autotasks-library](../library#usage)**
 
 ### 1. Run autotask
 
