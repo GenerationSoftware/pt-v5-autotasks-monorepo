@@ -1,5 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Provider } from "@ethersproject/providers";
+import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 // Config types
 export interface TokenData {
@@ -54,22 +55,6 @@ export interface ProviderOptions {
   chainId: number;
   provider: Provider;
 }
-
-export interface ProviderUrlOptions {
-  chainId: number;
-  providerUrl: string;
-}
-
-// OpenZeppelin Defender types
-export type Secrets = {
-  infuraApiKey?: string;
-
-  // Mainnet
-  ethereumMainnetProviderURL?: string;
-
-  // Testnet
-  ethereumSepoliaProviderURL?: string;
-};
 
 // Contracts types
 export interface Draw {
@@ -132,18 +117,26 @@ export interface VaultWinners {
   };
 }
 
-type Token = {
+export interface Token {
   name: string;
   decimals: string;
   address: string;
   symbol: string;
-};
+}
 
-export type ClaimPrizeContext = {
+export interface ClaimPrizeContext {
   feeToken: Token;
-};
+}
 
-export type GetClaimerProfitablePrizeTxsParams = {
+export interface GetClaimerProfitablePrizeTxsParams {
   chainId: number;
   feeRecipient: string;
-};
+}
+
+export interface ArbLiquidatorSwapParams {
+  swapRecipient: string;
+  relayerAddress: string;
+  chainId: number;
+  readProvider: Provider;
+  writeProvider: Provider | DefenderRelaySigner;
+}

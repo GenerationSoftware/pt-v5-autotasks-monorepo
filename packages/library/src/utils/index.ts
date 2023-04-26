@@ -6,3 +6,5 @@ export { getFeesUsd, getEthMarketRateUsd } from "./getFeesUsd";
 export { getTwabControllerSubgraphClient, getSubgraphVaults } from "./subgraphs";
 export { getComplexMulticallResults } from "./multicall";
 export { getWinners } from "./prizePoolMulticall";
+export { getSharedQuestions, when } from "./questions";
+export * from "./network";

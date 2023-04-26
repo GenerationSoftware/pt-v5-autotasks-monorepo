@@ -3,11 +3,10 @@ import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
 import { ethers } from "ethers";
-import { printAsterisks, printSpacer } from "@pooltogether/v5-autotasks-library";
+import { printAsterisks, printSpacer, NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
 
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 import { askQuestions } from "./helpers/questions";
-import { NETWORK_NAMES } from "./helpers/constants";
 
 import pkg from "../package.json";
 
@@ -23,7 +22,7 @@ function cliLoadParams() {
 
   return {
     feeRecipient,
-    chainId,
+    chainId
   };
 }
 
@@ -53,7 +52,7 @@ if (esMain(import.meta)) {
 
   const fakeEvent = {
     apiKey: config.get("RELAYER_API_KEY"),
-    apiSecret: config.get("RELAYER_API_SECRET"),
+    apiSecret: config.get("RELAYER_API_SECRET")
   };
   processPopulatedTransactions(fakeEvent, populatedTxs);
 }

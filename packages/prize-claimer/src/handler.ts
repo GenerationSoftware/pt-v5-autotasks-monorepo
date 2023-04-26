@@ -8,8 +8,9 @@ const handlerLoadParams = () => {
   return { chainId: Number(CHAIN_ID), feeRecipient: FEE_RECIPIENT };
 };
 
-// Docs
 export async function handler(event: RelayerParams) {
+  console.clear();
+
   const params = handlerLoadParams();
 
   const readProvider = new ethers.providers.InfuraProvider(

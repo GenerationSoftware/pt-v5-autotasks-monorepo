@@ -32,6 +32,11 @@ RELAYER_API_KEY: OZ Defender-specific
 RELAYER_API_SECRET: OZ Defender-specific
 INFURA_API_KEY: Infura-specific
 CHAIN_ID: Which network to claim on
+```
+
+The following one is unique to the prize claimer bot:
+
+```
 FEE_RECIPIENT: Who will receive the profit for claiming on other's behalf
 ```
 

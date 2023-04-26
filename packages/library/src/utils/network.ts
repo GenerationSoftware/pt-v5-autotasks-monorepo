@@ -1,4 +1,8 @@
-import { ContractsBlob, ProviderUrlOptions, Secrets } from "../types";
+import { ContractsBlob } from "../types";
+
+// Inquirer config variable switches:
+export const CHAIN_IDS = { goerli: 5, mainnet: 1 };
+export const NETWORK_NAMES = { 5: "goerli", 1: "mainnet" };
 
 // Mainnet chain ids
 export const ETHEREUM_MAINNET_CHAIN_ID = 1;

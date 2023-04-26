@@ -1,7 +1,7 @@
 {
   "name": "@pooltogether/v5-autotasks-arb-liquidator",
   "version": "0.0.1",
-  "description": "Autotask to check if there are profits to arb from a network's liquidator.",
+  "description": "Autotask to check if there are arbitrage profits from a network's liquidator.",
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/draw-beacon/README.md",
   "license": "ISC",
@@ -21,7 +21,7 @@
   "private": true,
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "build": "tsup --env.CHAIN_ID 5 --env.RELAYER_ADDRESS 22f928063d7fa5a90f4fd7949bb0848af7c79b0a --env.SWAP_RECIPIENT 5E6CC2397EcB33e6041C15360E17c777555A5E63",
+    "build": "tsup",
     "start": "ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "update": "npm run build && ./script/updateTask.js"
   },
@@ -30,7 +30,11 @@
   },
   "dependencies": {
     "@pooltogether/v5-autotasks-library": "file:.yalc/@pooltogether/v5-autotasks-library",
+    "configstore": "^6.0.0",
     "defender-relay-client": "1.39.0",
+    "ethereum-multicall": "^2.17.0",
+    "figlet": "^1.6.0",
+    "inquirer": "^9.2.0",
     "tsdx": "^0.14.1",
     "yalc": "^1.0.0-pre.53"
   },

@@ -2943,6 +2943,16 @@
     graphql-request "^5.2.0"
     yalc "^1.0.0-pre.53"
 
+"@pooltogether/v5-autotasks-library@file:packages/library/.yalc/@pooltogether/v5-autotasks-library":
+  version "0.0.1-beta.1"
+  dependencies:
+    chalk "^4.1.2"
+    defender-relay-client "1.39.0"
+    ethers "5.7.2"
+    graphql "^16.6.0"
+    graphql-request "^5.2.0"
+    yalc "^1.0.0-pre.53"
+
 "@pooltogether/v5-autotasks-library@file:packages/prize-claimer/.yalc/@pooltogether/v5-autotasks-library":
   version "0.0.1-beta.1"
   dependencies:
@@ -5819,6 +5829,14 @@ ethereum-multicall@^2.16.1:
   version "2.16.1"
   resolved "https://registry.yarnpkg.com/ethereum-multicall/-/ethereum-multicall-2.16.1.tgz#4a0e110b02b4c7a3431361822035fa8dfa3e11cd"
   integrity sha512-24MgG22WGHxavIsb6E46Pa6MpkHAkP3pau6R0rQFB4m9gQIxpv5by0Gj4vx7FMjXisFbjlcxVP32hZQXYRP6Yw==
+  dependencies:
+    "@ethersproject/providers" "^5.0.10"
+    ethers "^5.0.15"
+
+ethereum-multicall@^2.17.0:
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/ethereum-multicall/-/ethereum-multicall-2.17.0.tgz#c56a8884f2d895a87bc90b1257653e2f131ad8a5"
+  integrity sha512-9me2vHVjzLbb9Y5xWHCSu0PDtm13SVTZyvV3y2/VAtbuMykoET5g8h/ktL4ECZ8k76cn9jnZythoQki3nJqhSA==
   dependencies:
     "@ethersproject/providers" "^5.0.10"
     ethers "^5.0.15"

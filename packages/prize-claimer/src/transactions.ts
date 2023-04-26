@@ -1,7 +1,7 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import {
   testnetContractsBlob as contracts,
-  getClaimerProfitablePrizeTxs,
+  getClaimerProfitablePrizeTxs
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 
@@ -28,7 +28,7 @@ export const processPopulatedTransactions = async (event, populatedTxs) => {
         let transactionSentToNetwork = await relayer.sendTransaction({
           data: populatedTx.data,
           to: populatedTx.to,
-          gasLimit: 3500000,
+          gasLimit: 3500000
         });
         console.log("TransactionHash:", transactionSentToNetwork.hash);
       }

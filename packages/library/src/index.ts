@@ -9,4 +9,3 @@ export { testnetContractsBlob } from "./testnetContractsBlob";
 export * from "./abis";
 export * from "./types";
 export * from "./utils";
-// export * from './utils/network';

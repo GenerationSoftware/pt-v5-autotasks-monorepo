@@ -37,9 +37,9 @@ export const getFeesUsd = async (
 // TODO: Coingecko/0x spot API/other for production rates
 export const getEthMarketRateUsd = async (contracts: ContractsBlob, marketRate: Contract) => {
   const wethContract = contracts.contracts.find(
-    (contract) =>
+    contract =>
       contract.tokens &&
-      contract.tokens.find((token) => token.extensions.underlyingAsset.symbol === "WETH")
+      contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
   );
 
   const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
