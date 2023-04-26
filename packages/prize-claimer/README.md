@@ -10,9 +10,13 @@ This package is both a CLI for setting the config parameters of the OpenZeppelin
 
 The bulk of determining if a claim is profitable is in the v5-autotasks-library#(/packages/library)#getClaimerProfitablePrizeTxs.
 
+## Note:
+
+If you would rather use something other than OZ Defender/Infura, you can import the `v5-autotasks-library` into your own code. More info here: **[v5-autotasks-library](../packages/yieldvault-mintrate)**
+
 ### 1. Run autotask
 
-To run the autotask CLI locally:
+To run the OpenZeppelin Defender autotask locally:
 
 ```
 yarn start
@@ -21,14 +25,14 @@ yarn start
 You will be prompted to fill in the following necessary variables:
 
 ```
-DEFENDER_TEAM_API_KEY,
-DEFENDER_TEAM_SECRET_KEY,
-AUTOTASK_ID,
-RELAYER_API_KEY,
-RELAYER_API_SECRET,
-INFURA_API_KEY,
-CHAIN_ID,
-FEE_RECIPIENT,
+DEFENDER_TEAM_API_KEY: OZ Defender-specific
+DEFENDER_TEAM_SECRET_KEY: OZ Defender-specific
+AUTOTASK_ID: OZ Defender-specific
+RELAYER_API_KEY: OZ Defender-specific
+RELAYER_API_SECRET: OZ Defender-specific
+INFURA_API_KEY: Infura-specific
+CHAIN_ID: Which network to claim on
+FEE_RECIPIENT: Who will receive the profit for claiming on other's behalf
 ```
 
 Once the config has been saved with all of those variables, the script will run `getClaimerProfitablePrizeTxs()` and attempt to send multicall batched transactions through Flashbots bundles.
@@ -37,7 +41,7 @@ If everything looks good, you can upload the task to OZ Defender to be run perio
 
 ### 2. Update autotask
 
-To update the autotask on OZ Defender:
+With the config in place from step 1, you can update the autotask on OZ Defender using:
 
 ```
 yarn update
