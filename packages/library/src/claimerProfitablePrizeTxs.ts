@@ -298,7 +298,7 @@ const getFeeTokenRateUsd = async (
   };
 };
 
-const testnetParseFloat = (amountBigNum: BigNumber, decimals: string): number => {
+const testnetParseFloat = (amountBigNum: BigNumber, decimals: number): number => {
   return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
 };
 

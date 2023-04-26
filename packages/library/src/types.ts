@@ -119,7 +119,7 @@ export interface VaultWinners {
 
 export interface Token {
   name: string;
-  decimals: string;
+  decimals: number;
   address: string;
   symbol: string;
 }
@@ -139,4 +139,21 @@ export interface ArbLiquidatorSwapParams {
   chainId: number;
   readProvider: Provider;
   writeProvider: Provider | DefenderRelaySigner;
+}
+
+export interface RelayerContext {
+  tokenInAllowance: BigNumber;
+  tokenInBalance: BigNumber;
+}
+
+export interface TokenWithRate extends Token {
+  assetRateUsd: number;
+}
+
+export interface ArbLiquidatorContext {
+  tokenIn: TokenWithRate;
+  tokenOut: TokenWithRate;
+  tokenOutUnderlyingAsset: Token;
+  // tokenOutUnderlyingAsset: TokenWithRate;
+  relayer: RelayerContext;
 }

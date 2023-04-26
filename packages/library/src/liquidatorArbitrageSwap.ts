@@ -5,7 +5,7 @@ import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import { Relayer } from "defender-relay-client";
 import chalk from "chalk";
 
-import { ContractsBlob, Token, ArbLiquidatorSwapParams } from "./types";
+import { ContractsBlob, Token, ArbLiquidatorSwapParams, ArbLiquidatorContext } from "./types";
 import {
   logTable,
   logStringValue,
@@ -16,28 +16,12 @@ import {
   getContracts,
   getFeesUsd,
   getEthMarketRateUsd,
-  roundTwoDecimalPlaces
+  roundTwoDecimalPlaces,
+  arbLiquidatorMulticall
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
 const MIN_PROFIT_THRESHOLD_USD = 5; // Only swap if we're going to make at least $5.00
-
-interface RelayerContext {
-  tokenInAllowance: BigNumber;
-  tokenInBalance: BigNumber;
-}
-
-interface TokenWithRate extends Token {
-  assetRateUsd: number;
-}
-
-interface ArbLiquidatorContext {
-  tokenIn: TokenWithRate;
-  tokenOut: TokenWithRate;
-  tokenOutUnderlyingAsset: Token;
-  // tokenOutUnderlyingAsset: TokenWithRate;
-  relayer: RelayerContext;
-}
 
 interface SwapExactAmountInParams {
   liquidationPairAddress: string;
@@ -247,7 +231,7 @@ const getLiquidationContracts = (
   return { liquidationPairs, liquidationRouter, marketRate, vaults };
 };
 
-const testnetParseFloat = (amountBigNum: BigNumber, decimals: string): number => {
+const testnetParseFloat = (amountBigNum: BigNumber, decimals: number): number => {
   return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
 };
 
@@ -277,8 +261,10 @@ const getTokenOutAssetRateUsd = async (
 };
 
 // Gather information about this specific liquidation pair
-// This is complicated because tokenIn is the token to supply (likely the prize token, which is probably POOL),
-// while tokenOut is the Vault/Yield token, not the underlying asset which is likely the desired token (ie. DAI, USDC)
+// `tokenIn` is the token to supply (likely the prize token, which is probably POOL),
+// This gets complicated because `tokenOut` is the Vault/Yield token, not the underlying
+// asset which is likely the desired token (ie. DAI, USDC) - the desired
+// token is called `tokenOutUnderlyingAsset`
 //
 const getContext = async (
   marketRate: Contract,
@@ -289,81 +275,92 @@ const getContext = async (
   readProvider: Provider,
   relayerAddress: string
 ): Promise<ArbLiquidatorContext> => {
-  // 1. IN TOKEN
-  const tokenInAddress = await liquidationPair.tokenIn();
-  const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, readProvider);
-
-  const tokenIn: Token = {
-    address: tokenInAddress,
-    decimals: await tokenInContract.decimals(),
-    name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol()
-  };
-
-  // 2. VAULT TOKEN
-  const tokenOutAddress = await liquidationPair.tokenOut();
-  const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, readProvider);
-  const tokenOut: Token = {
-    address: tokenOutAddress,
-    decimals: await tokenOutContract.decimals(),
-    name: await tokenOutContract.name(),
-    symbol: await tokenOutContract.symbol()
-  };
-
-  // 3. VAULT UNDERLYING ASSET TOKEN
-  const vaultContract = contracts.contracts.find(
-    contract => contract.type === "Vault" && contract.address === tokenOutAddress
+  const context: ArbLiquidatorContext = await arbLiquidatorMulticall(
+    marketRate,
+    vaults,
+    liquidationRouter,
+    liquidationPair,
+    contracts,
+    readProvider,
+    relayerAddress
   );
-  const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
+  return context;
 
-  const tokenOutUnderlyingAssetContract = new ethers.Contract(
-    vaultUnderlyingAsset.address,
-    ERC20Abi,
-    readProvider
-  );
+  // // 1. IN TOKEN
+  // const tokenInAddress = await liquidationPair.tokenIn();
+  // const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, readProvider);
 
-  const tokenOutUnderlyingAsset: Token = {
-    address: vaultUnderlyingAsset.address,
-    decimals: await tokenOutUnderlyingAssetContract.decimals(),
-    name: vaultUnderlyingAsset.name,
-    symbol: vaultUnderlyingAsset.symbol
-  };
+  // const tokenIn: Token = {
+  //   address: tokenInAddress,
+  //   decimals: await tokenInContract.decimals(),
+  //   name: await tokenInContract.name(),
+  //   symbol: await tokenInContract.symbol()
+  // };
 
-  // 4. RELAYER tokenIn BALANCE
-  let balanceResult = await tokenInContract.functions.balanceOf(relayerAddress);
+  // // 2. VAULT TOKEN
+  // const tokenOutAddress = await liquidationPair.tokenOut();
+  // const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, readProvider);
+  // const tokenOut: Token = {
+  //   address: tokenOutAddress,
+  //   decimals: await tokenOutContract.decimals(),
+  //   name: await tokenOutContract.name(),
+  //   symbol: await tokenOutContract.symbol()
+  // };
 
-  // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
-  let allowanceResult = await tokenInContract.functions.allowance(
-    relayerAddress,
-    liquidationRouter.address
-  );
+  // // 3. VAULT UNDERLYING ASSET TOKEN
+  // const vaultContract = contracts.contracts.find(
+  //   contract => contract.type === "Vault" && contract.address === tokenOutAddress
+  // );
+  // const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
 
-  const relayer = {
-    tokenInBalance: balanceResult[0],
-    tokenInAllowance: allowanceResult[0]
-  };
+  // const tokenOutUnderlyingAssetContract = new ethers.Contract(
+  //   vaultUnderlyingAsset.address,
+  //   ERC20Abi,
+  //   readProvider
+  // );
 
-  // prize token/pool
-  const tokenInAssetRateUsd = await getTokenInAssetRateUsd(marketRate, tokenIn);
-  const tokenInWithRate: TokenWithRate = {
-    ...tokenIn,
-    assetRateUsd: tokenInAssetRateUsd
-  };
+  // const tokenOutUnderlyingAsset: Token = {
+  //   address: vaultUnderlyingAsset.address,
+  //   decimals: await tokenOutUnderlyingAssetContract.decimals(),
+  //   name: vaultUnderlyingAsset.name,
+  //   symbol: vaultUnderlyingAsset.symbol
+  // };
 
-  // yield token/vault underlying asset rate
-  // TODO: Double-check that the asset rate we're interested in is the underlying token asset ...
-  const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(marketRate, vaults, tokenOut);
-  const tokenOutWithRate: TokenWithRate = {
-    ...tokenOut,
-    assetRateUsd: tokenOutAssetRateUsd
-  };
+  // // 4. RELAYER tokenIn BALANCE
+  // let balanceResult = await tokenInContract.functions.balanceOf(relayerAddress);
 
-  return {
-    tokenIn: tokenInWithRate,
-    tokenOut: tokenOutWithRate,
-    tokenOutUnderlyingAsset,
-    relayer
-  };
+  // // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
+  // let allowanceResult = await tokenInContract.functions.allowance(
+  //   relayerAddress,
+  //   liquidationRouter.address
+  // );
+
+  // const relayer = {
+  //   tokenInBalance: balanceResult[0],
+  //   tokenInAllowance: allowanceResult[0]
+  // };
+
+  // // prize token/pool
+  // const tokenInAssetRateUsd = await getTokenInAssetRateUsd(marketRate, tokenIn);
+  // const tokenInWithRate: TokenWithRate = {
+  //   ...tokenIn,
+  //   assetRateUsd: tokenInAssetRateUsd
+  // };
+
+  // // yield token/vault underlying asset rate
+  // // TODO: Double-check that the asset rate we're interested in is the underlying token asset ...
+  // const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(marketRate, vaults, tokenOut);
+  // const tokenOutWithRate: TokenWithRate = {
+  //   ...tokenOut,
+  //   assetRateUsd: tokenOutAssetRateUsd
+  // };
+
+  // return {
+  //   tokenIn: tokenInWithRate,
+  //   tokenOut: tokenOutWithRate,
+  //   tokenOutUnderlyingAsset,
+  //   relayer
+  // };
 };
 
 const printContext = context => {
