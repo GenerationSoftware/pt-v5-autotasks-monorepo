@@ -15012,7 +15012,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,
@@ -16931,7 +16931,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,
@@ -18850,7 +18850,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,
@@ -20769,7 +20769,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,
@@ -22688,7 +22688,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,
@@ -24607,7 +24607,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,
@@ -26526,7 +26526,7 @@ export const testnetContractsBlob: ContractsBlob = {
         minor: 0,
         patch: 0
       },
-      type: "LiquidationPairFactory",
+      type: "LiquidationPair",
       abi: [
         {
           anonymous: false,

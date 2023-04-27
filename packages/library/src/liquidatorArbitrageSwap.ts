@@ -70,6 +70,7 @@ export async function liquidatorArbitrageSwap(
     printAsterisks();
     const liquidationPair = liquidationPairs[i];
     console.log(`LiquidationPair #${i + 1}`);
+    console.log(liquidationPair.address);
     printSpacer();
 
     const context: ArbLiquidatorContext = await getContext(
