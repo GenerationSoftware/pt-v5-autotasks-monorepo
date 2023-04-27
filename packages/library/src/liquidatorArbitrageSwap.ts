@@ -85,7 +85,13 @@ export async function liquidatorArbitrageSwap(
       console.log(chalk.red("Insufficient balance ✔"));
 
       const diff = exactAmountIn.sub(context.relayer.tokenInBalance);
-      console.log(chalk.grey(`Increase balance by: ${diff}`));
+      console.log(
+        chalk.bgBlack.red(
+          `Increase relayer '${relayerAddress}' ${
+            context.tokenIn.symbol
+          } balance by ${ethers.utils.formatUnits(diff, context.tokenIn.decimals)}`
+        )
+      );
 
       // continue;
     }
@@ -178,6 +184,12 @@ const approve = async (
     const allowance = context.relayer.tokenInAllowance;
 
     if (allowance.lt(exactAmountIn)) {
+      console.log(
+        chalk.bgBlack.red(
+          `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum`
+        )
+      );
+
       const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
       await tx.wait();
 

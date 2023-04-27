@@ -2,7 +2,7 @@ import { Relayer, RelayerParams } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {
   testnetContractsBlob as contracts,
-  testnetPrizePoolHandleCompletePrize,
+  testnetPrizePoolHandleCompletePrize
 } from "@pooltogether/v5-autotasks-library";
 
 export async function handler(event: RelayerParams) {
@@ -15,14 +15,14 @@ export async function handler(event: RelayerParams) {
   try {
     const transactionPopulated = await testnetPrizePoolHandleCompletePrize(contracts, {
       chainId,
-      provider: signer,
+      provider: provider
     });
 
     if (transactionPopulated) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 200000,
+        gasLimit: 200000
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {
