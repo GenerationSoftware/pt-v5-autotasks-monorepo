@@ -32,7 +32,8 @@ interface ClaimPrizesParams {
   feeRecipient: string;
 }
 
-const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
+const MARKET_RATE_CONTRACT_DECIMALS = 8;
+const MIN_PROFIT_THRESHOLD_USD = -300; // Only claim if we're going to make at least $5.00
 
 export async function getClaimerProfitablePrizeTxs(
   contracts: ContractsBlob,
@@ -295,5 +296,5 @@ const getFeeTokenAssetRateUsd = async (marketRate: Contract, feeToken: Token): P
   const feeTokenAddress = feeToken.address;
   const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
 
-  return testnetParseFloat(feeTokenRate, feeToken.decimals);
+  return testnetParseFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
