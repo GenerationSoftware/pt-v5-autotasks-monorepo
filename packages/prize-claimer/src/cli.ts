@@ -46,9 +46,6 @@ if (esMain(import.meta)) {
   printAsterisks();
   console.log(chalk.blue(`5. Sending transactions ...`));
   printSpacer();
-  console.log("populatedTxs");
-  console.log(populatedTxs);
-  printSpacer();
 
   const fakeEvent = {
     apiKey: config.get("RELAYER_API_KEY"),

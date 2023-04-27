@@ -110,13 +110,6 @@ export interface VaultAccount {
   id: string;
 }
 
-export interface VaultWinners {
-  [vault: string]: {
-    tiers: number[];
-    winners: string[];
-  };
-}
-
 export interface Token {
   name: string;
   decimals: number;
@@ -126,6 +119,8 @@ export interface Token {
 
 export interface ClaimPrizeContext {
   feeToken: Token;
+  drawId: string;
+  feeTokenRateUsd: number;
 }
 
 export interface GetClaimerProfitablePrizeTxsParams {
@@ -155,4 +150,10 @@ export interface ArbLiquidatorContext {
   tokenOut: Token;
   tokenOutUnderlyingAsset: TokenWithRate;
   relayer: RelayerContext;
+}
+
+export interface Claim {
+  vault: string;
+  winner: string;
+  tier: number;
 }

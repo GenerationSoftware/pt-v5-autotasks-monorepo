@@ -13,9 +13,7 @@ export const getSharedQuestions = config => {
     {
       name: "existingConfig",
       type: "list",
-      message: chalk.magenta.bold(
-        "Use existing config? (~/.config/configstore/@pooltogether/v5-autotasks-prize-claimer.json):"
-      ),
+      message: chalk.magenta.bold(`Use existing config? (${config._path}):`),
       choices: ["Yes", "No"],
       when: config.has("DEFENDER_TEAM_API_KEY"),
       filter(val) {
