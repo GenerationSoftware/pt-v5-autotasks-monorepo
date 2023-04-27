@@ -3,6 +3,197 @@ import { ContractsBlob } from "./types";
 // 20230427105133
 // https://raw.githubusercontent.com/pooltogether/v5-testnet/17a5a676f125dbaa9f84bcc6f566b1b21f165c65/deployments/ethGoerli/contracts.json
 
+const liquidationPairAbi = [
+  {
+    inputs: [
+      {
+        internalType: "contract ILiquidationSource",
+        name: "_source",
+        type: "address"
+      },
+      { internalType: "address", name: "_tokenIn", type: "address" },
+      { internalType: "address", name: "_tokenOut", type: "address" },
+      { internalType: "UFixed32x4", name: "_swapMultiplier", type: "uint32" },
+      {
+        internalType: "UFixed32x4",
+        name: "_liquidityFraction",
+        type: "uint32"
+      },
+      { internalType: "uint128", name: "_virtualReserveIn", type: "uint128" },
+      { internalType: "uint128", name: "_virtualReserveOut", type: "uint128" },
+      { internalType: "uint256", name: "_minK", type: "uint256" }
+    ],
+    stateMutability: "nonpayable",
+    type: "constructor"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "account",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amountIn",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amountOut",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint128",
+        name: "virtualReserveIn",
+        type: "uint128"
+      },
+      {
+        indexed: false,
+        internalType: "uint128",
+        name: "virtualReserveOut",
+        type: "uint128"
+      }
+    ],
+    name: "Swapped",
+    type: "event"
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_amountOut", type: "uint256" }],
+    name: "computeExactAmountIn",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_amountIn", type: "uint256" }],
+    name: "computeExactAmountOut",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "liquidityFraction",
+    outputs: [{ internalType: "UFixed32x4", name: "", type: "uint32" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "maxAmountIn",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "maxAmountOut",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "minK",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "nextLiquidationState",
+    outputs: [
+      { internalType: "uint128", name: "", type: "uint128" },
+      { internalType: "uint128", name: "", type: "uint128" }
+    ],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "source",
+    outputs: [
+      {
+        internalType: "contract ILiquidationSource",
+        name: "",
+        type: "address"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_account", type: "address" },
+      { internalType: "uint256", name: "_amountIn", type: "uint256" },
+      { internalType: "uint256", name: "_amountOutMin", type: "uint256" }
+    ],
+    name: "swapExactAmountIn",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_account", type: "address" },
+      { internalType: "uint256", name: "_amountOut", type: "uint256" },
+      { internalType: "uint256", name: "_amountInMax", type: "uint256" }
+    ],
+    name: "swapExactAmountOut",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "swapMultiplier",
+    outputs: [{ internalType: "UFixed32x4", name: "", type: "uint32" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "target",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "tokenIn",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "tokenOut",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "virtualReserveIn",
+    outputs: [{ internalType: "uint128", name: "", type: "uint128" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "virtualReserveOut",
+    outputs: [{ internalType: "uint128", name: "", type: "uint128" }],
+    stateMutability: "view",
+    type: "function"
+  }
+];
+
 export const testnetContractsBlob: ContractsBlob = {
   name: "Hyperstructure Testnet",
   version: {
@@ -15013,174 +15204,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     },
     {
       chainId: 5,
@@ -16932,174 +16956,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     },
     {
       chainId: 5,
@@ -18851,174 +18708,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     },
     {
       chainId: 5,
@@ -20770,174 +20460,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     },
     {
       chainId: 5,
@@ -22689,174 +22212,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     },
     {
       chainId: 5,
@@ -24608,174 +23964,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     },
     {
       chainId: 5,
@@ -26527,174 +25716,7 @@ export const testnetContractsBlob: ContractsBlob = {
         patch: 0
       },
       type: "LiquidationPair",
-      abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "contract LiquidationPair",
-              name: "liquidator",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "contract ILiquidationSource",
-              name: "source",
-              type: "address"
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "tokenIn",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "tokenOut",
-              type: "address"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "swapMultiplier",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "UFixed32x4",
-              name: "liquidityFraction",
-              type: "uint32"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint128",
-              name: "virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "minK",
-              type: "uint256"
-            }
-          ],
-          name: "PairCreated",
-          type: "event"
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          name: "allPairs",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract ILiquidationSource",
-              name: "_source",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenIn",
-              type: "address"
-            },
-            {
-              internalType: "address",
-              name: "_tokenOut",
-              type: "address"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_swapMultiplier",
-              type: "uint32"
-            },
-            {
-              internalType: "UFixed32x4",
-              name: "_liquidityFraction",
-              type: "uint32"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveIn",
-              type: "uint128"
-            },
-            {
-              internalType: "uint128",
-              name: "_virtualReserveOut",
-              type: "uint128"
-            },
-            {
-              internalType: "uint256",
-              name: "_mink",
-              type: "uint256"
-            }
-          ],
-          name: "createPair",
-          outputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          stateMutability: "nonpayable",
-          type: "function"
-        },
-        {
-          inputs: [
-            {
-              internalType: "contract LiquidationPair",
-              name: "",
-              type: "address"
-            }
-          ],
-          name: "deployedPairs",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        },
-        {
-          inputs: [],
-          name: "totalPairs",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256"
-            }
-          ],
-          stateMutability: "view",
-          type: "function"
-        }
-      ]
+      abi: liquidationPairAbi
     }
   ]
 };

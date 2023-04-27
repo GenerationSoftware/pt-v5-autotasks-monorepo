@@ -29,7 +29,9 @@ export const arbLiquidatorMulticall = async (
   const tokenInCalls: ContractCallContext["calls"] = [];
 
   // 1. IN TOKEN
-  const tokenInAddress = await liquidationPair.tokenIn();
+  console.log(liquidationPair);
+  const tokenInAddress = await liquidationPair.functions.tokenIn();
+  // const tokenInAddress = await liquidationPair.tokenIn();
 
   tokenInCalls.push({
     reference: `decimals`,
