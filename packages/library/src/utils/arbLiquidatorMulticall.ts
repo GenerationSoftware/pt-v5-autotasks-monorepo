@@ -1,4 +1,4 @@
-import { ethers, Contract } from "ethers";
+import { ethers, Contract, BigNumber } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { ContractCallContext } from "ethereum-multicall";
 
@@ -20,21 +20,16 @@ import { ERC20Abi } from "../abis/ERC20Abi";
  */
 export const arbLiquidatorMulticall = async (
   marketRate: Contract,
-  vaults: Contract[],
   liquidationRouter: Contract,
   liquidationPair: Contract,
   contracts: ContractsBlob,
   readProvider: Provider,
   relayerAddress: string
-  // ): Promise<ArbLiquidatorContext> => {
-): Promise<any> => {
-  // let context: ArbLiquidatorContext = {};
-
+): Promise<ArbLiquidatorContext> => {
   const tokenInCalls: ContractCallContext["calls"] = [];
 
   // 1. IN TOKEN
   const tokenInAddress = await liquidationPair.tokenIn();
-  // const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, readProvider);
 
   tokenInCalls.push({
     reference: `decimals`,
@@ -56,7 +51,6 @@ export const arbLiquidatorMulticall = async (
 
   // 2. OUT TOKEN
   const tokenOutAddress = await liquidationPair.tokenOut();
-  // const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, readProvider);
 
   tokenOutCalls.push({
     reference: `decimals`,
@@ -75,41 +69,63 @@ export const arbLiquidatorMulticall = async (
   });
 
   // // 3. VAULT UNDERLYING ASSET TOKEN
-  const tokenOutUnderlyingAssetCalls: ContractCallContext["calls"] = [];
+  const vaultUnderlyingAssetCalls: ContractCallContext["calls"] = [];
 
   const vaultContract = contracts.contracts.find(
     contract => contract.type === "Vault" && contract.address === tokenOutAddress
   );
-  const tokenOutUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
-  const tokenOutUnderlyingAssetAddress = tokenOutUnderlyingAsset.address;
+  const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
+  const vaultUnderlyingAssetAddress = vaultUnderlyingAsset.address;
 
-  // const tokenOutUnderlyingAssetContract = new ethers.Contract(
-  //   tokenOutUnderlyingAsset.address,
-  //   ERC20Abi,
-  //   readProvider
-  // );
-
-  // const tokenOutUnderlyingAsset: Token = {
-  //   address: vaultUnderlyingAsset.address,
-  //   decimals: await tokenOutUnderlyingAssetContract.decimals(),
-  //   name: vaultUnderlyingAsset.name,
-  //   symbol: vaultUnderlyingAsset.symbol
-  // };
-
-  tokenOutUnderlyingAssetCalls.push({
+  vaultUnderlyingAssetCalls.push({
     reference: `decimals`,
     methodName: "decimals",
     methodParameters: []
   });
-  tokenOutUnderlyingAssetCalls.push({
+  vaultUnderlyingAssetCalls.push({
     reference: `name`,
     methodName: "name",
     methodParameters: []
   });
-  tokenOutUnderlyingAssetCalls.push({
+  vaultUnderlyingAssetCalls.push({
     reference: `symbol`,
     methodName: "symbol",
     methodParameters: []
+  });
+
+  // // 4. RELAYER tokenIn BALANCE
+  tokenInCalls.push({
+    reference: `balanceOf`,
+    methodName: "balanceOf",
+    methodParameters: [relayerAddress]
+  });
+
+  // // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
+  tokenInCalls.push({
+    reference: `allowance`,
+    methodName: "allowance",
+    methodParameters: [relayerAddress, liquidationRouter.address]
+  });
+
+  // 6. MarketRate Calls
+  const marketRateCalls: ContractCallContext["calls"] = [];
+
+  // // // prize token/pool
+  const marketRateContractBlob = contracts.contracts.find(
+    contract => contract.type === "MarketRate"
+  );
+  const marketRateAddress = marketRate.address;
+  marketRateCalls.push({
+    reference: `priceFeed-${tokenInAddress}`,
+    methodName: "priceFeed",
+    methodParameters: [tokenInAddress, "USD"]
+  });
+
+  // // yield token/vault underlying asset rate
+  marketRateCalls.push({
+    reference: `priceFeed-${vaultUnderlyingAssetAddress}`,
+    methodName: "priceFeed",
+    methodParameters: [vaultUnderlyingAssetAddress, "USD"]
   });
 
   const queries: ContractCallContext[] = [
@@ -126,26 +142,77 @@ export const arbLiquidatorMulticall = async (
       calls: tokenOutCalls
     },
     {
-      reference: tokenOutUnderlyingAssetAddress,
-      contractAddress: tokenOutUnderlyingAssetAddress,
+      reference: vaultUnderlyingAssetAddress,
+      contractAddress: vaultUnderlyingAssetAddress,
       abi: ERC20Abi,
-      calls: tokenOutUnderlyingAssetCalls
+      calls: vaultUnderlyingAssetCalls
+    },
+    {
+      reference: marketRateAddress,
+      contractAddress: marketRateAddress,
+      abi: marketRateContractBlob.abi,
+      calls: marketRateCalls
     }
   ];
 
+  // Get and process results!
   const multicallResults = await getComplexMulticallResults(readProvider, queries);
 
-  const tokenInMulticallsResults = multicallResults[tokenInAddress];
-  const tokenIn: Token = {
-    address: tokenInAddress,
-    decimals: tokenInMulticallsResults.decimals[0],
-    name: tokenInMulticallsResults.name[0],
-    symbol: tokenInMulticallsResults.symbol[0]
-  };
-  console.log("multicallResults");
-  console.log(multicallResults);
-  console.log("tokenIn");
-  console.log(tokenIn);
+  const marketRateMulticallResults = multicallResults[marketRateAddress];
+  const tokenInPriceFeedResults = marketRateMulticallResults[`priceFeed-${tokenInAddress}`][0];
 
-  return {};
+  // 1. tokenIn results
+  const tokenInMulticallResults = multicallResults[tokenInAddress];
+  const tokenInAssetRateUsd = testnetParseFloat(
+    BigNumber.from(tokenInPriceFeedResults),
+    tokenInMulticallResults.decimals[0]
+  );
+  const tokenIn: TokenWithRate = {
+    address: tokenInAddress,
+    decimals: tokenInMulticallResults.decimals[0],
+    name: tokenInMulticallResults.name[0],
+    symbol: tokenInMulticallResults.symbol[0],
+    assetRateUsd: tokenInAssetRateUsd
+  };
+
+  // 2. tokenOut results (vault token)
+  const tokenOutMulticallResults = multicallResults[tokenOutAddress];
+  const tokenOut: Token = {
+    address: tokenOutAddress,
+    decimals: tokenOutMulticallResults.decimals[0],
+    name: tokenOutMulticallResults.name[0],
+    symbol: tokenOutMulticallResults.symbol[0]
+  };
+
+  // 3. vault underlying asset (hard asset such as DAI or USDC) results
+  const vaultUnderlyingAssetMulticallResults = multicallResults[vaultUnderlyingAssetAddress];
+  const vaultUnderlyingAssetPriceFeedResults =
+    marketRateMulticallResults[`priceFeed-${vaultUnderlyingAssetAddress}`][0];
+  const vaultUnderlyingAssetAssetRateUsd = testnetParseFloat(
+    BigNumber.from(vaultUnderlyingAssetPriceFeedResults),
+    vaultUnderlyingAssetMulticallResults.decimals[0]
+  );
+  const vaultUnderlyingAssetUnderlyingAsset: TokenWithRate = {
+    address: vaultUnderlyingAsset.address,
+    decimals: vaultUnderlyingAssetMulticallResults.decimals[0],
+    name: vaultUnderlyingAssetMulticallResults.name[0],
+    symbol: vaultUnderlyingAssetMulticallResults.symbol[0],
+    assetRateUsd: vaultUnderlyingAssetAssetRateUsd
+  };
+
+  const relayer = {
+    tokenInBalance: BigNumber.from(tokenInMulticallResults.balanceOf[0]),
+    tokenInAllowance: BigNumber.from(tokenInMulticallResults.allowance[0])
+  };
+
+  return {
+    tokenIn,
+    tokenOut,
+    tokenOutUnderlyingAsset: vaultUnderlyingAssetUnderlyingAsset,
+    relayer
+  };
+};
+
+const testnetParseFloat = (amountBigNum: BigNumber, decimals: number): number => {
+  return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
 };

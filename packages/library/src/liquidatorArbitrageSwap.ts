@@ -42,7 +42,7 @@ export async function liquidatorArbitrageSwap(
 
   // #1. Get contracts
   //
-  const { liquidationPairs, liquidationRouter, marketRate, vaults } = getLiquidationContracts(
+  const { liquidationPairs, liquidationRouter, marketRate } = getLiquidationContracts(
     contracts,
     params
   );
@@ -58,7 +58,6 @@ export async function liquidatorArbitrageSwap(
 
     const context: ArbLiquidatorContext = await getContext(
       marketRate,
-      vaults,
       liquidationRouter,
       liquidationPair,
       contracts,
@@ -201,7 +200,6 @@ const getLiquidationContracts = (
   liquidationPairs: Contract[];
   liquidationRouter: Contract;
   marketRate: Contract;
-  vaults: Contract[];
 } => {
   const { chainId, readProvider, writeProvider } = params;
 
@@ -226,38 +224,8 @@ const getLiquidationContracts = (
     contractsVersion
   );
   const marketRate = getContract("MarketRate", chainId, readProvider, contracts, contractsVersion);
-  const vaults = getContracts("Vault", chainId, readProvider, contracts, contractsVersion);
 
-  return { liquidationPairs, liquidationRouter, marketRate, vaults };
-};
-
-const testnetParseFloat = (amountBigNum: BigNumber, decimals: number): number => {
-  return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
-};
-
-const getTokenInAssetRateUsd = async (marketRate: Contract, tokenIn: Token): Promise<number> => {
-  const tokenInAddress = tokenIn.address;
-  const tokenInRate = await marketRate.priceFeed(tokenInAddress, "USD");
-
-  return testnetParseFloat(tokenInRate, tokenIn.decimals);
-};
-
-// TODO: Double-check that the asset rate we're interested in is the underlying token asset ...
-const getTokenOutAssetRateUsd = async (
-  marketRate: Contract,
-  vaults: Contract[],
-  tokenOut: Token
-): Promise<number> => {
-  // yield token/vault
-  const tokenOutAddress = tokenOut.address;
-
-  // underlying stablecoin we actually want
-  const vaultContract = vaults.find(contract => contract.address === tokenOutAddress);
-  const tokenOutAsset = await vaultContract.functions.asset();
-  const tokenOutAssetAddress = tokenOutAsset[0];
-  const tokenOutAssetRate = await marketRate.priceFeed(tokenOutAssetAddress, "USD");
-
-  return testnetParseFloat(tokenOutAssetRate, tokenOut.decimals);
+  return { liquidationPairs, liquidationRouter, marketRate };
 };
 
 // Gather information about this specific liquidation pair
@@ -268,7 +236,6 @@ const getTokenOutAssetRateUsd = async (
 //
 const getContext = async (
   marketRate: Contract,
-  vaults: Contract[],
   liquidationRouter: Contract,
   liquidationPair: Contract,
   contracts: ContractsBlob,
@@ -277,90 +244,14 @@ const getContext = async (
 ): Promise<ArbLiquidatorContext> => {
   const context: ArbLiquidatorContext = await arbLiquidatorMulticall(
     marketRate,
-    vaults,
     liquidationRouter,
     liquidationPair,
     contracts,
     readProvider,
     relayerAddress
   );
+
   return context;
-
-  // // 1. IN TOKEN
-  // const tokenInAddress = await liquidationPair.tokenIn();
-  // const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, readProvider);
-
-  // const tokenIn: Token = {
-  //   address: tokenInAddress,
-  //   decimals: await tokenInContract.decimals(),
-  //   name: await tokenInContract.name(),
-  //   symbol: await tokenInContract.symbol()
-  // };
-
-  // // 2. VAULT TOKEN
-  // const tokenOutAddress = await liquidationPair.tokenOut();
-  // const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, readProvider);
-  // const tokenOut: Token = {
-  //   address: tokenOutAddress,
-  //   decimals: await tokenOutContract.decimals(),
-  //   name: await tokenOutContract.name(),
-  //   symbol: await tokenOutContract.symbol()
-  // };
-
-  // // 3. VAULT UNDERLYING ASSET TOKEN
-  // const vaultContract = contracts.contracts.find(
-  //   contract => contract.type === "Vault" && contract.address === tokenOutAddress
-  // );
-  // const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
-
-  // const tokenOutUnderlyingAssetContract = new ethers.Contract(
-  //   vaultUnderlyingAsset.address,
-  //   ERC20Abi,
-  //   readProvider
-  // );
-
-  // const tokenOutUnderlyingAsset: Token = {
-  //   address: vaultUnderlyingAsset.address,
-  //   decimals: await tokenOutUnderlyingAssetContract.decimals(),
-  //   name: vaultUnderlyingAsset.name,
-  //   symbol: vaultUnderlyingAsset.symbol
-  // };
-
-  // // 4. RELAYER tokenIn BALANCE
-  // let balanceResult = await tokenInContract.functions.balanceOf(relayerAddress);
-
-  // // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
-  // let allowanceResult = await tokenInContract.functions.allowance(
-  //   relayerAddress,
-  //   liquidationRouter.address
-  // );
-
-  // const relayer = {
-  //   tokenInBalance: balanceResult[0],
-  //   tokenInAllowance: allowanceResult[0]
-  // };
-
-  // // prize token/pool
-  // const tokenInAssetRateUsd = await getTokenInAssetRateUsd(marketRate, tokenIn);
-  // const tokenInWithRate: TokenWithRate = {
-  //   ...tokenIn,
-  //   assetRateUsd: tokenInAssetRateUsd
-  // };
-
-  // // yield token/vault underlying asset rate
-  // // TODO: Double-check that the asset rate we're interested in is the underlying token asset ...
-  // const tokenOutAssetRateUsd = await getTokenOutAssetRateUsd(marketRate, vaults, tokenOut);
-  // const tokenOutWithRate: TokenWithRate = {
-  //   ...tokenOut,
-  //   assetRateUsd: tokenOutAssetRateUsd
-  // };
-
-  // return {
-  //   tokenIn: tokenInWithRate,
-  //   tokenOut: tokenOutWithRate,
-  //   tokenOutUnderlyingAsset,
-  //   relayer
-  // };
 };
 
 const printContext = context => {
@@ -432,21 +323,21 @@ const calculateProfit = async (
   console.log(chalk.blue("5. Profit/Loss (USD):"));
   printSpacer();
 
-  const tokenOutUsd =
+  const tokenOutUnderlyingAssetUsd =
     parseFloat(ethers.utils.formatUnits(amountOutMin, context.tokenOut.decimals)) *
-    context.tokenOut.assetRateUsd;
+    context.tokenOutUnderlyingAsset.assetRateUsd;
   const tokenInUsd =
     parseFloat(ethers.utils.formatUnits(exactAmountIn, context.tokenIn.decimals)) *
     context.tokenIn.assetRateUsd;
 
-  const grossProfitUsd = tokenOutUsd - tokenInUsd;
+  const grossProfitUsd = tokenOutUnderlyingAssetUsd - tokenInUsd;
   const netProfitUsd = grossProfitUsd - maxFeeUsd;
 
   console.log(chalk.magenta("Gross profit = tokenOut - tokenIn"));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
-        tokenOutUsd
+        tokenOutUnderlyingAssetUsd
       )} - $${roundTwoDecimalPlaces(tokenInUsd)}`
     )
   );

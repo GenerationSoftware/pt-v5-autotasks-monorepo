@@ -152,8 +152,7 @@ export interface TokenWithRate extends Token {
 
 export interface ArbLiquidatorContext {
   tokenIn: TokenWithRate;
-  tokenOut: TokenWithRate;
-  tokenOutUnderlyingAsset: Token;
-  // tokenOutUnderlyingAsset: TokenWithRate;
+  tokenOut: Token;
+  tokenOutUnderlyingAsset: TokenWithRate;
   relayer: RelayerContext;
 }
