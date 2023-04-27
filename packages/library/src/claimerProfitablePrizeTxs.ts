@@ -33,7 +33,7 @@ interface ClaimPrizesParams {
 }
 
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
-const MIN_PROFIT_THRESHOLD_USD = -300; // Only claim if we're going to make at least $5.00
+const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
 
 export async function getClaimerProfitablePrizeTxs(
   contracts: ContractsBlob,
