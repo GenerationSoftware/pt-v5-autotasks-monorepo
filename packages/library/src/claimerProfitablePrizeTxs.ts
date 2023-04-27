@@ -66,6 +66,7 @@ export async function getClaimerProfitablePrizeTxs(
   if (vaults.length === 0) {
     throw new Error("Claimer: No vaults found in subgraph");
   }
+  console.log(`Processing ${vaults.length} vaults ...`);
 
   // #3. Get more data about which users are winners from the contract
   const vaultWinners: VaultWinners = await getVaultWinners(
@@ -74,6 +75,13 @@ export async function getClaimerProfitablePrizeTxs(
     prizePool,
     vaults
   );
+
+  const initialValue = 0;
+  const numWinners = Object.keys(vaultWinners).reduce(
+    (accumulator, vaultId) => vaultWinners[vaultId].winners.length + accumulator,
+    initialValue
+  );
+  console.log(`There are ${numWinners} winners in ${Object.keys(vaultWinners).length} vaults ...`);
 
   // #4. Start iterating through vaults
   printAsterisks();

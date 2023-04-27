@@ -136,8 +136,7 @@ export async function liquidatorArbitrageSwap(
           `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`
         )
       );
-      // continue;
-      throw new Error();
+      continue;
     }
 
     // #7. Finally, populate tx when profitable
@@ -153,7 +152,7 @@ export async function liquidatorArbitrageSwap(
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 450000
+        gasLimit: 600000
       });
       console.log(chalk.greenBright.bold("Transaction sent! ✔"));
       console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
