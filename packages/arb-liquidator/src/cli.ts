@@ -13,7 +13,7 @@ import {
 import { Relayer } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
-import { askQuestions } from "./helpers/questions";
+import { askQuestions, checkPackageConfig } from "./helpers/questions";
 
 import pkg from "../package.json";
 
@@ -49,6 +49,7 @@ if (esMain(import.meta)) {
   if (!answers.existingConfig) {
     config.set(answers);
   }
+  checkPackageConfig(config);
 
   const fakeEvent = {
     apiKey: config.get("RELAYER_API_KEY"),

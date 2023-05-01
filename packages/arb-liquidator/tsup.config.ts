@@ -18,7 +18,12 @@ export default defineConfig(opt => {
         (options.define.SWAP_RECIPIENT = `'${config.get("SWAP_RECIPIENT")}'`),
         (options.define.RELAYER_ADDRESS = `'${config.get("RELAYER_ADDRESS")}'`);
     },
-    noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall", "configstore"],
+    noExternal: [
+      "@pooltogether/v5-autotasks-library",
+      "ethereum-multicall",
+      "configstore",
+      "@flashbots/ethers-provider-bundle"
+    ],
     format: "cjs",
     entry: ["src/handler.ts"],
     splitting: false,

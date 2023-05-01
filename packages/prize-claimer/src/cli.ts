@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import { printAsterisks, printSpacer, NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
 
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
-import { askQuestions } from "./helpers/questions";
+import { checkPackageConfig, askQuestions } from "./helpers/questions";
 
 import pkg from "../package.json";
 
@@ -33,6 +33,7 @@ if (esMain(import.meta)) {
   if (!answers.existingConfig) {
     config.set(answers);
   }
+  checkPackageConfig(config);
 
   const params = cliLoadParams();
 

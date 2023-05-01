@@ -1456,6 +1456,11 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
+"@flashbots/ethers-provider-bundle@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@flashbots/ethers-provider-bundle/-/ethers-provider-bundle-0.6.1.tgz#30b0ff86d1b96e10c34f3dcba774b8908edb7f12"
+  integrity sha512-W7tSX832mi7XKlbg4dIMzV1HMw5Dg0ox0YOqPxW2nO2JqsAZwWYFrAk4nNZnsqRdexHiPF4JUYez/ELI5VpScA==
+
 "@gar/promisify@^1.1.3":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"
@@ -2934,16 +2939,6 @@
     yalc "^1.0.0-pre.53"
 
 "@pooltogether/v5-autotasks-library@file:packages/draw-beacon/.yalc/@pooltogether/v5-autotasks-library":
-  version "0.0.1-beta.1"
-  dependencies:
-    chalk "^4.1.2"
-    defender-relay-client "1.39.0"
-    ethers "5.7.2"
-    graphql "^16.6.0"
-    graphql-request "^5.2.0"
-    yalc "^1.0.0-pre.53"
-
-"@pooltogether/v5-autotasks-library@file:packages/library/.yalc/@pooltogether/v5-autotasks-library":
   version "0.0.1-beta.1"
   dependencies:
     chalk "^4.1.2"

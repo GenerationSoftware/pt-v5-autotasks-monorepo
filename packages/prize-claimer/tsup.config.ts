@@ -5,7 +5,7 @@ import pkg from "./package.json";
 
 const config = new Configstore(pkg.name);
 
-export default defineConfig((opt) => {
+export default defineConfig(opt => {
   return {
     esbuildOptions: (options, context) => {
       (options.define.DEFENDER_TEAM_API_KEY = `'${config.get("DEFENDER_TEAM_API_KEY")}'`),
@@ -17,10 +17,15 @@ export default defineConfig((opt) => {
         (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`),
         (options.define.FEE_RECIPIENT = `'${config.get("FEE_RECIPIENT")}'`);
     },
-    noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall", "configstore"],
+    noExternal: [
+      "@pooltogether/v5-autotasks-library",
+      "ethereum-multicall",
+      "configstore",
+      "@flashbots/ethers-provider-bundle"
+    ],
     format: "cjs",
     entry: ["src/handler.ts"],
     splitting: false,
-    clean: true,
+    clean: true
   };
 });

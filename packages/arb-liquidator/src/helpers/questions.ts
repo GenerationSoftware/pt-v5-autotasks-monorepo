@@ -1,13 +1,28 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
 
-import { getSharedQuestions, when } from "@pooltogether/v5-autotasks-library";
+import {
+  SHARED_CONFIG_KEYS,
+  checkConfig,
+  getSharedQuestions,
+  when
+} from "@pooltogether/v5-autotasks-library";
+
+const PACKAGE_CONFIG_KEYS = {
+  SWAP_RECIPIENT: "SWAP_RECIPIENT",
+  RELAYER_ADDRESS: "RELAYER_ADDRESS"
+};
+
+export const checkPackageConfig = config => {
+  checkConfig(config, SHARED_CONFIG_KEYS);
+  checkConfig(config, PACKAGE_CONFIG_KEYS);
+};
 
 export const askQuestions = config => {
   const questions: any[] = getSharedQuestions(config);
 
   questions.push({
-    name: "SWAP_RECIPIENT",
+    name: PACKAGE_CONFIG_KEYS.SWAP_RECIPIENT,
     type: "input",
     message: chalk.green("Enter the swap recipient address:"),
     when,
@@ -21,7 +36,7 @@ export const askQuestions = config => {
   });
 
   questions.push({
-    name: "RELAYER_ADDRESS",
+    name: PACKAGE_CONFIG_KEYS.RELAYER_ADDRESS,
     type: "input",
     message: chalk.green("Enter the relayer address:"),
     when,
