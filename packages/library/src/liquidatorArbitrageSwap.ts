@@ -5,7 +5,7 @@ import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import { Relayer } from "defender-relay-client";
 import chalk from "chalk";
 
-import { ContractsBlob, Token, ArbLiquidatorSwapParams, ArbLiquidatorContext } from "./types";
+import { ContractsBlob, ArbLiquidatorSwapParams, ArbLiquidatorContext } from "./types";
 import {
   logTable,
   logStringValue,
@@ -21,8 +21,6 @@ import {
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
-const MIN_PROFIT_THRESHOLD_USD = 5; // Only swap if we're going to make at least $5.00
-
 interface SwapExactAmountInParams {
   liquidationPairAddress: string;
   swapRecipient: string;
@@ -30,9 +28,19 @@ interface SwapExactAmountInParams {
   amountOutMin: BigNumber;
 }
 
-// Curently this does not return PopulatedTransactions like the other bots as we want to send each swap transaction
-// the instant we know if it is profitable or not as we iterate through all LiquidityPairs
-//
+/**
+ * Only swap if we're going to make at least $5.00. This likely should be a config option
+ */
+const MIN_PROFIT_THRESHOLD_USD = 5;
+
+/**
+ * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
+ *
+ * Curently this does not return PopulatedTransactions like the other bots as
+ * we want to send each swap transaction the instant we know if it is profitable
+ * or not as we iterate through all LiquidityPairs.
+ * @returns {undefined} - void function
+ */
 export async function liquidatorArbitrageSwap(
   contracts: ContractsBlob,
   relayer: Relayer,
@@ -77,7 +85,7 @@ export async function liquidatorArbitrageSwap(
 
     // #3. Print balance of tokenIn for relayer
     //
-    const { sufficientBalance } = await checkBalance(context, exactAmountIn);
+    const sufficientBalance = await checkBalance(context, exactAmountIn);
 
     if (sufficientBalance) {
       console.log(chalk.green("Sufficient balance ✔"));
@@ -110,6 +118,7 @@ export async function liquidatorArbitrageSwap(
       exactAmountIn,
       amountOutMin
     };
+    console.log(swapExactAmountInParams);
     const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
       ...Object.values(swapExactAmountInParams)
     );
@@ -162,10 +171,12 @@ export async function liquidatorArbitrageSwap(
   }
 }
 
-// Allowance
-//
-// Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's `tokenIn` (likely POOL)
-// We will set allowance to max as we trust the security of the LiquidationRouter contract
+/**
+ * Allowance - Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's
+ * `tokenIn` (likely POOL). We will set allowance to max as we trust the security of the
+ * LiquidationRouter contract (you may want to change this!)
+ * @returns {undefined} - void function
+ */
 const approve = async (
   exactAmountIn: BigNumber,
   liquidationRouter: Contract,
@@ -205,6 +216,11 @@ const approve = async (
   }
 };
 
+/**
+ * Find and initialize the various contracts we will need for all liquidation pairs
+ * @returns {Promise} All of the LiquidationPair contracts, the LiquidationRouter contract
+ *                    and the MarketRate contract initialized as ethers contracts
+ */
 const getLiquidationContracts = (
   contracts: ContractsBlob,
   params: ArbLiquidatorSwapParams
@@ -240,12 +256,14 @@ const getLiquidationContracts = (
   return { liquidationPairs, liquidationRouter, marketRate };
 };
 
-// Gather information about this specific liquidation pair
-// `tokenIn` is the token to supply (likely the prize token, which is probably POOL),
-// This gets complicated because `tokenOut` is the Vault/Yield token, not the underlying
-// asset which is likely the desired token (ie. DAI, USDC) - the desired
-// token is called `tokenOutUnderlyingAsset`
-//
+/**
+ * Gather information about this specific liquidation pair
+ * `tokenIn` is the token to supply (likely the prize token, which is probably POOL),
+ * This gets complicated because `tokenOut` is the Vault/Yield token, not the
+ * underlying asset which is likely the desired token (ie. DAI, USDC) - the desired
+ * token is called `tokenOutUnderlyingAsset`
+ * @returns {Promise} Promise of an ArbLiquidatorContext object with all the data about this pair
+ */
 const getContext = async (
   marketRate: Contract,
   liquidationRouter: Contract,
@@ -290,10 +308,14 @@ const printContext = context => {
   );
 };
 
+/**
+ * Tests if the relayer has enough of the tokenIn to swap
+ * @returns {Promise} Promise boolean if the balance is sufficient to swap
+ */
 const checkBalance = async (
   context: ArbLiquidatorContext,
   exactAmountIn: BigNumber
-): Promise<{ sufficientBalance: boolean }> => {
+): Promise<boolean> => {
   printAsterisks();
   console.log(chalk.blue("2. Balance & Allowance"));
   console.log("Checking relayer 'tokenIn' balance ...");
@@ -301,9 +323,13 @@ const checkBalance = async (
   const tokenInBalance = context.relayer.tokenInBalance;
   const sufficientBalance = tokenInBalance.gt(exactAmountIn);
 
-  return { sufficientBalance };
+  return sufficientBalance;
 };
 
+/**
+ * Calculates the amount of profit the bot will make on this swap and if it's profitable or not
+ * @returns {Promise} Promise boolean of profitability
+ */
 const calculateProfit = async (
   contracts: ContractsBlob,
   marketRate: Contract,
@@ -376,6 +402,10 @@ const calculateProfit = async (
   return profitable;
 };
 
+/**
+ * Calculates necessary input parameters for the swap call based on current state of the contracts
+ * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
+ */
 const calculateAmounts = async (
   liquidationPair: Contract,
   context: ArbLiquidatorContext

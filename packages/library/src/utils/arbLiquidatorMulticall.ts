@@ -1,9 +1,9 @@
-import { ethers, Contract, BigNumber } from "ethers";
+import { Contract, BigNumber } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { ContractCallContext } from "ethereum-multicall";
 
 import { ContractsBlob, ArbLiquidatorContext, Token, TokenWithRate } from "../types";
-import { getComplexMulticallResults } from "../utils";
+import { getComplexMulticallResults, parseBigNumberAsFloat } from "../utils";
 import { ERC20Abi } from "../abis/ERC20Abi";
 
 /**
@@ -163,7 +163,7 @@ export const arbLiquidatorMulticall = async (
 
   // 1. tokenIn results
   const tokenInMulticallResults = multicallResults[tokenInAddress];
-  const tokenInAssetRateUsd = testnetParseFloat(
+  const tokenInAssetRateUsd = parseBigNumberAsFloat(
     BigNumber.from(tokenInPriceFeedResults),
     tokenInMulticallResults.decimals[0]
   );
@@ -188,7 +188,7 @@ export const arbLiquidatorMulticall = async (
   const vaultUnderlyingAssetMulticallResults = multicallResults[vaultUnderlyingAssetAddress];
   const vaultUnderlyingAssetPriceFeedResults =
     marketRateMulticallResults[`priceFeed-${vaultUnderlyingAssetAddress}`][0];
-  const vaultUnderlyingAssetAssetRateUsd = testnetParseFloat(
+  const vaultUnderlyingAssetAssetRateUsd = parseBigNumberAsFloat(
     BigNumber.from(vaultUnderlyingAssetPriceFeedResults),
     vaultUnderlyingAssetMulticallResults.decimals[0]
   );
@@ -211,8 +211,4 @@ export const arbLiquidatorMulticall = async (
     tokenOutUnderlyingAsset: vaultUnderlyingAssetUnderlyingAsset,
     relayer
   };
-};
-
-const testnetParseFloat = (amountBigNum: BigNumber, decimals: number): number => {
-  return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
 };

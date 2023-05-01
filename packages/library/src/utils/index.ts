@@ -1,6 +1,6 @@
 export { getContract } from "./getContract";
 export { getContracts } from "./getContracts";
-export { roundTwoDecimalPlaces } from "./math";
+export { roundTwoDecimalPlaces, parseBigNumberAsFloat } from "./math";
 export { getFeesUsd, getEthMarketRateUsd } from "./getFeesUsd";
 export * from "./subgraphs";
 export * from "./multicall";

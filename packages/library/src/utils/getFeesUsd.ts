@@ -5,11 +5,15 @@ import { ContractsBlob } from "../types";
 
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
-/// @notice Gather info on current fees from the chain
-/// @param estimatedGasLimit: how much gas the function is estimated to use (in wei)
-/// @param ethMarketRateUsd: provided from MarketRate contract or from an API
-/// @param provider: eth provider
-/// @return baseFeeUsd, maxFeeUsd, avgFeeUsd
+/**
+ * Gather info on current fees from the chain
+ *
+ * @param {BigNumber} estimatedGasLimit, how much gas the function is estimated to use (in wei)
+ * @param {ethMarketRateUsd} context, provided from MarketRate contract or from an API
+ * @param {Provider} provider, any ethers provider
+ * @returns {Promise} Promise object with recent baseFeeUsd & maxFeeUsd from the chain
+ *                    while avgFeeUsd is in between the two
+ **/
 export const getFeesUsd = async (
   estimatedGasLimit: BigNumber,
   ethMarketRateUsd: number,
@@ -33,8 +37,13 @@ export const getFeesUsd = async (
   return fees;
 };
 
-// On testnet: Search testnet contract blob to get wETH contract then ask MarketRate contract
-// TODO: Coingecko/0x spot API/other for production rates
+/**
+ * Gets the current USD value of ETH
+ * On testnet: Search testnet contract blob to get wETH contract then ask MarketRate contract
+ * TODO: 0x spot API/DEX subgraphs/other sources for production rates
+ *
+ * @returns {number} The spot price for ETH in USD
+ **/
 export const getEthMarketRateUsd = async (contracts: ContractsBlob, marketRate: Contract) => {
   const wethContract = contracts.contracts.find(
     contract =>

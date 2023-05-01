@@ -22,7 +22,8 @@ import {
   getEthMarketRateUsd,
   getSubgraphVaults,
   getWinners,
-  roundTwoDecimalPlaces
+  roundTwoDecimalPlaces,
+  parseBigNumberAsFloat
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
@@ -32,9 +33,22 @@ interface ClaimPrizesParams {
   feeRecipient: string;
 }
 
+/**
+ * For testnet MarketRate contract
+ */
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
-const MIN_PROFIT_THRESHOLD_USD = 5; // Only claim if we're going to make at least $5.00
 
+/**
+ * Only claim if we're going to make at least $5.00. This likely should be a config option
+ */
+const MIN_PROFIT_THRESHOLD_USD = 5;
+
+/**
+ * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
+ * to claim for them. The fees the claimer bot can earn increase logarithmically over time.
+ *
+ * @returns {(Promise|undefined)} Promise of an array of ethers PopulatedTransaction objects or undefined
+ */
 export async function getClaimerProfitablePrizeTxs(
   contracts: ContractsBlob,
   readProvider: Provider,
@@ -103,27 +117,11 @@ export async function getClaimerProfitablePrizeTxs(
   return transactionsPopulated;
 }
 
-const getMinFees = async (
-  claimer: Contract,
-  numWinners: number,
-  context: ClaimPrizeContext
-): Promise<BigNumber> => {
-  let minFees = BigNumber.from(0);
-  try {
-    minFees = await claimer.callStatic.estimateFees(numWinners);
-    logBigNumber(
-      "MinFees:",
-      minFees.toString(),
-      context.feeToken.decimals,
-      context.feeToken.symbol
-    );
-  } catch (e) {
-    console.error(chalk.red(e));
-  }
-
-  return minFees;
-};
-
+/**
+ * Figures out how much gas is required to run the contract function
+ *
+ * @returns {Promise} Promise of a BigNumber with the gas limit
+ */
 const getEstimatedGasLimit = async (
   claimer: Contract,
   claimPrizesParams: ClaimPrizesParams
@@ -138,12 +136,24 @@ const getEstimatedGasLimit = async (
   return estimatedGasLimit;
 };
 
-const getVaults = async (chainId: number) => {
+/**
+ * Pulls from the subgraph all of the vaults which the getVaultWinnersClaims function will need
+ * to determine who the winners are
+ *
+ * @returns {Promise} Promise of an array of Vault objects
+ */
+const getVaults = async (chainId: number): Promise<Vault[]> => {
   printAsterisks();
   console.log(chalk.blue(`2. Subgraph: Getting data ...`));
   return await getSubgraphVaults(chainId);
 };
 
+/**
+ * Finds out which of the accounts in each vault are winners for the last draw and formats
+ * them into an array Claim objects
+ *
+ * @returns {Promise} Promise of an array of Claim objects
+ */
 const getVaultWinnersClaims = async (
   readProvider: Provider,
   contracts: ContractsBlob,
@@ -161,6 +171,11 @@ const getVaultWinnersClaims = async (
   return claims;
 };
 
+/**
+ * Determines if the claim transaction will be profitable
+ *
+ * @returns {Promise} Promise of a boolean for profitability
+ */
 const calculateProfit = async (
   contracts: ContractsBlob,
   marketRate: Contract,
@@ -238,8 +253,11 @@ const calculateProfit = async (
   return profitable;
 };
 
-// Gather information about the prize pool's fee token
-//
+/**
+ * Gather information about the given prize pool's fee token, fee token price in USD
+ * and the last drawId
+ * @returns {Promise} Promise of a ClaimPrizeContext object
+ */
 const getContext = async (
   prizePool: Contract,
   marketRate: Contract,
@@ -257,11 +275,15 @@ const getContext = async (
     symbol: await tokenInContract.symbol()
   };
 
-  const { feeTokenRateUsd } = await getFeeTokenRateUsd(marketRate, feeToken);
+  const feeTokenRateUsd = await getFeeTokenRateUsd(marketRate, feeToken);
 
   return { feeToken, drawId, feeTokenRateUsd };
 };
 
+/**
+ * Logs the context to the console
+ * @returns {undefined} void function
+ */
 const printContext = context => {
   printAsterisks();
   console.log(chalk.blue.bold(`1. Prize token: ${context.feeToken.symbol}`));
@@ -275,26 +297,13 @@ const printContext = context => {
   );
 };
 
-const getFeeTokenRateUsd = async (
-  marketRate: Contract,
-  feeToken: Token
-): Promise<{
-  feeTokenRateUsd: number;
-}> => {
-  const feeTokenRateUsd = await getFeeTokenAssetRateUsd(marketRate, feeToken);
-
-  return {
-    feeTokenRateUsd
-  };
-};
-
-const testnetParseFloat = (amountBigNum: BigNumber, decimals: number): number => {
-  return parseFloat(ethers.utils.formatUnits(amountBigNum, decimals));
-};
-
-const getFeeTokenAssetRateUsd = async (marketRate: Contract, feeToken: Token): Promise<number> => {
+/**
+ * Finds the spot price of the fee token in USD
+ * @returns {number} feeTokenRateUsd
+ */
+const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promise<number> => {
   const feeTokenAddress = feeToken.address;
   const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
 
-  return testnetParseFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
+  return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
