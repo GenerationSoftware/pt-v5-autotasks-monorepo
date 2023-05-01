@@ -6,21 +6,6 @@ import { ContractsBlob, ArbLiquidatorContext, Token, TokenWithRate } from "../ty
 import { getComplexMulticallResults, parseBigNumberAsFloat } from "../utils";
 import { ERC20Abi } from "../abis/ERC20Abi";
 
-// ===== Uncomment this for mainnet =======
-// const CHAIN_ID = 1
-// const provider = new providers.JsonRpcProvider(
-//   { url: process.env.ETHEREUM_RPC_URL || 'http://127.0.0.1:8545' },
-//   { chainId: CHAIN_ID, ensAddress: '', name: 'mainnet' }
-// )
-// const FLASHBOTS_EP = undefined
-// ===== Uncomment this for mainnet =======
-
-// ===== Uncomment this for Goerli =======
-// const CHAIN_ID = 5
-// const provider = new providers.InfuraProvider(CHAIN_ID, process.env.INFURA_API_KEY)
-const FLASHBOTS_EP = "https://relay-goerli.flashbots.net/";
-// ===== Uncomment this for Goerli =======
-
 /**
  * Gather information about this specific liquidation pair
  * `tokenIn` is the token to supply (likely the prize token, which is probably POOL),

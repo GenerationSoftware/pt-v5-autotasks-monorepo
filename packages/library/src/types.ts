@@ -1,8 +1,19 @@
-import { BigNumber } from "@ethersproject/bignumber";
+import { Wallet, BigNumber } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 // Config types
+export interface Token {
+  name: string;
+  decimals: number;
+  address: string;
+  symbol: string;
+}
+
+export interface TokenWithRate extends Token {
+  assetRateUsd: number;
+}
+
 export interface TokenData {
   chainId: number;
   address: string;
@@ -42,63 +53,9 @@ export interface ContractsBlob {
   contracts: ContractData[];
 }
 
-export interface Config {
-  chainId: number;
-  network: string;
-  apiKey: string | undefined;
-  speed?: "slow" | "normal" | "fast";
-  gasLimit?: number | string;
-  execute?: Boolean;
-}
-
 export interface ProviderOptions {
   chainId: number;
   provider: Provider;
-}
-
-// Contracts types
-export interface Draw {
-  drawId: number;
-  beaconPeriodSeconds: number;
-  timestamp: number;
-  getBeaconPeriodSeconds: Function;
-}
-
-export interface ContractPrizeTierHistory {
-  getPrizeTier: Function;
-}
-export interface ReserverContract {
-  getReserveAccumulatedBetween: Function;
-}
-
-export interface Draw {
-  drawId: number;
-  winningRandomNumber: BigNumber;
-  timestamp: number;
-  beaconPeriodStartedAt: number;
-  beaconPeriodSeconds: number;
-}
-
-export interface PrizeDistribution {
-  bitRangeSize: number;
-  matchCardinality: number;
-  startTimestampOffset?: number;
-  endTimestampOffset?: number;
-  maxPicksPerUser: number;
-  expiryDuration: number;
-  numberOfPicks: BigNumber;
-  tiers: Array<BigNumber | number>;
-  prize: BigNumber;
-}
-
-export interface PrizeTier {
-  bitRangeSize: number;
-  drawId: number;
-  maxPicksPerUser: number;
-  expiryDuration: number;
-  endTimestampOffset: number;
-  prize: BigNumber;
-  tiers: Array<number>;
 }
 
 export interface Vault {
@@ -108,13 +65,6 @@ export interface Vault {
 
 export interface VaultAccount {
   id: string;
-}
-
-export interface Token {
-  name: string;
-  decimals: number;
-  address: string;
-  symbol: string;
 }
 
 export interface ClaimPrizeContext {
@@ -128,12 +78,10 @@ export interface GetClaimerProfitablePrizeTxsParams {
   feeRecipient: string;
 }
 
-export interface ArbLiquidatorSwapParams {
-  swapRecipient: string;
-  relayerAddress: string;
-  chainId: number;
-  readProvider: Provider;
-  writeProvider: Provider | DefenderRelaySigner;
+export interface Claim {
+  vault: string;
+  winner: string;
+  tier: number;
 }
 
 export interface RelayerContext {
@@ -141,8 +89,13 @@ export interface RelayerContext {
   tokenInBalance: BigNumber;
 }
 
-export interface TokenWithRate extends Token {
-  assetRateUsd: number;
+export interface ArbLiquidatorSwapParams {
+  flashbotsAuthWallet: Wallet;
+  swapRecipient: string;
+  relayerAddress: string;
+  chainId: number;
+  readProvider: Provider;
+  writeProvider: Provider | DefenderRelaySigner;
 }
 
 export interface ArbLiquidatorContext {
@@ -150,10 +103,4 @@ export interface ArbLiquidatorContext {
   tokenOut: Token;
   tokenOutUnderlyingAsset: TokenWithRate;
   relayer: RelayerContext;
-}
-
-export interface Claim {
-  vault: string;
-  winner: string;
-  tier: number;
 }

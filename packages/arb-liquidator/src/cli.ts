@@ -2,7 +2,7 @@ import esMain from "es-main";
 import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
-import { ethers } from "ethers";
+import { ethers, Wallet } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import {
   testnetContractsBlob as contracts,
@@ -33,12 +33,15 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorSwa
     config.get("INFURA_API_KEY")
   );
 
+  const flashbotsAuthWallet = new Wallet(config.get("FLASHBOTS_AUTH_PRIVATE_KEY"));
+
   return {
     writeProvider: signer,
     readProvider,
     relayerAddress,
     swapRecipient,
-    chainId
+    chainId,
+    flashbotsAuthWallet
   };
 };
 
