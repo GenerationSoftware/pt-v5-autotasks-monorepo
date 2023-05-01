@@ -2,8 +2,13 @@ import esMain from "es-main";
 import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
-import { ethers } from "ethers";
-import { printAsterisks, printSpacer, NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
+import { ethers, Wallet } from "ethers";
+import {
+  printAsterisks,
+  printSpacer,
+  NETWORK_NAMES,
+  PrizeClaimerConfigParams
+} from "@pooltogether/v5-autotasks-library";
 
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 import { checkPackageConfig, askQuestions } from "./helpers/questions";
@@ -14,13 +19,16 @@ console.clear();
 console.log(chalk.magenta(figlet.textSync("PoolTogether")));
 console.log(chalk.blue(figlet.textSync("Prize Claim Bot")));
 
-function cliLoadParams() {
+function cliLoadParams(): PrizeClaimerConfigParams {
   const config = new Configstore(pkg.name);
 
   const chainId = Number(config.get("CHAIN_ID"));
   const feeRecipient = String(config.get("FEE_RECIPIENT"));
 
+  const flashbotsAuthWallet = new Wallet(config.get("FLASHBOTS_AUTH_PRIVATE_KEY"));
+
   return {
+    flashbotsAuthWallet,
     feeRecipient,
     chainId
   };
@@ -35,7 +43,7 @@ if (esMain(import.meta)) {
   }
   checkPackageConfig(config);
 
-  const params = cliLoadParams();
+  const params: PrizeClaimerConfigParams = cliLoadParams();
 
   const readProvider = new ethers.providers.InfuraProvider(
     NETWORK_NAMES[params.chainId],

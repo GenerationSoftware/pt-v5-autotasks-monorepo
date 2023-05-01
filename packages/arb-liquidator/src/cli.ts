@@ -8,7 +8,7 @@ import {
   testnetContractsBlob as contracts,
   liquidatorArbitrageSwap,
   NETWORK_NAMES,
-  ArbLiquidatorSwapParams
+  ArbLiquidatorConfigParams
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
@@ -21,7 +21,7 @@ console.clear();
 console.log(chalk.magenta(figlet.textSync("PoolTogether")));
 console.log(chalk.blue(figlet.textSync("Arb Liquidator Bot")));
 
-const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorSwapParams => {
+const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorConfigParams => {
   const config = new Configstore(pkg.name);
 
   const chainId = Number(config.get("CHAIN_ID"));
@@ -62,7 +62,7 @@ if (esMain(import.meta)) {
   const provider = new DefenderRelayProvider(fakeEvent);
   const signer = new DefenderRelaySigner(fakeEvent, provider, { speed: "fast" });
 
-  const params: ArbLiquidatorSwapParams = cliLoadParams(signer);
+  const params: ArbLiquidatorConfigParams = cliLoadParams(signer);
 
   try {
     await liquidatorArbitrageSwap(contracts, relayer, params);

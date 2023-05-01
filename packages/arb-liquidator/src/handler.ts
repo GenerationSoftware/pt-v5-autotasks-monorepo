@@ -1,25 +1,28 @@
 import { Relayer } from "defender-relay-client";
-import { ethers } from "ethers";
+import { ethers, Wallet } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {
   liquidatorArbitrageSwap,
   testnetContractsBlob as contracts,
-  ArbLiquidatorSwapParams,
+  ArbLiquidatorConfigParams,
   NETWORK_NAMES
 } from "@pooltogether/v5-autotasks-library";
 
-const handlerLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorSwapParams => {
+const handlerLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorConfigParams => {
   const chainId = Number(CHAIN_ID);
 
   const readProvider = new ethers.providers.InfuraProvider(NETWORK_NAMES[chainId], INFURA_API_KEY);
+
+  const flashbotsAuthWallet = new Wallet(FLASHBOTS_AUTH_PRIVATE_KEY);
 
   return {
     writeProvider: signer,
     readProvider,
     chainId,
     swapRecipient: SWAP_RECIPIENT,
-    relayerAddress: RELAYER_ADDRESS
+    relayerAddress: RELAYER_ADDRESS,
+    flashbotsAuthWallet
   };
 };
 
@@ -30,7 +33,7 @@ export async function handler(event) {
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
 
-  const params: ArbLiquidatorSwapParams = handlerLoadParams(signer);
+  const params: ArbLiquidatorConfigParams = handlerLoadParams(signer);
 
   try {
     await liquidatorArbitrageSwap(contracts, relayer, params);

@@ -5,7 +5,7 @@ import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import { Relayer } from "defender-relay-client";
 import chalk from "chalk";
 
-import { ContractsBlob, ArbLiquidatorSwapParams, ArbLiquidatorContext } from "./types";
+import { ContractsBlob, ArbLiquidatorConfigParams, ArbLiquidatorContext } from "./types";
 import {
   logTable,
   logStringValue,
@@ -48,7 +48,7 @@ const FLASHBOTS_EP = "https://relay-goerli.flashbots.net/";
 export async function liquidatorArbitrageSwap(
   contracts: ContractsBlob,
   relayer: Relayer,
-  params: ArbLiquidatorSwapParams
+  params: ArbLiquidatorConfigParams
 ) {
   const { swapRecipient, relayerAddress, readProvider, writeProvider } = params;
 
@@ -227,7 +227,7 @@ const approve = async (
  */
 const getLiquidationContracts = (
   contracts: ContractsBlob,
-  params: ArbLiquidatorSwapParams
+  params: ArbLiquidatorConfigParams
 ): {
   liquidationPairs: Contract[];
   liquidationRouter: Contract;

@@ -89,7 +89,7 @@ export interface RelayerContext {
   tokenInBalance: BigNumber;
 }
 
-export interface ArbLiquidatorSwapParams {
+export interface ArbLiquidatorConfigParams {
   flashbotsAuthWallet: Wallet;
   swapRecipient: string;
   relayerAddress: string;
@@ -103,4 +103,10 @@ export interface ArbLiquidatorContext {
   tokenOut: Token;
   tokenOutUnderlyingAsset: TokenWithRate;
   relayer: RelayerContext;
+}
+
+export interface PrizeClaimerConfigParams {
+  flashbotsAuthWallet: Wallet;
+  feeRecipient: string;
+  chainId: number;
 }
