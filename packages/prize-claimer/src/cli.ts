@@ -25,10 +25,7 @@ function cliLoadParams(): PrizeClaimerConfigParams {
   const chainId = Number(config.get("CHAIN_ID"));
   const feeRecipient = String(config.get("FEE_RECIPIENT"));
 
-  const flashbotsAuthWallet = new Wallet(config.get("FLASHBOTS_AUTH_PRIVATE_KEY"));
-
   return {
-    flashbotsAuthWallet,
     feeRecipient,
     chainId
   };

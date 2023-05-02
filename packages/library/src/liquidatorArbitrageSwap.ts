@@ -33,10 +33,6 @@ interface SwapExactAmountInParams {
  */
 const MIN_PROFIT_THRESHOLD_USD = 5;
 
-// ===== Uncomment this for mainnet =======
-// const FLASHBOTS_EP = undefined
-const FLASHBOTS_EP = "https://relay-goerli.flashbots.net/";
-
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
  *
@@ -50,7 +46,7 @@ export async function liquidatorArbitrageSwap(
   relayer: Relayer,
   params: ArbLiquidatorConfigParams
 ) {
-  const { swapRecipient, relayerAddress, readProvider, writeProvider } = params;
+  const { chainId, swapRecipient, relayerAddress, readProvider, writeProvider } = params;
 
   // #1. Get contracts
   //

@@ -14,15 +14,12 @@ const handlerLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidato
 
   const readProvider = new ethers.providers.InfuraProvider(NETWORK_NAMES[chainId], INFURA_API_KEY);
 
-  const flashbotsAuthWallet = new Wallet(FLASHBOTS_AUTH_PRIVATE_KEY);
-
   return {
     writeProvider: signer,
     readProvider,
     chainId,
     swapRecipient: SWAP_RECIPIENT,
-    relayerAddress: RELAYER_ADDRESS,
-    flashbotsAuthWallet
+    relayerAddress: RELAYER_ADDRESS
   };
 };
 

@@ -6,9 +6,7 @@ import { NETWORK_NAMES } from "./helpers/constants";
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 
 const handlerLoadParams = (): PrizeClaimerConfigParams => {
-  const flashbotsAuthWallet = new Wallet(FLASHBOTS_AUTH_PRIVATE_KEY);
-
-  return { chainId: Number(CHAIN_ID), feeRecipient: FEE_RECIPIENT, flashbotsAuthWallet };
+  return { chainId: Number(CHAIN_ID), feeRecipient: FEE_RECIPIENT };
 };
 
 export async function handler(event: RelayerParams) {

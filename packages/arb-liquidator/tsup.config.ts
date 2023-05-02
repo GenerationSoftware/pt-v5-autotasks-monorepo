@@ -16,17 +16,9 @@ export default defineConfig(opt => {
         (options.define.INFURA_API_KEY = `'${config.get("INFURA_API_KEY")}'`),
         (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`),
         (options.define.SWAP_RECIPIENT = `'${config.get("SWAP_RECIPIENT")}'`),
-        (options.define.RELAYER_ADDRESS = `'${config.get("RELAYER_ADDRESS")}'`),
-        (options.define.FLASHBOTS_AUTH_PRIVATE_KEY = `'${config.get(
-          "FLASHBOTS_AUTH_PRIVATE_KEY"
-        )}'`);
+        (options.define.RELAYER_ADDRESS = `'${config.get("RELAYER_ADDRESS")}'`);
     },
-    noExternal: [
-      "@pooltogether/v5-autotasks-library",
-      "ethereum-multicall",
-      "configstore",
-      "@flashbots/ethers-provider-bundle"
-    ],
+    noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall", "configstore"],
     format: "cjs",
     entry: ["src/handler.ts"],
     splitting: false,

@@ -16,7 +16,6 @@ export const SHARED_CONFIG_KEYS = {
   RELAYER_API_KEY: "RELAYER_API_KEY",
   RELAYER_API_SECRET: "RELAYER_API_SECRET",
   INFURA_API_KEY: "INFURA_API_KEY",
-  FLASHBOTS_AUTH_PRIVATE_KEY: "FLASHBOTS_AUTH_PRIVATE_KEY",
   CHAIN_ID: "CHAIN_ID"
 };
 
@@ -123,21 +122,6 @@ export const getSharedQuestions = config => {
           return true;
         } else {
           return "Please enter your Infura API Key.";
-        }
-      }
-    },
-    {
-      name: SHARED_CONFIG_KEYS.FLASHBOTS_AUTH_PRIVATE_KEY,
-      type: "password",
-      message: chalk.green(
-        "Any wallet private key will work (this is to build reputation with Flashbots over time):"
-      ),
-      when,
-      validate: function(value) {
-        if (value.length) {
-          return true;
-        } else {
-          return "Please enter your Flashbots Wallet Private Key.";
         }
       }
     },

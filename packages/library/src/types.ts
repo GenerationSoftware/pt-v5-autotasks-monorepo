@@ -1,5 +1,5 @@
 import { Wallet, BigNumber } from "ethers";
-import { Provider } from "@ethersproject/providers";
+import { BaseProvider, Provider } from "@ethersproject/providers";
 import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 // Config types
@@ -90,11 +90,10 @@ export interface RelayerContext {
 }
 
 export interface ArbLiquidatorConfigParams {
-  flashbotsAuthWallet: Wallet;
   swapRecipient: string;
   relayerAddress: string;
   chainId: number;
-  readProvider: Provider;
+  readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
 }
 
@@ -106,7 +105,6 @@ export interface ArbLiquidatorContext {
 }
 
 export interface PrizeClaimerConfigParams {
-  flashbotsAuthWallet: Wallet;
   feeRecipient: string;
   chainId: number;
 }

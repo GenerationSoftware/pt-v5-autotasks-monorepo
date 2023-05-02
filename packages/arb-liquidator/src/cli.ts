@@ -33,15 +33,12 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorCon
     config.get("INFURA_API_KEY")
   );
 
-  const flashbotsAuthWallet = new Wallet(config.get("FLASHBOTS_AUTH_PRIVATE_KEY"));
-
   return {
     writeProvider: signer,
     readProvider,
     relayerAddress,
     swapRecipient,
-    chainId,
-    flashbotsAuthWallet
+    chainId
   };
 };
 
