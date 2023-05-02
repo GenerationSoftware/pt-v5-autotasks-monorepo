@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "outDir": "./dist",
+ },
+ "include": [
+    "./src"
+ ]
+}

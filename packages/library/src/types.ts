@@ -110,3 +110,8 @@ export interface PrizeClaimerConfigParams {
   feeRecipient: string;
   chainId: number;
 }
+
+export interface WithdrawClaimRewardsConfigParams {
+  rewardsRecipient: string;
+  chainId: number;
+}

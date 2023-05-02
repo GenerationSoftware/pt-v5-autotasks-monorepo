@@ -1,8 +1,7 @@
 import { ethers } from "ethers";
 import { RelayerParams } from "defender-relay-client";
-import { PrizeClaimerConfigParams } from "v5-autotasks-library";
+import { PrizeClaimerConfigParams, NETWORK_NAMES } from "v5-autotasks-library";
 
-import { NETWORK_NAMES } from "./helpers/constants";
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 
 const handlerLoadParams = (): PrizeClaimerConfigParams => {

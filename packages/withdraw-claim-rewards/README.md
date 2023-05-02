@@ -1,16 +1,12 @@
-# @pooltogether/v5-autotasks-prize-claimer
+# @pooltogether/v5-autotasks-prize-claim-sweeper
 
-![title image for PoolTogether Prize Claimer Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/prize-claimer/prize-claim-img.png "title image for PoolTogether Prize Claimer Bot")
+![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/prize-claim-sweeper/prize-claim-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot")
 
-PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to claim prizes on behalf of depositors.
+PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to sweep any rewards a prize claimer has accumulated on the prize pool.
 
 ## Usage
 
 This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
-
-The bulk of determining if a claim is profitable is in the v5-autotasks-library#(/packages/library)#getClaimerProfitablePrizeTxs.
-
-Typically this would be paired with the withdraw-claim-rewards bot in this monorepo, which will periodically sweep rewards profit to a wallet.
 
 ## Note:
 
@@ -36,13 +32,13 @@ INFURA_API_KEY: Infura-specific
 CHAIN_ID: Which network to claim on
 ```
 
-The following one is unique to the prize claimer bot:
+The following one is unique to the prize claim sweeper bot:
 
 ```
-FEE_RECIPIENT: Who will receive the profit for claiming on other's behalf
+REWARDS_RECIPIENT: Wallet that will receive the claim rewards
 ```
 
-Once the config has been saved with all of those variables, the script will run `getClaimerProfitablePrizeTxs()` and attempt to send multicall batched transactions through Flashbots bundles.
+Once the config has been saved with all of those variables, the script will run `withdrawClaimRewards()` and attempt to send a transaction.
 
 If everything looks good, you can upload the task to OZ Defender to be run periodically.
 
