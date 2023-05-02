@@ -16,7 +16,8 @@ export const SHARED_CONFIG_KEYS = {
   RELAYER_API_KEY: "RELAYER_API_KEY",
   RELAYER_API_SECRET: "RELAYER_API_SECRET",
   INFURA_API_KEY: "INFURA_API_KEY",
-  CHAIN_ID: "CHAIN_ID"
+  CHAIN_ID: "CHAIN_ID",
+  USE_FLASHBOTS: "USE_FLASHBOTS"
 };
 
 export const checkConfig = (config, keys) => {
@@ -133,6 +134,18 @@ export const getSharedQuestions = config => {
       when,
       filter(val) {
         return CHAIN_IDS[val.toLowerCase()];
+      }
+    },
+    {
+      name: SHARED_CONFIG_KEYS.USE_FLASHBOTS,
+      type: "list",
+      message: chalk.green(
+        "Use Flashbots to keep transactions private from the mempool and reduce failures? (recommended)"
+      ),
+      choices: ["Yes", "No"],
+      when,
+      filter(val) {
+        return val === "Yes" ? true : false;
       }
     }
   ];

@@ -2,7 +2,7 @@ import esMain from "es-main";
 import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
-import { ethers, Wallet } from "ethers";
+import { ethers } from "ethers";
 import {
   printAsterisks,
   printSpacer,
@@ -25,7 +25,10 @@ function cliLoadParams(): PrizeClaimerConfigParams {
   const chainId = Number(config.get("CHAIN_ID"));
   const feeRecipient = String(config.get("FEE_RECIPIENT"));
 
+  const useFlashbots = Boolean(config.get("USE_FLASHBOTS"));
+
   return {
+    useFlashbots,
     feeRecipient,
     chainId
   };

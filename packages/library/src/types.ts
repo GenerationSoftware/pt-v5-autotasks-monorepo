@@ -90,6 +90,7 @@ export interface RelayerContext {
 }
 
 export interface ArbLiquidatorConfigParams {
+  useFlashbots: boolean;
   swapRecipient: string;
   relayerAddress: string;
   chainId: number;
@@ -105,6 +106,7 @@ export interface ArbLiquidatorContext {
 }
 
 export interface PrizeClaimerConfigParams {
+  useFlashbots: boolean;
   feeRecipient: string;
   chainId: number;
 }

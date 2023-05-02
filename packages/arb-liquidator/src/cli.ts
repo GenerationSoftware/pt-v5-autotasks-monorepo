@@ -27,6 +27,7 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorCon
   const chainId = Number(config.get("CHAIN_ID"));
   const swapRecipient = String(config.get("SWAP_RECIPIENT"));
   const relayerAddress = String(config.get("RELAYER_ADDRESS"));
+  const useFlashbots = Boolean(config.get("USE_FLASHBOTS"));
 
   const readProvider = new ethers.providers.InfuraProvider(
     NETWORK_NAMES[chainId],
@@ -34,6 +35,7 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorCon
   );
 
   return {
+    useFlashbots,
     writeProvider: signer,
     readProvider,
     relayerAddress,

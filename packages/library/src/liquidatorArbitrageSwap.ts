@@ -46,7 +46,7 @@ export async function liquidatorArbitrageSwap(
   relayer: Relayer,
   params: ArbLiquidatorConfigParams
 ) {
-  const { chainId, swapRecipient, relayerAddress, readProvider, writeProvider } = params;
+  const { useFlashbots, swapRecipient, relayerAddress, readProvider, writeProvider } = params;
 
   // #1. Get contracts
   //
@@ -159,6 +159,7 @@ export async function liquidatorArbitrageSwap(
       );
 
       let transactionSentToNetwork = await relayer.sendTransaction({
+        isPrivate: useFlashbots,
         data: transactionPopulated.data,
         to: transactionPopulated.to,
         gasLimit: 600000
