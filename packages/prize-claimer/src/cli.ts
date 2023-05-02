@@ -60,7 +60,7 @@ if (esMain(import.meta)) {
     apiKey: config.get("RELAYER_API_KEY"),
     apiSecret: config.get("RELAYER_API_SECRET")
   };
-  processPopulatedTransactions(fakeEvent, populatedTxs);
+  processPopulatedTransactions(fakeEvent, populatedTxs, params);
 }
 
 export function main() {}

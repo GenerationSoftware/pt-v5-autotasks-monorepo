@@ -26,14 +26,6 @@ export const checkConfig = (config, keys) => {
       console.warn(chalk.yellow.bold(`'${configKey}' should be defined in your config`));
     }
   }
-
-  for (const param of Object.entries(config.get())) {
-    const key = param[0];
-    const value = param[1];
-    if (!value) {
-      console.warn(chalk.yellow.bold(`'${key}' is missing from your config`));
-    }
-  }
 };
 
 export const getSharedQuestions = config => {

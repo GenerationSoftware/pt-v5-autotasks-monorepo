@@ -1,11 +1,16 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
+import { RelayerParams } from "defender-relay-client";
 import {
   testnetContractsBlob as contracts,
-  getClaimerProfitablePrizeTxs
+  getClaimerProfitablePrizeTxs,
+  PrizeClaimerConfigParams
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 
-export const populateTransactions = async (params, readProvider) => {
+export const populateTransactions = async (
+  params,
+  readProvider
+): Promise<PopulatedTransaction[]> => {
   let populatedTxs: PopulatedTransaction[] = [];
   try {
     populatedTxs = await getClaimerProfitablePrizeTxs(contracts, readProvider, params);
@@ -16,7 +21,11 @@ export const populateTransactions = async (params, readProvider) => {
   return populatedTxs;
 };
 
-export const processPopulatedTransactions = async (event, populatedTxs) => {
+export const processPopulatedTransactions = async (
+  event: RelayerParams,
+  populatedTxs: PopulatedTransaction[],
+  params: PrizeClaimerConfigParams
+) => {
   const relayer = new Relayer(event);
 
   console.log("populatedTxs");
@@ -26,6 +35,7 @@ export const processPopulatedTransactions = async (event, populatedTxs) => {
     if (populatedTxs.length > 0) {
       for (const populatedTx of populatedTxs) {
         let transactionSentToNetwork = await relayer.sendTransaction({
+          isPrivate: params.useFlashbots,
           data: populatedTx.data,
           to: populatedTx.to,
           gasLimit: 3500000
