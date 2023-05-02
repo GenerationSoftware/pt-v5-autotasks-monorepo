@@ -1,4 +1,4 @@
-import { Wallet, BigNumber } from "ethers";
+import { BigNumber } from "ethers";
 import { BaseProvider, Provider } from "@ethersproject/providers";
 import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
@@ -112,6 +112,11 @@ export interface PrizeClaimerConfigParams {
 }
 
 export interface WithdrawClaimRewardsConfigParams {
+  relayerAddress: string;
   rewardsRecipient: string;
   chainId: number;
+}
+
+export interface WithdrawClaimRewardsContext {
+  rewardsToken: Token;
 }

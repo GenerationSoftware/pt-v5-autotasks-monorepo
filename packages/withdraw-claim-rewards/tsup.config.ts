@@ -15,7 +15,7 @@ export default defineConfig(opt => {
         (options.define.RELAYER_API_SECRET = `'${config.get("RELAYER_API_SECRET")}'`),
         (options.define.INFURA_API_KEY = `'${config.get("INFURA_API_KEY")}'`),
         (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`),
-        (options.define.FEE_RECIPIENT = `'${config.get("FEE_RECIPIENT")}'`);
+        (options.define.REWARDS_RECIPIENT = `'${config.get("REWARDS_RECIPIENT")}'`);
     },
     noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall", "configstore"],
     format: "cjs",

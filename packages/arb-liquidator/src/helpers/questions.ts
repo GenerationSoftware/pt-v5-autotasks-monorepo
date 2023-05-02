@@ -18,8 +18,8 @@ export const checkPackageConfig = config => {
   checkConfig(config, PACKAGE_CONFIG_KEYS);
 };
 
-export const askQuestions = config => {
-  const questions: any[] = getSharedQuestions(config);
+export const askQuestions = (config, { askFlashbots }) => {
+  const questions: any[] = getSharedQuestions(config, askFlashbots);
 
   questions.push({
     name: PACKAGE_CONFIG_KEYS.SWAP_RECIPIENT,

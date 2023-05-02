@@ -37,7 +37,7 @@ function cliLoadParams(): PrizeClaimerConfigParams {
 if (esMain(import.meta)) {
   const config = new Configstore(pkg.name);
 
-  const answers = await askQuestions(config);
+  const answers = await askQuestions(config, { askFlashbots: true });
   if (!answers.existingConfig) {
     config.set(answers);
   }

@@ -1,5 +1,5 @@
 import { Relayer } from "defender-relay-client";
-import { ethers, Wallet } from "ethers";
+import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 import {

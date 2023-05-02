@@ -1,6 +1,6 @@
-# @pooltogether/v5-autotasks-prize-claim-sweeper
+# @pooltogether/v5-autotasks-withdraw-claim-rewards
 
-![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/prize-claim-sweeper/prize-claim-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot")
+![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/withdraw-claim-rewards/prize-claim-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot")
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to sweep any rewards a prize claimer has accumulated on the prize pool.
 
@@ -35,7 +35,7 @@ CHAIN_ID: Which network to claim on
 The following one is unique to the prize claim sweeper bot:
 
 ```
-REWARDS_RECIPIENT: Wallet that will receive the claim rewards
+REWARDS_RECIPIENT: EVM account that will receive the claim rewards
 ```
 
 Once the config has been saved with all of those variables, the script will run `withdrawClaimRewards()` and attempt to send a transaction.

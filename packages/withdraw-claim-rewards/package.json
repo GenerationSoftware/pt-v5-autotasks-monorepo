@@ -1,9 +1,9 @@
 {
-  "name": "@pooltogether/v5-autotasks-prize-claim-sweeper",
+  "name": "@pooltogether/v5-autotasks-withdraw-claim-rewards",
   "version": "0.0.1",
   "description": "Autotask to automatically sweep prize claim rewards PoolTogether Hyperstructure (v5) prizes.",
   "author": "PoolTogether Inc.",
-  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/prize-claim-sweeper/README.md",
+  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/withdraw-claim-rewards/README.md",
   "license": "ISC",
   "type": "module",
   "main": "dist/handler.js",

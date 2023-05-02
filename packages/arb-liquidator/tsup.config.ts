@@ -15,6 +15,7 @@ export default defineConfig(opt => {
         (options.define.RELAYER_API_SECRET = `'${config.get("RELAYER_API_SECRET")}'`),
         (options.define.INFURA_API_KEY = `'${config.get("INFURA_API_KEY")}'`),
         (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`),
+        (options.define.USE_FLASHBOTS = `'${config.get("USE_FLASHBOTS")}'`),
         (options.define.SWAP_RECIPIENT = `'${config.get("SWAP_RECIPIENT")}'`),
         (options.define.RELAYER_ADDRESS = `'${config.get("RELAYER_ADDRESS")}'`);
     },

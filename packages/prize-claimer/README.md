@@ -10,7 +10,7 @@ This package is both a CLI for setting the config parameters of the OpenZeppelin
 
 The bulk of determining if a claim is profitable is in the v5-autotasks-library#(/packages/library)#getClaimerProfitablePrizeTxs.
 
-Typically this would be paired with the withdraw-claim-rewards bot in this monorepo, which will periodically sweep rewards profit to a wallet.
+Typically this would be paired with the withdraw-claim-rewards bot in this monorepo, which will periodically sweep rewards profit to an EVM account.
 
 ## Note:
 

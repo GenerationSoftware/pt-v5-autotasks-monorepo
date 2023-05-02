@@ -1,16 +1,16 @@
+import chalk from "chalk";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { RelayerParams } from "defender-relay-client";
 import {
   testnetContractsBlob as contracts,
   getWithdrawClaimRewardsTx,
-  WithdrawClaimRewardsConfigParams
+  WithdrawClaimRewardsConfigParams,
+  printAsterisks,
+  printSpacer
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 
-export const populateTransaction = async (
-  params,
-  readProvider
-): Promise<PopulatedTransaction> => {
+export const populateTransaction = async (params, readProvider): Promise<PopulatedTransaction> => {
   let populatedTx: PopulatedTransaction;
   try {
     populatedTx = await getWithdrawClaimRewardsTx(contracts, readProvider, params);
@@ -23,10 +23,13 @@ export const populateTransaction = async (
 
 export const processPopulatedTransaction = async (
   event: RelayerParams,
-  populatedTx: PopulatedTransaction,
-  params: WithdrawClaimRewardsConfigParams
+  populatedTx: PopulatedTransaction
 ) => {
   const relayer = new Relayer(event);
+
+  printAsterisks();
+  console.log(chalk.blue(`4. Sending transactions ...`));
+  printSpacer();
 
   try {
     if (populatedTx) {

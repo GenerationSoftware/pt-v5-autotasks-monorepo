@@ -28,7 +28,7 @@ export const checkConfig = (config, keys) => {
   }
 };
 
-export const getSharedQuestions = config => {
+export const getSharedQuestions = (config, askFlashbots) => {
   return [
     {
       name: "existingConfig",
@@ -135,7 +135,14 @@ export const getSharedQuestions = config => {
         "Use Flashbots to keep transactions private from the mempool and reduce failures? (recommended)"
       ),
       choices: ["Yes", "No"],
-      when,
+      when: answers => {
+        if (!answers.existingConfig) {
+          return true;
+        } else if (askFlashbots) {
+          console.log("asking flashbots");
+          return false;
+        }
+      },
       filter(val) {
         return val === "Yes" ? true : false;
       }

@@ -2,7 +2,7 @@ import esMain from "es-main";
 import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
-import { ethers, Wallet } from "ethers";
+import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import {
   testnetContractsBlob as contracts,
@@ -47,7 +47,7 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorCon
 if (esMain(import.meta)) {
   const config = new Configstore(pkg.name);
 
-  const answers = await askQuestions(config);
+  const answers = await askQuestions(config, { askFlashbots: true });
   if (!answers.existingConfig) {
     config.set(answers);
   }

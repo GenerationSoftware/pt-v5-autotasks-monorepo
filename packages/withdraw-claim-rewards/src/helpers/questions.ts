@@ -9,7 +9,7 @@ import {
 } from "@pooltogether/v5-autotasks-library";
 
 const PACKAGE_CONFIG_KEYS = {
-  FEE_RECIPIENT: "FEE_RECIPIENT"
+  REWARDS_RECIPIENT: "REWARDS_RECIPIENT"
 };
 
 export const checkPackageConfig = config => {
@@ -17,19 +17,19 @@ export const checkPackageConfig = config => {
   checkConfig(config, PACKAGE_CONFIG_KEYS);
 };
 
-export const askQuestions = config => {
-  const questions: any[] = getSharedQuestions(config);
+export const askQuestions = (config, { askFlashbots }) => {
+  const questions: any[] = getSharedQuestions(config, askFlashbots);
 
   questions.push({
-    name: PACKAGE_CONFIG_KEYS.FEE_RECIPIENT,
+    name: PACKAGE_CONFIG_KEYS.REWARDS_RECIPIENT,
     type: "input",
-    message: chalk.green("Enter the fee recipient address:"),
+    message: chalk.green("Enter the rewards recipient address:"),
     when,
     validate: function(value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter the fee recipient's address (where the fee profit should be sent):";
+        return "Please enter the rewards recipient's address (where the rewards should be sent):";
       }
     }
   });
