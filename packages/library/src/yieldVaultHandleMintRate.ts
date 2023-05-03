@@ -1,13 +1,13 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 
-import { ContractsBlob, ProviderOptions } from "./types";
+import { ContractsBlob } from "./types";
 import { getContracts } from "./utils";
 
 export async function yieldVaultHandleMintRate(
   contracts: ContractsBlob,
-  config: ProviderOptions
+  params
 ): Promise<PopulatedTransaction[] | undefined> {
-  const { chainId, provider } = config;
+  const { chainId, provider } = params;
 
   const yieldVaults = getContracts("YieldVault", chainId, provider, contracts);
 
