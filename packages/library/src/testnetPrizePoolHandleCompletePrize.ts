@@ -1,14 +1,14 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
-import { ContractsBlob, ProviderOptions } from "./types";
-import { getContract, getContracts } from "./utils";
+import { ContractsBlob } from "./types";
+import { getContract } from "./utils";
 
 export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,
-  config: ProviderOptions
+  params
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, provider } = config;
+  const { chainId, writeProvider } = params;
 
-  const prizePool = getContract("PrizePool", chainId, provider, contracts);
+  const prizePool = getContract("PrizePool", chainId, writeProvider, contracts);
 
   if (!prizePool) {
     throw new Error("TestNet PrizePool: Contract Unavailable");
@@ -31,9 +31,8 @@ export async function testnetPrizePoolHandleCompletePrize(
     transactionPopulated = await prizePool.populateTransaction.completeAndStartNextDraw(randNum);
   } else {
     console.log(
-      `TestNet PrizePool: Draw not ready to start.\nReady in ${
-        nextDrawEndsAt - Date.now() / 1000
-      } seconds`
+      `TestNet PrizePool: Draw not ready to start.\nReady in ${nextDrawEndsAt -
+        Date.now() / 1000} seconds`
     );
   }
 
