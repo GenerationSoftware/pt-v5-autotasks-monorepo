@@ -24,7 +24,8 @@
     "yalcadd": "npx yalc add @pooltogether/v5-autotasks-library",
     "build": "npm run yalcadd && tsup",
     "start": "npm run yalcadd && ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
-    "update": "npm run yalcadd && npm run build && ./script/updateTask.js"
+    "updatetask": "ts-node --esm --experimental-specifier-resolution=node ./script/updateTask.js",
+    "update": "npm run yalcadd && npm run build && npm run updatetask"
   },
   "bugs": {
     "url": "https://github.com/pooltogether/v5-autotasks/issues"

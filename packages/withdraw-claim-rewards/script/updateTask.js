@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
+import Configstore from "configstore";
 import { AutotaskClient } from "defender-autotask-client";
 import fs from "fs";
 
+import pkg from "../package.json";
+const config = new Configstore(pkg.name);
+
 async function updateAutotask(autotaskId, file) {
   const client = new AutotaskClient({
-    apiKey: DEFENDER_TEAM_API_KEY,
-    apiSecret: DEFENDER_TEAM_SECRET_KEY
+    apiKey: config.get("DEFENDER_TEAM_API_KEY"),
+    apiSecret: config.get("DEFENDER_TEAM_SECRET_KEY")
   });
 
   const source = fs.readFileSync(file);
@@ -19,7 +23,7 @@ async function updateAutotask(autotaskId, file) {
 }
 
 async function run() {
-  await updateAutotask(AUTOTASK_ID, "./dist/handler.cjs");
+  await updateAutotask(config.get("AUTOTASK_ID"), "./dist/handler.cjs");
 }
 
 run();

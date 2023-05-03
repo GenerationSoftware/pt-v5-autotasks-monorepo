@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { RelayerParams } from "defender-relay-client";
-import { PrizeClaimerConfigParams, NETWORK_NAMES } from "v5-autotasks-library";
+import { PrizeClaimerConfigParams, NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
 
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 
