@@ -67,10 +67,16 @@ export interface VaultAccount {
   id: string;
 }
 
+export interface TiersContext {
+  numberOfTiers: number;
+  rangeArray: number[];
+}
+
 export interface ClaimPrizeContext {
   feeToken: Token;
   drawId: string;
   feeTokenRateUsd: number;
+  tiers: TiersContext;
 }
 
 export interface GetClaimerProfitablePrizeTxsParams {

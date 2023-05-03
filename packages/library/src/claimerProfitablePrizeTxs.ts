@@ -9,7 +9,8 @@ import {
   Vault,
   Token,
   ClaimPrizeContext,
-  GetClaimerProfitablePrizeTxsParams
+  GetClaimerProfitablePrizeTxsParams,
+  TiersContext
 } from "./types";
 import {
   logTable,
@@ -81,7 +82,7 @@ export async function getClaimerProfitablePrizeTxs(
   console.log(chalk.dim(`${vaults.length} vaults.`));
 
   // #3. Get more data about which users are winners from the contract
-  const claims: Claim[] = await getVaultWinnersClaims(readProvider, contracts, prizePool, vaults);
+  const claims: Claim[] = await getVaultWinnersClaims(readProvider, contracts, vaults, context);
 
   console.log(chalk.dim(`${claims.length} winners.`));
 
@@ -157,16 +158,14 @@ const getVaults = async (chainId: number): Promise<Vault[]> => {
 const getVaultWinnersClaims = async (
   readProvider: Provider,
   contracts: ContractsBlob,
-  prizePool: Contract,
-  vaults: Vault[]
+  vaults: Vault[],
+  context: ClaimPrizeContext
 ): Promise<Claim[]> => {
   printAsterisks();
   console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
-  const numberOfTiers = await prizePool.numberOfTiers();
-  const tiersArray = Array.from({ length: numberOfTiers + 1 }, (value, index) => index);
 
   // TODO: Make sure user has balance before adding them to the read multicall
-  const claims: Claim[] = await getWinners(readProvider, contracts, vaults, tiersArray);
+  const claims: Claim[] = await getWinners(readProvider, contracts, vaults, context);
 
   return claims;
 };
@@ -266,6 +265,10 @@ const getContext = async (
   const feeTokenAddress = await prizePool.prizeToken();
   const drawId = await prizePool.getLastCompletedDrawId();
 
+  const tiers: TiersContext = { numberOfTiers: undefined, rangeArray: undefined };
+  tiers.numberOfTiers = await prizePool.numberOfTiers();
+  tiers.rangeArray = Array.from({ length: tiers.numberOfTiers + 1 }, (value, index) => index);
+
   const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
   const feeToken = {
@@ -277,7 +280,7 @@ const getContext = async (
 
   const feeTokenRateUsd = await getFeeTokenRateUsd(marketRate, feeToken);
 
-  return { feeToken, drawId, feeTokenRateUsd };
+  return { feeToken, drawId, feeTokenRateUsd, tiers };
 };
 
 /**
@@ -290,6 +293,7 @@ const printContext = context => {
   printSpacer();
 
   logTable({ feeToken: context.feeToken });
+  logTable({ tiers: context.tiers });
   logStringValue("Draw ID:", context.drawId);
   logStringValue(
     `Fee Token ${context.feeToken.symbol} MarketRate USD: `,

@@ -1,7 +1,7 @@
 import { providers } from "ethers";
 import { ContractCallContext } from "ethereum-multicall";
 
-import { Claim, ContractsBlob, Vault } from "../types";
+import { Claim, ClaimPrizeContext, ContractsBlob, Vault } from "../types";
 import { getComplexMulticallResults } from "../utils";
 
 /**
@@ -17,8 +17,10 @@ export const getWinners = async (
   readProvider: providers.Provider,
   contracts: ContractsBlob,
   vaults: Vault[],
-  tiersArray: number[]
+  context: ClaimPrizeContext
 ): Promise<Claim[]> => {
+  const tiersArray = context.tiers.rangeArray;
+
   const prizePoolContractBlob = contracts.contracts.find(contract => contract.type === "PrizePool");
 
   const calls: ContractCallContext["calls"] = [];

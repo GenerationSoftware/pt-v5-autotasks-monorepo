@@ -135,14 +135,7 @@ export const getSharedQuestions = (config, askFlashbots) => {
         "Use Flashbots to keep transactions private from the mempool and reduce failures? (recommended)"
       ),
       choices: ["Yes", "No"],
-      when: answers => {
-        if (!answers.existingConfig) {
-          return true;
-        } else if (askFlashbots) {
-          console.log("asking flashbots");
-          return false;
-        }
-      },
+      when,
       filter(val) {
         return val === "Yes" ? true : false;
       }
