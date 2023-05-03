@@ -12,7 +12,6 @@ import { getComplexMulticallResults } from "../utils";
  * @param tiersArray an easily iterable range of numbers for each tier available (ie. [0, 1, 2])
  * @returns
  */
-// TODO: canary tier
 export const getWinners = async (
   readProvider: providers.Provider,
   contracts: ContractsBlob,
@@ -53,10 +52,14 @@ export const getWinners = async (
   const multicallResults = await getComplexMulticallResults(readProvider, queries);
 
   // Builds the array of claims
-  return getClaims(prizePoolAddress, multicallResults);
+  return getClaims(prizePoolAddress, multicallResults, context);
 };
 
-const getClaims = (prizePoolAddress: string, multicallResults): Claim[] => {
+const getClaims = (
+  prizePoolAddress: string,
+  multicallResults,
+  context: ClaimPrizeContext
+): Claim[] => {
   const claims: Claim[] = [];
 
   Object.entries(multicallResults[prizePoolAddress]).forEach(vaultUserTierResult => {
@@ -71,5 +74,21 @@ const getClaims = (prizePoolAddress: string, multicallResults): Claim[] => {
     }
   });
 
+  logClaims(claims, context);
+
   return claims;
+};
+
+const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
+  const tiersArray = context.tiers.rangeArray;
+
+  let tierClaimsFiltered = {};
+  tiersArray.forEach(tierNum => {
+    tierClaimsFiltered[tierNum] = claims.filter(claim => claim.tier === tierNum);
+  });
+
+  tiersArray.forEach(tierNum => {
+    const tierClaims = tierClaimsFiltered[tierNum];
+    console.table({ Tier: { "#": tierNum, "# of Winners": tierClaims.length } });
+  });
 };

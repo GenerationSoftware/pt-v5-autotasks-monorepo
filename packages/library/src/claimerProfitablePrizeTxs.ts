@@ -46,7 +46,7 @@ const MIN_PROFIT_THRESHOLD_USD = 5;
 
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
- * to claim for them. The fees the claimer bot can earn increase logarithmically over time.
+ * to claim for them. The fees the claimer bot can earn increase exponentially over time.
  *
  * @returns {(Promise|undefined)} Promise of an array of ethers PopulatedTransaction objects or undefined
  */
@@ -265,9 +265,9 @@ const getContext = async (
   const feeTokenAddress = await prizePool.prizeToken();
   const drawId = await prizePool.getLastCompletedDrawId();
 
-  const tiers: TiersContext = { numberOfTiers: undefined, rangeArray: undefined };
-  tiers.numberOfTiers = await prizePool.numberOfTiers();
-  tiers.rangeArray = Array.from({ length: tiers.numberOfTiers + 1 }, (value, index) => index);
+  const numberOfTiers = await prizePool.numberOfTiers();
+  const rangeArray = Array.from({ length: numberOfTiers + 1 }, (value, index) => index);
+  const tiers: TiersContext = { numberOfTiers, rangeArray };
 
   const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
