@@ -21,12 +21,14 @@ console.clear();
 console.log(chalk.magenta(figlet.textSync("PoolTogether")));
 console.log(chalk.blue(figlet.textSync("Arb Liquidator Bot")));
 
-const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorConfigParams => {
+const cliLoadParams = (
+  signer: Provider | DefenderRelaySigner,
+  relayerAddress: string
+): ArbLiquidatorConfigParams => {
   const config = new Configstore(pkg.name);
 
   const chainId = Number(config.get("CHAIN_ID"));
   const swapRecipient = String(config.get("SWAP_RECIPIENT"));
-  const relayerAddress = String(config.get("RELAYER_ADDRESS"));
   const useFlashbots = Boolean(config.get("USE_FLASHBOTS"));
 
   const readProvider = new ethers.providers.InfuraProvider(
@@ -35,10 +37,10 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorCon
   );
 
   return {
+    relayerAddress,
     useFlashbots,
     writeProvider: signer,
     readProvider,
-    relayerAddress,
     swapRecipient,
     chainId
   };
@@ -60,8 +62,9 @@ if (esMain(import.meta)) {
   const relayer = new Relayer(fakeEvent);
   const provider = new DefenderRelayProvider(fakeEvent);
   const signer = new DefenderRelaySigner(fakeEvent, provider, { speed: "fast" });
+  const relayerAddress = await signer.getAddress();
 
-  const params: ArbLiquidatorConfigParams = cliLoadParams(signer);
+  const params: ArbLiquidatorConfigParams = cliLoadParams(signer, relayerAddress);
 
   try {
     await liquidatorArbitrageSwap(contracts, relayer, params);

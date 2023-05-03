@@ -9,17 +9,21 @@ import {
   NETWORK_NAMES
 } from "@pooltogether/v5-autotasks-library";
 
-const handlerLoadParams = (signer: Provider | DefenderRelaySigner): ArbLiquidatorConfigParams => {
+const handlerLoadParams = (
+  signer: Provider | DefenderRelaySigner,
+  relayerAddress: string
+): ArbLiquidatorConfigParams => {
   const chainId = Number(CHAIN_ID);
 
   const readProvider = new ethers.providers.InfuraProvider(NETWORK_NAMES[chainId], INFURA_API_KEY);
 
   return {
+    relayerAddress,
+    useFlashbots: USE_FLASHBOTS,
     writeProvider: signer,
     readProvider,
     chainId,
-    swapRecipient: SWAP_RECIPIENT,
-    relayerAddress: RELAYER_ADDRESS
+    swapRecipient: SWAP_RECIPIENT
   };
 };
 
@@ -29,8 +33,9 @@ export async function handler(event) {
   const relayer = new Relayer(event);
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
+  const relayerAddress = await signer.getAddress();
 
-  const params: ArbLiquidatorConfigParams = handlerLoadParams(signer);
+  const params: ArbLiquidatorConfigParams = handlerLoadParams(signer, relayerAddress);
 
   try {
     await liquidatorArbitrageSwap(contracts, relayer, params);

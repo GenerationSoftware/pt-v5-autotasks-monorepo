@@ -9,8 +9,7 @@ import {
 } from "@pooltogether/v5-autotasks-library";
 
 const PACKAGE_CONFIG_KEYS = {
-  SWAP_RECIPIENT: "SWAP_RECIPIENT",
-  RELAYER_ADDRESS: "RELAYER_ADDRESS"
+  SWAP_RECIPIENT: "SWAP_RECIPIENT"
 };
 
 export const checkPackageConfig = config => {
@@ -31,20 +30,6 @@ export const askQuestions = (config, { askFlashbots }) => {
         return true;
       } else {
         return "Please enter the swap recipient's address (where the profit should be sent):";
-      }
-    }
-  });
-
-  questions.push({
-    name: PACKAGE_CONFIG_KEYS.RELAYER_ADDRESS,
-    type: "input",
-    message: chalk.green("Enter the relayer address:"),
-    when,
-    validate: function(value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the relayer address (account address which is sending the transactions):";
       }
     }
   });
