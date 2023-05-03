@@ -14,12 +14,16 @@ export const logStringValue = (str: string, val: any) => {
 };
 
 export const logBigNumber = (title, bigNumber, decimals, symbol = null) => {
-  const formatted = ethers.utils.formatUnits(bigNumber, decimals);
+  try {
+    const formatted = ethers.utils.formatUnits(bigNumber, decimals);
 
-  logStringValue(
-    title,
-    `${formatted}${symbol !== null && ` ${symbol}`} (${bigNumber.toString()} wei)`
-  );
+    logStringValue(
+      title,
+      `${formatted}${symbol !== null && ` ${symbol}`} (${bigNumber.toString()} wei)`
+    );
+  } catch (e) {
+    console.log(chalk.dim("Unable to log BigNumber:", title));
+  }
 };
 
 export const printAsterisks = () => {

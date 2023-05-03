@@ -34,6 +34,11 @@ interface ClaimPrizesParams {
   feeRecipient: string;
 }
 
+const NETWORK_NATIVE_TOKEN_INFO = {
+  1: { decimals: 18, symbol: "ETH" },
+  5: { decimals: 18, symbol: "ETH" }
+};
+
 /**
  * For testnet MarketRate contract
  */
@@ -104,11 +109,11 @@ export async function getClaimerProfitablePrizeTxs(
     claimer,
     claimPrizesParams,
     readProvider,
-    context
+    context,
+    chainId
   );
   if (profitable) {
     console.log(chalk.green("Claimer: Add Populated Claim Tx"));
-    // TODO: Don't attempt to run tx unless we know for sure it will succeed/ Flashbots?
     const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
     transactionsPopulated.push(tx);
   } else {
@@ -181,7 +186,8 @@ const calculateProfit = async (
   claimer: Contract,
   claimPrizesParams: ClaimPrizesParams,
   readProvider: Provider,
-  context: ClaimPrizeContext
+  context: ClaimPrizeContext,
+  chainId: number
 ): Promise<boolean> => {
   printAsterisks();
   console.log(chalk.blue("4b. Current gas costs for transaction:"));
@@ -189,12 +195,15 @@ const calculateProfit = async (
   logStringValue("ETH Market Rate (USD):", ethMarketRateUsd);
 
   const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
-  // TODO: Don't hardcode 18 and ETH here, depending on chain ...
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow("Estimated gas limit is 0 ..."));
-    // continue;
   } else {
-    logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
+    logBigNumber(
+      "Estimated gas limit:",
+      estimatedGasLimit,
+      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol
+    );
   }
 
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(

@@ -118,10 +118,21 @@ export async function liquidatorArbitrageSwap(
       exactAmountIn,
       amountOutMin
     };
-    console.log(swapExactAmountInParams);
-    const amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
-      ...Object.values(swapExactAmountInParams)
-    );
+
+    let amountOutEstimate;
+    try {
+      amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
+        ...Object.values(swapExactAmountInParams)
+      );
+    } catch (e) {
+      console.error(chalk.red(e));
+      console.warn(
+        chalk.yellow(
+          `Unable to retrieve 'amountOutEstimate' from contract. Moving to next pair ...`
+        )
+      );
+      continue;
+    }
     logBigNumber(
       `Estimated amount of tokenOut to receive:`,
       amountOutEstimate,
@@ -345,9 +356,15 @@ const calculateProfit = async (
 
   printAsterisks();
   console.log(chalk.blue("4. Current gas costs for transaction:"));
-  const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
-    ...Object.values(swapExactAmountInParams)
-  );
+
+  let estimatedGasLimit;
+  try {
+    estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
+      ...Object.values(swapExactAmountInParams)
+    );
+  } catch (e) {
+    console.error(chalk.red(e));
+  }
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     estimatedGasLimit,
     ethMarketRateUsd,

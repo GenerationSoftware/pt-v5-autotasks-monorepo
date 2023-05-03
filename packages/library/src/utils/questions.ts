@@ -8,7 +8,6 @@ export const when = answers => {
   }
 };
 
-// TODO: Don't store CHAIN_ID in config but make it an arg value for each run
 export const SHARED_CONFIG_KEYS = {
   DEFENDER_TEAM_API_KEY: "DEFENDER_TEAM_API_KEY",
   DEFENDER_TEAM_SECRET_KEY: "DEFENDER_TEAM_SECRET_KEY",
