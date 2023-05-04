@@ -52,7 +52,7 @@ if (esMain(import.meta)) {
 
   const params = cliLoadParams(signer);
 
-  processTransaction(fakeEvent, params);
+  await processTransaction(fakeEvent, params);
 }
 
 export function main() {}

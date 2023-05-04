@@ -11,5 +11,5 @@ export async function handler(event: RelayerParams) {
 
   const params = handlerLoadParams();
 
-  processTransaction(event, params);
+  await processTransaction(event, params);
 }

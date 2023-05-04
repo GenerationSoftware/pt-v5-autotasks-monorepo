@@ -6,7 +6,7 @@ export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,
   params
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, readProvider, writeProvider } = params;
+  const { chainId, writeProvider } = params;
 
   const prizePool = getContract("PrizePool", chainId, writeProvider, contracts);
 
