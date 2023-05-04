@@ -89,6 +89,7 @@ const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
 
   tiersArray.forEach(tierNum => {
     const tierClaims = tierClaimsFiltered[tierNum];
-    console.table({ Tier: { "#": tierNum, "# of Winners": tierClaims.length } });
+    const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
+    console.table({ Tier: { "#": tierWord, "# of Winners": tierClaims.length } });
   });
 };
