@@ -2,16 +2,14 @@ import esMain from "es-main";
 import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
+import { Relayer } from "defender-relay-client";
 import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
-import {
-  testnetContractsBlob as contracts,
-  testnetPrizePoolHandleCompletePrize,
-  NETWORK_NAMES
-} from "@pooltogether/v5-autotasks-library";
+import { NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 import { askQuestions, checkPackageConfig } from "./helpers/questions";
+import { processTransaction } from "./transactions";
 
 import pkg from "../package.json";
 
@@ -54,11 +52,7 @@ if (esMain(import.meta)) {
 
   const params = cliLoadParams(signer);
 
-  try {
-    await testnetPrizePoolHandleCompletePrize(contracts, params);
-  } catch (error) {
-    throw new Error(error);
-  }
+  processTransaction(fakeEvent, params);
 }
 
 export function main() {}

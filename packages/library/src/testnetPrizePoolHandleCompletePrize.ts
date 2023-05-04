@@ -6,7 +6,7 @@ export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,
   params
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, writeProvider } = params;
+  const { chainId, readProvider, writeProvider } = params;
 
   const prizePool = getContract("PrizePool", chainId, writeProvider, contracts);
 
@@ -14,7 +14,7 @@ export async function testnetPrizePoolHandleCompletePrize(
     throw new Error("TestNet PrizePool: Contract Unavailable");
   }
 
-  const nextDrawEndsAt = await prizePool.nextDrawEndsAt();
+  const nextDrawEndsAt = await prizePool.functions.nextDrawEndsAt();
   const canCompleteDraw = Date.now() / 1000 > nextDrawEndsAt;
 
   // Debug Contract Request Parameters

@@ -9,18 +9,18 @@ export async function processTransaction(event, params) {
   const { chainId } = params;
 
   const relayer = new Relayer(event);
-  const provider = new DefenderRelayProvider(event);
+  const writeProvider = new DefenderRelayProvider(event);
 
   try {
-    const transactionPopulated = await testnetPrizePoolHandleCompletePrize(contracts, {
+    const populatedTx = await testnetPrizePoolHandleCompletePrize(contracts, {
       chainId,
-      provider
+      writeProvider
     });
 
-    if (transactionPopulated) {
+    if (populatedTx) {
       let transactionSentToNetwork = await relayer.sendTransaction({
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
+        data: populatedTx.data,
+        to: populatedTx.to,
         gasLimit: 200000
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
