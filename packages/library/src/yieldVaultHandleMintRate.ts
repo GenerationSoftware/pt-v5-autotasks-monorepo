@@ -7,9 +7,9 @@ export async function yieldVaultHandleMintRate(
   contracts: ContractsBlob,
   params
 ): Promise<PopulatedTransaction[] | undefined> {
-  const { chainId, provider } = params;
+  const { chainId, writeProvider } = params;
 
-  const yieldVaults = getContracts("YieldVault", chainId, provider, contracts);
+  const yieldVaults = getContracts("YieldVault", chainId, writeProvider, contracts);
 
   let transactionsPopulated: PopulatedTransaction[] | undefined = [];
   for (const yieldVault of yieldVaults) {

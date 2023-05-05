@@ -9,11 +9,11 @@ export async function processTransactions(event, params) {
   const { chainId } = params;
 
   const relayer = new Relayer(event);
-  const provider = new DefenderRelayProvider(event);
+  const writeProvider = new DefenderRelayProvider(event);
 
   const transactionsPopulated = await yieldVaultHandleMintRate(contracts, {
     chainId,
-    provider
+    writeProvider
   });
 
   if (transactionsPopulated.length > 0) {

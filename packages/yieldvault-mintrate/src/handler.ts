@@ -10,7 +10,6 @@ export async function handler(event: RelayerParams) {
   console.clear();
 
   const params = handlerLoadParams();
-  console.log(params);
 
-  processTransactions(event, params);
+  await processTransactions(event, params);
 }
