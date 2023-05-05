@@ -61,11 +61,14 @@ if (esMain(import.meta)) {
   };
   const relayer = new Relayer(fakeEvent);
   const provider = new DefenderRelayProvider(fakeEvent);
-  const signer = new DefenderRelaySigner(fakeEvent, provider, { speed: "fast" });
+  const signer = new DefenderRelaySigner(fakeEvent, provider, {
+    speed: "fast"
+  });
   const relayerAddress = await signer.getAddress();
 
   const params: ArbLiquidatorConfigParams = cliLoadParams(signer, relayerAddress);
 
+  // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
     await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {

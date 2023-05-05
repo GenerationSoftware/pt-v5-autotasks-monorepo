@@ -32,11 +32,14 @@ export async function handler(event) {
 
   const relayer = new Relayer(event);
   const provider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
+  const signer = new DefenderRelaySigner(event, provider, {
+    speed: "fast"
+  });
   const relayerAddress = await signer.getAddress();
 
   const params: ArbLiquidatorConfigParams = handlerLoadParams(signer, relayerAddress);
 
+  // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
     await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
