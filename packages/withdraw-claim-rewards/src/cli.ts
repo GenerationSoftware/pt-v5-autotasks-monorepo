@@ -56,7 +56,7 @@ if (esMain(import.meta)) {
   );
   const populatedTxs = await populateTransaction(params, readProvider);
 
-  processPopulatedTransaction(fakeEvent, populatedTxs);
+  await processPopulatedTransaction(fakeEvent, populatedTxs);
 }
 
 export function main() {}

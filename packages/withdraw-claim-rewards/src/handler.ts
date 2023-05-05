@@ -29,5 +29,5 @@ export async function handler(event: RelayerParams) {
 
   const populatedTx = await populateTransaction(params, readProvider);
 
-  processPopulatedTransaction(event, populatedTx);
+  await processPopulatedTransaction(event, populatedTx);
 }
