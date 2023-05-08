@@ -2,7 +2,6 @@ import esMain from "es-main";
 import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
-import { Relayer } from "defender-relay-client";
 import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";

@@ -5,7 +5,6 @@ export { getFeesUsd, getEthMarketRateUsd } from "./getFeesUsd";
 export * from "./subgraphs";
 export * from "./multicall";
 export * from "./arbLiquidatorMulticall";
-export * from "./prizePoolMulticall";
 export * from "./questions";
 export * from "./logging";
 export * from "./network";

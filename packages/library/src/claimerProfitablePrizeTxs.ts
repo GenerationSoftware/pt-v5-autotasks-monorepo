@@ -1,12 +1,12 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { Provider } from "@ethersproject/providers";
+import { getSubgraphVaults, getWinnersClaims } from "@pooltogether/v5-utils-js";
 import chalk from "chalk";
 
 import {
   ContractsBlob,
   Claim,
-  Vault,
   Token,
   ClaimPrizeContext,
   GetClaimerProfitablePrizeTxsParams,
@@ -21,8 +21,6 @@ import {
   getContract,
   getFeesUsd,
   getEthMarketRateUsd,
-  getSubgraphVaults,
-  getWinners,
   roundTwoDecimalPlaces,
   parseBigNumberAsFloat
 } from "./utils";
@@ -80,15 +78,19 @@ export async function getClaimerProfitablePrizeTxs(
   printContext(context);
 
   // #2. Get data about all user's with balances from the subgraph
-  const vaults = await getVaults(chainId);
+  printAsterisks();
+  console.log(chalk.blue(`2. Subgraph: Getting data ...`));
+  const vaults = await getSubgraphVaults(chainId);
   if (vaults.length === 0) {
     throw new Error("Claimer: No vaults found in subgraph");
   }
   console.log(chalk.dim(`${vaults.length} vaults.`));
 
   // #3. Get more data about which users are winners from the contract
-  const claims: Claim[] = await getVaultWinnersClaims(readProvider, contracts, vaults, context);
-
+  printAsterisks();
+  console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
+  const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, context);
+  logClaims(claims, context);
   console.log(chalk.dim(`${claims.length} winners.`));
 
   // #4. Start iterating through vaults
@@ -140,39 +142,6 @@ const getEstimatedGasLimit = async (
   }
 
   return estimatedGasLimit;
-};
-
-/**
- * Pulls from the subgraph all of the vaults which the getVaultWinnersClaims function will need
- * to determine who the winners are
- *
- * @returns {Promise} Promise of an array of Vault objects
- */
-const getVaults = async (chainId: number): Promise<Vault[]> => {
-  printAsterisks();
-  console.log(chalk.blue(`2. Subgraph: Getting data ...`));
-  return await getSubgraphVaults(chainId);
-};
-
-/**
- * Finds out which of the accounts in each vault are winners for the last draw and formats
- * them into an array Claim objects
- *
- * @returns {Promise} Promise of an array of Claim objects
- */
-const getVaultWinnersClaims = async (
-  readProvider: Provider,
-  contracts: ContractsBlob,
-  vaults: Vault[],
-  context: ClaimPrizeContext
-): Promise<Claim[]> => {
-  printAsterisks();
-  console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
-
-  // TODO: Make sure user has balance before adding them to the read multicall
-  const claims: Claim[] = await getWinners(readProvider, contracts, vaults, context);
-
-  return claims;
 };
 
 /**
@@ -319,4 +288,19 @@ const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promis
   const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
 
   return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
+};
+
+const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
+  const tiersArray = context.tiers.rangeArray;
+
+  let tierClaimsFiltered: { [index: number]: Claim[] } = {};
+  tiersArray.forEach(tierNum => {
+    tierClaimsFiltered[tierNum] = claims.filter(claim => claim.tier === tierNum);
+  });
+
+  tiersArray.forEach(tierNum => {
+    const tierClaims = tierClaimsFiltered[tierNum];
+    const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
+    console.table({ Tier: { "#": tierWord, "# of Winners": tierClaims.length } });
+  });
 };
