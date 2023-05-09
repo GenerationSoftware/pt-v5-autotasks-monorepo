@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { RelayerParams } from "defender-relay-client";
-import { PrizeClaimerConfigParams, NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
+import { PrizeClaimerConfigParams } from "@pooltogether/v5-autotasks-library";
 
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 
@@ -13,10 +13,7 @@ export async function handler(event: RelayerParams) {
 
   const params = handlerLoadParams();
 
-  const readProvider = new ethers.providers.InfuraProvider(
-    NETWORK_NAMES[params.chainId],
-    INFURA_API_KEY
-  );
+  const readProvider = new ethers.providers.InfuraProvider(params.chainId, INFURA_API_KEY);
 
   const populatedTxs = await populateTransactions(params, readProvider);
 

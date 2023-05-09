@@ -5,8 +5,7 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import {
   liquidatorArbitrageSwap,
   testnetContractsBlob as contracts,
-  ArbLiquidatorConfigParams,
-  NETWORK_NAMES
+  ArbLiquidatorConfigParams
 } from "@pooltogether/v5-autotasks-library";
 
 const handlerLoadParams = (
@@ -15,7 +14,7 @@ const handlerLoadParams = (
 ): ArbLiquidatorConfigParams => {
   const chainId = Number(CHAIN_ID);
 
-  const readProvider = new ethers.providers.InfuraProvider(NETWORK_NAMES[chainId], INFURA_API_KEY);
+  const readProvider = new ethers.providers.InfuraProvider(chainId, INFURA_API_KEY);
 
   return {
     relayerAddress,

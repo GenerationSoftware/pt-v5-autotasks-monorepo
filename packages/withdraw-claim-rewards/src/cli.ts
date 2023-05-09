@@ -3,10 +3,7 @@ import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
 import { ethers } from "ethers";
-import {
-  NETWORK_NAMES,
-  WithdrawClaimRewardsConfigParams
-} from "@pooltogether/v5-autotasks-library";
+import { WithdrawClaimRewardsConfigParams } from "@pooltogether/v5-autotasks-library";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 import { checkPackageConfig, askQuestions } from "./helpers/questions";
@@ -51,7 +48,7 @@ if (esMain(import.meta)) {
   const params: WithdrawClaimRewardsConfigParams = cliLoadParams(relayerAddress);
 
   const readProvider = new ethers.providers.InfuraProvider(
-    NETWORK_NAMES[params.chainId],
+    params.chainId,
     config.get("INFURA_API_KEY")
   );
   const populatedTxs = await populateTransaction(params, readProvider);

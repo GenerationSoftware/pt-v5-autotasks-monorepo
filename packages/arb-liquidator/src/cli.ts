@@ -7,7 +7,6 @@ import { Provider } from "@ethersproject/providers";
 import {
   testnetContractsBlob as contracts,
   liquidatorArbitrageSwap,
-  NETWORK_NAMES,
   ArbLiquidatorConfigParams
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
@@ -31,10 +30,7 @@ const cliLoadParams = (
   const swapRecipient = String(config.get("SWAP_RECIPIENT"));
   const useFlashbots = Boolean(config.get("USE_FLASHBOTS"));
 
-  const readProvider = new ethers.providers.InfuraProvider(
-    NETWORK_NAMES[chainId],
-    config.get("INFURA_API_KEY")
-  );
+  const readProvider = new ethers.providers.InfuraProvider(chainId, config.get("INFURA_API_KEY"));
 
   return {
     relayerAddress,

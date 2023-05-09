@@ -1,9 +1,6 @@
 import { ethers } from "ethers";
 import { RelayerParams } from "defender-relay-client";
-import {
-  WithdrawClaimRewardsConfigParams,
-  NETWORK_NAMES
-} from "@pooltogether/v5-autotasks-library";
+import { WithdrawClaimRewardsConfigParams } from "@pooltogether/v5-autotasks-library";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 import { populateTransaction, processPopulatedTransaction } from "./transactions";
@@ -21,10 +18,7 @@ export async function handler(event: RelayerParams) {
 
   const params = handlerLoadParams(relayerAddress);
 
-  const readProvider = new ethers.providers.InfuraProvider(
-    NETWORK_NAMES[params.chainId],
-    INFURA_API_KEY
-  );
+  const readProvider = new ethers.providers.InfuraProvider(params.chainId, INFURA_API_KEY);
 
   const populatedTx = await populateTransaction(params, readProvider);
 

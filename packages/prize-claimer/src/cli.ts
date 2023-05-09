@@ -6,7 +6,6 @@ import { ethers } from "ethers";
 import {
   printAsterisks,
   printSpacer,
-  NETWORK_NAMES,
   PrizeClaimerConfigParams
 } from "@pooltogether/v5-autotasks-library";
 
@@ -46,7 +45,7 @@ if (esMain(import.meta)) {
   const params: PrizeClaimerConfigParams = cliLoadParams();
 
   const readProvider = new ethers.providers.InfuraProvider(
-    NETWORK_NAMES[params.chainId],
+    params.chainId,
     config.get("INFURA_API_KEY")
   );
 
