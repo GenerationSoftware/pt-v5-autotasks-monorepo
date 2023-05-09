@@ -20,7 +20,6 @@ export async function handler(event: RelayerParams) {
   const relayerAddress = await signer.getAddress();
 
   const params = handlerLoadParams(relayerAddress);
-  console.log(params);
 
   const readProvider = new ethers.providers.InfuraProvider(
     NETWORK_NAMES[params.chainId],

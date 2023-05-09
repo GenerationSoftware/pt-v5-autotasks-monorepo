@@ -6,9 +6,9 @@ export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,
   params
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, writeProvider } = params;
+  const { chainId, readProvider } = params;
 
-  const prizePool = getContract("PrizePool", chainId, writeProvider, contracts);
+  const prizePool = getContract("PrizePool", chainId, readProvider, contracts);
 
   if (!prizePool) {
     throw new Error("TestNet PrizePool: Contract Unavailable");

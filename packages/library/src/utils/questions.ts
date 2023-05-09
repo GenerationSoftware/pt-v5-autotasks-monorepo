@@ -121,7 +121,7 @@ export const getSharedQuestions = (config, askFlashbots) => {
       name: SHARED_CONFIG_KEYS.CHAIN_ID,
       type: "list",
       message: chalk.green("Which network?"),
-      choices: ["Goerli", "Mainnet"],
+      choices: ["Mumbai", "Goerli", "Mainnet"],
       when,
       filter(val) {
         return CHAIN_IDS[val.toLowerCase()];

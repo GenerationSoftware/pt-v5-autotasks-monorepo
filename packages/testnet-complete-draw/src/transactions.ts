@@ -1,21 +1,14 @@
 import { Relayer } from "defender-relay-client";
-import { DefenderRelayProvider } from "defender-relay-client/lib/ethers";
 import {
   testnetContractsBlob as contracts,
   testnetPrizePoolHandleCompletePrize
 } from "@pooltogether/v5-autotasks-library";
 
 export async function processTransaction(event, params) {
-  const { chainId } = params;
-
   const relayer = new Relayer(event);
-  const writeProvider = new DefenderRelayProvider(event);
 
   try {
-    const populatedTx = await testnetPrizePoolHandleCompletePrize(contracts, {
-      chainId,
-      writeProvider
-    });
+    const populatedTx = await testnetPrizePoolHandleCompletePrize(contracts, params);
 
     if (populatedTx) {
       let transactionSentToNetwork = await relayer.sendTransaction({

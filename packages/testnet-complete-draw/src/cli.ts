@@ -4,7 +4,6 @@ import figlet from "figlet";
 import chalk from "chalk";
 import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
-import { NETWORK_NAMES } from "@pooltogether/v5-autotasks-library";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
 import { askQuestions, checkPackageConfig } from "./helpers/questions";
@@ -21,10 +20,7 @@ const cliLoadParams = (signer: Provider | DefenderRelaySigner) => {
 
   const chainId = Number(config.get("CHAIN_ID"));
 
-  const readProvider = new ethers.providers.InfuraProvider(
-    NETWORK_NAMES[chainId],
-    config.get("INFURA_API_KEY")
-  );
+  const readProvider = new ethers.providers.InfuraProvider(chainId, config.get("INFURA_API_KEY"));
 
   return {
     writeProvider: signer,
