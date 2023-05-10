@@ -21,7 +21,7 @@
   "type": "module",
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "yalcadd": "npx yalc add @pooltogether/v5-autotasks-library",
+    "yalcadd": "npx yalc add @pooltogether/v5-autotasks-library && npx yalc add @pooltogether/v5-utils-js",
     "build": "npm run yalcadd && tsup",
     "start": "npm run yalcadd && ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "updatetask": "ts-node --esm --experimental-specifier-resolution=node ./script/updateTask.js",
