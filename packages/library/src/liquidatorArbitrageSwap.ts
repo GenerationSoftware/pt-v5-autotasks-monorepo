@@ -20,6 +20,7 @@ import {
   arbLiquidatorMulticall
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
+import { FLASHBOTS_SUPPORTED_CHAINS } from "./utils/network";
 
 interface SwapExactAmountInParams {
   liquidationPairAddress: string;
@@ -46,7 +47,14 @@ export async function liquidatorArbitrageSwap(
   relayer: Relayer,
   params: ArbLiquidatorConfigParams
 ) {
-  const { useFlashbots, swapRecipient, relayerAddress, readProvider, writeProvider } = params;
+  const {
+    chainId,
+    useFlashbots,
+    swapRecipient,
+    relayerAddress,
+    readProvider,
+    writeProvider
+  } = params;
 
   // #1. Get contracts
   //
@@ -101,7 +109,8 @@ export async function liquidatorArbitrageSwap(
         )
       );
 
-      // continue;
+      console.warn(chalk.yellow(`Moving to next pair ...`));
+      continue;
     }
 
     // #4. Get allowance approval (necessary before upcoming static call)
@@ -156,6 +165,7 @@ export async function liquidatorArbitrageSwap(
           `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`
         )
       );
+      console.warn(chalk.yellow(`Moving to next pair ...`));
       continue;
     }
 
@@ -169,8 +179,10 @@ export async function liquidatorArbitrageSwap(
         ...Object.values(swapExactAmountInParams)
       );
 
+      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
+
       let transactionSentToNetwork = await relayer.sendTransaction({
-        isPrivate: useFlashbots,
+        isPrivate: chainSupportsFlashbots && useFlashbots,
         data: transactionPopulated.data,
         to: transactionPopulated.to,
         gasLimit: 600000
@@ -441,11 +453,12 @@ const calculateAmounts = async (
 
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
-  const divisor = 1;
-  if (divisor !== 1) {
-    logStringValue("Divide max amount out by:", Math.round(divisor));
-  }
-  const wantedAmountOut = maxAmountOut.div(divisor);
+  // const divisor = 1;
+  // if (divisor !== 1) {
+  //   logStringValue("Divide max amount out by:", Math.round(divisor));
+  // }
+  // const wantedAmountOut = maxAmountOut.div(divisor);
+  const wantedAmountOut = maxAmountOut;
   logBigNumber(
     "Wanted amount out:",
     wantedAmountOut,

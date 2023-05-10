@@ -28,9 +28,6 @@ export const processPopulatedTransactions = async (
 ) => {
   const relayer = new Relayer(event);
 
-  console.log("populatedTxs");
-  console.log(populatedTxs);
-
   try {
     if (populatedTxs.length > 0) {
       for (const populatedTx of populatedTxs) {
