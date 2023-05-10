@@ -19,23 +19,18 @@ import {
   printAsterisks,
   printSpacer,
   getFeesUsd,
-  getEthMarketRateUsd,
+  getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   parseBigNumberAsFloat
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
+import { NETWORK_NATIVE_TOKEN_INFO } from "./utils/network";
 
 interface ClaimPrizesParams {
   drawId: string;
   claims: Claim[];
   feeRecipient: string;
 }
-
-const NETWORK_NATIVE_TOKEN_INFO = {
-  1: { decimals: 18, symbol: "ETH" },
-  5: { decimals: 18, symbol: "ETH" },
-  80001: { decimals: 18, symbol: "MATIC" }
-};
 
 /**
  * For testnet MarketRate contract
@@ -160,8 +155,11 @@ const calculateProfit = async (
 ): Promise<boolean> => {
   printAsterisks();
   console.log(chalk.blue("4b. Current gas costs for transaction:"));
-  const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
-  logStringValue("ETH Market Rate (USD):", ethMarketRateUsd);
+  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+  logStringValue(
+    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    gasTokenMarketRateUsd
+  );
 
   const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
@@ -177,7 +175,7 @@ const calculateProfit = async (
 
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     estimatedGasLimit,
-    ethMarketRateUsd,
+    gasTokenMarketRateUsd,
     readProvider
   );
   logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });

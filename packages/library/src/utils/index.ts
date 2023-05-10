@@ -1,5 +1,5 @@
 export { roundTwoDecimalPlaces, parseBigNumberAsFloat } from "./math";
-export { getFeesUsd, getEthMarketRateUsd } from "./getFeesUsd";
+export { getFeesUsd, getGasTokenMarketRateUsd } from "./getFeesUsd";
 export * from "./multicall";
 export * from "./arbLiquidatorMulticall";
 export * from "./questions";

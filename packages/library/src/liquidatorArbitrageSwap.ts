@@ -14,12 +14,12 @@ import {
   printAsterisks,
   printSpacer,
   getFeesUsd,
-  getEthMarketRateUsd,
+  getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   arbLiquidatorMulticall
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
-import { FLASHBOTS_SUPPORTED_CHAINS } from "./utils/network";
+import { FLASHBOTS_SUPPORTED_CHAINS, NETWORK_NATIVE_TOKEN_INFO } from "./utils/network";
 
 interface SwapExactAmountInParams {
   liquidationPairAddress: string;
@@ -108,7 +108,7 @@ export async function liquidatorArbitrageSwap(
         )
       );
 
-      console.warn(chalk.yellow(`Moving to next pair ...`));
+      logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
 
@@ -134,11 +134,8 @@ export async function liquidatorArbitrageSwap(
       );
     } catch (e) {
       console.error(chalk.red(e));
-      console.warn(
-        chalk.yellow(
-          `Unable to retrieve 'amountOutEstimate' from contract. Moving to next pair ...`
-        )
-      );
+      console.warn(chalk.yellow(`Unable to retrieve 'amountOutEstimate' from contract.`));
+      logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
     logBigNumber(
@@ -151,6 +148,7 @@ export async function liquidatorArbitrageSwap(
     // #6. Decide if profitable or not
     //
     const profitable = await calculateProfit(
+      chainId,
       contracts,
       marketRate,
       liquidationRouter,
@@ -164,7 +162,7 @@ export async function liquidatorArbitrageSwap(
           `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`
         )
       );
-      console.warn(chalk.yellow(`Moving to next pair ...`));
+      logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
 
@@ -354,6 +352,7 @@ const checkBalance = async (
  * @returns {Promise} Promise boolean of profitability
  */
 const calculateProfit = async (
+  chainId: number,
   contracts: ContractsBlob,
   marketRate: Contract,
   liquidationRouter: Contract,
@@ -363,7 +362,7 @@ const calculateProfit = async (
 ): Promise<Boolean> => {
   const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
 
-  const ethMarketRateUsd = await getEthMarketRateUsd(contracts, marketRate);
+  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
 
   printAsterisks();
   console.log(chalk.blue("4. Current gas costs for transaction:"));
@@ -378,11 +377,22 @@ const calculateProfit = async (
   }
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     estimatedGasLimit,
-    ethMarketRateUsd,
+    gasTokenMarketRateUsd,
     readProvider
   );
+  // const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+  logStringValue(
+    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    gasTokenMarketRateUsd
+  );
+
   printSpacer();
-  logBigNumber("Estimated gas limit:", estimatedGasLimit, 18, "ETH");
+  logBigNumber(
+    "Estimated gas limit:",
+    estimatedGasLimit,
+    18,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol
+  );
 
   logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
@@ -481,4 +491,10 @@ const calculateAmounts = async (
     exactAmountIn,
     amountOutMin
   };
+};
+
+const logNextPair = (liquidationPair, liquidationPairs) => {
+  if (liquidationPair !== liquidationPairs[liquidationPairs.length - 1]) {
+    console.warn(chalk.yellow(`Moving to next pair ...`));
+  }
 };

@@ -2,6 +2,7 @@ import { ethers, BigNumber, Contract } from "ethers";
 import { Provider } from "@ethersproject/providers";
 
 import { ContractsBlob } from "../types";
+import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from "../utils/network";
 
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
@@ -38,21 +39,23 @@ export const getFeesUsd = async (
 };
 
 /**
- * Gets the current USD value of ETH
+ * Gets the current USD value of Native Gas Token for Current Chain
  * On testnet: Search testnet contract blob to get wETH contract then ask MarketRate contract
  * TODO: 0x spot API/DEX subgraphs/other sources for production rates
  *
- * @returns {number} The spot price for ETH in USD
+ * @returns {number} The spot price for the Native Gas Token in USD
  **/
-export const getEthMarketRateUsd = async (contracts: ContractsBlob, marketRate: Contract) => {
-  const wethContract = contracts.contracts.find(
-    contract =>
-      contract.tokens &&
-      contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
-  );
+export const getGasTokenMarketRateUsd = async (contracts: ContractsBlob, marketRate: Contract) => {
+  // const wethContract = contracts.contracts.find(
+  //   contract =>
+  //     contract.tokens &&
+  //     contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
+  // );
+  // const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
+  // const wethRate = await marketRate.priceFeed(wethAddress, "USD");
 
-  const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
-  const wethRate = await marketRate.priceFeed(wethAddress, "USD");
+  const nativeTokenAddress = TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS;
+  const gasTokenRate = await marketRate.priceFeed(nativeTokenAddress, "USD");
 
-  return parseFloat(ethers.utils.formatUnits(wethRate, MARKET_RATE_CONTRACT_DECIMALS));
+  return parseFloat(ethers.utils.formatUnits(gasTokenRate, MARKET_RATE_CONTRACT_DECIMALS));
 };
