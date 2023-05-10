@@ -1,6 +1,7 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
+import { getContract } from "@pooltogether/v5-utils-js";
+
 import { ContractsBlob } from "./types";
-import { getContract } from "./utils";
 
 export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,

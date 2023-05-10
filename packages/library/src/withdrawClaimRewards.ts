@@ -1,6 +1,7 @@
 import { ethers, Contract, BigNumber } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { Provider } from "@ethersproject/providers";
+import { getContract } from "@pooltogether/v5-utils-js";
 import chalk from "chalk";
 
 import {
@@ -8,14 +9,7 @@ import {
   WithdrawClaimRewardsConfigParams,
   WithdrawClaimRewardsContext
 } from "./types";
-import {
-  logTable,
-  logStringValue,
-  logBigNumber,
-  printAsterisks,
-  printSpacer,
-  getContract
-} from "./utils";
+import { logTable, logBigNumber, printAsterisks, printSpacer } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 
 interface WithdrawClaimRewardsParams {

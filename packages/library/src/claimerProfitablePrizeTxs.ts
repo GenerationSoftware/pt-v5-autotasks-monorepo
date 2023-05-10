@@ -1,7 +1,7 @@
 import { ethers, BigNumber, Contract } from "ethers";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { Provider } from "@ethersproject/providers";
-import { getSubgraphVaults, getWinnersClaims } from "@pooltogether/v5-utils-js";
+import { getContract, getSubgraphVaults, getWinnersClaims } from "@pooltogether/v5-utils-js";
 import chalk from "chalk";
 
 import {
@@ -18,7 +18,6 @@ import {
   logBigNumber,
   printAsterisks,
   printSpacer,
-  getContract,
   getFeesUsd,
   getEthMarketRateUsd,
   roundTwoDecimalPlaces,
@@ -46,7 +45,7 @@ const MARKET_RATE_CONTRACT_DECIMALS = 8;
 /**
  * Only claim if we're going to make at least $5.00. This likely should be a config option
  */
-const MIN_PROFIT_THRESHOLD_USD = 5;
+const MIN_PROFIT_THRESHOLD_USD = -5;
 
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
@@ -188,12 +187,12 @@ const calculateProfit = async (
   printSpacer();
 
   // Get the exact amount of fees we'll get back
-  let totalFees = BigNumber.from(0);
+  let totalFees;
   try {
     const staticResult = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
     totalFees = staticResult.totalFees;
   } catch (e) {
-    console.error(e);
+    throw new Error(e);
   }
 
   const totalFeesUsd =

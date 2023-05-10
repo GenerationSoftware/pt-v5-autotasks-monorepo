@@ -5,7 +5,6 @@ export { yieldVaultHandleMintRate } from "./yieldVaultHandleMintRate";
 export { getWithdrawClaimRewardsTx } from "./withdrawClaimRewards";
 
 export { testnetPrizePoolHandleCompletePrize } from "./testnetPrizePoolHandleCompletePrize";
-export { testnetContractsBlob } from "./testnetContractsBlob";
 
 export * from "./abis";
 export * from "./types";

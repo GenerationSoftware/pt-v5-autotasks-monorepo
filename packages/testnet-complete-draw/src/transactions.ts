@@ -1,8 +1,6 @@
 import { Relayer } from "defender-relay-client";
-import {
-  testnetContractsBlob as contracts,
-  testnetPrizePoolHandleCompletePrize
-} from "@pooltogether/v5-autotasks-library";
+import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetPrizePoolHandleCompletePrize } from "@pooltogether/v5-autotasks-library";
 
 export async function processTransaction(event, params) {
   const relayer = new Relayer(event);

@@ -1,5 +1,3 @@
-export { getContract } from "./getContract";
-export { getContracts } from "./getContracts";
 export { roundTwoDecimalPlaces, parseBigNumberAsFloat } from "./math";
 export { getFeesUsd, getEthMarketRateUsd } from "./getFeesUsd";
 export * from "./multicall";

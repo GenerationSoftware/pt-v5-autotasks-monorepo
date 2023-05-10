@@ -1,7 +1,7 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
-import { ContractsBlob, ProviderOptions } from "./types";
-import { getContract } from "./utils";
+import { getContract } from "@pooltogether/v5-utils-js";
 
+import { ContractsBlob, ProviderOptions } from "./types";
 // const debug = require("debug")("pt-autotask-lib");
 
 export async function drawBeaconHandleDrawStartAndComplete(

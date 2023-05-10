@@ -1,10 +1,9 @@
 import chalk from "chalk";
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { RelayerParams } from "defender-relay-client";
+import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
 import {
-  testnetContractsBlob as contracts,
   getWithdrawClaimRewardsTx,
-  WithdrawClaimRewardsConfigParams,
   printAsterisks,
   printSpacer
 } from "@pooltogether/v5-autotasks-library";
@@ -36,7 +35,7 @@ export const processPopulatedTransaction = async (
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: populatedTx.data,
         to: populatedTx.to,
-        gasLimit: 3500000
+        gasLimit: 200000
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {

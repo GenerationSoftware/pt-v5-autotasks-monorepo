@@ -1,9 +1,7 @@
 import { Relayer, RelayerParams } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
-import {
-  testnetContractsBlob as contracts,
-  drawBeaconHandleDrawStartAndComplete
-} from "@pooltogether/v5-autotasks-library";
+import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { drawBeaconHandleDrawStartAndComplete } from "@pooltogether/v5-autotasks-library";
 
 export async function handler(event: RelayerParams) {
   const provider = new DefenderRelayProvider(event);

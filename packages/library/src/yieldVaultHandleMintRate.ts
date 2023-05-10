@@ -1,7 +1,7 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
+import { getContracts } from "@pooltogether/v5-utils-js";
 
 import { ContractsBlob } from "./types";
-import { getContracts } from "./utils";
 
 export async function yieldVaultHandleMintRate(
   contracts: ContractsBlob,

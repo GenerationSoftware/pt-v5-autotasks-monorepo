@@ -2928,68 +2928,10 @@
   resolved "https://registry.yarnpkg.com/@pooltogether/contract-list-schema/-/contract-list-schema-0.1.4.tgz#52a4b35e1ef1b263c643e517ca1908180cf1cb6e"
   integrity sha512-oLAu9TGfU9xf1QFJJZQxUj0hsfcRao/DMCZ1hVvDkmwOnX1PUkuhuvZfvgwLFd4hJ4m2kjdCyTJ+VJ5qvgjyww==
 
-"@pooltogether/v5-autotasks-library@file:packages/arb-liquidator/.yalc/@pooltogether/v5-autotasks-library":
-  version "0.0.1-beta.2"
-  dependencies:
-    "@pooltogether/v5-utils-js" "^0.0.1-beta.2"
-    chalk "^4.1.2"
-    defender-relay-client "1.39.0"
-    ethers "5.7.2"
-    graphql "^16.6.0"
-    graphql-request "^5.2.0"
-    tsc-watch "^6.0.4"
-    yalc "^1.0.0-pre.53"
-
-"@pooltogether/v5-autotasks-library@file:packages/draw-beacon/.yalc/@pooltogether/v5-autotasks-library":
-  version "0.0.1-beta.1"
-  dependencies:
-    chalk "^4.1.2"
-    defender-relay-client "1.39.0"
-    ethers "5.7.2"
-    graphql "^16.6.0"
-    graphql-request "^5.2.0"
-    yalc "^1.0.0-pre.53"
-
-"@pooltogether/v5-autotasks-library@file:packages/testnet-complete-draw/.yalc/@pooltogether/v5-autotasks-library":
-  version "0.0.1-beta.2"
-  dependencies:
-    "@pooltogether/v5-utils-js" "^0.0.1-beta.2"
-    chalk "^4.1.2"
-    defender-relay-client "1.39.0"
-    ethers "5.7.2"
-    graphql "^16.6.0"
-    graphql-request "^5.2.0"
-    tsc-watch "^6.0.4"
-    yalc "^1.0.0-pre.53"
-
-"@pooltogether/v5-autotasks-library@file:packages/withdraw-claim-rewards/.yalc/@pooltogether/v5-autotasks-library":
-  version "0.0.1-beta.2"
-  dependencies:
-    "@pooltogether/v5-utils-js" "^0.0.1-beta.2"
-    chalk "^4.1.2"
-    defender-relay-client "1.39.0"
-    ethers "5.7.2"
-    graphql "^16.6.0"
-    graphql-request "^5.2.0"
-    tsc-watch "^6.0.4"
-    yalc "^1.0.0-pre.53"
-
-"@pooltogether/v5-autotasks-library@file:packages/yieldvault-mintrate/.yalc/@pooltogether/v5-autotasks-library":
-  version "0.0.1-beta.2"
-  dependencies:
-    "@pooltogether/v5-utils-js" "^0.0.1-beta.2"
-    chalk "^4.1.2"
-    defender-relay-client "1.39.0"
-    ethers "5.7.2"
-    graphql "^16.6.0"
-    graphql-request "^5.2.0"
-    tsc-watch "^6.0.4"
-    yalc "^1.0.0-pre.53"
-
-"@pooltogether/v5-utils-js@^0.0.1-beta.2", "@pooltogether/v5-utils-js@^0.0.1-beta.5":
-  version "0.0.1-beta.5"
-  resolved "https://registry.yarnpkg.com/@pooltogether/v5-utils-js/-/v5-utils-js-0.0.1-beta.5.tgz#5bf8e6bfcb6fd838a3d69681648445c25dce373e"
-  integrity sha512-WRGtKED1LSj5FiElBMg1hRm8xRiU63+yBS1sAIizrkOoh35ab+xwprEjhSAjVN8zRlQ6rAGMjwVWiZroGUb6Sw==
+"@pooltogether/v5-utils-js@0.0.1-beta.6":
+  version "0.0.1-beta.6"
+  resolved "https://registry.yarnpkg.com/@pooltogether/v5-utils-js/-/v5-utils-js-0.0.1-beta.6.tgz#9dd9a1ece5c5f40bbfc0f6ab932883c10ee9499d"
+  integrity sha512-jFPBCLLv25lCwJCY2KcBgB8a73uoxj4s2sOabVouLDAA5ZIOC0QgGG1J0iqafYKKZ8hFgJYeTCucCi7lupHBDg==
   dependencies:
     "@pooltogether/contract-list-schema" "^0.1.4"
     ethereum-multicall "^2.17.0"
