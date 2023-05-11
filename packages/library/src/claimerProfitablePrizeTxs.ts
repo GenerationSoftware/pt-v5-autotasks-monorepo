@@ -55,6 +55,8 @@ export async function getClaimerProfitablePrizeTxs(
 ): Promise<PopulatedTransaction[] | undefined> {
   const { chainId, feeRecipient } = params;
 
+  let transactionsPopulated: PopulatedTransaction[] | undefined = [];
+
   const contractsVersion = {
     major: 1,
     minor: 0,
@@ -84,20 +86,32 @@ export async function getClaimerProfitablePrizeTxs(
   // #3. Get more data about which users are winners from the contract
   printAsterisks();
   console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
-  const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, context);
+  const claims: Claim[] = await getWinnersClaims(
+    readProvider,
+    contracts,
+    vaults,
+    context.tiers.rangeArray
+  );
   logClaims(claims, context);
   console.log(chalk.dim(`${claims.length} winners.`));
+  if (claims.length === 0) {
+    console.warn(
+      chalk.yellow(`There are ${claims.length} winners in the previous draw. Exiting ...`)
+    );
+
+    return transactionsPopulated;
+  }
 
   // #4. Start iterating through vaults
   printAsterisks();
   console.log(chalk.blue(`4. Processing claims ...`));
-  let transactionsPopulated: PopulatedTransaction[] | undefined = [];
 
   const claimPrizesParams: ClaimPrizesParams = {
     drawId: context.drawId,
     claims,
     feeRecipient
   };
+  console.log(claimPrizesParams);
 
   // #5. Decide if profitable or not
   const profitable = await calculateProfit(

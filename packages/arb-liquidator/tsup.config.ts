@@ -18,7 +18,12 @@ export default defineConfig(opt => {
         (options.define.USE_FLASHBOTS = `'${config.get("USE_FLASHBOTS")}'`),
         (options.define.SWAP_RECIPIENT = `'${config.get("SWAP_RECIPIENT")}'`);
     },
-    noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall", "configstore"],
+    noExternal: [
+      "@pooltogether/v5-autotasks-library",
+      "@pooltogether/v5-utils-js",
+      "ethereum-multicall",
+      "configstore"
+    ],
     format: "cjs",
     entry: ["src/handler.ts"],
     splitting: false,

@@ -10,17 +10,19 @@ const handlerLoadParams = (relayerAddress): WithdrawClaimRewardsConfigParams => 
 };
 
 export async function handler(event: RelayerParams) {
-  console.clear();
+  console.log("hello!");
 
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fast" });
   const relayerAddress = await signer.getAddress();
 
   const params = handlerLoadParams(relayerAddress);
+  console.log(params);
 
   const readProvider = new ethers.providers.InfuraProvider(params.chainId, INFURA_API_KEY);
 
   const populatedTx = await populateTransaction(params, readProvider);
+  console.log(populatedTx);
 
   await processPopulatedTransaction(event, populatedTx);
 }

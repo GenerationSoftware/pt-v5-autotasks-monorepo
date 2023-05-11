@@ -19,8 +19,8 @@
     "url": "git+https://github.com/pooltogether/v5-autotasks.git"
   },
   "scripts": {
-    "build": "yalcadd && tsc",
-    "start": "yalcadd && tsc-watch --onSuccess \"npx yalc publish\"",
+    "build": "npm run yalcadd && tsc",
+    "start": "npm run yalcadd && tsc-watch --onSuccess \"npx yalc publish\"",
     "yalcadd": "npx yalc add @pooltogether/v5-utils-js",
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\""
   },

@@ -9,8 +9,6 @@ const handlerLoadParams = (): PrizeClaimerConfigParams => {
 };
 
 export async function handler(event: RelayerParams) {
-  console.clear();
-
   const params = handlerLoadParams();
 
   const readProvider = new ethers.providers.InfuraProvider(params.chainId, INFURA_API_KEY);

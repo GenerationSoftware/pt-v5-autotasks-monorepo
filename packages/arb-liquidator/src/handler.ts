@@ -27,8 +27,6 @@ const handlerLoadParams = (
 };
 
 export async function handler(event) {
-  console.clear();
-
   const relayer = new Relayer(event);
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, {

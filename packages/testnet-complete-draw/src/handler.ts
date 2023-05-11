@@ -11,8 +11,6 @@ const handlerLoadParams = () => {
 };
 
 export async function handler(event: RelayerParams) {
-  console.clear();
-
   const params = handlerLoadParams();
 
   await processTransaction(event, params);

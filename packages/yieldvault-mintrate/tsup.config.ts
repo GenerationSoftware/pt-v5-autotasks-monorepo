@@ -16,7 +16,7 @@ export default defineConfig(opt => {
         (options.define.INFURA_API_KEY = `'${config.get("INFURA_API_KEY")}'`),
         (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`);
     },
-    noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall"],
+    noExternal: ["@pooltogether/v5-autotasks-library", "@pooltogether/v5-utils-js", "ethereum-multicall"],
     format: "cjs",
     entry: ["src/handler.ts"],
     splitting: false,

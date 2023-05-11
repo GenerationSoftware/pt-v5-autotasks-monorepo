@@ -17,7 +17,12 @@ export default defineConfig(opt => {
         (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`),
         (options.define.REWARDS_RECIPIENT = `'${config.get("REWARDS_RECIPIENT")}'`);
     },
-    noExternal: ["@pooltogether/v5-autotasks-library", "ethereum-multicall", "configstore"],
+    noExternal: [
+      "@pooltogether/v5-autotasks-library",
+      "@pooltogether/v5-utils-js",
+      "ethereum-multicall",
+      "configstore"
+    ],
     format: "cjs",
     entry: ["src/handler.ts"],
     splitting: false,
