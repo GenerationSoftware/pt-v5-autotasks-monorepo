@@ -86,12 +86,8 @@ export async function getClaimerProfitablePrizeTxs(
   // #3. Get more data about which users are winners from the contract
   printAsterisks();
   console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
-  const claims: Claim[] = await getWinnersClaims(
-    readProvider,
-    contracts,
-    vaults,
-    context.tiers.rangeArray
-  );
+  const tiersRangeArray = context.tiers.rangeArray;
+  const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, tiersRangeArray);
   logClaims(claims, context);
   console.log(chalk.dim(`${claims.length} winners.`));
   if (claims.length === 0) {
