@@ -107,8 +107,7 @@ export async function getClaimerProfitablePrizeTxs(
   // #4. Cross-ref other to filter out already claimed prizes
   printAsterisks();
   console.log(chalk.blue(`4. Filtering: Cross-referencing claimed prizes subgraph ...`));
-  const drawId = "15";
-  // const drawId = context.drawId.toString();
+  const drawId = context.drawId.toString();
   const claimedPrizes: ClaimedPrize[] = await getSubgraphClaimedPrizes(chainId, drawId);
 
   if (claimedPrizes.length === 0) {
@@ -118,39 +117,35 @@ export async function getClaimerProfitablePrizeTxs(
   }
 
   const filteredClaims: Claim[] = await filterClaimedPrizes(claims, claimedPrizes);
-  console.log("filteredClaims");
-  console.log(filteredClaims.length);
-  console.log(filteredClaims);
-  console.log("filteredClaims");
 
-  // // #5. Start iterating through vaults
-  // printAsterisks();
-  // console.log(chalk.blue(`5. Processing claims ...`));
+  // #5. Start iterating through vaults
+  printAsterisks();
+  console.log(chalk.blue(`5. Processing claims ...`));
 
-  // const claimPrizesParams: ClaimPrizesParams = {
-  //   drawId: context.drawId,
-  //   claims,
-  //   feeRecipient
-  // };
-  // console.log(claimPrizesParams);
+  const claimPrizesParams: ClaimPrizesParams = {
+    drawId: context.drawId,
+    claims: filteredClaims,
+    feeRecipient
+  };
+  console.log(claimPrizesParams);
 
-  // // #7. Decide if profitable or not
-  // const profitable = await calculateProfit(
-  //   contracts,
-  //   marketRate,
-  //   claimer,
-  //   claimPrizesParams,
-  //   readProvider,
-  //   context,
-  //   chainId
-  // );
-  // if (profitable) {
-  //   console.log(chalk.green("Claimer: Add Populated Claim Tx"));
-  //   const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
-  //   transactionsPopulated.push(tx);
-  // } else {
-  //   console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
-  // }
+  // #7. Decide if profitable or not
+  const profitable = await calculateProfit(
+    contracts,
+    marketRate,
+    claimer,
+    claimPrizesParams,
+    readProvider,
+    context,
+    chainId
+  );
+  if (profitable) {
+    console.log(chalk.green("Claimer: Add Populated Claim Tx"));
+    const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
+    transactionsPopulated.push(tx);
+  } else {
+    console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
+  }
 
   return transactionsPopulated;
 }
@@ -338,78 +333,15 @@ const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
   });
 };
 
-// vault ID + winner ID + draw ID + tier
 const filterClaimedPrizes = (claims: Claim[], claimedPrizes: ClaimedPrize[]): Claim[] => {
   const formattedClaimedPrizes = claimedPrizes.map(claimedPrize => {
+    // From Subgraph, `id` is:
+    // vault ID + winner ID + draw ID + tier
     const [vault, winner, draw, tier] = claimedPrize.id.split("-");
     return `${vault}-${winner}-${tier}`;
   });
-  console.log("formattedClaimedPrizes");
-  console.log(formattedClaimedPrizes);
-  console.log("formattedClaimedPrizes");
 
-  // const fakeClaims = [
-  //   {
-  //     vault: "0x12032ca7c271c1ca5f272040b15d1a19145c6323",
-  //     tier: 2,
-  //     winner: "0x18acb1313d2d65aaad7b46c82b287ffbeaea607f"
-  //   },
-  //   {
-  //     vault: "0x12032ca7c271c1ca5f272040b15d1a19145c6323",
-  //     winner: "0xe26014cc6bdef641845f0dc7ddc28ac90a78e3ef",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x12032ca7c271c1ca5f272040b15d1a19145c6323",
-  //     winner: "0xeee049fe109f17aafa743a40e9f62da5a8877257",
-  //     tier: 1
-  //   },
-  //   {
-  //     vault: "0x12032ca7c271c1ca5f272040b15d1a19145c6323",
-  //     winner: "0xf4ef28981f039f9bc4986b6f1b4ed757beab59cd",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x12032ca7c271c1ca5f272040b15d1a19145c6323",
-  //     winner: "0xf5e1795e80c9e32426b65806c326c39c65342a54",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x12032ca7c271c1ca5f272040b15d1a19145c6323",
-  //     winner: "0xf63934ea7a9b095bbcbb5da8dc6609d2f75e0b37",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x224060242784cab6c0e2ec72c29f3eac945be7b9",
-  //     winner: "0x46cc3e208bdd4b2b0eda8e394f692bbdc1860ddd",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x662748f2c5d269ac30d8d35ca1c0c2c658371187",
-  //     winner: "0x03f1c43581517edea27bb9358e327bf2f05f5523",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x662748f2c5d269ac30d8d35ca1c0c2c658371187",
-  //     winner: "0x10cf82328e53e69b9d6b4d28317f14df573cecca",
-  //     tier: 2
-  //   },
-  //   {
-  //     vault: "0x662748f2c5d269ac30d8d35ca1c0c2c658371187",
-  //     winner: "0x328598008707eb4ca45e91dc538b46059d1d4563",
-  //     tier: 1
-  //   },
-  //   {
-  //     vault: "0x662748f2c5d269ac30d8d35ca1c0c2c658371187",
-  //     winner: "0x7bfb1057377b15014f9fb8d9f32a741c0b25d4c0",
-  //     tier: 2
-  //   }
-  // ];
-  // console.log(fakeClaims.length);
   return claims.filter(
     claim => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`)
   );
-  // return fakeClaims.filter(
-  //   claim => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`)
-  // );
 };
