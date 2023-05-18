@@ -187,7 +187,7 @@ export async function liquidatorArbitrageSwap(
         gasLimit: 600000
       });
       console.log(chalk.greenBright.bold("Transaction sent! ✔"));
-      console.log(chalk.blue("Transaction hash:", transactionSentToNetwork.hash));
+      console.log(chalk.blueBright.bold("Transaction hash:", transactionSentToNetwork.hash));
     } catch (error) {
       throw new Error(error);
     }

@@ -127,7 +127,6 @@ export async function getClaimerProfitablePrizeTxs(
     claims: filteredClaims,
     feeRecipient
   };
-  console.log(claimPrizesParams);
 
   // #7. Decide if profitable or not
   const profitable = await calculateProfit(

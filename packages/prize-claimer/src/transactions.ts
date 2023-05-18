@@ -7,6 +7,7 @@ import {
   FLASHBOTS_SUPPORTED_CHAINS
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
+import chalk from "chalk";
 
 export const populateTransactions = async (
   params,
@@ -41,7 +42,8 @@ export const processPopulatedTransactions = async (
           to: populatedTx.to,
           gasLimit: 6000000
         });
-        console.log("TransactionHash:", transactionSentToNetwork.hash);
+        console.log(chalk.greenBright.bold("Transaction sent! ✔"));
+        console.log(chalk.blueBright.bold("Transaction hash:", transactionSentToNetwork.hash));
       }
     } else {
       console.log("Claimer: No transactions populated");
