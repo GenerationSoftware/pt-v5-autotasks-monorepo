@@ -120,25 +120,21 @@ export async function getClaimerProfitablePrizeTxs(
 
   // #5. Start iterating through vaults
   printAsterisks();
-  console.log(chalk.blue(`5. Processing claims ...`));
-
-  const claimPrizesParams: ClaimPrizesParams = {
-    drawId: context.drawId,
-    claims: filteredClaims,
-    feeRecipient
-  };
+  console.log(chalk.blue(`5. Calculating # of profitable claims ...`));
 
   // #7. Decide if profitable or not
-  const profitable = await calculateProfit(
-    contracts,
-    marketRate,
-    claimer,
-    claimPrizesParams,
+  const claimPrizesParams = await calculateProfit(
     readProvider,
-    context,
-    chainId
+    chainId,
+    contracts,
+    claimer,
+    filteredClaims,
+    feeRecipient,
+    marketRate,
+    context
   );
-  if (profitable) {
+  // It's profitable if there is at least 1 claim to claim
+  if (claimPrizesParams.claims.length > 0) {
     console.log(chalk.green("Claimer: Add Populated Claim Tx"));
     const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
     transactionsPopulated.push(tx);
@@ -174,87 +170,128 @@ const getEstimatedGasLimit = async (
  * @returns {Promise} Promise of a boolean for profitability
  */
 const calculateProfit = async (
-  contracts: ContractsBlob,
-  marketRate: Contract,
-  claimer: Contract,
-  claimPrizesParams: ClaimPrizesParams,
   readProvider: Provider,
-  context: ClaimPrizeContext,
-  chainId: number
-): Promise<boolean> => {
-  printAsterisks();
-  console.log(chalk.blue("4b. Current gas costs for transaction:"));
+  chainId: number,
+  contracts: ContractsBlob,
+  claimer: Contract,
+  claims: Claim[],
+  feeRecipient: string,
+  marketRate: Contract,
+  context: ClaimPrizeContext
+): Promise<ClaimPrizesParams> => {
+  printSpacer();
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     gasTokenMarketRateUsd
   );
 
-  const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
-  if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
-    console.error(chalk.yellow("Estimated gas limit is 0 ..."));
-  } else {
-    logBigNumber(
-      "Estimated gas limit:",
-      estimatedGasLimit,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol
-    );
+  let claimsSlice;
+  let claimPrizesParams;
+  let numClaims = 1;
+  while (numClaims < claims.length) {
+    try {
+      console.log(chalk.blue(`5a. Gas costs for ${numClaims} claims:`));
+
+      claimsSlice = claims.slice(0, numClaims);
+      claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
+
+      printSpacer();
+      const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
+      if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
+        console.error(chalk.yellow("Estimated gas limit is 0 ..."));
+      } else {
+        logBigNumber(
+          "Estimated gas limit:",
+          estimatedGasLimit,
+          NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+          NETWORK_NATIVE_TOKEN_INFO[chainId].symbol
+        );
+      }
+
+      const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+        estimatedGasLimit,
+        gasTokenMarketRateUsd,
+        readProvider
+      );
+      logStringValue(`Average Gas Fee (USD):`, avgFeeUsd);
+      // logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+
+      console.log(chalk.blue("5b. Profit/Loss (USD):"));
+      printSpacer();
+
+      // Get the exact amount of fees we'll get back
+      let totalFees;
+      try {
+        const staticResult = await claimer.callStatic.claimPrizes(
+          ...Object.values(claimPrizesParams)
+        );
+        totalFees = staticResult.totalFees;
+      } catch (e) {
+        throw new Error(e);
+      }
+
+      const totalFeesUsd =
+        parseFloat(ethers.utils.formatUnits(totalFees, context.feeToken.decimals)) *
+        context.feeTokenRateUsd;
+      logBigNumber(
+        "TotalFees:",
+        totalFees.toString(),
+        context.feeToken.decimals,
+        context.feeToken.symbol
+      );
+      console.log(chalk.green("TotalFees:", `$${roundTwoDecimalPlaces(totalFeesUsd)}`));
+
+      printSpacer();
+
+      const netProfitUsd = totalFeesUsd - avgFeeUsd;
+      console.log(chalk.magenta("Net profit = (Earned fees - Gas [Avg])"));
+      console.log(
+        chalk.greenBright(
+          `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
+            totalFeesUsd
+          )} - $${roundTwoDecimalPlaces(avgFeeUsd)})`
+        )
+      );
+      printSpacer();
+
+      const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+      logTable({
+        MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+        "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+        "Profitable?": profitable ? "✔" : "✗"
+      });
+      printSpacer();
+
+      if (!profitable) {
+        console.log(chalk.yellow("This # of claims is not currently profitable:", numClaims));
+        numClaims--;
+        break;
+      }
+
+      numClaims++;
+    } catch (e) {
+      console.log(chalk.yellow(`Transaction error returned for ${numClaims} prize(s).`));
+      if (numClaims > 1) {
+        console.log(chalk.yellow(`Submitting transaction with ${numClaims - 1} prize(s).`));
+        numClaims--;
+      } else {
+        console.log(chalk.yellow(`Unable to submit successful transaction.`));
+        numClaims = 0;
+        //
+        // FIX: This still tries to send a tx!
+        //
+      }
+      break;
+    }
   }
 
-  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
-    estimatedGasLimit,
-    gasTokenMarketRateUsd,
-    readProvider
-  );
-  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
-
-  printAsterisks();
-  console.log(chalk.blue("4c. Profit/Loss (USD):"));
-  printSpacer();
-
-  // Get the exact amount of fees we'll get back
-  let totalFees;
-  try {
-    const staticResult = await claimer.callStatic.claimPrizes(...Object.values(claimPrizesParams));
-    totalFees = staticResult.totalFees;
-  } catch (e) {
-    throw new Error(e);
+  if (numClaims !== 0) {
+    claimsSlice = claims.slice(0, numClaims);
+    claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
   }
 
-  const totalFeesUsd =
-    parseFloat(ethers.utils.formatUnits(totalFees, context.feeToken.decimals)) *
-    context.feeTokenRateUsd;
-  logBigNumber(
-    "TotalFees:",
-    totalFees.toString(),
-    context.feeToken.decimals,
-    context.feeToken.symbol
-  );
-  console.log(chalk.green("TotalFees:", `$${roundTwoDecimalPlaces(totalFeesUsd)}`));
-
-  printSpacer();
-
-  const netProfitUsd = totalFeesUsd - avgFeeUsd;
-  console.log(chalk.magenta("Net profit = (Earned fees - Gas [Avg])"));
-  console.log(
-    chalk.greenBright(
-      `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-        totalFeesUsd
-      )} - $${roundTwoDecimalPlaces(avgFeeUsd)})`
-    )
-  );
-  printSpacer();
-
-  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
-  logTable({
-    MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
-    "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-    "Profitable?": profitable ? "✔" : "✗"
-  });
-  printSpacer();
-
-  return profitable;
+  return claimPrizesParams;
 };
 
 /**
@@ -343,4 +380,16 @@ const filterClaimedPrizes = (claims: Claim[], claimedPrizes: ClaimedPrize[]): Cl
   return claims.filter(
     claim => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`)
   );
+};
+
+const buildParams = (
+  context: ClaimPrizeContext,
+  claims: Claim[],
+  feeRecipient: string
+): ClaimPrizesParams => {
+  return {
+    drawId: context.drawId,
+    claims,
+    feeRecipient
+  };
 };
