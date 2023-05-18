@@ -31,7 +31,7 @@ interface SwapExactAmountInParams {
 /**
  * Only swap if we're going to make at least $5.00. This likely should be a config option
  */
-const MIN_PROFIT_THRESHOLD_USD = 5;
+const MIN_PROFIT_THRESHOLD_USD = 3;
 
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
@@ -66,11 +66,13 @@ export async function liquidatorArbitrageSwap(
   printSpacer();
   console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
   for (let i = 0; i < liquidationPairs.length; i++) {
+    printSpacer();
+    printSpacer();
+    printSpacer();
     printAsterisks();
     const liquidationPair = liquidationPairs[i];
     console.log(`LiquidationPair #${i + 1}`);
     console.log(liquidationPair.address);
-    printSpacer();
 
     const context: ArbLiquidatorContext = await getContext(
       marketRate,
@@ -97,11 +99,11 @@ export async function liquidatorArbitrageSwap(
     if (sufficientBalance) {
       console.log(chalk.green("Sufficient balance ✔"));
     } else {
-      console.log(chalk.red("Insufficient balance ✔"));
+      console.log(chalk.red("Insufficient balance ✗"));
 
       const diff = exactAmountIn.sub(context.relayer.tokenInBalance);
       console.log(
-        chalk.bgBlack.red(
+        chalk.red(
           `Increase relayer '${relayerAddress}' ${
             context.tokenIn.symbol
           } balance by ${ethers.utils.formatUnits(diff, context.tokenIn.decimals)}`
@@ -185,7 +187,7 @@ export async function liquidatorArbitrageSwap(
         gasLimit: 600000
       });
       console.log(chalk.greenBright.bold("Transaction sent! ✔"));
-      console.log(chalk.green("Transaction hash:", transactionSentToNetwork.hash));
+      console.log(chalk.blue("Transaction hash:", transactionSentToNetwork.hash));
     } catch (error) {
       throw new Error(error);
     }
