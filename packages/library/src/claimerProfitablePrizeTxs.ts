@@ -46,7 +46,7 @@ const MARKET_RATE_CONTRACT_DECIMALS = 8;
 /**
  * Only claim if we're going to make at least $5.00. This likely should be a config option
  */
-const MIN_PROFIT_THRESHOLD_USD = -5;
+const MIN_PROFIT_THRESHOLD_USD = 0.05;
 
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
@@ -97,9 +97,7 @@ export async function getClaimerProfitablePrizeTxs(
   logClaims(claims, context);
   console.log(chalk.dim(`${claims.length} prizes.`));
   if (claims.length === 0) {
-    console.warn(
-      chalk.yellow(`There are ${claims.length} winners in the previous draw. Exiting ...`)
-    );
+    console.warn(chalk.yellow(`There are 0 winners in the previous draw. Exiting ...`));
 
     return transactionsPopulated;
   }
@@ -113,8 +111,11 @@ export async function getClaimerProfitablePrizeTxs(
   if (claimedPrizes.length === 0) {
     console.log(chalk.dim(`No claimed prizes in subgraph for draw #${drawId}.`));
   } else {
-    console.log(chalk.dim(`${claimedPrizes.length} claimed prizes for draw #${drawId}.`));
+    console.log(chalk.dim(`${claimedPrizes.length} prizes already claimed for draw #${drawId}.`));
   }
+  console.log(
+    chalk.dim(`${claims.length - claimedPrizes.length} prizes remaining to be claimed...`)
+  );
 
   const filteredClaims: Claim[] = await filterClaimedPrizes(claims, claimedPrizes);
 
@@ -136,8 +137,8 @@ export async function getClaimerProfitablePrizeTxs(
   // It's profitable if there is at least 1 claim to claim
   if (claimPrizesParams.claims.length > 0) {
     console.log(chalk.green("Claimer: Add Populated Claim Tx"));
-    const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
-    transactionsPopulated.push(tx);
+    // const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
+    // transactionsPopulated.push(tx);
   } else {
     console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
   }
@@ -191,7 +192,7 @@ const calculateProfit = async (
   let numClaims = 1;
   while (numClaims < claims.length) {
     try {
-      console.log(chalk.blue(`5a. Gas costs for ${numClaims} claims:`));
+      console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${numClaims} claims:`));
 
       claimsSlice = claims.slice(0, numClaims);
       claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
@@ -209,15 +210,15 @@ const calculateProfit = async (
         );
       }
 
-      const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+      const { maxFeeUsd } = await getFeesUsd(
+        chainId,
         estimatedGasLimit,
         gasTokenMarketRateUsd,
         readProvider
       );
-      logStringValue(`Average Gas Fee (USD):`, avgFeeUsd);
-      // logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+      logStringValue(`Max Gas Fee (USD):`, `$${roundTwoDecimalPlaces(maxFeeUsd)}`);
 
-      console.log(chalk.blue("5b. Profit/Loss (USD):"));
+      console.log(chalk.bgBlack.cyan("5b. Profit/Loss (USD):"));
       printSpacer();
 
       // Get the exact amount of fees we'll get back
@@ -244,13 +245,13 @@ const calculateProfit = async (
 
       printSpacer();
 
-      const netProfitUsd = totalFeesUsd - avgFeeUsd;
-      console.log(chalk.magenta("Net profit = (Earned fees - Gas [Avg])"));
+      const netProfitUsd = totalFeesUsd - maxFeeUsd;
+      console.log(chalk.magenta("Net profit = (Earned fees - Gas [Max])"));
       console.log(
         chalk.greenBright(
           `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
             totalFeesUsd
-          )} - $${roundTwoDecimalPlaces(avgFeeUsd)})`
+          )} - $${roundTwoDecimalPlaces(maxFeeUsd)})`
         )
       );
       printSpacer();
@@ -264,25 +265,22 @@ const calculateProfit = async (
       printSpacer();
 
       if (!profitable) {
-        console.log(chalk.yellow("This # of claims is not currently profitable:", numClaims));
+        console.log(chalk.yellow(`Claiming ${numClaims} claim(s) is currently not profitable:`));
         numClaims--;
         break;
       }
 
       numClaims++;
     } catch (e) {
-      console.log(chalk.yellow(`Transaction error returned for ${numClaims} prize(s).`));
-      if (numClaims > 1) {
-        console.log(chalk.yellow(`Submitting transaction with ${numClaims - 1} prize(s).`));
-        numClaims--;
-      } else {
-        console.log(chalk.yellow(`Unable to submit successful transaction.`));
-        numClaims = 0;
-        //
-        // FIX: This still tries to send a tx!
-        //
-      }
+      console.log(chalk.yellow(`Error for ${numClaims} prize claim(s).`));
+      numClaims--;
       break;
+    } finally {
+      if (numClaims > 0) {
+        console.log(chalk.yellow(`Submitting transaction to claim ${numClaims} prize(s).`));
+      } else {
+        console.log(chalk.yellow(`Unable to submit any optimal, profitable transactions.`));
+      }
     }
   }
 

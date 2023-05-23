@@ -6,18 +6,25 @@ import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from "../utils/network";
 
 const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
+const CHAIN_GAS_PRICE_MULTIPLIERS = {
+  1: 1,
+  11155111: 1,
+  80001: 24 // mumbai seems to return a much cheaper gas price then it bills you for
+};
+
 /**
  * Gather info on current fees from the chain
  *
  * @param {BigNumber} estimatedGasLimit, how much gas the function is estimated to use (in wei)
- * @param {ethMarketRateUsd} context, provided from MarketRate contract or from an API
+ * @param {gasTokenMarketRateUsd} context, provided from MarketRate contract or from an API
  * @param {Provider} provider, any ethers provider
  * @returns {Promise} Promise object with recent baseFeeUsd & maxFeeUsd from the chain
  *                    while avgFeeUsd is in between the two
  **/
 export const getFeesUsd = async (
+  chainId: number,
   estimatedGasLimit: BigNumber,
-  ethMarketRateUsd: number,
+  gasTokenMarketRateUsd: number,
   provider: Provider
 ): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
   const fees = { baseFeeUsd: null, maxFeeUsd: null, avgFeeUsd: null };
@@ -31,9 +38,13 @@ export const getFeesUsd = async (
   const baseFeeWei = feeData.lastBaseFeePerGas?.mul(estimatedGasLimit);
   const maxFeeWei = feeData.maxFeePerGas?.mul(estimatedGasLimit);
 
-  fees.baseFeeUsd = parseFloat(ethers.utils.formatEther(baseFeeWei)) * ethMarketRateUsd;
-  fees.maxFeeUsd = parseFloat(ethers.utils.formatEther(maxFeeWei)) * ethMarketRateUsd;
-  fees.avgFeeUsd = (fees.baseFeeUsd + fees.maxFeeUsd) / 2;
+  const chainMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
+
+  fees.baseFeeUsd =
+    parseFloat(ethers.utils.formatEther(baseFeeWei)) * gasTokenMarketRateUsd * chainMultiplier;
+  fees.maxFeeUsd =
+    parseFloat(ethers.utils.formatEther(maxFeeWei)) * gasTokenMarketRateUsd * chainMultiplier;
+  fees.avgFeeUsd = ((fees.baseFeeUsd + fees.maxFeeUsd) / 2) * chainMultiplier;
 
   return fees;
 };

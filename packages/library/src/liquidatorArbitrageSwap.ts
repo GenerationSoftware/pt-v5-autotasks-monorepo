@@ -378,6 +378,7 @@ const calculateProfit = async (
     console.error(chalk.red(e));
   }
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+    chainId,
     estimatedGasLimit,
     gasTokenMarketRateUsd,
     readProvider
