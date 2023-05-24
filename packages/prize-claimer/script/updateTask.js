@@ -10,8 +10,8 @@ const chainId = config.get("CHAIN_ID");
 
 async function updateAutotask(autotaskId, file) {
   const client = new AutotaskClient({
-    apiKey: config.get(`${chainId}.DEFENDER_TEAM_API_KEY`),
-    apiSecret: config.get(`${chainId}.DEFENDER_TEAM_SECRET_KEY`)
+    apiKey: config.get("DEFENDER_TEAM_API_KEY"),
+    apiSecret: config.get("DEFENDER_TEAM_SECRET_KEY")
   });
 
   const source = fs.readFileSync(file);
