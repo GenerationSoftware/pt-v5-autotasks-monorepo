@@ -2,6 +2,10 @@
 
 Monorepo grouping PoolTogether hyperstructure (v5) bots as OpenZeppelin Defender autotasks.
 
+## Installation
+
+This library uses `yalc` to manage local dependencies. Make sure to run `yarn yalcadd` after install to setup local dependencies.
+
 ## Development
 
 - **[library](./packages/library)**: Shared functions which can be installed from any repo, published as `v5-autotasks-library` on NPM.
