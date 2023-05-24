@@ -14,7 +14,3 @@ This library uses `yalc` to manage local dependencies. Make sure to run `yarn ya
 - **[draw-beacon](./packages/draw-beacon)**: OpenZeppelin Defender autotask to start and complete a draw.
 - **[testnet-complete-draw](./packages/testnet-complete-draw)**: OpenZeppelin Defender autotask to start and complete a draw on a TestNet PrizePool.
 - **[yieldvault-mintrate](./packages/yieldvault-mintrate)**: OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
-
-### Todo:
-
-- ArbLiquidator bot could benefit from multicall reads to speed it up
