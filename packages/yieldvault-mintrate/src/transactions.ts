@@ -1,6 +1,6 @@
 import { Relayer } from "defender-relay-client";
 import { DefenderRelayProvider } from "defender-relay-client/lib/ethers";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import { yieldVaultHandleMintRate } from "@pooltogether/v5-autotasks-library";
 
 export async function processTransactions(event, params) {

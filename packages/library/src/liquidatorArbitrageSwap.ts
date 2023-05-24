@@ -31,7 +31,7 @@ interface SwapExactAmountInParams {
 /**
  * Only swap if we're going to make at least $5.00. This likely should be a config option
  */
-const MIN_PROFIT_THRESHOLD_USD = 3;
+const MIN_PROFIT_THRESHOLD_USD = -3;
 
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
@@ -91,6 +91,10 @@ export async function liquidatorArbitrageSwap(
     console.log(chalk.blue(`1. Amounts:`));
 
     const { exactAmountIn, amountOutMin } = await calculateAmounts(liquidationPair, context);
+    if (amountOutMin.eq(0)) {
+      logNextPair(liquidationPair, liquidationPairs);
+      continue;
+    }
 
     // #3. Print balance of tokenIn for relayer
     //
@@ -218,8 +222,8 @@ const approve = async (
 
     if (allowance.lt(exactAmountIn)) {
       console.log(
-        chalk.bgBlack.red(
-          `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum`
+        chalk.bgBlack.yellowBright(
+          `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum ...`
         )
       );
 
@@ -463,6 +467,17 @@ const calculateAmounts = async (
     context.tokenOut.symbol
   );
 
+  if (maxAmountOut.eq(0)) {
+    console.warn(
+      chalk.bgBlack.yellowBright(
+        `Max amount out available is 0: (Not enough interest accrued ... Is yield deposited and draws have completed?)`
+      )
+    );
+    return {
+      exactAmountIn: BigNumber.from(0),
+      amountOutMin: BigNumber.from(0)
+    };
+  }
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
   // const divisor = 1;

@@ -1,6 +1,6 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { RelayerParams } from "defender-relay-client";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import {
   getClaimerProfitablePrizeTxs,
   PrizeClaimerConfigParams,

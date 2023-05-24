@@ -4,7 +4,7 @@ import figlet from "figlet";
 import chalk from "chalk";
 import { ethers } from "ethers";
 import { Provider } from "@ethersproject/providers";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams

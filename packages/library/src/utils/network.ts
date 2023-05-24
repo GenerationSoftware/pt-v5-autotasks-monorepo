@@ -8,6 +8,7 @@ export const FLASHBOTS_SUPPORTED_CHAINS = [1, 5, 11155111];
 export const NETWORK_NATIVE_TOKEN_INFO = {
   1: { decimals: 18, symbol: "ETH" },
   5: { decimals: 18, symbol: "ETH" },
+  11155111: { decimals: 18, symbol: "ETH" },
   80001: { decimals: 18, symbol: "MATIC" }
 };
 
