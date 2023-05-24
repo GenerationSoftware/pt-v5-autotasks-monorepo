@@ -21,18 +21,15 @@
   "private": true,
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "yalcadd": "npx yalc add @pooltogether/v5-autotasks-library && npx yalc add @pooltogether/v5-utils-js",
-    "build": "npm run yalcadd && tsup",
-    "start": "npm run yalcadd && ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
+    "build": "tsup",
+    "start": "ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "updatetask": "ts-node --esm --experimental-specifier-resolution=node ./script/updateTask.js",
-    "update": "npm run yalcadd && npm run build && npm run updatetask"
+    "update": "npm run build && npm run updatetask"
   },
   "bugs": {
     "url": "https://github.com/pooltogether/v5-autotasks/issues"
   },
   "dependencies": {
-    "@pooltogether/v5-autotasks-library": "file:.yalc/@pooltogether/v5-autotasks-library",
-    "@pooltogether/v5-utils-js": "file:.yalc/@pooltogether/v5-utils-js",
     "configstore": "^6.0.0",
     "defender-relay-client": "1.39.0",
     "ethereum-multicall": "^2.17.0",
