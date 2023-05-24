@@ -12,17 +12,17 @@ const handlerLoadParams = (
   signer: Provider | DefenderRelaySigner,
   relayerAddress: string
 ): ArbLiquidatorConfigParams => {
-  const chainId = Number(CHAIN_ID);
+  const chainId = Number(BUILD_CHAIN_ID);
 
-  const readProvider = new ethers.providers.InfuraProvider(chainId, INFURA_API_KEY);
+  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, chainId);
 
   return {
     relayerAddress,
-    useFlashbots: USE_FLASHBOTS,
+    useFlashbots: BUILD_USE_FLASHBOTS,
     writeProvider: signer,
     readProvider,
     chainId,
-    swapRecipient: SWAP_RECIPIENT
+    swapRecipient: BUILD_SWAP_RECIPIENT
   };
 };
 

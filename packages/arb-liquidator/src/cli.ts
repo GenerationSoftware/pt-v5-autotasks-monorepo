@@ -3,7 +3,6 @@ import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
 import { ethers } from "ethers";
-import { Provider } from "@ethersproject/providers";
 import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
 import {
   liquidatorArbitrageSwap,
@@ -12,48 +11,21 @@ import {
 import { Relayer } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
-import { askQuestions, checkPackageConfig } from "./helpers/questions";
+import { askQuestions } from "./helpers/questions";
 
-import pkg from "../package.json";
+// @ts-ignore
+import pkg from "../package.json" assert { type: "json" };
 
 console.clear();
 console.log(chalk.magenta(figlet.textSync("PoolTogether")));
 console.log(chalk.blue(figlet.textSync("Arb Liquidator Bot")));
 
-const cliLoadParams = (
-  signer: Provider | DefenderRelaySigner,
-  relayerAddress: string
-): ArbLiquidatorConfigParams => {
-  const config = new Configstore(pkg.name);
-
-  const chainId = Number(config.get("CHAIN_ID"));
-  const swapRecipient = String(config.get("SWAP_RECIPIENT"));
-  const useFlashbots = Boolean(config.get("USE_FLASHBOTS"));
-
-  const readProvider = new ethers.providers.InfuraProvider(chainId, config.get("INFURA_API_KEY"));
-
-  return {
-    relayerAddress,
-    useFlashbots,
-    writeProvider: signer,
-    readProvider,
-    swapRecipient,
-    chainId
-  };
-};
-
 if (esMain(import.meta)) {
-  const config = new Configstore(pkg.name);
-
-  const answers = await askQuestions(config, { askFlashbots: true });
-  if (!answers.existingConfig) {
-    config.set(answers);
-  }
-  checkPackageConfig(config);
+  const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: true });
 
   const fakeEvent = {
-    apiKey: config.get("RELAYER_API_KEY"),
-    apiSecret: config.get("RELAYER_API_SECRET")
+    apiKey: config.RELAYER_API_KEY,
+    apiSecret: config.RELAYER_API_SECRET
   };
   const relayer = new Relayer(fakeEvent);
   const provider = new DefenderRelayProvider(fakeEvent);
@@ -62,7 +34,14 @@ if (esMain(import.meta)) {
   });
   const relayerAddress = await signer.getAddress();
 
-  const params: ArbLiquidatorConfigParams = cliLoadParams(signer, relayerAddress);
+  const params: ArbLiquidatorConfigParams = {
+    relayerAddress,
+    useFlashbots: config.USE_FLASHBOTS,
+    writeProvider: signer,
+    readProvider: new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID),
+    swapRecipient: config.SWAP_RECIPIENT,
+    chainId: config.CHAIN_ID
+  };
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
