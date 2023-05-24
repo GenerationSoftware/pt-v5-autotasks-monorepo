@@ -9,6 +9,7 @@ export default defineConfig(opt => {
   return {
     esbuildOptions: (options, context) => {
       const CHAIN_ID = config.get("CHAIN_ID");
+      if(!CHAIN_ID || !(`${CHAIN_ID}` in config.all)) throw new Error("Missing chain configuration! Try running `yarn start` first to set the config.");
       options.define = {
         ...(options.define ?? {}),
         BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
