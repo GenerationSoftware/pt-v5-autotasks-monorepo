@@ -10,45 +10,26 @@ import {
 } from "@pooltogether/v5-autotasks-library";
 
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
-import { checkPackageConfig, askQuestions } from "./helpers/questions";
+import { askQuestions } from "./helpers/questions";
 
-import pkg from "../package.json";
+// @ts-ignore
+import pkg from "../package.json" assert { type: "json" };
 
 console.clear();
 console.log(chalk.magenta(figlet.textSync("PoolTogether")));
 console.log(chalk.blue(figlet.textSync("Prize Claim Bot")));
 
-function cliLoadParams(): PrizeClaimerConfigParams {
-  const config = new Configstore(pkg.name);
-
-  const chainId = Number(config.get("CHAIN_ID"));
-  const feeRecipient = String(config.get("FEE_RECIPIENT"));
-
-  const useFlashbots = Boolean(config.get("USE_FLASHBOTS"));
-
-  return {
-    useFlashbots,
-    feeRecipient,
-    chainId
-  };
-}
-
 if (esMain(import.meta)) {
-  const config = new Configstore(pkg.name);
-
-  const answers = await askQuestions(config, { askFlashbots: true });
-  if (!answers.existingConfig) {
-    config.set(answers);
-  }
-  checkPackageConfig(config);
-
-  const params: PrizeClaimerConfigParams = cliLoadParams();
-
-  const readProvider = new ethers.providers.InfuraProvider(
-    params.chainId,
-    config.get("INFURA_API_KEY")
+  const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: true });
+  const readProvider = new ethers.providers.JsonRpcProvider(
+    config.JSON_RPC_URI,
+    config.CHAIN_ID
   );
-
+  const params: PrizeClaimerConfigParams = {
+    chainId: config.CHAIN_ID,
+    feeRecipient: config.FEE_RECIPIENT,
+    useFlashbots: config.USE_FLASHBOTS
+  };
   const populatedTxs = await populateTransactions(params, readProvider);
 
   printAsterisks();
@@ -56,8 +37,8 @@ if (esMain(import.meta)) {
   printSpacer();
 
   const fakeEvent = {
-    apiKey: config.get("RELAYER_API_KEY"),
-    apiSecret: config.get("RELAYER_API_SECRET")
+    apiKey: config.RELAYER_API_KEY,
+    apiSecret: config.RELAYER_API_SECRET
   };
   await processPopulatedTransactions(fakeEvent, populatedTxs, params);
 }
