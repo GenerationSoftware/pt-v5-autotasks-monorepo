@@ -23,7 +23,11 @@ export async function testnetPrizePoolHandleCompletePrize(
   console.log('Date.now():', Date.now());
   console.log('Can Complete Draw:', canCompleteDraw);
 
-  console.log(`TestNet PrizePool: Draw is behind by ${Date.now() / 1000 - nextDrawEndsAt} seconds`);
+  const diff = Date.now() / 1000 - nextDrawEndsAt;
+  const laggingBehind = diff > 0;
+  if (laggingBehind) {
+    console.log(`TestNet PrizePool: Draw is behind by ${diff} seconds`);
+  }
 
   let transactionPopulated: PopulatedTransaction | undefined;
 

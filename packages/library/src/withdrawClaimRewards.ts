@@ -1,16 +1,16 @@
-import { ethers, Contract, BigNumber } from "ethers";
-import { PopulatedTransaction } from "@ethersproject/contracts";
-import { Provider } from "@ethersproject/providers";
-import { getContract } from "@pooltogether/v5-utils-js";
-import chalk from "chalk";
+import { ethers, Contract, BigNumber } from 'ethers';
+import { PopulatedTransaction } from '@ethersproject/contracts';
+import { Provider } from '@ethersproject/providers';
+import { getContract } from '@pooltogether/v5-utils-js';
+import chalk from 'chalk';
 
 import {
   ContractsBlob,
   WithdrawClaimRewardsConfigParams,
   WithdrawClaimRewardsContext,
-} from "./types";
-import { logTable, logBigNumber, printAsterisks, printSpacer } from "./utils";
-import { ERC20Abi } from "./abis/ERC20Abi";
+} from './types';
+import { logTable, logBigNumber, printAsterisks, printSpacer } from './utils';
+import { ERC20Abi } from './abis/ERC20Abi';
 
 interface WithdrawClaimRewardsParams {
   amount: BigNumber;
@@ -25,7 +25,7 @@ interface WithdrawClaimRewardsParams {
 export async function getWithdrawClaimRewardsTx(
   contracts: ContractsBlob,
   readProvider: Provider,
-  params: WithdrawClaimRewardsConfigParams
+  params: WithdrawClaimRewardsConfigParams,
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, rewardsRecipient, relayerAddress } = params;
 
@@ -34,10 +34,10 @@ export async function getWithdrawClaimRewardsTx(
     minor: 0,
     patch: 0,
   };
-  const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
+  const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
 
   if (!prizePool) {
-    throw new Error("WithdrawRewards: PrizePool Contract Unavailable");
+    throw new Error('WithdrawRewards: PrizePool Contract Unavailable');
   }
 
   // #1. Get context about the prize pool prize token, etc
@@ -53,22 +53,30 @@ export async function getWithdrawClaimRewardsTx(
     `${context.rewardsToken.symbol} balance:`,
     amount,
     context.rewardsToken.decimals,
-    context.rewardsToken.symbol
+    context.rewardsToken.symbol,
   );
 
-  printAsterisks();
-  console.log(chalk.blue(`3. Creating transaction ...`));
+  let populatedTx: PopulatedTransaction;
 
-  const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
-    rewardsRecipient,
-    amount,
-  };
+  // TODO: Actually calculate profitability here ...
+  const profitable = amount.gt(0);
+  if (!profitable) {
+    printAsterisks();
+    console.log(chalk.yellow(`Not profitable to claim rewards yet. Exiting ...`));
+  } else {
+    printAsterisks();
+    console.log(chalk.blue(`3. Creating transaction ...`));
 
-  console.log(chalk.green("Claimer: Add Populated Claim Tx"));
-  const populatedTx: PopulatedTransaction =
-    await prizePool.populateTransaction.withdrawClaimRewards(
-      ...Object.values(withdrawClaimRewardsParams)
+    const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
+      rewardsRecipient,
+      amount,
+    };
+
+    console.log(chalk.green('Claimer: Add Populated Claim Tx'));
+    populatedTx = await prizePool.populateTransaction.withdrawClaimRewards(
+      ...Object.values(withdrawClaimRewardsParams),
     );
+  }
 
   return populatedTx;
 }
@@ -80,7 +88,7 @@ export async function getWithdrawClaimRewardsTx(
  */
 const getContext = async (
   prizePool: Contract,
-  readProvider: Provider
+  readProvider: Provider,
 ): Promise<WithdrawClaimRewardsContext> => {
   const rewardsTokenAddress = await prizePool.prizeToken();
 

@@ -27,12 +27,12 @@ export const processPopulatedTransaction = async (
 ) => {
   const relayer = new Relayer(event);
 
-  printAsterisks();
-  console.log(chalk.blue(`4. Sending transactions ...`));
-  printSpacer();
-
   try {
     if (populatedTx) {
+      printAsterisks();
+      console.log(chalk.blue(`4. Sending transactions ...`));
+      printSpacer();
+
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: populatedTx.data,
         to: populatedTx.to,
