@@ -2,11 +2,13 @@
   "name": "root",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    ".yalc/@*/*"
   ],
   "scripts": {
     "lerna": "lerna",
-    "publish": "npm run lerna publish --conventional-commits --exact --include-merged-tags"
+    "publish": "npm run lerna publish --conventional-commits --exact --include-merged-tags",
+    "yalcadd": "npx yalc add @pooltogether/v5-utils-js --pure"
   },
   "devDependencies": {
     "@types/jest": "29.2.2",

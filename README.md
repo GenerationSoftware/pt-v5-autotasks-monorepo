@@ -2,6 +2,14 @@
 
 Monorepo grouping PoolTogether hyperstructure (v5) bots as OpenZeppelin Defender autotasks.
 
+## Installation
+
+1. This library uses `yalc` to manage local dependencies. You will need to clone the `v5-utils-js` repo and publish it (you can publish it using `yarn start` after `yarn install` in the `v5-utils-js` directory).
+
+2. Following that, make sure to run `yarn yalcadd` before installing to setup local dependencies.
+
+3. Finally, run `yarn install` in the root of this package. You can now run `yarn start` in any of the subpackages.
+
 ## Development
 
 - **[library](./packages/library)**: Shared functions which can be installed from any repo, published as `v5-autotasks-library` on NPM.
@@ -10,7 +18,3 @@ Monorepo grouping PoolTogether hyperstructure (v5) bots as OpenZeppelin Defender
 - **[draw-beacon](./packages/draw-beacon)**: OpenZeppelin Defender autotask to start and complete a draw.
 - **[testnet-complete-draw](./packages/testnet-complete-draw)**: OpenZeppelin Defender autotask to start and complete a draw on a TestNet PrizePool.
 - **[yieldvault-mintrate](./packages/yieldvault-mintrate)**: OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
-
-### Todo:
-
-- ArbLiquidator bot could benefit from multicall reads to speed it up

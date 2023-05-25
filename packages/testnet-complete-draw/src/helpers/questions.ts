@@ -1,17 +1,8 @@
-import inquirer from "inquirer";
-
 import {
-  SHARED_CONFIG_KEYS,
-  checkConfig,
-  getSharedQuestions
+  populateConfig
 } from "@pooltogether/v5-autotasks-library";
+import Configstore from "configstore";
 
-export const checkPackageConfig = config => {
-  checkConfig(config, SHARED_CONFIG_KEYS);
-};
-
-export const askQuestions = (config, { askFlashbots }) => {
-  const questions: any[] = getSharedQuestions(config, askFlashbots);
-
-  return inquirer.prompt(questions);
+export const askQuestions = (config: Configstore, { askFlashbots }) => {
+  return populateConfig(config, { askFlashbots });
 };

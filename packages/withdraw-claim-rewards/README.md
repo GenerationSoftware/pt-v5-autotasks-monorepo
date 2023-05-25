@@ -23,13 +23,13 @@ yarn start
 You will be prompted to fill in the following necessary variables:
 
 ```
+CHAIN_ID: Which network to run on
 DEFENDER_TEAM_API_KEY: OZ Defender-specific
 DEFENDER_TEAM_SECRET_KEY: OZ Defender-specific
 AUTOTASK_ID: OZ Defender-specific
 RELAYER_API_KEY: OZ Defender-specific
 RELAYER_API_SECRET: OZ Defender-specific
-INFURA_API_KEY: Infura-specific
-CHAIN_ID: Which network to claim on
+JSON_RPC_URI: Network-specific
 ```
 
 The following one is unique to the prize claim sweeper bot:

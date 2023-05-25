@@ -19,23 +19,26 @@
     "url": "git+https://github.com/pooltogether/v5-autotasks.git"
   },
   "scripts": {
-    "build": "npm run yalcadd && tsc",
-    "start": "npm run yalcadd && tsc-watch --onSuccess \"npx yalc publish\"",
-    "yalcadd": "npx yalc add @pooltogether/v5-utils-js",
+    "build": "tsc",
+    "start": "tsc-watch",
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\""
   },
   "bugs": {
     "url": "https://github.com/pooltogether/v5-autotasks/issues"
   },
   "dependencies": {
-    "@pooltogether/v5-utils-js": "file:.yalc/@pooltogether/v5-utils-js",
     "chalk": "^4.1.2",
+    "configstore": "^6.0.0",
     "defender-relay-client": "1.39.0",
     "ethers": "5.7.2",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
-    "tsc-watch": "^6.0.4",
-    "yalc": "^1.0.0-pre.53"
+    "inquirer": "^9.2.6",
+    "tsc-watch": "^6.0.4"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "4.8.4",
+    "@types/configstore": "^6.0.0",
+    "@types/inquirer": "^9.0.3"
+  }
 }

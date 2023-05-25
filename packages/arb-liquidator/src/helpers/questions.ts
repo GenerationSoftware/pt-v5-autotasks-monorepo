@@ -1,30 +1,22 @@
 import chalk from "chalk";
-import inquirer from "inquirer";
+import { DistinctQuestion } from "inquirer";
 
 import {
-  SHARED_CONFIG_KEYS,
-  checkConfig,
-  getSharedQuestions,
-  when
+  populateConfig
 } from "@pooltogether/v5-autotasks-library";
+import Configstore from "configstore";
 
-const PACKAGE_CONFIG_KEYS = {
-  SWAP_RECIPIENT: "SWAP_RECIPIENT"
+interface PACKAGE_CONFIG {
+  SWAP_RECIPIENT: string
 };
 
-export const checkPackageConfig = config => {
-  checkConfig(config, SHARED_CONFIG_KEYS);
-  checkConfig(config, PACKAGE_CONFIG_KEYS);
-};
-
-export const askQuestions = (config, { askFlashbots }) => {
-  const questions: any[] = getSharedQuestions(config, askFlashbots);
-
-  questions.push({
-    name: PACKAGE_CONFIG_KEYS.SWAP_RECIPIENT,
+const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: (DistinctQuestion & { name: key })} = {
+  SWAP_RECIPIENT: {
+    name: "SWAP_RECIPIENT",
     type: "input",
-    message: chalk.green("Enter the swap recipient address:"),
-    when,
+    message: chalk.green(
+      "Enter the swap recipient address:"
+    ),
     validate: function(value) {
       if (value.length) {
         return true;
@@ -32,7 +24,16 @@ export const askQuestions = (config, { askFlashbots }) => {
         return "Please enter the swap recipient's address (where the profit should be sent):";
       }
     }
-  });
+  }
+};
 
-  return inquirer.prompt(questions);
+export const askQuestions = (config: Configstore, { askFlashbots }) => {
+  return populateConfig<{}, PACKAGE_CONFIG>(config, {
+    askFlashbots,
+    extraConfig: {
+      network: [
+        PACKAGE_QUESTIONS.SWAP_RECIPIENT
+      ]
+    }
+  });
 };

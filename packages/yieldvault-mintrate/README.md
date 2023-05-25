@@ -2,58 +2,38 @@
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
 
-## Development
+## Note:
 
-### Env
+If you would rather use something other than OZ Defender/Infura, you can import the `v5-autotasks-library` into your own code. More info here: **[v5-autotasks-library](../library#usage)**
 
-We use [direnv](https://direnv.net) to manage environment variables. You'll likely need to install it.
+### 1. Run autotask
 
-Copy `.envrc.example` and write down the env variables needed to run this project.
-
-```
-cp .envrc.example .envrc
-```
-
-Once your env variables are setup, load them with:
+To run the OpenZeppelin Defender autotask locally:
 
 ```
-direnv allow
+yarn start
 ```
 
-### Autotasks
-
-Depending on which autotask you wish to update, you need to set the following env variables:
+You will be prompted to fill in the following necessary variables:
 
 ```
-export AUTOTASK_ID=
-export CHAIN_ID=
-export RELAYER_API_KEY=
-export RELAYER_API_SECRET=
+CHAIN_ID: Which network to run on
+DEFENDER_TEAM_API_KEY: OZ Defender-specific
+DEFENDER_TEAM_SECRET_KEY: OZ Defender-specific
+AUTOTASK_ID: OZ Defender-specific
+RELAYER_API_KEY: OZ Defender-specific
+RELAYER_API_SECRET: OZ Defender-specific
+JSON_RPC_URI: Network-specific
 ```
 
-Here are the currently deployed autotasks and their corresponding ID.
+Once the config has been saved with all of those variables, the script will run.
 
-#### Testnet
+If everything looks good, you can upload the task to OpenZeppelin Defender to be run periodically.
 
-##### Sepolia
+### 2. Update autotask
 
-```
-export AUTOTASK_ID=83...
-export CHAIN_ID=11155111
-```
-
-### Run autotask
-
-To run the autotask locally, run:
+With the config in place from step 1, you can build and update the autotask on OpenZeppelin Defender using:
 
 ```
-npm start
-```
-
-### Update autotask
-
-To update the autotask, run:
-
-```
-npm run update
+yarn update
 ```
