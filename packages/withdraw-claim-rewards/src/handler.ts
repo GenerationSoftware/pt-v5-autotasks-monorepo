@@ -6,7 +6,7 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import { populateTransaction, processPopulatedTransaction } from "./transactions";
 
 const handlerLoadParams = (relayerAddress): WithdrawClaimRewardsConfigParams => {
-  return { relayerAddress, chainId: Number(CHAIN_ID), rewardsRecipient: REWARDS_RECIPIENT };
+  return { relayerAddress, chainId: Number(BUILD_CHAIN_ID), rewardsRecipient: BUILD_REWARDS_RECIPIENT };
 };
 
 export async function handler(event: RelayerParams) {
@@ -19,7 +19,7 @@ export async function handler(event: RelayerParams) {
   const params = handlerLoadParams(relayerAddress);
   console.log(params);
 
-  const readProvider = new ethers.providers.InfuraProvider(params.chainId, INFURA_API_KEY);
+  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, BUILD_CHAIN_ID);
 
   const populatedTx = await populateTransaction(params, readProvider);
   console.log(populatedTx);

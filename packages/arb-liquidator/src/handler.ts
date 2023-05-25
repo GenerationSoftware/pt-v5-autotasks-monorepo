@@ -5,24 +5,24 @@ import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-clien
 import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import {
   liquidatorArbitrageSwap,
-  ArbLiquidatorConfigParams
+  ArbLiquidatorConfigParams,
 } from "@pooltogether/v5-autotasks-library";
 
 const handlerLoadParams = (
   signer: Provider | DefenderRelaySigner,
   relayerAddress: string
 ): ArbLiquidatorConfigParams => {
-  const chainId = Number(CHAIN_ID);
+  const chainId = Number(BUILD_CHAIN_ID);
 
-  const readProvider = new ethers.providers.InfuraProvider(chainId, INFURA_API_KEY);
+  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, chainId);
 
   return {
     relayerAddress,
-    useFlashbots: USE_FLASHBOTS,
+    useFlashbots: BUILD_USE_FLASHBOTS,
     writeProvider: signer,
     readProvider,
     chainId,
-    swapRecipient: SWAP_RECIPIENT
+    swapRecipient: BUILD_SWAP_RECIPIENT,
   };
 };
 
@@ -30,7 +30,7 @@ export async function handler(event) {
   const relayer = new Relayer(event);
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, {
-    speed: "fast"
+    speed: "fast",
   });
   const relayerAddress = await signer.getAddress();
 

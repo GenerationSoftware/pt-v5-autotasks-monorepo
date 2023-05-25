@@ -12,7 +12,7 @@ export async function processTransaction(event, params) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: populatedTx.data,
         to: populatedTx.to,
-        gasLimit: 200000
+        gasLimit: 200000,
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {

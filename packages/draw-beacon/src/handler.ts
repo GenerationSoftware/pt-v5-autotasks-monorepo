@@ -13,14 +13,14 @@ export async function handler(event: RelayerParams) {
   try {
     const transactionPopulated = await drawBeaconHandleDrawStartAndComplete(contracts, {
       chainId,
-      provider: signer
+      provider: signer,
     });
 
     if (transactionPopulated) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 500000
+        gasLimit: 500000,
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {
