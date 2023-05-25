@@ -9,7 +9,7 @@ const MARKET_RATE_CONTRACT_DECIMALS = 8;
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
   1: 1,
   11155111: 1,
-  80001: 24 // mumbai seems to return a much cheaper gas price then it bills you for
+  80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
 };
 
 /**

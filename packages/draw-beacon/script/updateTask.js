@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { AutotaskClient } from "defender-autotask-client";
-import fs from "fs";
+import { AutotaskClient } from 'defender-autotask-client';
+import fs from 'fs';
 
 async function updateAutotask(autotaskId, file) {
   const client = new AutotaskClient({
@@ -14,12 +14,12 @@ async function updateAutotask(autotaskId, file) {
   console.log(`Updating autotask ${autotaskId} with sourcefile ${file}`);
 
   await client.updateCodeFromSources(autotaskId, {
-    "index.js": source,
+    'index.js': source,
   });
 }
 
 async function run() {
-  await updateAutotask(process.env.AUTOTASK_ID, "./dist/handler.cjs");
+  await updateAutotask(process.env.AUTOTASK_ID, './dist/handler.cjs');
 }
 
 run();

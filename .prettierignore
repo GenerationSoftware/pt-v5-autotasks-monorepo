@@ -1,10 +1,7 @@
-artifacts
-broadcast
-cache
-cache_hardhat
-deployments
+dist
 lib
 out
 types
-
 package.json
+.yalc
+.yarn

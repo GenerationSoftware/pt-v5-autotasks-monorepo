@@ -1,23 +1,23 @@
-import esMain from "es-main";
-import Configstore from "configstore";
-import figlet from "figlet";
-import chalk from "chalk";
-import { ethers } from "ethers";
+import esMain from 'es-main';
+import Configstore from 'configstore';
+import figlet from 'figlet';
+import chalk from 'chalk';
+import { ethers } from 'ethers';
 import {
   printAsterisks,
   printSpacer,
   PrizeClaimerConfigParams,
-} from "@pooltogether/v5-autotasks-library";
+} from '@pooltogether/v5-autotasks-library';
 
-import { populateTransactions, processPopulatedTransactions } from "./transactions";
-import { askQuestions } from "./helpers/questions";
+import { populateTransactions, processPopulatedTransactions } from './transactions';
+import { askQuestions } from './helpers/questions';
 
 // @ts-ignore
-import pkg from "../package.json" assert { type: "json" };
+import pkg from '../package.json' assert { type: 'json' };
 
 console.clear();
-console.log(chalk.magenta(figlet.textSync("PoolTogether")));
-console.log(chalk.blue(figlet.textSync("Prize Claim Bot")));
+console.log(chalk.magenta(figlet.textSync('PoolTogether')));
+console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
 
 if (esMain(import.meta)) {
   const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: true });

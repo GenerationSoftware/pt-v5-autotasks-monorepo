@@ -1,29 +1,32 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from 'tsup';
 
-import Configstore from "configstore";
-import pkg from "./package.json";
+import Configstore from 'configstore';
+import pkg from './package.json';
 
 const config = new Configstore(pkg.name);
 
-export default defineConfig(opt => {
+export default defineConfig((opt) => {
   return {
     esbuildOptions: (options, context) => {
-      const CHAIN_ID = config.get("CHAIN_ID");
-      if(!CHAIN_ID || !(`${CHAIN_ID}` in config.all)) throw new Error("Missing chain configuration! Try running `yarn start` first to set the config.");
+      const CHAIN_ID = config.get('CHAIN_ID');
+      if (!CHAIN_ID || !(`${CHAIN_ID}` in config.all))
+        throw new Error(
+          'Missing chain configuration! Try running `yarn start` first to set the config.',
+        );
       options.define = {
         ...(options.define ?? {}),
-        BUILD_CHAIN_ID: `'${CHAIN_ID}'`
+        BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
       };
     },
     noExternal: [
-      "@pooltogether/v5-autotasks-library",
-      "@pooltogether/v5-utils-js",
-      "ethereum-multicall",
-      "configstore"
+      '@pooltogether/v5-autotasks-library',
+      '@pooltogether/v5-utils-js',
+      'ethereum-multicall',
+      'configstore',
     ],
-    format: "cjs",
-    entry: ["src/handler.ts"],
+    format: 'cjs',
+    entry: ['src/handler.ts'],
     splitting: false,
-    clean: true
+    clean: true,
   };
 });

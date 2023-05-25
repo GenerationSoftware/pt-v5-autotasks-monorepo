@@ -1,13 +1,13 @@
-import chalk from "chalk";
-import { PopulatedTransaction } from "@ethersproject/contracts";
-import { RelayerParams } from "defender-relay-client";
-import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
+import chalk from 'chalk';
+import { PopulatedTransaction } from '@ethersproject/contracts';
+import { RelayerParams } from 'defender-relay-client';
+import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
 import {
   getWithdrawClaimRewardsTx,
   printAsterisks,
   printSpacer,
-} from "@pooltogether/v5-autotasks-library";
-import { Relayer } from "defender-relay-client";
+} from '@pooltogether/v5-autotasks-library';
+import { Relayer } from 'defender-relay-client';
 
 export const populateTransaction = async (params, readProvider): Promise<PopulatedTransaction> => {
   let populatedTx: PopulatedTransaction;
@@ -22,7 +22,7 @@ export const populateTransaction = async (params, readProvider): Promise<Populat
 
 export const processPopulatedTransaction = async (
   event: RelayerParams,
-  populatedTx: PopulatedTransaction
+  populatedTx: PopulatedTransaction,
 ) => {
   const relayer = new Relayer(event);
 
@@ -37,9 +37,9 @@ export const processPopulatedTransaction = async (
         to: populatedTx.to,
         gasLimit: 200000,
       });
-      console.log("TransactionHash:", transactionSentToNetwork.hash);
+      console.log('TransactionHash:', transactionSentToNetwork.hash);
     } else {
-      console.log("WithdrawRewards: No transactions populated");
+      console.log('WithdrawRewards: No transactions populated');
     }
   } catch (error) {
     throw new Error(error);

@@ -1,7 +1,7 @@
-import { Relayer } from "defender-relay-client";
-import { DefenderRelayProvider } from "defender-relay-client/lib/ethers";
-import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
-import { yieldVaultHandleMintRate } from "@pooltogether/v5-autotasks-library";
+import { Relayer } from 'defender-relay-client';
+import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
+import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { yieldVaultHandleMintRate } from '@pooltogether/v5-autotasks-library';
 
 export async function processTransactions(event, params) {
   const { chainId } = params;
@@ -22,12 +22,12 @@ export async function processTransactions(event, params) {
           to: transactionPopulated.to,
           gasLimit: 70000,
         });
-        console.log("TransactionHash:", transactionSentToNetwork.hash);
+        console.log('TransactionHash:', transactionSentToNetwork.hash);
       } catch (error) {
         throw new Error(error);
       }
     }
   } else {
-    console.log("YieldVault: Transactions not populated");
+    console.log('YieldVault: Transactions not populated');
   }
 }

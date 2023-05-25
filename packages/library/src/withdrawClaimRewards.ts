@@ -7,7 +7,7 @@ import chalk from "chalk";
 import {
   ContractsBlob,
   WithdrawClaimRewardsConfigParams,
-  WithdrawClaimRewardsContext
+  WithdrawClaimRewardsContext,
 } from "./types";
 import { logTable, logBigNumber, printAsterisks, printSpacer } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
@@ -32,7 +32,7 @@ export async function getWithdrawClaimRewardsTx(
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0
+    patch: 0,
   };
   const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
 
@@ -61,13 +61,14 @@ export async function getWithdrawClaimRewardsTx(
 
   const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
     rewardsRecipient,
-    amount
+    amount,
   };
 
   console.log(chalk.green("Claimer: Add Populated Claim Tx"));
-  const populatedTx: PopulatedTransaction = await prizePool.populateTransaction.withdrawClaimRewards(
-    ...Object.values(withdrawClaimRewardsParams)
-  );
+  const populatedTx: PopulatedTransaction =
+    await prizePool.populateTransaction.withdrawClaimRewards(
+      ...Object.values(withdrawClaimRewardsParams)
+    );
 
   return populatedTx;
 }
@@ -89,7 +90,7 @@ const getContext = async (
     address: rewardsTokenAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol()
+    symbol: await tokenInContract.symbol(),
   };
 
   // const rewardsTokenRateUsd = await getRewardsTokenRateUsd(marketRate, rewardsToken);
@@ -101,7 +102,7 @@ const getContext = async (
  * Logs the context to the console
  * @returns {undefined} void function
  */
-const printContext = context => {
+const printContext = (context) => {
   printAsterisks();
   console.log(chalk.blue.bold(`1. Rewards/prize token: ${context.rewardsToken.symbol}`));
   printSpacer();
