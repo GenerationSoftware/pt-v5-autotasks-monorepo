@@ -1,6 +1,6 @@
 import { Relayer, RelayerParams } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
 import { drawBeaconHandleDrawStartAndComplete } from '@pooltogether/v5-autotasks-library';
 
 export async function handler(event: RelayerParams) {
@@ -11,6 +11,7 @@ export async function handler(event: RelayerParams) {
   const chainId = Number(process.env.CHAIN_ID);
 
   try {
+    const contracts = await downloadContractsBlob(chainId);
     const transactionPopulated = await drawBeaconHandleDrawStartAndComplete(contracts, {
       chainId,
       provider: signer,

@@ -1,6 +1,6 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
-import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
 import {
   getClaimerProfitablePrizeTxs,
   PrizeClaimerConfigParams,
@@ -17,6 +17,7 @@ export const populateTransactions = async (
 ): Promise<PopulatedTransaction[]> => {
   let populatedTxs: PopulatedTransaction[] = [];
   try {
+    const contracts = await downloadContractsBlob(params.chainId);
     populatedTxs = await getClaimerProfitablePrizeTxs(contracts, readProvider, params);
   } catch (e) {
     console.error(e);
