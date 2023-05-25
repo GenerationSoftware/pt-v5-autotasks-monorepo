@@ -1,11 +1,11 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { RelayerParams } from "defender-relay-client";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import {
   getClaimerProfitablePrizeTxs,
   PrizeClaimerConfigParams,
   FLASHBOTS_SUPPORTED_CHAINS,
-  GetClaimerProfitablePrizeTxsParams
+  GetClaimerProfitablePrizeTxsParams,
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 import chalk from "chalk";
@@ -42,7 +42,7 @@ export const processPopulatedTransactions = async (
           isPrivate: chainSupportsFlashbots && params.useFlashbots,
           data: populatedTx.data,
           to: populatedTx.to,
-          gasLimit: 6000000
+          gasLimit: 6000000,
         });
         console.log(chalk.greenBright.bold("Transaction sent! ✔"));
         console.log(chalk.blueBright.bold("Transaction hash:", transactionSentToNetwork.hash));

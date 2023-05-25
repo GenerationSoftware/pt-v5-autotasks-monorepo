@@ -1,6 +1,6 @@
 import { Relayer, RelayerParams } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import { drawBeaconHandleDrawStartAndComplete } from "@pooltogether/v5-autotasks-library";
 
 export async function handler(event: RelayerParams) {
@@ -13,14 +13,14 @@ export async function handler(event: RelayerParams) {
   try {
     const transactionPopulated = await drawBeaconHandleDrawStartAndComplete(contracts, {
       chainId,
-      provider: signer
+      provider: signer,
     });
 
     if (transactionPopulated) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 500000
+        gasLimit: 500000,
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {

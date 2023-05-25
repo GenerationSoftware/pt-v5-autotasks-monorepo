@@ -3,10 +3,10 @@ import Configstore from "configstore";
 import figlet from "figlet";
 import chalk from "chalk";
 import { ethers } from "ethers";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import {
   liquidatorArbitrageSwap,
-  ArbLiquidatorConfigParams
+  ArbLiquidatorConfigParams,
 } from "@pooltogether/v5-autotasks-library";
 import { Relayer } from "defender-relay-client";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
@@ -25,12 +25,12 @@ if (esMain(import.meta)) {
 
   const fakeEvent = {
     apiKey: config.RELAYER_API_KEY,
-    apiSecret: config.RELAYER_API_SECRET
+    apiSecret: config.RELAYER_API_SECRET,
   };
   const relayer = new Relayer(fakeEvent);
   const provider = new DefenderRelayProvider(fakeEvent);
   const signer = new DefenderRelaySigner(fakeEvent, provider, {
-    speed: "fast"
+    speed: "fast",
   });
   const relayerAddress = await signer.getAddress();
 
@@ -40,7 +40,7 @@ if (esMain(import.meta)) {
     writeProvider: signer,
     readProvider: new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID),
     swapRecipient: config.SWAP_RECIPIENT,
-    chainId: config.CHAIN_ID
+    chainId: config.CHAIN_ID,
   };
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well

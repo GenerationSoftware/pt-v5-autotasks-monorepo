@@ -1,5 +1,5 @@
 import { Relayer } from "defender-relay-client";
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import { testnetPrizePoolHandleCompletePrize } from "@pooltogether/v5-autotasks-library";
 
 export async function processTransaction(event, params) {
@@ -12,7 +12,7 @@ export async function processTransaction(event, params) {
       let transactionSentToNetwork = await relayer.sendTransaction({
         data: populatedTx.data,
         to: populatedTx.to,
-        gasLimit: 200000
+        gasLimit: 200000,
       });
       console.log("TransactionHash:", transactionSentToNetwork.hash);
     } else {

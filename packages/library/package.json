@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "start": "tsc-watch",
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\""
   },
   "bugs": {
