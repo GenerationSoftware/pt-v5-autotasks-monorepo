@@ -11,7 +11,7 @@ export async function processTransactions(event, params) {
 
   const transactionsPopulated = await yieldVaultHandleMintRate(contracts, {
     chainId,
-    writeProvider
+    writeProvider,
   });
 
   if (transactionsPopulated.length > 0) {
@@ -20,7 +20,7 @@ export async function processTransactions(event, params) {
         let transactionSentToNetwork = await relayer.sendTransaction({
           data: transactionPopulated.data,
           to: transactionPopulated.to,
-          gasLimit: 70000
+          gasLimit: 70000,
         });
         console.log("TransactionHash:", transactionSentToNetwork.hash);
       } catch (error) {

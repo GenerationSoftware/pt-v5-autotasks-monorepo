@@ -6,50 +6,36 @@ import { ethers } from "ethers";
 import { WithdrawClaimRewardsConfigParams } from "@pooltogether/v5-autotasks-library";
 import { DefenderRelayProvider, DefenderRelaySigner } from "defender-relay-client/lib/ethers";
 
-import { checkPackageConfig, askQuestions } from "./helpers/questions";
+import { askQuestions } from "./helpers/questions";
 import { populateTransaction, processPopulatedTransaction } from "./transactions";
 
-import pkg from "../package.json";
+// @ts-ignore
+import pkg from "../package.json" assert { type: "json" };
 
 console.clear();
 console.log(chalk.magenta(figlet.textSync("PoolTogether")));
 console.log(chalk.blue(figlet.textSync("Withdraw Rewards Bot")));
 
-function cliLoadParams(relayerAddress): WithdrawClaimRewardsConfigParams {
-  const config = new Configstore(pkg.name);
-
-  const chainId = Number(config.get("CHAIN_ID"));
-  const rewardsRecipient = String(config.get("REWARDS_RECIPIENT"));
-
-  return {
-    relayerAddress,
-    rewardsRecipient,
-    chainId
-  };
-}
-
 if (esMain(import.meta)) {
-  const config = new Configstore(pkg.name);
-
-  const answers = await askQuestions(config, { askFlashbots: false });
-  if (!answers.existingConfig) {
-    config.set(answers);
-  }
-  checkPackageConfig(config);
+  const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: false });
 
   const fakeEvent = {
-    apiKey: config.get("RELAYER_API_KEY"),
-    apiSecret: config.get("RELAYER_API_SECRET")
+    apiKey: config.RELAYER_API_KEY,
+    apiSecret: config.RELAYER_API_SECRET
   };
   const provider = new DefenderRelayProvider(fakeEvent);
   const signer = new DefenderRelaySigner(fakeEvent, provider, { speed: "fast" });
   const relayerAddress = await signer.getAddress();
 
-  const params: WithdrawClaimRewardsConfigParams = cliLoadParams(relayerAddress);
+  const params: WithdrawClaimRewardsConfigParams = {
+    relayerAddress,
+    rewardsRecipient: config.REWARDS_RECIPIENT,
+    chainId: config.CHAIN_ID
+  };
 
-  const readProvider = new ethers.providers.InfuraProvider(
-    params.chainId,
-    config.get("INFURA_API_KEY")
+  const readProvider = new ethers.providers.JsonRpcProvider(
+    config.JSON_RPC_URI,
+    config.CHAIN_ID
   );
   const populatedTxs = await populateTransaction(params, readProvider);
 
