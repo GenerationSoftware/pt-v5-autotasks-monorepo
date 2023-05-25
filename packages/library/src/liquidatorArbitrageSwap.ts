@@ -16,7 +16,7 @@ import {
   getFeesUsd,
   getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
-  arbLiquidatorMulticall
+  arbLiquidatorMulticall,
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 import { FLASHBOTS_SUPPORTED_CHAINS, NETWORK_NATIVE_TOKEN_INFO } from "./utils/network";
@@ -46,14 +46,8 @@ export async function liquidatorArbitrageSwap(
   relayer: Relayer,
   params: ArbLiquidatorConfigParams
 ) {
-  const {
-    chainId,
-    useFlashbots,
-    swapRecipient,
-    relayerAddress,
-    readProvider,
-    writeProvider
-  } = params;
+  const { chainId, useFlashbots, swapRecipient, relayerAddress, readProvider, writeProvider } =
+    params;
 
   // #1. Get contracts
   //
@@ -130,7 +124,7 @@ export async function liquidatorArbitrageSwap(
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
       exactAmountIn,
-      amountOutMin
+      amountOutMin,
     };
 
     let amountOutEstimate;
@@ -188,7 +182,7 @@ export async function liquidatorArbitrageSwap(
         isPrivate: chainSupportsFlashbots && useFlashbots,
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 600000
+        gasLimit: 600000,
       });
       console.log(chalk.greenBright.bold("Transaction sent! ✔"));
       console.log(chalk.blueBright.bold("Transaction hash:", transactionSentToNetwork.hash));
@@ -261,7 +255,7 @@ const getLiquidationContracts = (
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0
+    patch: 0,
   };
 
   const liquidationPairs = getContracts(
@@ -311,7 +305,7 @@ const getContext = async (
   return context;
 };
 
-const printContext = context => {
+const printContext = (context) => {
   printAsterisks();
   console.log(chalk.blue(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
   printSpacer();
@@ -319,7 +313,7 @@ const printContext = context => {
   logTable({
     tokenIn: context.tokenIn,
     tokenOut: context.tokenOut,
-    tokenOutUnderlyingAsset: context.tokenOutUnderlyingAsset
+    tokenOutUnderlyingAsset: context.tokenOutUnderlyingAsset,
   });
   logBigNumber(
     `Relayer ${context.tokenIn.symbol} balance:`,
@@ -441,7 +435,7 @@ const calculateProfit = async (
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
     "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-    "Profitable?": profitable ? "✔" : "✗"
+    "Profitable?": profitable ? "✔" : "✗",
   });
   printSpacer();
 
@@ -475,7 +469,7 @@ const calculateAmounts = async (
     );
     return {
       exactAmountIn: BigNumber.from(0),
-      amountOutMin: BigNumber.from(0)
+      amountOutMin: BigNumber.from(0),
     };
   }
   // Needs to be based on how much the bot owner has of tokenIn
@@ -507,7 +501,7 @@ const calculateAmounts = async (
 
   return {
     exactAmountIn,
-    amountOutMin
+    amountOutMin,
   };
 };
 

@@ -1,11 +1,15 @@
-import { ethers } from "ethers";
-import { RelayerParams } from "defender-relay-client";
-import { PrizeClaimerConfigParams } from "@pooltogether/v5-autotasks-library";
+import { ethers } from 'ethers';
+import { RelayerParams } from 'defender-relay-client';
+import { PrizeClaimerConfigParams } from '@pooltogether/v5-autotasks-library';
 
-import { populateTransactions, processPopulatedTransactions } from "./transactions";
+import { populateTransactions, processPopulatedTransactions } from './transactions';
 
 const handlerLoadParams = (): PrizeClaimerConfigParams => {
-  return { chainId: Number(BUILD_CHAIN_ID), feeRecipient: BUILD_FEE_RECIPIENT, useFlashbots: BUILD_USE_FLASHBOTS };
+  return {
+    chainId: Number(BUILD_CHAIN_ID),
+    feeRecipient: BUILD_FEE_RECIPIENT,
+    useFlashbots: BUILD_USE_FLASHBOTS,
+  };
 };
 
 export async function handler(event: RelayerParams) {

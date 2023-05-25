@@ -3,9 +3,12 @@
   "tabWidth": 2,
   "overrides": [
     {
-      "files": "*.sol",
+      "files": "*.{ts,js}",
       "options": {
-        "bracketSpacing": true
+        "parser": "typescript",
+        "trailingComma": "all",
+        "arrowParens": "always",
+        "singleQuote": true
       }
     }
   ]

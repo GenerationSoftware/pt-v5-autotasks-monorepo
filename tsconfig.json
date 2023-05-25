@@ -1,25 +1,19 @@
 {
- "compilerOptions": {
-   "module": "ESNext",
-   "declaration": true,
-   "noImplicitAny": false,
-   "removeComments": true,
-   "noLib": false,
-   "emitDecoratorMetadata": true,
-   "experimentalDecorators": true,
-   "resolveJsonModule": true,
-   "esModuleInterop": true,
-   "moduleResolution": "node",
-   "target": "es6",
-   "sourceMap": true,
-   "skipLibCheck": true,
-   "lib": [
-     "es6",
-     "dom"
-   ],
- },
- "exclude": [
-   "dist",
-   "node_modules"
- ]
+  "compilerOptions": {
+    "module": "ESNext",
+    "declaration": true,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "noLib": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "target": "es6",
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "lib": ["es6", "dom"]
+  },
+  "exclude": ["dist", "node_modules"]
 }

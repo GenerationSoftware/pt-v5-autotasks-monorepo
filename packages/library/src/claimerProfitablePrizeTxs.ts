@@ -6,7 +6,7 @@ import {
   getContract,
   getSubgraphVaults,
   getSubgraphClaimedPrizes,
-  getWinnersClaims
+  getWinnersClaims,
 } from "@pooltogether/v5-utils-js";
 import chalk from "chalk";
 
@@ -16,7 +16,7 @@ import {
   Token,
   ClaimPrizeContext,
   GetClaimerProfitablePrizeTxsParams,
-  TiersContext
+  TiersContext,
 } from "./types";
 import {
   logTable,
@@ -27,7 +27,7 @@ import {
   getFeesUsd,
   getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
-  parseBigNumberAsFloat
+  parseBigNumberAsFloat,
 } from "./utils";
 import { ERC20Abi } from "./abis/ERC20Abi";
 import { NETWORK_NATIVE_TOKEN_INFO } from "./utils/network";
@@ -66,7 +66,7 @@ export async function getClaimerProfitablePrizeTxs(
   const contractsVersion = {
     major: 1,
     minor: 0,
-    patch: 0
+    patch: 0,
   };
   const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
   const claimer = getContract("Claimer", chainId, readProvider, contracts, contractsVersion);
@@ -260,7 +260,7 @@ const calculateProfit = async (
       logTable({
         MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
         "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-        "Profitable?": profitable ? "✔" : "✗"
+        "Profitable?": profitable ? "✔" : "✗",
       });
       printSpacer();
 
@@ -315,7 +315,7 @@ const getContext = async (
     address: feeTokenAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol()
+    symbol: await tokenInContract.symbol(),
   };
 
   const feeTokenRateUsd = await getFeeTokenRateUsd(marketRate, feeToken);
@@ -327,7 +327,7 @@ const getContext = async (
  * Logs the context to the console
  * @returns {undefined} void function
  */
-const printContext = context => {
+const printContext = (context) => {
   printAsterisks();
   console.log(chalk.blue.bold(`1. Prize token: ${context.feeToken.symbol}`));
   printSpacer();
@@ -356,11 +356,11 @@ const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
   const tiersArray = context.tiers.rangeArray;
 
   let tierClaimsFiltered: { [index: number]: Claim[] } = {};
-  tiersArray.forEach(tierNum => {
-    tierClaimsFiltered[tierNum] = claims.filter(claim => claim.tier === tierNum);
+  tiersArray.forEach((tierNum) => {
+    tierClaimsFiltered[tierNum] = claims.filter((claim) => claim.tier === tierNum);
   });
 
-  tiersArray.forEach(tierNum => {
+  tiersArray.forEach((tierNum) => {
     const tierClaims = tierClaimsFiltered[tierNum];
     const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
     console.table({ Tier: { "#": tierWord, "# of Winners": tierClaims.length } });
@@ -368,7 +368,7 @@ const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
 };
 
 const filterClaimedPrizes = (claims: Claim[], claimedPrizes: ClaimedPrize[]): Claim[] => {
-  const formattedClaimedPrizes = claimedPrizes.map(claimedPrize => {
+  const formattedClaimedPrizes = claimedPrizes.map((claimedPrize) => {
     // From Subgraph, `id` is:
     // vault ID + winner ID + draw ID + tier
     const [vault, winner, draw, tier] = claimedPrize.id.split("-");
@@ -376,7 +376,7 @@ const filterClaimedPrizes = (claims: Claim[], claimedPrizes: ClaimedPrize[]): Cl
   });
 
   return claims.filter(
-    claim => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`)
+    (claim) => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`)
   );
 };
 
@@ -388,6 +388,6 @@ const buildParams = (
   return {
     drawId: context.drawId,
     claims,
-    feeRecipient
+    feeRecipient,
   };
 };

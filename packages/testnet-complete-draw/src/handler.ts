@@ -1,7 +1,7 @@
-import { ethers } from "ethers";
-import { RelayerParams } from "defender-relay-client";
+import { ethers } from 'ethers';
+import { RelayerParams } from 'defender-relay-client';
 
-import { processTransaction } from "./transactions";
+import { processTransaction } from './transactions';
 
 const handlerLoadParams = () => {
   const chainId = Number(BUILD_CHAIN_ID);

@@ -1,6 +1,6 @@
-import { Relayer } from "defender-relay-client";
-import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
-import { testnetPrizePoolHandleCompletePrize } from "@pooltogether/v5-autotasks-library";
+import { Relayer } from 'defender-relay-client';
+import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { testnetPrizePoolHandleCompletePrize } from '@pooltogether/v5-autotasks-library';
 
 export async function processTransaction(event, params) {
   const relayer = new Relayer(event);
@@ -14,9 +14,9 @@ export async function processTransaction(event, params) {
         to: populatedTx.to,
         gasLimit: 200000,
       });
-      console.log("TransactionHash:", transactionSentToNetwork.hash);
+      console.log('TransactionHash:', transactionSentToNetwork.hash);
     } else {
-      console.log("TestNet PrizePool: Transaction not populated");
+      console.log('TestNet PrizePool: Transaction not populated');
     }
   } catch (error) {
     throw new Error(error);

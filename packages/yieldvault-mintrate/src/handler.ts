@@ -1,6 +1,6 @@
-import { RelayerParams } from "defender-relay-client";
+import { RelayerParams } from 'defender-relay-client';
 
-import { processTransactions } from "./transactions";
+import { processTransactions } from './transactions';
 
 const handlerLoadParams = () => {
   return { chainId: Number(BUILD_CHAIN_ID) };

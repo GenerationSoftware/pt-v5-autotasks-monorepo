@@ -32,8 +32,9 @@ export async function testnetPrizePoolHandleCompletePrize(
     transactionPopulated = await prizePool.populateTransaction.completeAndStartNextDraw(randNum);
   } else {
     console.log(
-      `TestNet PrizePool: Draw not ready to start.\nReady in ${nextDrawEndsAt -
-        Date.now() / 1000} seconds`
+      `TestNet PrizePool: Draw not ready to start.\nReady in ${
+        nextDrawEndsAt - Date.now() / 1000
+      } seconds`
     );
   }
 

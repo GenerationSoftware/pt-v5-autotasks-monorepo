@@ -34,17 +34,17 @@ export const arbLiquidatorMulticall = async (
   tokenInCalls.push({
     reference: `decimals`,
     methodName: "decimals",
-    methodParameters: []
+    methodParameters: [],
   });
   tokenInCalls.push({
     reference: `name`,
     methodName: "name",
-    methodParameters: []
+    methodParameters: [],
   });
   tokenInCalls.push({
     reference: `symbol`,
     methodName: "symbol",
-    methodParameters: []
+    methodParameters: [],
   });
 
   const tokenOutCalls: ContractCallContext["calls"] = [];
@@ -55,24 +55,24 @@ export const arbLiquidatorMulticall = async (
   tokenOutCalls.push({
     reference: `decimals`,
     methodName: "decimals",
-    methodParameters: []
+    methodParameters: [],
   });
   tokenOutCalls.push({
     reference: `name`,
     methodName: "name",
-    methodParameters: []
+    methodParameters: [],
   });
   tokenOutCalls.push({
     reference: `symbol`,
     methodName: "symbol",
-    methodParameters: []
+    methodParameters: [],
   });
 
   // // 3. VAULT UNDERLYING ASSET TOKEN
   const vaultUnderlyingAssetCalls: ContractCallContext["calls"] = [];
 
   const vaultContract = contracts.contracts.find(
-    contract => contract.type === "Vault" && contract.address === tokenOutAddress
+    (contract) => contract.type === "Vault" && contract.address === tokenOutAddress
   );
   const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
   const vaultUnderlyingAssetAddress = vaultUnderlyingAsset.address;
@@ -80,31 +80,31 @@ export const arbLiquidatorMulticall = async (
   vaultUnderlyingAssetCalls.push({
     reference: `decimals`,
     methodName: "decimals",
-    methodParameters: []
+    methodParameters: [],
   });
   vaultUnderlyingAssetCalls.push({
     reference: `name`,
     methodName: "name",
-    methodParameters: []
+    methodParameters: [],
   });
   vaultUnderlyingAssetCalls.push({
     reference: `symbol`,
     methodName: "symbol",
-    methodParameters: []
+    methodParameters: [],
   });
 
   // // 4. RELAYER tokenIn BALANCE
   tokenInCalls.push({
     reference: `balanceOf`,
     methodName: "balanceOf",
-    methodParameters: [relayerAddress]
+    methodParameters: [relayerAddress],
   });
 
   // // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
   tokenInCalls.push({
     reference: `allowance`,
     methodName: "allowance",
-    methodParameters: [relayerAddress, liquidationRouter.address]
+    methodParameters: [relayerAddress, liquidationRouter.address],
   });
 
   // 6. MarketRate Calls
@@ -112,20 +112,20 @@ export const arbLiquidatorMulticall = async (
 
   // // // prize token/pool
   const marketRateContractBlob = contracts.contracts.find(
-    contract => contract.type === "MarketRate"
+    (contract) => contract.type === "MarketRate"
   );
   const marketRateAddress = marketRate.address;
   marketRateCalls.push({
     reference: `priceFeed-${tokenInAddress}`,
     methodName: "priceFeed",
-    methodParameters: [tokenInAddress, "USD"]
+    methodParameters: [tokenInAddress, "USD"],
   });
 
   // // yield token/vault underlying asset rate
   marketRateCalls.push({
     reference: `priceFeed-${vaultUnderlyingAssetAddress}`,
     methodName: "priceFeed",
-    methodParameters: [vaultUnderlyingAssetAddress, "USD"]
+    methodParameters: [vaultUnderlyingAssetAddress, "USD"],
   });
 
   const queries: ContractCallContext[] = [
@@ -133,26 +133,26 @@ export const arbLiquidatorMulticall = async (
       reference: tokenInAddress,
       contractAddress: tokenInAddress,
       abi: ERC20Abi,
-      calls: tokenInCalls
+      calls: tokenInCalls,
     },
     {
       reference: tokenOutAddress,
       contractAddress: tokenOutAddress,
       abi: ERC20Abi,
-      calls: tokenOutCalls
+      calls: tokenOutCalls,
     },
     {
       reference: vaultUnderlyingAssetAddress,
       contractAddress: vaultUnderlyingAssetAddress,
       abi: ERC20Abi,
-      calls: vaultUnderlyingAssetCalls
+      calls: vaultUnderlyingAssetCalls,
     },
     {
       reference: marketRateAddress,
       contractAddress: marketRateAddress,
       abi: marketRateContractBlob.abi,
-      calls: marketRateCalls
-    }
+      calls: marketRateCalls,
+    },
   ];
 
   // Get and process results!
@@ -172,7 +172,7 @@ export const arbLiquidatorMulticall = async (
     decimals: tokenInMulticallResults.decimals[0],
     name: tokenInMulticallResults.name[0],
     symbol: tokenInMulticallResults.symbol[0],
-    assetRateUsd: tokenInAssetRateUsd
+    assetRateUsd: tokenInAssetRateUsd,
   };
 
   // 2. tokenOut results (vault token)
@@ -181,7 +181,7 @@ export const arbLiquidatorMulticall = async (
     address: tokenOutAddress,
     decimals: tokenOutMulticallResults.decimals[0],
     name: tokenOutMulticallResults.name[0],
-    symbol: tokenOutMulticallResults.symbol[0]
+    symbol: tokenOutMulticallResults.symbol[0],
   };
 
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
@@ -197,18 +197,18 @@ export const arbLiquidatorMulticall = async (
     decimals: vaultUnderlyingAssetMulticallResults.decimals[0],
     name: vaultUnderlyingAssetMulticallResults.name[0],
     symbol: vaultUnderlyingAssetMulticallResults.symbol[0],
-    assetRateUsd: vaultUnderlyingAssetAssetRateUsd
+    assetRateUsd: vaultUnderlyingAssetAssetRateUsd,
   };
 
   const relayer = {
     tokenInBalance: BigNumber.from(tokenInMulticallResults.balanceOf[0]),
-    tokenInAllowance: BigNumber.from(tokenInMulticallResults.allowance[0])
+    tokenInAllowance: BigNumber.from(tokenInMulticallResults.allowance[0]),
   };
 
   return {
     tokenIn,
     tokenOut,
     tokenOutUnderlyingAsset: vaultUnderlyingAssetUnderlyingAsset,
-    relayer
+    relayer,
   };
 };

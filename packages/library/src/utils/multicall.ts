@@ -20,7 +20,7 @@ export const getMulticallResults = async (
     [reference: string]: any[];
   };
 }> => {
-  const validAddresses = contractAddresses.every(address => utils.isAddress(address));
+  const validAddresses = contractAddresses.every((address) => utils.isAddress(address));
   if (contractAddresses.length === 0 || !validAddresses || calls.length === 0) {
     throw new Error("Multicall Error: Invalid parameters");
   }
@@ -31,7 +31,7 @@ export const getMulticallResults = async (
   }
 
   const queries: ContractCallContext[] = [];
-  contractAddresses.forEach(contractAddress => {
+  contractAddresses.forEach((contractAddress) => {
     queries.push({ reference: contractAddress, contractAddress, abi, calls });
   });
 
@@ -39,9 +39,9 @@ export const getMulticallResults = async (
   const response: ContractCallResults = await multicall.call(queries);
 
   const formattedResults: { [contractAddress: string]: { [reference: string]: any[] } } = {};
-  contractAddresses.forEach(contractAddress => {
+  contractAddresses.forEach((contractAddress) => {
     formattedResults[contractAddress] = {};
-    response.results[contractAddress].callsReturnContext.forEach(result => {
+    response.results[contractAddress].callsReturnContext.forEach((result) => {
       formattedResults[contractAddress][result.reference] = result.returnValues;
     });
   });
@@ -63,7 +63,7 @@ export const getComplexMulticallResults = async (
     [reference: string]: any[];
   };
 }> => {
-  const validAddresses = queries.every(query => utils.isAddress(query.contractAddress));
+  const validAddresses = queries.every((query) => utils.isAddress(query.contractAddress));
   if (queries.length === 0 || !validAddresses) {
     throw new Error("Multicall Error: Invalid parameters");
   }
@@ -77,11 +77,11 @@ export const getComplexMulticallResults = async (
   const response: ContractCallResults = await multicall.call(queries);
 
   const formattedResults: { [contractAddress: string]: { [reference: string]: any[] } } = {};
-  queries.forEach(query => {
+  queries.forEach((query) => {
     if (formattedResults[query.contractAddress] === undefined) {
       formattedResults[query.contractAddress] = {};
     }
-    response.results[query.reference].callsReturnContext.forEach(result => {
+    response.results[query.reference].callsReturnContext.forEach((result) => {
       formattedResults[query.contractAddress][result.reference] = result.returnValues;
     });
   });
