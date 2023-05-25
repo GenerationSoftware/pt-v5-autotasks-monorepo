@@ -188,7 +188,7 @@ export const populateConfig = async <G extends Record<string, any> = {}, N exten
   if(!useExistingGlobal) {
     globalAnswers = await inquirer.prompt(globalQuestions);
   } else {
-    globalAnswers = Object.fromEntries(Object.entries(config.all).filter(([key]) => key in networkKeys));
+    globalAnswers = Object.fromEntries(Object.entries(config.all).filter(([key]) => globalKeys.includes(key)));
   }
 
   // Check for network config:
@@ -210,7 +210,7 @@ export const populateConfig = async <G extends Record<string, any> = {}, N exten
   if(!useExistingNetwork) {
     networkAnswers = await inquirer.prompt(networkQuestions);
   } else {
-    networkAnswers = Object.fromEntries(Object.entries(config.all[CHAIN_ID]).filter(([key]) => key in networkKeys))
+    networkAnswers = Object.fromEntries(Object.entries(config.all[CHAIN_ID]).filter(([key]) => networkKeys.includes(key)))
   }
 
   // Set config:
