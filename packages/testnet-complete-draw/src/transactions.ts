@@ -1,11 +1,12 @@
 import { Relayer } from 'defender-relay-client';
-import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
 import { testnetPrizePoolHandleCompletePrize } from '@pooltogether/v5-autotasks-library';
 
 export async function processTransaction(event, params) {
   const relayer = new Relayer(event);
 
   try {
+    const contracts = await downloadContractsBlob(params.chainId);
     const populatedTx = await testnetPrizePoolHandleCompletePrize(contracts, params);
 
     if (populatedTx) {

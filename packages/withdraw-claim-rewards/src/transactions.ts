@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
-import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
 import {
   getWithdrawClaimRewardsTx,
   printAsterisks,
@@ -12,6 +12,7 @@ import { Relayer } from 'defender-relay-client';
 export const populateTransaction = async (params, readProvider): Promise<PopulatedTransaction> => {
   let populatedTx: PopulatedTransaction;
   try {
+    const contracts = await downloadContractsBlob(params.chainId);
     populatedTx = await getWithdrawClaimRewardsTx(contracts, readProvider, params);
   } catch (e) {
     console.error(e);

@@ -2,7 +2,7 @@ import { Relayer } from 'defender-relay-client';
 import { ethers } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { testnetContractsBlobSepolia as contracts } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
 import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
@@ -38,6 +38,7 @@ export async function handler(event) {
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
+    const contracts = await downloadContractsBlob(params.chainId);
     await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
     throw new Error(error);
