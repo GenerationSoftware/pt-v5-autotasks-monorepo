@@ -8,17 +8,21 @@ const config = new Configstore(pkg.name);
 export default defineConfig(opt => {
   return {
     esbuildOptions: (options, context) => {
-      (options.define.DEFENDER_TEAM_API_KEY = `'${config.get("DEFENDER_TEAM_API_KEY")}'`),
-        (options.define.DEFENDER_TEAM_SECRET_KEY = `'${config.get("DEFENDER_TEAM_SECRET_KEY")}'`),
-        (options.define.AUTOTASK_ID = `'${config.get("AUTOTASK_ID")}'`),
-        (options.define.RELAYER_API_KEY = `'${config.get("RELAYER_API_KEY")}'`),
-        (options.define.RELAYER_API_SECRET = `'${config.get("RELAYER_API_SECRET")}'`),
-        (options.define.INFURA_API_KEY = `'${config.get("INFURA_API_KEY")}'`),
-        (options.define.CHAIN_ID = `'${config.get("CHAIN_ID")}'`);
+      const CHAIN_ID = config.get("CHAIN_ID");
+      if(!CHAIN_ID || !(`${CHAIN_ID}` in config.all)) throw new Error("Missing chain configuration! Try running `yarn start` first to set the config.");
+      options.define = {
+        ...(options.define ?? {}),
+        BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
+        BUILD_JSON_RPC_URI: `'${config.get(`${CHAIN_ID}.JSON_RPC_URI`)}'`,
+      };
     },
-    noExternal: ["@pooltogether/v5-autotasks-library", "@pooltogether/v5-utils-js", "configstore"],
+    noExternal: [
+      "@pooltogether/v5-autotasks-library",
+      "@pooltogether/v5-utils-js",
+      "ethereum-multicall",
+      "configstore"
+    ],
     format: "cjs",
-    shims: true,
     entry: ["src/handler.ts"],
     splitting: false,
     clean: true

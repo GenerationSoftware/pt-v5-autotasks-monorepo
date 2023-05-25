@@ -19,7 +19,7 @@ npm install @pooltogether/v5-autotasks-library
 You can use this library in your own code, for instance if you would rather not use OpenZeppelin Defender for your automated/cron-based bots. Here's an example:
 
 ```ts
-import { testnetContractsBlob as contracts } from "@pooltogether/v5-utils-js";
+import { testnetContractsBlobSepolia as contracts } from "@pooltogether/v5-utils-js";
 import { getClaimerProfitablePrizeTxs } from "@pooltogether/v5-autotasks-library";
 
 interface Params {

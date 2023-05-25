@@ -6,6 +6,7 @@ import fs from "fs";
 
 import pkg from "../package.json";
 const config = new Configstore(pkg.name);
+const chainId = config.get("CHAIN_ID");
 
 async function updateAutotask(autotaskId, file) {
   const client = new AutotaskClient({
@@ -23,7 +24,7 @@ async function updateAutotask(autotaskId, file) {
 }
 
 async function run() {
-  await updateAutotask(config.get("AUTOTASK_ID"), "./dist/handler.cjs");
+  await updateAutotask(config.get(`${chainId}.AUTOTASK_ID`), "./dist/handler.cjs");
 }
 
 run();

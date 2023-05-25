@@ -1,32 +1,20 @@
 import chalk from "chalk";
-import inquirer from "inquirer";
+import { DistinctQuestion } from "inquirer";
 
-import {
-  SHARED_CONFIG_KEYS,
-  checkConfig,
-  getSharedQuestions,
-  when
-} from "@pooltogether/v5-autotasks-library";
+import { populateConfig } from "@pooltogether/v5-autotasks-library";
+import Configstore from "configstore";
 
-const PACKAGE_CONFIG_KEYS = {
-  FEE_RECIPIENT: "FEE_RECIPIENT"
+interface PACKAGE_CONFIG {
+  FEE_RECIPIENT: string
 };
 
-export const checkPackageConfig = config => {
-  checkConfig(config, SHARED_CONFIG_KEYS);
-  checkConfig(config, PACKAGE_CONFIG_KEYS);
-};
-
-export const askQuestions = (config, { askFlashbots }) => {
-  const questions: any[] = getSharedQuestions(config, askFlashbots);
-
-  questions.push({
-    name: PACKAGE_CONFIG_KEYS.FEE_RECIPIENT,
+const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: (DistinctQuestion & { name: key })} = {
+  FEE_RECIPIENT: {
+    name: "FEE_RECIPIENT",
     type: "input",
     message: chalk.green(
       "Enter the fee recipient address (the account which will accumulate rewards/fee profit on the PrizePool):"
     ),
-    when,
     validate: function(value) {
       if (value.length) {
         return true;
@@ -34,7 +22,16 @@ export const askQuestions = (config, { askFlashbots }) => {
         return "Please enter the fee recipient's address:";
       }
     }
-  });
+  }
+};
 
-  return inquirer.prompt(questions);
+export const askQuestions = (config: Configstore, { askFlashbots }) => {
+  return populateConfig<{}, PACKAGE_CONFIG>(config, {
+    askFlashbots,
+    extraConfig: {
+      network: [
+        PACKAGE_QUESTIONS.FEE_RECIPIENT
+      ]
+    }
+  });
 };

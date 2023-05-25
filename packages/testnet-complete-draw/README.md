@@ -2,12 +2,6 @@
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to start and complete a draw on a TestNet PrizePool.
 
-## Development
-
-This package uses `yalc` locally to connect the library package (in **[/packages/library](../library)**) to this one. This let's us use `import * from '@pooltogether/v5-autotasks-library` without needing to publish to npm on each change.
-
-Typically you will want to run `yarn start` or `npm run start` in the **[library package](../library)** first and make sure it compiles and publishes to yalc. Then you can run `yarn start` or `npm run start` in this package in another terminal tab to run the bot.
-
 ## Usage
 
 This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
@@ -29,13 +23,13 @@ yarn start
 You will be prompted to fill in the following necessary variables:
 
 ```
+CHAIN_ID: Which network to run on
 DEFENDER_TEAM_API_KEY: OZ Defender-specific
 DEFENDER_TEAM_SECRET_KEY: OZ Defender-specific
 AUTOTASK_ID: OZ Defender-specific
 RELAYER_API_KEY: OZ Defender-specific
 RELAYER_API_SECRET: OZ Defender-specific
-INFURA_API_KEY: Infura-specific
-CHAIN_ID: Which network to claim on
+JSON_RPC_URI: Network-specific
 ```
 
 Once the config has been saved with all of those variables, the script will run.

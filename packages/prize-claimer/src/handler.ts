@@ -5,13 +5,13 @@ import { PrizeClaimerConfigParams } from "@pooltogether/v5-autotasks-library";
 import { populateTransactions, processPopulatedTransactions } from "./transactions";
 
 const handlerLoadParams = (): PrizeClaimerConfigParams => {
-  return { chainId: Number(CHAIN_ID), feeRecipient: FEE_RECIPIENT };
+  return { chainId: Number(BUILD_CHAIN_ID), feeRecipient: BUILD_FEE_RECIPIENT, useFlashbots: BUILD_USE_FLASHBOTS };
 };
 
 export async function handler(event: RelayerParams) {
   const params = handlerLoadParams();
 
-  const readProvider = new ethers.providers.InfuraProvider(params.chainId, INFURA_API_KEY);
+  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, params.chainId);
 
   const populatedTxs = await populateTransactions(params, readProvider);
 
