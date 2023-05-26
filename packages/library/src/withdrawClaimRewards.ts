@@ -6,10 +6,19 @@ import chalk from 'chalk';
 
 import {
   ContractsBlob,
+  Token,
   WithdrawClaimRewardsConfigParams,
   WithdrawClaimRewardsContext,
 } from './types';
-import { logTable, logBigNumber, printAsterisks, printSpacer } from './utils';
+import {
+  logTable,
+  logBigNumber,
+  logStringValue,
+  printAsterisks,
+  printSpacer,
+  parseBigNumberAsFloat,
+  MARKET_RATE_CONTRACT_DECIMALS,
+} from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 
 interface WithdrawClaimRewardsParams {
@@ -35,13 +44,18 @@ export async function getWithdrawClaimRewardsTx(
     patch: 0,
   };
   const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
+  const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
   if (!prizePool) {
     throw new Error('WithdrawRewards: PrizePool Contract Unavailable');
   }
 
   // #1. Get context about the prize pool prize token, etc
-  const context: WithdrawClaimRewardsContext = await getContext(prizePool, readProvider);
+  const context: WithdrawClaimRewardsContext = await getContext(
+    prizePool,
+    marketRate,
+    readProvider,
+  );
   printContext(context);
 
   // #2. Get data about how much rewards a prize claimer can withdraw
@@ -88,6 +102,7 @@ export async function getWithdrawClaimRewardsTx(
  */
 const getContext = async (
   prizePool: Contract,
+  marketRate: Contract,
   readProvider: Provider,
 ): Promise<WithdrawClaimRewardsContext> => {
   const rewardsTokenAddress = await prizePool.prizeToken();
@@ -101,9 +116,9 @@ const getContext = async (
     symbol: await tokenInContract.symbol(),
   };
 
-  // const rewardsTokenRateUsd = await getRewardsTokenRateUsd(marketRate, rewardsToken);
+  const rewardsTokenRateUsd = await getRewardsTokenRateUsd(marketRate, rewardsToken);
 
-  return { rewardsToken };
+  return { rewardsTokenRateUsd, rewardsToken };
 };
 
 /**
@@ -116,8 +131,22 @@ const printContext = (context) => {
   printSpacer();
 
   logTable({ rewardsToken: context.rewardsToken });
-  // logStringValue(
-  //   `Rewards Token ${context.rewardsToken.symbol} MarketRate USD: `,
-  //   `$${context.rewardsTokenRateUsd}`
-  // );
+  logStringValue(
+    `Rewards Token '${context.rewardsToken.symbol}' MarketRate USD: `,
+    `$${context.rewardsTokenRateUsd}`,
+  );
+};
+
+/**
+ * Finds the spot price of the reward token in USD
+ * @returns {number} rewardTokenRateUsd
+ */
+const getRewardsTokenRateUsd = async (
+  marketRate: Contract,
+  rewardToken: Token,
+): Promise<number> => {
+  const rewardTokenAddress = rewardToken.address;
+  const rewardTokenRate = await marketRate.priceFeed(rewardTokenAddress, 'USD');
+
+  return parseBigNumberAsFloat(rewardTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };

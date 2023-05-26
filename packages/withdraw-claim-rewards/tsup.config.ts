@@ -18,10 +18,11 @@ export default defineConfig((opt) => {
         BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
         BUILD_JSON_RPC_URI: `'${config.get(`${CHAIN_ID}.JSON_RPC_URI`)}'`,
         BUILD_USE_FLASHBOTS: `'${config.get(`${CHAIN_ID}.USE_FLASHBOTS`)}'`,
-        BUILD_REWARDS_RECIPIENT: `'${config.get(`${CHAIN_ID}.BUILD_REWARDS_RECIPIENT`)}'`,
+        BUILD_REWARDS_RECIPIENT: `'${config.get(`${CHAIN_ID}.REWARDS_RECIPIENT`)}'`,
       };
     },
     noExternal: [
+      'inquirer',
       '@pooltogether/v5-autotasks-library',
       '@pooltogether/v5-utils-js',
       'ethereum-multicall',

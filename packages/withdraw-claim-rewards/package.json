@@ -33,7 +33,6 @@
     "configstore": "^6.0.0",
     "defender-relay-client": "1.39.0",
     "figlet": "^1.6.0",
-    "inquirer": "^9.2.0",
     "tsdx": "^0.14.1"
   },
   "devDependencies": {
