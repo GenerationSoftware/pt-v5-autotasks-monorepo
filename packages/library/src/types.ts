@@ -124,6 +124,5 @@ export interface WithdrawClaimRewardsConfigParams {
 }
 
 export interface WithdrawClaimRewardsContext {
-  rewardsToken: Token;
-  rewardsTokenRateUsd: number;
+  rewardsToken: TokenWithRate;
 }

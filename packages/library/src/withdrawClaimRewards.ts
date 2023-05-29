@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import {
   ContractsBlob,
   Token,
+  TokenWithRate,
   WithdrawClaimRewardsConfigParams,
   WithdrawClaimRewardsContext,
 } from './types';
@@ -18,13 +19,22 @@ import {
   printSpacer,
   parseBigNumberAsFloat,
   MARKET_RATE_CONTRACT_DECIMALS,
+  getFeesUsd,
+  getGasTokenMarketRateUsd,
+  roundTwoDecimalPlaces,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
+import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 
 interface WithdrawClaimRewardsParams {
   amount: BigNumber;
   rewardsRecipient: string;
 }
+
+/**
+ * Only claim rewards if we're going to make at least X dollars
+ */
+const MIN_PROFIT_THRESHOLD_USD = 1;
 
 /**
  * Creates a populated transaction object for a prize claimer to withdraw their claim rewards.
@@ -69,22 +79,37 @@ export async function getWithdrawClaimRewardsTx(
     context.rewardsToken.decimals,
     context.rewardsToken.symbol,
   );
+  const rewardsTokenUsd =
+    parseFloat(ethers.utils.formatUnits(amount, context.rewardsToken.decimals)) *
+    context.rewardsToken.assetRateUsd;
+  console.log(
+    chalk.dim(`${context.rewardsToken.symbol} balance (USD):`),
+    chalk.greenBright(`$${roundTwoDecimalPlaces(rewardsTokenUsd)}`),
+  );
 
   let populatedTx: PopulatedTransaction;
 
-  // TODO: Actually calculate profitability here ...
-  const profitable = amount.gt(0);
+  const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
+    rewardsRecipient,
+    amount,
+  };
+
+  // #3. Decide if profitable or not
+  const profitable = await calculateProfit(
+    chainId,
+    contracts,
+    marketRate,
+    prizePool,
+    rewardsTokenUsd,
+    withdrawClaimRewardsParams,
+    readProvider,
+  );
   if (!profitable) {
     printAsterisks();
     console.log(chalk.yellow(`Not profitable to claim rewards yet. Exiting ...`));
   } else {
     printAsterisks();
-    console.log(chalk.blue(`3. Creating transaction ...`));
-
-    const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
-      rewardsRecipient,
-      amount,
-    };
+    console.log(chalk.blue(`5. Creating transaction ...`));
 
     console.log(chalk.green('Claimer: Add Populated Claim Tx'));
     populatedTx = await prizePool.populateTransaction.withdrawClaimRewards(
@@ -109,16 +134,19 @@ const getContext = async (
 
   const tokenInContract = new ethers.Contract(rewardsTokenAddress, ERC20Abi, readProvider);
 
-  const rewardsToken = {
+  const rewardsToken: Token = {
     address: rewardsTokenAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
     symbol: await tokenInContract.symbol(),
   };
 
-  const rewardsTokenRateUsd = await getRewardsTokenRateUsd(marketRate, rewardsToken);
+  const rewardsTokenWithRate = {
+    ...rewardsToken,
+    assetRateUsd: await getRewardsTokenRateUsd(marketRate, rewardsToken),
+  };
 
-  return { rewardsTokenRateUsd, rewardsToken };
+  return { rewardsToken: rewardsTokenWithRate };
 };
 
 /**
@@ -132,8 +160,8 @@ const printContext = (context) => {
 
   logTable({ rewardsToken: context.rewardsToken });
   logStringValue(
-    `Rewards Token '${context.rewardsToken.symbol}' MarketRate USD: `,
-    `$${context.rewardsTokenRateUsd}`,
+    `Rewards Token '${context.rewardsToken.symbol}' MarketRate USD:`,
+    `$${context.rewardsToken.assetRateUsd}`,
   );
 };
 
@@ -149,4 +177,87 @@ const getRewardsTokenRateUsd = async (
   const rewardTokenRate = await marketRate.priceFeed(rewardTokenAddress, 'USD');
 
   return parseBigNumberAsFloat(rewardTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
+};
+
+/**
+ * Calculates the amount of profit the bot will make on this swap and if it's profitable or not
+ * @returns {Promise} Promise boolean of profitability
+ */
+const calculateProfit = async (
+  chainId: number,
+  contracts: ContractsBlob,
+  marketRate: Contract,
+  prizePool: Contract,
+  rewardsTokenUsd: number,
+  withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
+  readProvider: Provider,
+): Promise<Boolean> => {
+  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+
+  printAsterisks();
+  console.log(chalk.blue('3. Current gas costs for transaction:'));
+
+  let estimatedGasLimit;
+  try {
+    estimatedGasLimit = await prizePool.estimateGas.withdrawClaimRewards(
+      ...Object.values(withdrawClaimRewardsParams),
+    );
+  } catch (e) {
+    console.error(chalk.red(e));
+  }
+  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+    chainId,
+    estimatedGasLimit,
+    gasTokenMarketRateUsd,
+    readProvider,
+  );
+  logStringValue(
+    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    gasTokenMarketRateUsd,
+  );
+
+  printSpacer();
+  logBigNumber(
+    'Estimated gas limit:',
+    estimatedGasLimit,
+    18,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+
+  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+
+  printAsterisks();
+  console.log(chalk.blue('4. Profit/Loss (USD):'));
+  printSpacer();
+
+  const grossProfitUsd = rewardsTokenUsd;
+  const netProfitUsd = grossProfitUsd - maxFeeUsd;
+
+  console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
+  console.log(
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(rewardsTokenUsd)}`,
+    ),
+  );
+  printSpacer();
+
+  console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Max)'));
+  console.log(
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
+        grossProfitUsd,
+      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`,
+    ),
+  );
+  printSpacer();
+
+  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  logTable({
+    MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+    'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+    'Profitable?': profitable ? '✔' : '✗',
+  });
+  printSpacer();
+
+  return profitable;
 };
