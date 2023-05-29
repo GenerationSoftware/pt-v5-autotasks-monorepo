@@ -1,9 +1,9 @@
-import chalk from "chalk";
+import chalk from 'chalk';
 
-import { CHAIN_IDS } from "./network";
-import Configstore from "configstore";
-import { DistinctQuestion } from "inquirer";
-import inquirer from "inquirer";
+import { CHAIN_IDS } from './network';
+import Configstore from 'configstore';
+import { DistinctQuestion } from 'inquirer';
+import inquirer from 'inquirer';
 
 export type CHAIN_CONFIG = {
   CHAIN_ID: number; // stores last-selected chain ID
@@ -22,29 +22,58 @@ export type NETWORK_CONFIG = {
   USE_FLASHBOTS: boolean;
 };
 
+export async function askChainId(config: Configstore) {
+  // Ask for chain info:
+  const previousNetwork = config.has('CHAIN_ID') ? config.get('CHAIN_ID') : null;
+  const previousNetworkName = previousNetwork
+    ? Object.fromEntries(Object.entries(CHAIN_IDS).map(([name, id]) => [id, name]))[previousNetwork]
+    : null;
+  const { CHAIN_ID } = await inquirer.prompt({
+    name: 'CHAIN_ID',
+    type: 'list',
+    message: chalk.green('Which network?'),
+    choices: [
+      ...(previousNetworkName ? [`Last Used (${previousNetworkName})`] : []),
+      'Mumbai',
+      'Goerli',
+      'Sepolia',
+      'Mainnet',
+    ],
+    filter(val: string) {
+      if (val.startsWith('Last Used')) {
+        val = previousNetworkName;
+      }
+      return CHAIN_IDS[val.toLowerCase()];
+    },
+  });
+  config.set('CHAIN_ID', CHAIN_ID);
+
+  return CHAIN_ID;
+}
+
 const GLOBAL_CONFIG_QUESTIONS: { [key in keyof GLOBAL_CONFIG]: DistinctQuestion & { name: key } } =
   {
     DEFENDER_TEAM_API_KEY: {
-      name: "DEFENDER_TEAM_API_KEY",
-      type: "password",
-      message: chalk.green("Enter your OpenZeppelin Defender Team API Key:"),
+      name: 'DEFENDER_TEAM_API_KEY',
+      type: 'password',
+      message: chalk.green('Enter your OpenZeppelin Defender Team API Key:'),
       validate: function (value) {
         if (value.length) {
           return true;
         } else {
-          return "Please enter your OpenZeppelin Defender Team API Key.";
+          return 'Please enter your OpenZeppelin Defender Team API Key.';
         }
       },
     },
     DEFENDER_TEAM_SECRET_KEY: {
-      name: "DEFENDER_TEAM_SECRET_KEY",
-      type: "password",
-      message: chalk.green("Enter your OpenZeppelin Defender Team Secret Key:"),
+      name: 'DEFENDER_TEAM_SECRET_KEY',
+      type: 'password',
+      message: chalk.green('Enter your OpenZeppelin Defender Team Secret Key:'),
       validate: function (value) {
         if (value.length) {
           return true;
         } else {
-          return "Please enter your OpenZeppelin Defender Team Secret Key.";
+          return 'Please enter your OpenZeppelin Defender Team Secret Key.';
         }
       },
     },
@@ -55,62 +84,62 @@ export const NETWORK_CONFIG_QUESTIONS: {
   [key in keyof NETWORK_CONFIG]: DistinctQuestion & { name: key };
 } = {
   AUTOTASK_ID: {
-    name: "AUTOTASK_ID",
-    type: "input",
-    message: chalk.green("Enter your OpenZeppelin Defender Autotask ID:"),
+    name: 'AUTOTASK_ID',
+    type: 'input',
+    message: chalk.green('Enter your OpenZeppelin Defender Autotask ID:'),
     validate: function (value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter your OpenZeppelin Defender Autotask ID.";
+        return 'Please enter your OpenZeppelin Defender Autotask ID.';
       }
     },
   },
   RELAYER_API_KEY: {
-    name: "RELAYER_API_KEY",
-    type: "password",
-    message: chalk.green("Enter your OpenZeppelin Defender Relayer API Key:"),
+    name: 'RELAYER_API_KEY',
+    type: 'password',
+    message: chalk.green('Enter your OpenZeppelin Defender Relayer API Key:'),
     validate: function (value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter your OpenZeppelin Defender Relayer API Key.";
+        return 'Please enter your OpenZeppelin Defender Relayer API Key.';
       }
     },
   },
   RELAYER_API_SECRET: {
-    name: "RELAYER_API_SECRET",
-    type: "password",
-    message: chalk.green("Enter your OpenZeppelin Defender Relayer API Secret:"),
+    name: 'RELAYER_API_SECRET',
+    type: 'password',
+    message: chalk.green('Enter your OpenZeppelin Defender Relayer API Secret:'),
     validate: function (value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter your OpenZeppelin Defender Relayer API Secret.";
+        return 'Please enter your OpenZeppelin Defender Relayer API Secret.';
       }
     },
   },
   JSON_RPC_URI: {
-    name: "JSON_RPC_URI",
-    type: "password",
-    message: chalk.green("Enter your JSON RPC URI:"),
+    name: 'JSON_RPC_URI',
+    type: 'password',
+    message: chalk.green('Enter your JSON RPC URI:'),
     validate: function (value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter your JSON RPC URI.";
+        return 'Please enter your JSON RPC URI.';
       }
     },
   },
   USE_FLASHBOTS: {
-    name: "USE_FLASHBOTS",
-    type: "list",
+    name: 'USE_FLASHBOTS',
+    type: 'list',
     message: chalk.green(
-      "Use Flashbots to keep transactions private from the mempool and reduce failures? (recommended)"
+      'Use Flashbots to keep transactions private from the mempool and reduce failures? (recommended)',
     ),
-    choices: ["Yes", "No"],
+    choices: ['Yes', 'No'],
     filter(val) {
-      return val === "Yes" ? true : false;
+      return val === 'Yes' ? true : false;
     },
   },
 };
@@ -135,7 +164,7 @@ export const configHasKeys = (config: Configstore | Record<string, any>, keys: s
  */
 export const populateConfig = async <
   G extends Record<string, any> = {},
-  N extends Record<string, any> = {}
+  N extends Record<string, any> = {},
 >(
   config: Configstore,
   {
@@ -149,7 +178,7 @@ export const populateConfig = async <
     };
   } = {
     askFlashbots: true,
-  }
+  },
 ): Promise<CHAIN_CONFIG & GLOBAL_CONFIG & NETWORK_CONFIG & G & N> => {
   const globalQuestions = [
     ...Object.values(GLOBAL_CONFIG_QUESTIONS),
@@ -165,40 +194,20 @@ export const populateConfig = async <
   let networkAnswers = {};
 
   // Ask for chain info:
-  const previousNetwork = config.has("CHAIN_ID") ? config.get("CHAIN_ID") : null;
-  const previousNetworkName = previousNetwork
-    ? Object.fromEntries(Object.entries(CHAIN_IDS).map(([name, id]) => [id, name]))[previousNetwork]
-    : null;
-  const { CHAIN_ID } = await inquirer.prompt({
-    name: "CHAIN_ID",
-    type: "list",
-    message: chalk.green("Which network?"),
-    choices: [
-      ...(previousNetworkName ? [`Last Used (${previousNetworkName})`] : []),
-      "Mumbai",
-      "Goerli",
-      "Sepolia",
-      "Mainnet",
-    ],
-    filter(val: string) {
-      if (val.startsWith("Last Used")) val = previousNetworkName;
-      return CHAIN_IDS[val.toLowerCase()];
-    },
-  });
-  config.set("CHAIN_ID", CHAIN_ID);
+  const CHAIN_ID = await askChainId(config);
 
   // Check for global config:
   let useExistingGlobal = false;
   if (configHasKeys(config, globalKeys)) {
     const { USE_GLOBAL_CONFIG } = await inquirer.prompt({
-      name: "USE_GLOBAL_CONFIG",
-      type: "list",
+      name: 'USE_GLOBAL_CONFIG',
+      type: 'list',
       message: chalk.green(
-        `Would you like to use the existing OZ Defender config? (${config.path})`
+        `Would you like to use the existing OZ Defender config? (${config.path})`,
       ),
-      choices: ["Yes", "No"],
+      choices: ['Yes', 'No'],
       filter(val: string) {
-        return val.toLowerCase().startsWith("y");
+        return val.toLowerCase().startsWith('y');
       },
     });
     useExistingGlobal = USE_GLOBAL_CONFIG;
@@ -209,7 +218,7 @@ export const populateConfig = async <
     globalAnswers = await inquirer.prompt(globalQuestions);
   } else {
     globalAnswers = Object.fromEntries(
-      Object.entries(config.all).filter(([key]) => globalKeys.includes(key))
+      Object.entries(config.all).filter(([key]) => globalKeys.includes(key)),
     );
   }
 
@@ -217,12 +226,12 @@ export const populateConfig = async <
   let useExistingNetwork = false;
   if (`${CHAIN_ID}` in config.all && configHasKeys(config.all[CHAIN_ID], networkKeys)) {
     const { USE_NETWORK_CONFIG } = await inquirer.prompt({
-      name: "USE_NETWORK_CONFIG",
-      type: "list",
+      name: 'USE_NETWORK_CONFIG',
+      type: 'list',
       message: chalk.green(`Would you like to use the existing network config? (${config.path})`),
-      choices: ["Yes", "No"],
+      choices: ['Yes', 'No'],
       filter(val: string) {
-        return val.toLowerCase().startsWith("y");
+        return val.toLowerCase().startsWith('y');
       },
     });
     useExistingNetwork = USE_NETWORK_CONFIG;
@@ -233,7 +242,7 @@ export const populateConfig = async <
     networkAnswers = await inquirer.prompt(networkQuestions);
   } else {
     networkAnswers = Object.fromEntries(
-      Object.entries(config.all[CHAIN_ID]).filter(([key]) => networkKeys.includes(key))
+      Object.entries(config.all[CHAIN_ID]).filter(([key]) => networkKeys.includes(key)),
     );
   }
 
