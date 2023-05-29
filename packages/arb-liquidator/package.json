@@ -21,7 +21,9 @@
   "private": true,
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "build": "tsup",
+    "chooseNetwork": "ts-node --esm --experimental-specifier-resolution=node ./script/chooseNetwork.ts",
+    "tsup": "tsup",
+    "build": "npm run chooseNetwork && npm run tsup",
     "start": "ts-node --esm --experimental-specifier-resolution=node ./src/cli.ts",
     "updatetask": "ts-node --esm --experimental-specifier-resolution=node ./script/updateTask.js",
     "update": "npm run build && npm run updatetask"
