@@ -35,7 +35,6 @@
     "ethereum-multicall": "^2.16.1",
     "figlet": "^1.6.0",
     "graphql-request": "^5.2.0",
-    "inquirer": "^9.2.0",
     "tsdx": "^0.14.1"
   },
   "devDependencies": {

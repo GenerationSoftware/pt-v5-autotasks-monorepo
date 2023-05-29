@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "chalk": "^4.1.2",
-    "configstore": "^6.0.0",
     "defender-relay-client": "1.39.0",
     "ethers": "5.7.2",
     "graphql": "^16.6.0",
@@ -38,7 +37,6 @@
   },
   "devDependencies": {
     "typescript": "4.8.4",
-    "@types/configstore": "^6.0.0",
     "@types/inquirer": "^9.0.3"
   }
 }

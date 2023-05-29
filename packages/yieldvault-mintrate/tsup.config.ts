@@ -28,5 +28,6 @@ export default defineConfig((opt) => {
     entry: ['src/handler.ts'],
     splitting: false,
     clean: true,
+    minify: true,
   };
 });

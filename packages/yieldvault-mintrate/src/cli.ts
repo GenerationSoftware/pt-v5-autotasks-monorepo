@@ -6,8 +6,7 @@ import chalk from 'chalk';
 import { askQuestions } from './helpers/questions';
 import { processTransactions } from './transactions';
 
-// @ts-ignore
-import pkg from '../package.json' assert { type: 'json' };
+import pkg from '../package.json';
 
 console.clear();
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));

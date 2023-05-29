@@ -13,8 +13,7 @@ import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-clien
 
 import { askQuestions } from './helpers/questions';
 
-// @ts-ignore
-import pkg from '../package.json' assert { type: 'json' };
+import pkg from '../package.json';
 
 console.clear();
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));

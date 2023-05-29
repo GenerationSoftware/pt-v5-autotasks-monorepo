@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
     "declaration": true,
     "noImplicitAny": false,
     "removeComments": true,
@@ -10,7 +9,8 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "target": "es6",
+    "target": "esnext",
+    "module": "esnext",
     "sourceMap": true,
     "skipLibCheck": true,
     "lib": ["es6", "dom"]
