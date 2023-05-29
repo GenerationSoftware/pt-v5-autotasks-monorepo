@@ -1,10 +1,14 @@
-import { Contract, BigNumber } from "ethers";
-import { Provider } from "@ethersproject/providers";
-import { ContractCallContext } from "ethereum-multicall";
+import { Contract, BigNumber } from 'ethers';
+import { Provider } from '@ethersproject/providers';
+import { ContractCallContext } from 'ethereum-multicall';
 
-import { ContractsBlob, ArbLiquidatorContext, Token, TokenWithRate } from "../types";
-import { getComplexMulticallResults, parseBigNumberAsFloat } from "../utils";
-import { ERC20Abi } from "../abis/ERC20Abi";
+import { ContractsBlob, ArbLiquidatorContext, Token, TokenWithRate } from '../types';
+import {
+  getComplexMulticallResults,
+  parseBigNumberAsFloat,
+  MARKET_RATE_CONTRACT_DECIMALS,
+} from '../utils';
+import { ERC20Abi } from '../abis/ERC20Abi';
 
 /**
  * Gather information about this specific liquidation pair
@@ -24,108 +28,108 @@ export const arbLiquidatorMulticall = async (
   liquidationPair: Contract,
   contracts: ContractsBlob,
   readProvider: Provider,
-  relayerAddress: string
+  relayerAddress: string,
 ): Promise<ArbLiquidatorContext> => {
-  const tokenInCalls: ContractCallContext["calls"] = [];
+  const tokenInCalls: ContractCallContext['calls'] = [];
 
   // 1. IN TOKEN
   const tokenInAddress = await liquidationPair.tokenIn();
 
   tokenInCalls.push({
     reference: `decimals`,
-    methodName: "decimals",
+    methodName: 'decimals',
     methodParameters: [],
   });
   tokenInCalls.push({
     reference: `name`,
-    methodName: "name",
+    methodName: 'name',
     methodParameters: [],
   });
   tokenInCalls.push({
     reference: `symbol`,
-    methodName: "symbol",
+    methodName: 'symbol',
     methodParameters: [],
   });
 
-  const tokenOutCalls: ContractCallContext["calls"] = [];
+  const tokenOutCalls: ContractCallContext['calls'] = [];
 
   // 2. OUT TOKEN
   const tokenOutAddress = await liquidationPair.tokenOut();
 
   tokenOutCalls.push({
     reference: `decimals`,
-    methodName: "decimals",
+    methodName: 'decimals',
     methodParameters: [],
   });
   tokenOutCalls.push({
     reference: `name`,
-    methodName: "name",
+    methodName: 'name',
     methodParameters: [],
   });
   tokenOutCalls.push({
     reference: `symbol`,
-    methodName: "symbol",
+    methodName: 'symbol',
     methodParameters: [],
   });
 
   // // 3. VAULT UNDERLYING ASSET TOKEN
-  const vaultUnderlyingAssetCalls: ContractCallContext["calls"] = [];
+  const vaultUnderlyingAssetCalls: ContractCallContext['calls'] = [];
 
   const vaultContract = contracts.contracts.find(
-    (contract) => contract.type === "Vault" && contract.address === tokenOutAddress
+    (contract) => contract.type === 'Vault' && contract.address === tokenOutAddress,
   );
   const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
   const vaultUnderlyingAssetAddress = vaultUnderlyingAsset.address;
 
   vaultUnderlyingAssetCalls.push({
     reference: `decimals`,
-    methodName: "decimals",
+    methodName: 'decimals',
     methodParameters: [],
   });
   vaultUnderlyingAssetCalls.push({
     reference: `name`,
-    methodName: "name",
+    methodName: 'name',
     methodParameters: [],
   });
   vaultUnderlyingAssetCalls.push({
     reference: `symbol`,
-    methodName: "symbol",
+    methodName: 'symbol',
     methodParameters: [],
   });
 
   // // 4. RELAYER tokenIn BALANCE
   tokenInCalls.push({
     reference: `balanceOf`,
-    methodName: "balanceOf",
+    methodName: 'balanceOf',
     methodParameters: [relayerAddress],
   });
 
   // // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
   tokenInCalls.push({
     reference: `allowance`,
-    methodName: "allowance",
+    methodName: 'allowance',
     methodParameters: [relayerAddress, liquidationRouter.address],
   });
 
   // 6. MarketRate Calls
-  const marketRateCalls: ContractCallContext["calls"] = [];
+  const marketRateCalls: ContractCallContext['calls'] = [];
 
   // // // prize token/pool
   const marketRateContractBlob = contracts.contracts.find(
-    (contract) => contract.type === "MarketRate"
+    (contract) => contract.type === 'MarketRate',
   );
   const marketRateAddress = marketRate.address;
   marketRateCalls.push({
     reference: `priceFeed-${tokenInAddress}`,
-    methodName: "priceFeed",
-    methodParameters: [tokenInAddress, "USD"],
+    methodName: 'priceFeed',
+    methodParameters: [tokenInAddress, 'USD'],
   });
 
   // // yield token/vault underlying asset rate
   marketRateCalls.push({
     reference: `priceFeed-${vaultUnderlyingAssetAddress}`,
-    methodName: "priceFeed",
-    methodParameters: [vaultUnderlyingAssetAddress, "USD"],
+    methodName: 'priceFeed',
+    methodParameters: [vaultUnderlyingAssetAddress, 'USD'],
   });
 
   const queries: ContractCallContext[] = [
@@ -165,7 +169,7 @@ export const arbLiquidatorMulticall = async (
   const tokenInMulticallResults = multicallResults[tokenInAddress];
   const tokenInAssetRateUsd = parseBigNumberAsFloat(
     BigNumber.from(tokenInPriceFeedResults),
-    tokenInMulticallResults.decimals[0]
+    MARKET_RATE_CONTRACT_DECIMALS,
   );
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
@@ -190,7 +194,7 @@ export const arbLiquidatorMulticall = async (
     marketRateMulticallResults[`priceFeed-${vaultUnderlyingAssetAddress}`][0];
   const vaultUnderlyingAssetAssetRateUsd = parseBigNumberAsFloat(
     BigNumber.from(vaultUnderlyingAssetPriceFeedResults),
-    vaultUnderlyingAssetMulticallResults.decimals[0]
+    MARKET_RATE_CONTRACT_DECIMALS,
   );
   const vaultUnderlyingAssetUnderlyingAsset: TokenWithRate = {
     address: vaultUnderlyingAsset.address,
