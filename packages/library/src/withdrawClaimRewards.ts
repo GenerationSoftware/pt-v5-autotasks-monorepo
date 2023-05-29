@@ -1,8 +1,8 @@
-import { ethers, Contract, BigNumber } from 'ethers';
-import { PopulatedTransaction } from '@ethersproject/contracts';
-import { Provider } from '@ethersproject/providers';
-import { getContract } from '@pooltogether/v5-utils-js';
-import chalk from 'chalk';
+import { ethers, Contract, BigNumber } from "ethers";
+import { PopulatedTransaction } from "@ethersproject/contracts";
+import { Provider } from "@ethersproject/providers";
+import { getContract } from "@pooltogether/v5-utils-js";
+import chalk from "chalk";
 
 import {
   ContractsBlob,
@@ -10,7 +10,7 @@ import {
   TokenWithRate,
   WithdrawClaimRewardsConfigParams,
   WithdrawClaimRewardsContext,
-} from './types';
+} from "./types";
 import {
   logTable,
   logBigNumber,
@@ -22,9 +22,9 @@ import {
   getFeesUsd,
   getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
-} from './utils';
-import { ERC20Abi } from './abis/ERC20Abi';
-import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+} from "./utils";
+import { ERC20Abi } from "./abis/ERC20Abi";
+import { NETWORK_NATIVE_TOKEN_INFO } from "./utils/network";
 
 interface WithdrawClaimRewardsParams {
   amount: BigNumber;
@@ -44,7 +44,7 @@ const MIN_PROFIT_THRESHOLD_USD = 1;
 export async function getWithdrawClaimRewardsTx(
   contracts: ContractsBlob,
   readProvider: Provider,
-  params: WithdrawClaimRewardsConfigParams,
+  params: WithdrawClaimRewardsConfigParams
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, rewardsRecipient, relayerAddress } = params;
 
@@ -53,18 +53,18 @@ export async function getWithdrawClaimRewardsTx(
     minor: 0,
     patch: 0,
   };
-  const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
-  const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
+  const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
+  const marketRate = getContract("MarketRate", chainId, readProvider, contracts, contractsVersion);
 
   if (!prizePool) {
-    throw new Error('WithdrawRewards: PrizePool Contract Unavailable');
+    throw new Error("WithdrawRewards: PrizePool Contract Unavailable");
   }
 
   // #1. Get context about the prize pool prize token, etc
   const context: WithdrawClaimRewardsContext = await getContext(
     prizePool,
     marketRate,
-    readProvider,
+    readProvider
   );
   printContext(context);
 
@@ -77,14 +77,14 @@ export async function getWithdrawClaimRewardsTx(
     `${context.rewardsToken.symbol} balance:`,
     amount,
     context.rewardsToken.decimals,
-    context.rewardsToken.symbol,
+    context.rewardsToken.symbol
   );
   const rewardsTokenUsd =
     parseFloat(ethers.utils.formatUnits(amount, context.rewardsToken.decimals)) *
     context.rewardsToken.assetRateUsd;
   console.log(
     chalk.dim(`${context.rewardsToken.symbol} balance (USD):`),
-    chalk.greenBright(`$${roundTwoDecimalPlaces(rewardsTokenUsd)}`),
+    chalk.greenBright(`$${roundTwoDecimalPlaces(rewardsTokenUsd)}`)
   );
 
   let populatedTx: PopulatedTransaction;
@@ -102,7 +102,7 @@ export async function getWithdrawClaimRewardsTx(
     prizePool,
     rewardsTokenUsd,
     withdrawClaimRewardsParams,
-    readProvider,
+    readProvider
   );
   if (!profitable) {
     printAsterisks();
@@ -111,9 +111,9 @@ export async function getWithdrawClaimRewardsTx(
     printAsterisks();
     console.log(chalk.blue(`5. Creating transaction ...`));
 
-    console.log(chalk.green('Claimer: Add Populated Claim Tx'));
+    console.log(chalk.green("Claimer: Add Populated Claim Tx"));
     populatedTx = await prizePool.populateTransaction.withdrawClaimRewards(
-      ...Object.values(withdrawClaimRewardsParams),
+      ...Object.values(withdrawClaimRewardsParams)
     );
   }
 
@@ -128,7 +128,7 @@ export async function getWithdrawClaimRewardsTx(
 const getContext = async (
   prizePool: Contract,
   marketRate: Contract,
-  readProvider: Provider,
+  readProvider: Provider
 ): Promise<WithdrawClaimRewardsContext> => {
   const rewardsTokenAddress = await prizePool.prizeToken();
 
@@ -161,7 +161,7 @@ const printContext = (context) => {
   logTable({ rewardsToken: context.rewardsToken });
   logStringValue(
     `Rewards Token '${context.rewardsToken.symbol}' MarketRate USD:`,
-    `$${context.rewardsToken.assetRateUsd}`,
+    `$${context.rewardsToken.assetRateUsd}`
   );
 };
 
@@ -171,10 +171,10 @@ const printContext = (context) => {
  */
 const getRewardsTokenRateUsd = async (
   marketRate: Contract,
-  rewardToken: Token,
+  rewardToken: Token
 ): Promise<number> => {
   const rewardTokenAddress = rewardToken.address;
-  const rewardTokenRate = await marketRate.priceFeed(rewardTokenAddress, 'USD');
+  const rewardTokenRate = await marketRate.priceFeed(rewardTokenAddress, "USD");
 
   return parseBigNumberAsFloat(rewardTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
@@ -190,17 +190,17 @@ const calculateProfit = async (
   prizePool: Contract,
   rewardsTokenUsd: number,
   withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
-  readProvider: Provider,
+  readProvider: Provider
 ): Promise<Boolean> => {
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
 
   printAsterisks();
-  console.log(chalk.blue('3. Current gas costs for transaction:'));
+  console.log(chalk.blue("3. Current gas costs for transaction:"));
 
   let estimatedGasLimit;
   try {
     estimatedGasLimit = await prizePool.estimateGas.withdrawClaimRewards(
-      ...Object.values(withdrawClaimRewardsParams),
+      ...Object.values(withdrawClaimRewardsParams)
     );
   } catch (e) {
     console.error(chalk.red(e));
@@ -209,53 +209,53 @@ const calculateProfit = async (
     chainId,
     estimatedGasLimit,
     gasTokenMarketRateUsd,
-    readProvider,
+    readProvider
   );
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    gasTokenMarketRateUsd,
+    gasTokenMarketRateUsd
   );
 
   printSpacer();
   logBigNumber(
-    'Estimated gas limit:',
+    "Estimated gas limit:",
     estimatedGasLimit,
     18,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol
   );
 
   logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   printAsterisks();
-  console.log(chalk.blue('4. Profit/Loss (USD):'));
+  console.log(chalk.blue("4. Profit/Loss (USD):"));
   printSpacer();
 
   const grossProfitUsd = rewardsTokenUsd;
   const netProfitUsd = grossProfitUsd - maxFeeUsd;
 
-  console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
+  console.log(chalk.magenta("Gross profit = tokenOut - tokenIn"));
   console.log(
     chalk.greenBright(
-      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(rewardsTokenUsd)}`,
-    ),
+      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(rewardsTokenUsd)}`
+    )
   );
   printSpacer();
 
-  console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Max)'));
+  console.log(chalk.magenta("Net profit = Gross profit - Gas fee (Max)"));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
-        grossProfitUsd,
-      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`,
-    ),
+        grossProfitUsd
+      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`
+    )
   );
   printSpacer();
 
   const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
-    'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-    'Profitable?': profitable ? '✔' : '✗',
+    "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+    "Profitable?": profitable ? "✔" : "✗",
   });
   printSpacer();
 
