@@ -1,14 +1,14 @@
-import { ethers, BigNumber, Contract } from "ethers";
-import { PopulatedTransaction } from "@ethersproject/contracts";
-import { Provider } from "@ethersproject/providers";
+import { ethers, BigNumber, Contract } from 'ethers';
+import { PopulatedTransaction } from '@ethersproject/contracts';
+import { Provider } from '@ethersproject/providers';
 import {
   ClaimedPrize,
   getContract,
   getSubgraphVaults,
   getSubgraphClaimedPrizes,
   getWinnersClaims,
-} from "@pooltogether/v5-utils-js";
-import chalk from "chalk";
+} from '@pooltogether/v5-utils-js';
+import chalk from 'chalk';
 
 import {
   ContractsBlob,
@@ -17,7 +17,7 @@ import {
   ClaimPrizeContext,
   GetClaimerProfitablePrizeTxsParams,
   TiersContext,
-} from "./types";
+} from './types';
 import {
   logTable,
   logStringValue,
@@ -29,9 +29,9 @@ import {
   getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   parseBigNumberAsFloat,
-} from "./utils";
-import { ERC20Abi } from "./abis/ERC20Abi";
-import { NETWORK_NATIVE_TOKEN_INFO } from "./utils/network";
+} from './utils';
+import { ERC20Abi } from './abis/ERC20Abi';
+import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 
 interface ClaimPrizesParams {
   drawId: string;
@@ -53,7 +53,7 @@ const MIN_PROFIT_THRESHOLD_USD = 0.05;
 export async function getClaimerProfitablePrizeTxs(
   contracts: ContractsBlob,
   readProvider: Provider,
-  params: GetClaimerProfitablePrizeTxsParams
+  params: GetClaimerProfitablePrizeTxsParams,
 ): Promise<PopulatedTransaction[] | undefined> {
   const { chainId, feeRecipient } = params;
 
@@ -64,12 +64,12 @@ export async function getClaimerProfitablePrizeTxs(
     minor: 0,
     patch: 0,
   };
-  const prizePool = getContract("PrizePool", chainId, readProvider, contracts, contractsVersion);
-  const claimer = getContract("Claimer", chainId, readProvider, contracts, contractsVersion);
-  const marketRate = getContract("MarketRate", chainId, readProvider, contracts, contractsVersion);
+  const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
+  const claimer = getContract('Claimer', chainId, readProvider, contracts, contractsVersion);
+  const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
   if (!claimer) {
-    throw new Error("Claimer: Contract Unavailable");
+    throw new Error('Claimer: Contract Unavailable');
   }
 
   // #1. Get context about the prize pool prize token, etc
@@ -81,7 +81,7 @@ export async function getClaimerProfitablePrizeTxs(
   console.log(chalk.blue(`2. Subgraph: Getting data ...`));
   const vaults = await getSubgraphVaults(chainId);
   if (vaults.length === 0) {
-    throw new Error("Claimer: No vaults found in subgraph");
+    throw new Error('Claimer: No vaults found in subgraph');
   }
   console.log(chalk.dim(`${vaults.length} vaults.`));
 
@@ -89,7 +89,9 @@ export async function getClaimerProfitablePrizeTxs(
   printAsterisks();
   console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
   const tiersRangeArray = context.tiers.rangeArray;
-  const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, tiersRangeArray);
+  const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, tiersRangeArray, {
+    filterAutoClaimDisabled: true,
+  });
   logClaims(claims, context);
   console.log(chalk.dim(`${claims.length} prizes.`));
   if (claims.length === 0) {
@@ -110,7 +112,7 @@ export async function getClaimerProfitablePrizeTxs(
     console.log(chalk.dim(`${claimedPrizes.length} prizes already claimed for draw #${drawId}.`));
   }
   console.log(
-    chalk.dim(`${claims.length - claimedPrizes.length} prizes remaining to be claimed...`)
+    chalk.dim(`${claims.length - claimedPrizes.length} prizes remaining to be claimed...`),
   );
 
   const filteredClaims: Claim[] = await filterClaimedPrizes(claims, claimedPrizes);
@@ -128,11 +130,11 @@ export async function getClaimerProfitablePrizeTxs(
     filteredClaims,
     feeRecipient,
     marketRate,
-    context
+    context,
   );
   // It's profitable if there is at least 1 claim to claim
   if (claimPrizesParams.claims.length > 0) {
-    console.log(chalk.green("Claimer: Add Populated Claim Tx"));
+    console.log(chalk.green('Claimer: Add Populated Claim Tx'));
     // const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
     // transactionsPopulated.push(tx);
   } else {
@@ -149,7 +151,7 @@ export async function getClaimerProfitablePrizeTxs(
  */
 const getEstimatedGasLimit = async (
   claimer: Contract,
-  claimPrizesParams: ClaimPrizesParams
+  claimPrizesParams: ClaimPrizesParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
@@ -174,13 +176,13 @@ const calculateProfit = async (
   claims: Claim[],
   feeRecipient: string,
   marketRate: Contract,
-  context: ClaimPrizeContext
+  context: ClaimPrizeContext,
 ): Promise<ClaimPrizesParams> => {
   printSpacer();
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    gasTokenMarketRateUsd
+    gasTokenMarketRateUsd,
   );
 
   let claimsSlice;
@@ -196,13 +198,13 @@ const calculateProfit = async (
       printSpacer();
       const estimatedGasLimit = await getEstimatedGasLimit(claimer, claimPrizesParams);
       if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
-        console.error(chalk.yellow("Estimated gas limit is 0 ..."));
+        console.error(chalk.yellow('Estimated gas limit is 0 ...'));
       } else {
         logBigNumber(
-          "Estimated gas limit:",
+          'Estimated gas limit:',
           estimatedGasLimit,
           NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-          NETWORK_NATIVE_TOKEN_INFO[chainId].symbol
+          NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
         );
       }
 
@@ -210,18 +212,18 @@ const calculateProfit = async (
         chainId,
         estimatedGasLimit,
         gasTokenMarketRateUsd,
-        readProvider
+        readProvider,
       );
       logStringValue(`Max Gas Fee (USD):`, `$${roundTwoDecimalPlaces(maxFeeUsd)}`);
 
-      console.log(chalk.bgBlack.cyan("5b. Profit/Loss (USD):"));
+      console.log(chalk.bgBlack.cyan('5b. Profit/Loss (USD):'));
       printSpacer();
 
       // Get the exact amount of fees we'll get back
       let totalFees;
       try {
         const staticResult = await claimer.callStatic.claimPrizes(
-          ...Object.values(claimPrizesParams)
+          ...Object.values(claimPrizesParams),
         );
         totalFees = staticResult.totalFees;
       } catch (e) {
@@ -232,31 +234,31 @@ const calculateProfit = async (
         parseFloat(ethers.utils.formatUnits(totalFees, context.feeToken.decimals)) *
         context.feeTokenRateUsd;
       logBigNumber(
-        "TotalFees:",
+        'TotalFees:',
         totalFees.toString(),
         context.feeToken.decimals,
-        context.feeToken.symbol
+        context.feeToken.symbol,
       );
-      console.log(chalk.green("TotalFees:", `$${roundTwoDecimalPlaces(totalFeesUsd)}`));
+      console.log(chalk.green('TotalFees:', `$${roundTwoDecimalPlaces(totalFeesUsd)}`));
 
       printSpacer();
 
       const netProfitUsd = totalFeesUsd - maxFeeUsd;
-      console.log(chalk.magenta("Net profit = (Earned fees - Gas [Max])"));
+      console.log(chalk.magenta('Net profit = (Earned fees - Gas [Max])'));
       console.log(
         chalk.greenBright(
           `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-            totalFeesUsd
-          )} - $${roundTwoDecimalPlaces(maxFeeUsd)})`
-        )
+            totalFeesUsd,
+          )} - $${roundTwoDecimalPlaces(maxFeeUsd)})`,
+        ),
       );
       printSpacer();
 
       const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
       logTable({
         MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
-        "Net profit (USD)": `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-        "Profitable?": profitable ? "✔" : "✗",
+        'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+        'Profitable?': profitable ? '✔' : '✗',
       });
       printSpacer();
 
@@ -296,7 +298,7 @@ const calculateProfit = async (
 const getContext = async (
   prizePool: Contract,
   marketRate: Contract,
-  readProvider: Provider
+  readProvider: Provider,
 ): Promise<ClaimPrizeContext> => {
   const feeTokenAddress = await prizePool.prizeToken();
   const drawId = await prizePool.getLastCompletedDrawId();
@@ -330,10 +332,10 @@ const printContext = (context) => {
 
   logTable({ feeToken: context.feeToken });
   logTable({ tiers: context.tiers });
-  logStringValue("Draw ID:", context.drawId);
+  logStringValue('Draw ID:', context.drawId);
   logStringValue(
     `Fee Token ${context.feeToken.symbol} MarketRate USD: `,
-    `$${context.feeTokenRateUsd}`
+    `$${context.feeTokenRateUsd}`,
   );
 };
 
@@ -343,7 +345,7 @@ const printContext = (context) => {
  */
 const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promise<number> => {
   const feeTokenAddress = feeToken.address;
-  const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, "USD");
+  const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, 'USD');
 
   return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
@@ -359,7 +361,7 @@ const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
   tiersArray.forEach((tierNum) => {
     const tierClaims = tierClaimsFiltered[tierNum];
     const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
-    console.table({ Tier: { "#": tierWord, "# of Winners": tierClaims.length } });
+    console.table({ Tier: { '#': tierWord, '# of Winners': tierClaims.length } });
   });
 };
 
@@ -367,19 +369,19 @@ const filterClaimedPrizes = (claims: Claim[], claimedPrizes: ClaimedPrize[]): Cl
   const formattedClaimedPrizes = claimedPrizes.map((claimedPrize) => {
     // From Subgraph, `id` is:
     // vault ID + winner ID + draw ID + tier
-    const [vault, winner, draw, tier] = claimedPrize.id.split("-");
+    const [vault, winner, draw, tier] = claimedPrize.id.split('-');
     return `${vault}-${winner}-${tier}`;
   });
 
   return claims.filter(
-    (claim) => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`)
+    (claim) => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`),
   );
 };
 
 const buildParams = (
   context: ClaimPrizeContext,
   claims: Claim[],
-  feeRecipient: string
+  feeRecipient: string,
 ): ClaimPrizesParams => {
   return {
     drawId: context.drawId,
