@@ -14,8 +14,6 @@ const handlerLoadParams = (relayerAddress): WithdrawClaimRewardsConfigParams => 
 };
 
 export async function handler(event: RelayerParams) {
-  console.log('hello!');
-
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: 'fast' });
   const relayerAddress = await signer.getAddress();
@@ -23,10 +21,10 @@ export async function handler(event: RelayerParams) {
   const params = handlerLoadParams(relayerAddress);
   console.log(params);
 
-  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, BUILD_CHAIN_ID);
+  const chainId = Number(BUILD_CHAIN_ID);
+  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, chainId);
 
   const populatedTx = await populateTransaction(params, readProvider);
-  console.log(populatedTx);
 
   await processPopulatedTransaction(event, populatedTx);
 }
