@@ -11,6 +11,7 @@ import { Relayer } from 'defender-relay-client';
 
 export const populateTransaction = async (params, readProvider): Promise<PopulatedTransaction> => {
   let populatedTx: PopulatedTransaction;
+
   try {
     const contracts = await downloadContractsBlob(params.chainId);
     populatedTx = await getWithdrawClaimRewardsTx(contracts, readProvider, params);
