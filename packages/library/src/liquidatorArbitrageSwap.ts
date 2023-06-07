@@ -38,7 +38,7 @@ interface Stat {
 /**
  * Only swap if we're going to make at least $5.00. This likely should be a config option
  */
-const MIN_PROFIT_THRESHOLD_USD = -3;
+const MIN_PROFIT_THRESHOLD_USD = 3;
 
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
