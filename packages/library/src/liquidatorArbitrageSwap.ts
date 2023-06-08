@@ -28,10 +28,17 @@ interface SwapExactAmountInParams {
   amountOutMin: BigNumber;
 }
 
+interface Stat {
+  pair: string;
+  estimatedProfitUsd: number;
+  txHash?: string;
+  error?: string;
+}
+
 /**
  * Only swap if we're going to make at least $5.00. This likely should be a config option
  */
-const MIN_PROFIT_THRESHOLD_USD = -3;
+const MIN_PROFIT_THRESHOLD_USD = 3;
 
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
@@ -59,6 +66,7 @@ export async function liquidatorArbitrageSwap(
   // Loop through all liquidation pairs
   printSpacer();
   console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
+  const stats: Stat[] = [];
   for (let i = 0; i < liquidationPairs.length; i++) {
     printSpacer();
     printSpacer();
@@ -76,6 +84,7 @@ export async function liquidatorArbitrageSwap(
       readProvider,
       relayerAddress,
     );
+    const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
     printContext(context);
     printAsterisks();
@@ -86,6 +95,11 @@ export async function liquidatorArbitrageSwap(
 
     const { exactAmountIn, amountOutMin } = await calculateAmounts(liquidationPair, context);
     if (amountOutMin.eq(0)) {
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `amountOutMin is 0`,
+      });
       logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
@@ -100,14 +114,21 @@ export async function liquidatorArbitrageSwap(
       console.log(chalk.red('Insufficient balance ✗'));
 
       const diff = exactAmountIn.sub(context.relayer.tokenInBalance);
+      const increaseAmount = ethers.utils.formatUnits(diff, context.tokenIn.decimals);
+      const errorMsg = `Relayer ${
+        context.tokenIn.symbol
+      } balance insufficient by ${roundTwoDecimalPlaces(Number(increaseAmount))}`;
       console.log(
         chalk.red(
-          `Increase relayer '${relayerAddress}' ${
-            context.tokenIn.symbol
-          } balance by ${ethers.utils.formatUnits(diff, context.tokenIn.decimals)}`,
+          `Increase relayer '${relayerAddress}' ${context.tokenIn.symbol} balance by ${increaseAmount}`,
         ),
       );
 
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: errorMsg,
+      });
       logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
@@ -135,6 +156,11 @@ export async function liquidatorArbitrageSwap(
     } catch (e) {
       console.error(chalk.red(e));
       console.warn(chalk.yellow(`Unable to retrieve 'amountOutEstimate' from contract.`));
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Unable to retrieve 'amountOutEstimate' from contract`,
+      });
       logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
@@ -147,7 +173,7 @@ export async function liquidatorArbitrageSwap(
 
     // #6. Decide if profitable or not
     //
-    const profitable = await calculateProfit(
+    const { estimatedProfitUsd, profitable } = await calculateProfit(
       chainId,
       contracts,
       marketRate,
@@ -162,6 +188,11 @@ export async function liquidatorArbitrageSwap(
           `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`,
         ),
       );
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Not profitable`,
+      });
       logNextPair(liquidationPair, liquidationPairs);
       continue;
     }
@@ -186,10 +217,33 @@ export async function liquidatorArbitrageSwap(
       });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', transactionSentToNetwork.hash));
+
+      stats.push({
+        pair,
+        estimatedProfitUsd,
+        txHash: transactionSentToNetwork.hash,
+      });
     } catch (error) {
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: error.message,
+      });
       throw new Error(error);
     }
   }
+
+  printSpacer();
+  printSpacer();
+  printAsterisks();
+  console.log(chalk.greenBright.bold(`SUMMARY`));
+  console.table(stats);
+  const estimatedProfitUsdTotal = stats.reduce((accumulator, stat) => {
+    return accumulator + stat.estimatedProfitUsd;
+  }, 0);
+  console.log(
+    chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
+  );
 }
 
 /**
@@ -359,7 +413,7 @@ const calculateProfit = async (
   swapExactAmountInParams: SwapExactAmountInParams,
   readProvider: Provider,
   context: ArbLiquidatorContext,
-): Promise<Boolean> => {
+): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
 
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
@@ -439,7 +493,7 @@ const calculateProfit = async (
   });
   printSpacer();
 
-  return profitable;
+  return { estimatedProfitUsd: roundTwoDecimalPlaces(netProfitUsd), profitable };
 };
 
 /**
