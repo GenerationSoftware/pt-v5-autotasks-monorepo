@@ -1,6 +1,6 @@
-import { BigNumber } from "ethers";
-import { BaseProvider, Provider } from "@ethersproject/providers";
-import { DefenderRelaySigner } from "defender-relay-client/lib/ethers";
+import { BigNumber } from 'ethers';
+import { BaseProvider, Provider } from '@ethersproject/providers';
+import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 // Config types
 export interface Token {
@@ -125,4 +125,14 @@ export interface WithdrawClaimRewardsConfigParams {
 
 export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
+}
+
+export interface DrawReserveConfigParams {
+  relayerAddress: string;
+  reserveRecipient: string;
+  chainId: number;
+}
+
+export interface DrawReserveContext {
+  reserveToken: TokenWithRate;
 }
