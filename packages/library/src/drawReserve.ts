@@ -4,12 +4,7 @@ import { Provider } from '@ethersproject/providers';
 import { getContract } from '@pooltogether/v5-utils-js';
 import chalk from 'chalk';
 
-import {
-  ContractsBlob,
-  Token,
-  WithdrawClaimRewardsConfigParams,
-  WithdrawClaimRewardsContext,
-} from './types';
+import { ContractsBlob, Token, DrawReserveConfigParams, DrawReserveContext } from './types';
 import {
   logTable,
   logBigNumber,
@@ -25,27 +20,27 @@ import {
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 
-interface WithdrawClaimRewardsParams {
+interface DrawReserveParams {
   amount: BigNumber;
-  rewardsRecipient: string;
+  reserveRecipient: string;
 }
 
 /**
- * Only claim rewards if we're going to make at least X dollars
+ * Only withdraw reserve if we're going to make at least X dollars
  */
 const MIN_PROFIT_THRESHOLD_USD = 1;
 
 /**
- * Creates a populated transaction object for a prize claimer to withdraw their claim rewards.
+ * Creates a populated transaction object for a draw start & complete bot to withdraw their reserve.
  *
  * @returns {(Promise|undefined)} Promise of an ethers PopulatedTransaction or undefined
  */
-export async function getWithdrawClaimRewardsTx(
+export async function getWithdrawReserveTx(
   contracts: ContractsBlob,
   readProvider: Provider,
-  params: WithdrawClaimRewardsConfigParams,
+  params: DrawReserveConfigParams,
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, rewardsRecipient, relayerAddress } = params;
+  const { chainId, reserveRecipient, relayerAddress } = params;
 
   const contractsVersion = {
     major: 1,
@@ -56,40 +51,36 @@ export async function getWithdrawClaimRewardsTx(
   const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
   if (!prizePool) {
-    throw new Error('WithdrawRewards: PrizePool Contract Unavailable');
+    throw new Error('DrawReserve: PrizePool Contract Unavailable');
   }
 
   // #1. Get context about the prize pool prize token, etc
-  const context: WithdrawClaimRewardsContext = await getContext(
-    prizePool,
-    marketRate,
-    readProvider,
-  );
+  const context: DrawReserveContext = await getContext(prizePool, marketRate, readProvider);
   printContext(context);
 
-  // #2. Get data about how much rewards a prize claimer can withdraw
+  // #2. Get data about how much reserve a prize claimer can withdraw
   printSpacer();
-  console.log(chalk.blue(`2. Getting claim rewards balance for '${relayerAddress}' ...`));
-  const amount = await prizePool.balanceOfClaimRewards(relayerAddress);
+  console.log(chalk.blue(`2. Getting reserve balance for '${relayerAddress}' ...`));
+  const amount = await prizePool.???(relayerAddress);
 
   logBigNumber(
-    `${context.rewardsToken.symbol} balance:`,
+    `${context.reserveToken.symbol} balance:`,
     amount,
-    context.rewardsToken.decimals,
-    context.rewardsToken.symbol,
+    context.reserveToken.decimals,
+    context.reserveToken.symbol,
   );
-  const rewardsTokenUsd =
-    parseFloat(ethers.utils.formatUnits(amount, context.rewardsToken.decimals)) *
-    context.rewardsToken.assetRateUsd;
+  const reserveTokenUsd =
+    parseFloat(ethers.utils.formatUnits(amount, context.reserveToken.decimals)) *
+    context.reserveToken.assetRateUsd;
   console.log(
-    chalk.dim(`${context.rewardsToken.symbol} balance (USD):`),
-    chalk.greenBright(`$${roundTwoDecimalPlaces(rewardsTokenUsd)}`),
+    chalk.dim(`${context.reserveToken.symbol} balance (USD):`),
+    chalk.greenBright(`$${roundTwoDecimalPlaces(reserveTokenUsd)}`),
   );
 
   let populatedTx: PopulatedTransaction;
 
-  const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
-    rewardsRecipient,
+  const drawReserveParams: DrawReserveParams = {
+    reserveRecipient,
     amount,
   };
 
@@ -99,20 +90,20 @@ export async function getWithdrawClaimRewardsTx(
     contracts,
     marketRate,
     prizePool,
-    rewardsTokenUsd,
-    withdrawClaimRewardsParams,
+    reserveTokenUsd,
+    drawReserveParams,
     readProvider,
   );
   if (!profitable) {
     printAsterisks();
-    console.log(chalk.yellow(`Not profitable to claim rewards yet. Exiting ...`));
+    console.log(chalk.yellow(`Not profitable to withdraw reserve yet. Exiting ...`));
   } else {
     printAsterisks();
     console.log(chalk.blue(`5. Creating transaction ...`));
 
     console.log(chalk.green('Claimer: Add Populated Claim Tx'));
-    populatedTx = await prizePool.populateTransaction.withdrawClaimRewards(
-      ...Object.values(withdrawClaimRewardsParams),
+    populatedTx = await prizePool.populateTransaction.withdrawReserve(
+      ...Object.values(drawReserveParams),
     );
   }
 
@@ -122,30 +113,30 @@ export async function getWithdrawClaimRewardsTx(
 /**
  * Gather information about the given prize pool's fee token, fee token price in USD
  * and the last drawId
- * @returns {Promise} Promise of a WithdrawClaimRewardsContext object
+ * @returns {Promise} Promise of a DrawReserveContext object
  */
 const getContext = async (
   prizePool: Contract,
   marketRate: Contract,
   readProvider: Provider,
-): Promise<WithdrawClaimRewardsContext> => {
-  const rewardsTokenAddress = await prizePool.prizeToken();
+): Promise<DrawReserveContext> => {
+  const reserveTokenAddress = await prizePool.prizeToken();
 
-  const tokenInContract = new ethers.Contract(rewardsTokenAddress, ERC20Abi, readProvider);
+  const tokenInContract = new ethers.Contract(reserveTokenAddress, ERC20Abi, readProvider);
 
-  const rewardsToken: Token = {
-    address: rewardsTokenAddress,
+  const reserveToken: Token = {
+    address: reserveTokenAddress,
     decimals: await tokenInContract.decimals(),
     name: await tokenInContract.name(),
     symbol: await tokenInContract.symbol(),
   };
 
-  const rewardsTokenWithRate = {
-    ...rewardsToken,
-    assetRateUsd: await getRewardsTokenRateUsd(marketRate, rewardsToken),
+  const reserveTokenWithRate = {
+    ...reserveToken,
+    assetRateUsd: await getReserveTokenRateUsd(marketRate, reserveToken),
   };
 
-  return { rewardsToken: rewardsTokenWithRate };
+  return { reserveToken: reserveTokenWithRate };
 };
 
 /**
@@ -154,28 +145,28 @@ const getContext = async (
  */
 const printContext = (context) => {
   printAsterisks();
-  console.log(chalk.blue.bold(`1. Rewards/prize token: ${context.rewardsToken.symbol}`));
+  console.log(chalk.blue.bold(`1. Reserve token: ${context.reserveToken.symbol}`));
   printSpacer();
 
-  logTable({ rewardsToken: context.rewardsToken });
+  logTable({ reserveToken: context.reserveToken });
   logStringValue(
-    `Rewards Token '${context.rewardsToken.symbol}' MarketRate USD:`,
-    `$${context.rewardsToken.assetRateUsd}`,
+    `Reserve token '${context.reserveToken.symbol}' MarketRate USD:`,
+    `$${context.reserveToken.assetRateUsd}`,
   );
 };
 
 /**
- * Finds the spot price of the reward token in USD
- * @returns {number} rewardTokenRateUsd
+ * Finds the spot price of the reserve token in USD
+ * @returns {number} reserveTokenRateUsd
  */
-const getRewardsTokenRateUsd = async (
+const getReserveTokenRateUsd = async (
   marketRate: Contract,
-  rewardToken: Token,
+  reserveToken: Token,
 ): Promise<number> => {
-  const rewardTokenAddress = rewardToken.address;
-  const rewardTokenRate = await marketRate.priceFeed(rewardTokenAddress, 'USD');
+  const reserveTokenAddress = reserveToken.address;
+  const reserveTokenRate = await marketRate.priceFeed(reserveTokenAddress, 'USD');
 
-  return parseBigNumberAsFloat(rewardTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
+  return parseBigNumberAsFloat(reserveTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
 
 /**
@@ -187,8 +178,8 @@ const calculateProfit = async (
   contracts: ContractsBlob,
   marketRate: Contract,
   prizePool: Contract,
-  rewardsTokenUsd: number,
-  withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
+  reserveTokenUsd: number,
+  drawReserveParams: DrawReserveParams,
   readProvider: Provider,
 ): Promise<Boolean> => {
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
@@ -198,8 +189,8 @@ const calculateProfit = async (
 
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await prizePool.estimateGas.withdrawClaimRewards(
-      ...Object.values(withdrawClaimRewardsParams),
+    estimatedGasLimit = await prizePool.estimateGas.withdrawReserve(
+      ...Object.values(drawReserveParams),
     );
   } catch (e) {
     console.error(chalk.red(e));
@@ -229,13 +220,13 @@ const calculateProfit = async (
   console.log(chalk.blue('4. Profit/Loss (USD):'));
   printSpacer();
 
-  const grossProfitUsd = rewardsTokenUsd;
+  const grossProfitUsd = reserveTokenUsd;
   const netProfitUsd = grossProfitUsd - maxFeeUsd;
 
   console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
   console.log(
     chalk.greenBright(
-      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(rewardsTokenUsd)}`,
+      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(reserveTokenUsd)}`,
     ),
   );
   printSpacer();
