@@ -186,7 +186,6 @@ const calculateProfit = async (
   );
 
   printSpacer();
-  // claimsSlice = claims.slice(0, claimCount);
   const gasCost = await getGasCost(
     readProvider,
     chainId,
@@ -197,19 +196,12 @@ const calculateProfit = async (
     gasTokenMarketRateUsd,
   );
 
-  //   claimsSlice = claims.slice(0, claimCount);
-  //   claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
-
-  const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(context, claims, gasCost);
-  console.log('*************************');
-  console.log('claimCount');
-  console.log(claimCount);
-
-  console.log('totalCostUsd');
-  console.log(totalCostUsd);
-
-  console.log('claimFeesUsd');
-  console.log(claimFeesUsd);
+  const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(
+    context,
+    claimer,
+    claims,
+    gasCost,
+  );
 
   console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
 
@@ -438,14 +430,9 @@ interface ClaimInfo {
   totalCostUsd: number;
 }
 
-// Fees go down on each claim
-const fakeFees = (num) => {
-  // TODO: Make exponential :)
-  return BigNumber.from('2100000000000000000').mul(num).mul(10).div(13);
-};
-
 const getClaimInfo = async (
   context: ClaimPrizeContext,
+  claimer: Contract,
   claims: Claim[],
   gasCost: any,
 ): Promise<ClaimInfo> => {
@@ -454,9 +441,8 @@ const getClaimInfo = async (
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
   for (let numClaims = 1; numClaims < claims.length; numClaims++) {
-    console.log({ numClaims });
-    const nextClaimFees = fakeFees(numClaims);
-    // const nextClaimFees = await claimer.computeTotalFees(numClaims);
+    printSpacer();
+    const nextClaimFees = await claimer.computeTotalFees(numClaims);
 
     // COSTS USD
     const claimCostUsd = gasCost.gasCostPerClaimUsd * numClaims;
@@ -466,14 +452,14 @@ const getClaimInfo = async (
     claimFeesUsd =
       parseFloat(ethers.utils.formatUnits(claimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
-    console.log(chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`));
+    // console.log(chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`));
 
     const nextClaimFeesUsd =
       parseFloat(ethers.utils.formatUnits(nextClaimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
-    console.log(
-      chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
-    );
+    // console.log(
+    //   chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
+    // );
 
     if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
       claimCount = numClaims;
