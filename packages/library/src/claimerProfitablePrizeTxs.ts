@@ -119,7 +119,7 @@ export async function getClaimerProfitablePrizeTxs(
 
   // #5. Start iterating through vaults
   printAsterisks();
-  console.log(chalk.blue(`5. Calculating # of profitable claims ...`));
+  console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
   // #7. Decide if profitable or not
   const claimPrizesParams = await calculateProfit(
@@ -203,12 +203,14 @@ const calculateProfit = async (
     gasCost,
   );
 
-  console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
+  printSpacer();
+  // console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
+  // printSpacer();
 
   const claimsSlice = claims.slice(0, claimCount);
   const claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
 
-  console.log(chalk.bgBlack.cyan('5b. Profit/Loss (USD):'));
+  console.log(chalk.magenta('5b. Profit/Loss (USD):'));
   printSpacer();
 
   // FEES USD
@@ -452,14 +454,14 @@ const getClaimInfo = async (
     claimFeesUsd =
       parseFloat(ethers.utils.formatUnits(claimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
-    // console.log(chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`));
+    console.log(chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`));
 
     const nextClaimFeesUsd =
       parseFloat(ethers.utils.formatUnits(nextClaimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
-    // console.log(
-    //   chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
-    // );
+    console.log(
+      chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
+    );
 
     if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
       claimCount = numClaims;
