@@ -84,6 +84,10 @@ export async function getClaimerProfitablePrizeTxs(
     throw new Error('Claimer: No vaults found in subgraph');
   }
   console.log(chalk.dim(`${vaults.length} vaults.`));
+  const accountsCount = vaults.reduce((accumulator, vault) => {
+    return accumulator + vault.accounts.length;
+  }, 0);
+  console.log(chalk.dim(`${accountsCount} accounts.`));
 
   // #3. Get more data about which users are winners from the contract
   printAsterisks();
@@ -444,6 +448,7 @@ const getClaimInfo = async (
   let totalCostUsd = 0;
   for (let numClaims = 1; numClaims < claims.length; numClaims++) {
     printSpacer();
+    console.log(chalk.green(`Number of claims: ${numClaims}`));
     const nextClaimFees = await claimer.computeTotalFees(numClaims);
 
     // COSTS USD
@@ -454,11 +459,24 @@ const getClaimInfo = async (
     claimFeesUsd =
       parseFloat(ethers.utils.formatUnits(claimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
+    logBigNumber(
+      'Claim Fees (WEI):',
+      claimFees,
+      context.feeToken.decimals,
+      context.feeToken.symbol,
+    );
     console.log(chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`));
 
     const nextClaimFeesUsd =
       parseFloat(ethers.utils.formatUnits(nextClaimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
+
+    logBigNumber(
+      'Next Claim Fees (WEI):',
+      nextClaimFees,
+      context.feeToken.decimals,
+      context.feeToken.symbol,
+    );
     console.log(
       chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
     );
