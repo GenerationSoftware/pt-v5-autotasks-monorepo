@@ -7,6 +7,7 @@ import {
   getSubgraphVaults,
   getSubgraphClaimedPrizes,
   getWinnersClaims,
+  populateSubgraphVaultAccounts,
 } from '@pooltogether/v5-utils-js';
 import chalk from 'chalk';
 
@@ -79,11 +80,15 @@ export async function getClaimerProfitablePrizeTxs(
   // #2. Get data about all user's with balances from the subgraph
   printAsterisks();
   console.log(chalk.blue(`2. Subgraph: Getting data ...`));
-  const vaults = await getSubgraphVaults(chainId);
+  let vaults = await getSubgraphVaults(chainId);
   if (vaults.length === 0) {
     throw new Error('Claimer: No vaults found in subgraph');
   }
   console.log(chalk.dim(`${vaults.length} vaults.`));
+
+  // Page through and concat all accounts for all vaults
+  vaults = await populateSubgraphVaultAccounts(chainId, vaults);
+
   const accountsCount = vaults.reduce((accumulator, vault) => {
     return accumulator + vault.accounts.length;
   }, 0);
