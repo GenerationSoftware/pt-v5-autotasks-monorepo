@@ -61,7 +61,8 @@ export async function getWithdrawReserveTx(
   // #2. Get data about how much reserve a prize claimer can withdraw
   printSpacer();
   console.log(chalk.blue(`2. Getting reserve balance for '${relayerAddress}' ...`));
-  const amount = await prizePool.???(relayerAddress);
+  // const amount = await prizePool.???(relayerAddress);
+  const amount = BigNumber.from(1);
 
   logBigNumber(
     `${context.reserveToken.symbol} balance:`,
