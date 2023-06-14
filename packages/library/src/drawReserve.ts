@@ -102,7 +102,7 @@ export async function getWithdrawReserveTx(
     printAsterisks();
     console.log(chalk.blue(`5. Creating transaction ...`));
 
-    console.log(chalk.green('Claimer: Add Populated Claim Tx'));
+    console.log(chalk.green('DrawReserve: Add Populated Claim Tx'));
     populatedTx = await prizePool.populateTransaction.withdrawReserve(
       ...Object.values(drawReserveParams),
     );

@@ -41,7 +41,7 @@ interface ClaimPrizesParams {
 }
 
 /**
- * Only claim if we're going to make at least $5.00. This likely should be a config option
+ * Only claim if we're going to make at least $0.05 (This likely should be a config option)
  */
 const MIN_PROFIT_THRESHOLD_USD = 0.05;
 
@@ -102,7 +102,7 @@ export async function getClaimerProfitablePrizeTxs(
   const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, tiersRangeArray, {
     filterAutoClaimDisabled: true,
   });
-  logClaims(claims, context);
+  logClaimSummary(claims, context);
   console.log(chalk.dim(`${claims.length} prizes.`));
   if (claims.length === 0) {
     console.warn(chalk.yellow(`There are 0 winners in the previous draw. Exiting ...`));
@@ -248,12 +248,21 @@ const calculateProfit = async (
   }
 
   if (claimCount > 0) {
-    console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s).`));
+    console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
+
+    logClaims(claimsSlice);
   } else {
     console.log(chalk.yellow(`Unable to submit any optimal, profitable transactions.`));
   }
 
   return claimPrizesParams;
+};
+
+const logClaims = (claims: Claim[]) => {
+  printSpacer();
+  claims.forEach((claim) => console.log(`${claim.vault}-${claim.winner}-${claim.tier}`));
+  printSpacer();
+  printSpacer();
 };
 
 /**
@@ -316,7 +325,7 @@ const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promis
   return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
 
-const logClaims = (claims: Claim[], context: ClaimPrizeContext) => {
+const logClaimSummary = (claims: Claim[], context: ClaimPrizeContext) => {
   const tiersArray = context.tiers.rangeArray;
 
   let tierClaimsFiltered: { [index: number]: Claim[] } = {};
@@ -487,6 +496,12 @@ const getClaimInfo = async (
       chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
     );
 
+    // To push through a non-profitable tx for debugging:
+    // claimCount = numClaims;
+    // claimFees = nextClaimFees;
+    // if (numClaims === 3) {
+    //   return { claimCount, claimFeesUsd, totalCostUsd };
+    // }
     if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
       claimCount = numClaims;
       claimFees = nextClaimFees;

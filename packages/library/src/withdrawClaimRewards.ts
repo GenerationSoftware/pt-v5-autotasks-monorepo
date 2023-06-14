@@ -110,7 +110,7 @@ export async function getWithdrawClaimRewardsTx(
     printAsterisks();
     console.log(chalk.blue(`5. Creating transaction ...`));
 
-    console.log(chalk.green('Claimer: Add Populated Claim Tx'));
+    console.log(chalk.green('WithdrawClaimRewards: Add Populated Claim Tx'));
     populatedTx = await prizePool.populateTransaction.withdrawClaimRewards(
       ...Object.values(withdrawClaimRewardsParams),
     );
