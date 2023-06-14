@@ -5,8 +5,6 @@ import { askChainId } from '@pooltogether/v5-autotasks-library';
 
 import pkg from '../package.json';
 
-console.clear();
-
 if (esMain(import.meta)) {
   await askChainId(new Configstore(pkg.name));
 }

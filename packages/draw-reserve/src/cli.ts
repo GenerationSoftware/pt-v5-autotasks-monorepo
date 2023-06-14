@@ -11,7 +11,6 @@ import { populateTransaction, processPopulatedTransaction } from './transactions
 
 import pkg from '../package.json';
 
-console.clear();
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Draw Reserve Bot')));
 

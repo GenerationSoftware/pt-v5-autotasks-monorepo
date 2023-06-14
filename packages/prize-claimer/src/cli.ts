@@ -14,7 +14,6 @@ import { askQuestions } from './helpers/questions';
 
 import pkg from '../package.json';
 
-console.clear();
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
 
