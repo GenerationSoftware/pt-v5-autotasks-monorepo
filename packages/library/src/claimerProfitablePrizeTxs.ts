@@ -98,6 +98,7 @@ export async function getClaimerProfitablePrizeTxs(
   printAsterisks();
   console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
   const tiersRangeArray = context.tiers.rangeArray;
+  // console.log(vaults);
   const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, tiersRangeArray, {
     filterAutoClaimDisabled: true,
   });
