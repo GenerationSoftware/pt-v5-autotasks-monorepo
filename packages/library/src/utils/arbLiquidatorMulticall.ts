@@ -1,13 +1,10 @@
 import { Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractCallContext } from 'ethereum-multicall';
+import { getComplexMulticallResults } from '@pooltogether/v5-utils-js';
 
 import { ContractsBlob, ArbLiquidatorContext, Token, TokenWithRate } from '../types';
-import {
-  getComplexMulticallResults,
-  parseBigNumberAsFloat,
-  MARKET_RATE_CONTRACT_DECIMALS,
-} from '../utils';
+import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
 
 /**
