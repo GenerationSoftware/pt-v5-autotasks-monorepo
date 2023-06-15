@@ -1,14 +1,14 @@
-import { ethers, BigNumber, Contract } from "ethers";
-import { Provider } from "@ethersproject/providers";
+import { ethers, BigNumber, Contract } from 'ethers';
+import { Provider } from '@ethersproject/providers';
 
-import { ContractsBlob } from "../types";
-import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from "../utils/network";
+import { ContractsBlob } from '../types';
+import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from '../utils/network';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
   1: 1,
-  11155111: 1,
+  11155111: 0.01, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
   80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
 };
 
@@ -25,7 +25,7 @@ export const getFeesUsd = async (
   chainId: number,
   estimatedGasLimit: BigNumber,
   gasTokenMarketRateUsd: number,
-  provider: Provider
+  provider: Provider,
 ): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
   const fees = { baseFeeUsd: null, maxFeeUsd: null, avgFeeUsd: null };
 
@@ -66,7 +66,7 @@ export const getGasTokenMarketRateUsd = async (contracts: ContractsBlob, marketR
   // const wethRate = await marketRate.priceFeed(wethAddress, "USD");
 
   const nativeTokenAddress = TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS;
-  const gasTokenRate = await marketRate.priceFeed(nativeTokenAddress, "USD");
+  const gasTokenRate = await marketRate.priceFeed(nativeTokenAddress, 'USD');
 
   return parseFloat(ethers.utils.formatUnits(gasTokenRate, MARKET_RATE_CONTRACT_DECIMALS));
 };

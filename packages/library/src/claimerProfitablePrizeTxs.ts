@@ -41,9 +41,9 @@ interface ClaimPrizesParams {
 }
 
 /**
- * Only claim if we're going to make at least $0.05 (This likely should be a config option)
+ * Only claim if we're going to make at least $0.01 (This likely should be a config option)
  */
-const MIN_PROFIT_THRESHOLD_USD = 0.05;
+const MIN_PROFIT_THRESHOLD_USD = 0.01;
 
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
