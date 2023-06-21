@@ -2728,6 +2728,24 @@
   resolved "https://registry.yarnpkg.com/@pooltogether/contract-list-schema/-/contract-list-schema-0.1.4.tgz#52a4b35e1ef1b263c643e517ca1908180cf1cb6e"
   integrity sha512-oLAu9TGfU9xf1QFJJZQxUj0hsfcRao/DMCZ1hVvDkmwOnX1PUkuhuvZfvgwLFd4hJ4m2kjdCyTJ+VJ5qvgjyww==
 
+"@pooltogether/v5-utils-js@0.0.1-beta.23":
+  version "0.0.1-beta.23"
+  resolved "https://registry.yarnpkg.com/@pooltogether/v5-utils-js/-/v5-utils-js-0.0.1-beta.23.tgz#fdf7c3b7ef1fe904ece44c23e919ab0713e4af97"
+  integrity sha512-IhVA+nbuE3xw5Gc3F+/Tgd9VXMi5PjRlSc5IOgMgNfPNP9IlC8YbMDUOeCdftFxVVBO7U0G5Dkn2OI9VWD2H9w==
+  dependencies:
+    "@pooltogether/contract-list-schema" "^0.1.4"
+    "@types/lodash" "^4.14.195"
+    ethereum-multicall "^2.17.0"
+    ethers "^5.5.1"
+    ethers-multicall-provider "^3.0.3"
+    graphql "^16.6.0"
+    graphql-request "^6.0.0"
+    lodash "^4.17.21"
+    node-fetch "^2.6.11"
+    tsc "^2.0.4"
+    tsc-watch "^6.0.4"
+    typescript "^5.0.4"
+
 "@rollup/plugin-babel@^5.1.0":
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.3.1.tgz#04bc0608f4aa4b2e4b1aebf284344d0f68fda283"
