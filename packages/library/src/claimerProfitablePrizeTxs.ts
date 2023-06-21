@@ -77,71 +77,26 @@ export async function getClaimerProfitablePrizeTxs(
   const context: ClaimPrizeContext = await getContext(prizePool, marketRate, readProvider);
   printContext(context);
 
-  // #2. Get data about all user's with balances from the subgraph
-  printAsterisks();
-  console.log(chalk.blue(`2. Subgraph: Getting data ...`));
-  let vaults = await getSubgraphVaults(chainId);
-  if (vaults.length === 0) {
-    throw new Error('Claimer: No vaults found in subgraph');
-  }
-  console.log(chalk.dim(`${vaults.length} vaults.`));
-
-  // Page through and concat all accounts for all vaults
-  vaults = await populateSubgraphVaultAccounts(chainId, vaults);
-
-  const accountsCount = vaults.reduce((accumulator, vault) => {
-    return accumulator + vault.accounts.length;
-  }, 0);
-  console.log(chalk.dim(`${accountsCount} accounts.`));
-
-  // #3. Get more data about which users are winners from the contract
-  printAsterisks();
-  console.log(chalk.blue(`3. Multicall: Getting vault winners ...`));
-  const tiersRangeArray = context.tiers.rangeArray;
-  // console.log(vaults);
-  const claims: Claim[] = await getWinnersClaims(readProvider, contracts, vaults, tiersRangeArray, {
-    filterAutoClaimDisabled: true,
-  });
-  logClaimSummary(claims, context);
-  console.log(chalk.dim(`${claims.length} prizes.`));
-  if (claims.length === 0) {
-    console.warn(chalk.yellow(`There are 0 winners in the previous draw. Exiting ...`));
-
-    return transactionsPopulated;
-  }
-
-  // #4. Cross-ref other to filter out already claimed prizes
-  printAsterisks();
-  console.log(chalk.blue(`4. Filtering: Cross-referencing claimed prizes subgraph ...`));
+  // #2. Get data from v5-draw-results
   const drawId = context.drawId.toString();
-  const claimedPrizes: ClaimedPrize[] = await getSubgraphClaimedPrizes(chainId, drawId);
+  const claims = await fetchClaims(chainId, prizePool.address, drawId);
+  console.log(claims);
 
-  if (claimedPrizes.length === 0) {
-    console.log(chalk.dim(`No claimed prizes in subgraph for draw #${drawId}.`));
-  } else {
-    console.log(chalk.dim(`${claimedPrizes.length} prizes already claimed for draw #${drawId}.`));
-  }
-  console.log(
-    chalk.dim(`${claims.length - claimedPrizes.length} prizes remaining to be claimed...`),
-  );
-
-  const filteredClaims: Claim[] = await filterClaimedPrizes(claims, claimedPrizes);
-
-  // #5. Start iterating through vaults
+  // #3. Decide if profitable or not
   printAsterisks();
   console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
-  // #7. Decide if profitable or not
   const claimPrizesParams = await calculateProfit(
     readProvider,
     chainId,
     contracts,
     claimer,
-    filteredClaims,
+    claims,
     feeRecipient,
     marketRate,
     context,
   );
+
   // It's profitable if there is at least 1 claim to claim
   if (claimPrizesParams.claims.length > 0) {
     console.log(chalk.green('Claimer: Add Populated Claim Tx'));
@@ -340,19 +295,6 @@ const logClaimSummary = (claims: Claim[], context: ClaimPrizeContext) => {
   });
 };
 
-const filterClaimedPrizes = (claims: Claim[], claimedPrizes: ClaimedPrize[]): Claim[] => {
-  const formattedClaimedPrizes = claimedPrizes.map((claimedPrize) => {
-    // From Subgraph, `id` is:
-    // vault ID + winner ID + draw ID + tier
-    const [vault, winner, draw, tier] = claimedPrize.id.split('-');
-    return `${vault}-${winner}-${tier}`;
-  });
-
-  return claims.filter(
-    (claim) => !formattedClaimedPrizes.includes(`${claim.vault}-${claim.winner}-${claim.tier}`),
-  );
-};
-
 const buildParams = (
   context: ClaimPrizeContext,
   claims: Claim[],
@@ -511,4 +453,26 @@ const getClaimInfo = async (
   }
 
   return { claimCount, claimFeesUsd, totalCostUsd };
+};
+
+const fetchClaims = async (
+  chainId: number,
+  prizePoolAddress: string,
+  drawId: string,
+): Promise<Claim[]> => {
+  let claims: Claim[] = [];
+  const uri = `https://raw.githubusercontent.com/pooltogether/v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
+  console.log(uri);
+
+  try {
+    const response = await fetch(uri);
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    claims = await response.json();
+  } catch (err) {
+    console.log(err);
+  }
+
+  return claims;
 };
