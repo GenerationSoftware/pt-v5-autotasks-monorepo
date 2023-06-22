@@ -73,7 +73,7 @@ export async function getClaimerProfitablePrizeTxs(
   // #2. Get data from v5-draw-results
   const drawId = context.drawId.toString();
   const claims = await fetchClaims(chainId, prizePool.address, drawId);
-  const claimedPrizes = claims.map((claim) => claim.claimed);
+  const claimedPrizes = claims.filter((claim) => claim.claimed);
   const claimsRemainingCount = claims.length - claimedPrizes.length;
   if (claimedPrizes.length === 0) {
     console.log(chalk.dim(`No claimed prizes in subgraph for draw #${drawId}.`));
