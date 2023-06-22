@@ -3,6 +3,7 @@ import { PopulatedTransaction } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
 import { Claim, getContract } from '@pooltogether/v5-utils-js';
 import chalk from 'chalk';
+import fetch from 'node-fetch';
 
 import {
   ContractsBlob,
