@@ -28,7 +28,7 @@ if (esMain(import.meta)) {
   const populatedTxs = await populateTransactions(params, readProvider);
 
   printAsterisks();
-  console.log(chalk.blue(`6. Sending transactions ...`));
+  console.log(chalk.blue(`Sending transactions ...`));
   printSpacer();
 
   const fakeEvent = {
