@@ -84,11 +84,11 @@ export interface GetClaimerProfitablePrizeTxsParams {
   feeRecipient: string;
 }
 
-export interface Claim {
-  vault: string;
-  winner: string;
-  tier: number;
-}
+// export interface Claim {
+//   vault: string;
+//   winner: string;
+//   tier: number;
+// }
 
 export interface RelayerContext {
   tokenInAllowance: BigNumber;

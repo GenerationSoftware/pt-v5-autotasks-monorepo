@@ -1,19 +1,11 @@
 import { ethers, BigNumber, Contract } from 'ethers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
-import {
-  ClaimedPrize,
-  getContract,
-  getSubgraphVaults,
-  getSubgraphClaimedPrizes,
-  getWinnersClaims,
-  populateSubgraphVaultAccounts,
-} from '@pooltogether/v5-utils-js';
+import { Claim, getContract } from '@pooltogether/v5-utils-js';
 import chalk from 'chalk';
 
 import {
   ContractsBlob,
-  Claim,
   Token,
   ClaimPrizeContext,
   GetClaimerProfitablePrizeTxsParams,
@@ -80,7 +72,20 @@ export async function getClaimerProfitablePrizeTxs(
   // #2. Get data from v5-draw-results
   const drawId = context.drawId.toString();
   const claims = await fetchClaims(chainId, prizePool.address, drawId);
-  console.log(claims);
+  const claimedPrizes = claims.map((claim) => claim.claimed);
+  const claimsRemainingCount = claims.length - claimedPrizes.length;
+  if (claimedPrizes.length === 0) {
+    console.log(chalk.dim(`No claimed prizes in subgraph for draw #${drawId}.`));
+  } else {
+    console.log(chalk.dim(`${claimedPrizes.length} prizes already claimed for draw #${drawId}.`));
+  }
+  console.log(chalk.dim(`${claimsRemainingCount} prizes remaining to be claimed...`));
+
+  if (claimsRemainingCount === 0) {
+    printAsterisks();
+    console.log(chalk.yellow(`No prizes left to claim. Exiting ...`));
+    return [];
+  }
 
   // #3. Decide if profitable or not
   printAsterisks();
@@ -462,7 +467,6 @@ const fetchClaims = async (
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
   const uri = `https://raw.githubusercontent.com/pooltogether/v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
-  console.log(uri);
 
   try {
     const response = await fetch(uri);
