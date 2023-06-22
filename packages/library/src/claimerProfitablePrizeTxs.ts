@@ -73,16 +73,16 @@ export async function getClaimerProfitablePrizeTxs(
   // #2. Get data from v5-draw-results
   const drawId = context.drawId.toString();
   const claims = await fetchClaims(chainId, prizePool.address, drawId);
-  const claimedPrizes = claims.filter((claim) => claim.claimed);
-  const claimsRemainingCount = claims.length - claimedPrizes.length;
-  if (claimedPrizes.length === 0) {
+  const unclaimedClaims = claims.filter((claim) => !claim.claimed);
+  const claimedClaims = claims.filter((claim) => claim.claimed);
+  if (claimedClaims.length === 0) {
     console.log(chalk.dim(`No claimed prizes in subgraph for draw #${drawId}.`));
   } else {
-    console.log(chalk.dim(`${claimedPrizes.length} prizes already claimed for draw #${drawId}.`));
+    console.log(chalk.dim(`${claimedClaims.length} prizes already claimed for draw #${drawId}.`));
   }
-  console.log(chalk.dim(`${claimsRemainingCount} prizes remaining to be claimed...`));
+  console.log(chalk.dim(`${unclaimedClaims.length} prizes remaining to be claimed...`));
 
-  if (claimsRemainingCount === 0) {
+  if (unclaimedClaims.length === 0) {
     printAsterisks();
     console.log(chalk.yellow(`No prizes left to claim. Exiting ...`));
     return [];
@@ -97,7 +97,7 @@ export async function getClaimerProfitablePrizeTxs(
     chainId,
     contracts,
     claimer,
-    claims,
+    unclaimedClaims,
     feeRecipient,
     marketRate,
     context,
@@ -144,7 +144,7 @@ const calculateProfit = async (
   chainId: number,
   contracts: ContractsBlob,
   claimer: Contract,
-  claims: Claim[],
+  unclaimedClaims: Claim[],
   feeRecipient: string,
   marketRate: Contract,
   context: ClaimPrizeContext,
@@ -162,7 +162,7 @@ const calculateProfit = async (
     chainId,
     context,
     claimer,
-    claims,
+    unclaimedClaims,
     feeRecipient,
     gasTokenMarketRateUsd,
   );
@@ -170,15 +170,15 @@ const calculateProfit = async (
   const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(
     context,
     claimer,
-    claims,
+    unclaimedClaims,
     gasCost,
   );
 
   printSpacer();
   // console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
-  // printSpacer();
+  // printSpacer();ƒ
 
-  const claimsSlice = claims.slice(0, claimCount);
+  const claimsSlice = unclaimedClaims.slice(0, claimCount);
   const claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
 
   console.log(chalk.magenta('5b. Profit/Loss (USD):'));
@@ -409,7 +409,7 @@ const getClaimInfo = async (
   let claimFees = BigNumber.from(0);
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
-  for (let numClaims = 1; numClaims < claims.length; numClaims++) {
+  for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     console.log(chalk.green(`Number of claims: ${numClaims}`));
     const nextClaimFees = await claimer.computeTotalFees(numClaims);
