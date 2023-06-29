@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
 import { PrizeClaimerConfigParams } from '@pooltogether/v5-autotasks-library';
 
-import { populateTransactions, processPopulatedTransactions } from './transactions';
+import { executeTransactions } from './transactions';
 
 const handlerLoadParams = (): PrizeClaimerConfigParams => {
   return {
@@ -17,7 +17,8 @@ export async function handler(event: RelayerParams) {
 
   const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, params.chainId);
 
-  const populatedTxs = await populateTransactions(params, readProvider);
+  await executeTransactions(event, readProvider, params);
 
-  await processPopulatedTransactions(event, populatedTxs, params);
+  // const populatedTxs = await populateTransactions(params, readProvider);
+  // await processPopulatedTransactions(event, populatedTxs, params);
 }

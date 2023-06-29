@@ -2,23 +2,27 @@ import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
 import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
 import {
-  getClaimerProfitablePrizeTxs,
+  executeClaimerProfitablePrizeTxs,
   PrizeClaimerConfigParams,
   FLASHBOTS_SUPPORTED_CHAINS,
-  GetClaimerProfitablePrizeTxsParams,
+  ExecuteClaimerProfitablePrizeTxsParams,
 } from '@pooltogether/v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
 import { Provider } from '@ethersproject/abstract-provider';
 
-export const populateTransactions = async (
-  params: GetClaimerProfitablePrizeTxsParams,
+export const executeTransactions = async (
+  event: RelayerParams,
   readProvider: Provider,
+  params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<PopulatedTransaction[]> => {
   let populatedTxs: PopulatedTransaction[] = [];
+
+  const relayer = new Relayer(event);
+
   try {
     const contracts = await downloadContractsBlob(params.chainId);
-    populatedTxs = await getClaimerProfitablePrizeTxs(contracts, readProvider, params);
+    await executeClaimerProfitablePrizeTxs(contracts, relayer, readProvider, params);
   } catch (e) {
     console.error(e);
   }
