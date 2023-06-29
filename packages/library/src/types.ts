@@ -79,9 +79,10 @@ export interface ClaimPrizeContext {
   tiers: TiersContext;
 }
 
-export interface GetClaimerProfitablePrizeTxsParams {
+export interface ExecuteClaimerProfitablePrizeTxsParams {
   chainId: number;
   feeRecipient: string;
+  useFlashbots: boolean;
 }
 
 export interface RelayerContext {

@@ -20,21 +20,21 @@ You can use this library in your own code, for instance if you would rather not 
 
 ```ts
 import { downloadContractsBlob } from "@pooltogether/v5-utils-js";
-import { getClaimerProfitablePrizeTxs } from "@pooltogether/v5-autotasks-library";
+import { executeClaimerProfitablePrizeTxs } from "@pooltogether/v5-autotasks-library";
 
 interface Params {
   contracts: ContractsBlob;
   readProvider: Provider;
-  config: GetClaimerProfitablePrizeTxsParams;
+  config: ExecuteClaimerProfitablePrizeTxsParams;
 }
 
 async function main() {
   const contracts = await downloadContractsBlob(chainId);
   const params: Params = { contracts, readProvider, config };
-  const populatedTxs = getClaimerProfitablePrizeTxs(params);
+  executeClaimerProfitablePrizeTxs(params);
 }
 
 main();
 ```
 
-Where `readProvider` is any ethers `Provider`, and `params` is of the `GetClaimerProfitablePrizeTxsParams` type. You can then pass the list of populated transactions `populatedTxs` to whichever relayer/write provider you would like to send transactions with.
+Where `readProvider` is any ethers `Provider`, and `params` is of the `ExecuteClaimerProfitablePrizeTxsParams` type. You can then pass the list of populated transactions `populatedTxs` to whichever relayer/write provider you would like to send transactions with.

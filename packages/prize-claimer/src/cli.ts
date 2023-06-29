@@ -9,7 +9,7 @@ import {
   PrizeClaimerConfigParams,
 } from '@pooltogether/v5-autotasks-library';
 
-import { populateTransactions, processPopulatedTransactions } from './transactions';
+import { executeTransactions } from './transactions';
 import { askQuestions } from './helpers/questions';
 
 import pkg from '../package.json';
@@ -25,17 +25,22 @@ if (esMain(import.meta)) {
     feeRecipient: config.FEE_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
   };
-  const populatedTxs = await populateTransactions(params, readProvider);
-
-  printAsterisks();
-  console.log(chalk.blue(`Sending transactions ...`));
-  printSpacer();
 
   const fakeEvent = {
     apiKey: config.RELAYER_API_KEY,
     apiSecret: config.RELAYER_API_SECRET,
   };
-  await processPopulatedTransactions(fakeEvent, populatedTxs, params);
+  await executeTransactions(fakeEvent, readProvider, params);
+
+  // printAsterisks();
+  // console.log(chalk.blue(`Sending transactions ...`));
+  // printSpacer();
+
+  // const fakeEvent = {
+  //   apiKey: config.RELAYER_API_KEY,
+  //   apiSecret: config.RELAYER_API_SECRET,
+  // };
+  // await processPopulatedTransactions(fakeEvent, populatedTxs, params);
 }
 
 export function main() {}

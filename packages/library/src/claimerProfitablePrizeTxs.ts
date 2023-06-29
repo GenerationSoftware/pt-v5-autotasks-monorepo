@@ -1,16 +1,16 @@
 import { ethers, BigNumber, Contract } from 'ethers';
-import { PopulatedTransaction } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
 import { Claim, getContract } from '@pooltogether/v5-utils-js';
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
+import { Relayer } from 'defender-relay-client';
 
 import {
   ContractsBlob,
   Token,
   ClaimPrizeContext,
-  GetClaimerProfitablePrizeTxsParams,
+  ExecuteClaimerProfitablePrizeTxsParams,
   TiersContext,
 } from './types';
 import {
@@ -20,6 +20,7 @@ import {
   printAsterisks,
   printSpacer,
   getFeesUsd,
+  FLASHBOTS_SUPPORTED_CHAINS,
   MARKET_RATE_CONTRACT_DECIMALS,
   getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
@@ -45,16 +46,15 @@ const MIN_PROFIT_THRESHOLD_USD = 0.01;
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
  * to claim for them. The fees the claimer bot can earn increase exponentially over time.
  *
- * @returns {(Promise|undefined)} Promise of an array of ethers PopulatedTransaction objects or undefined
+ * @returns {undefined} void function
  */
-export async function getClaimerProfitablePrizeTxs(
+export async function executeClaimerProfitablePrizeTxs(
   contracts: ContractsBlob,
+  relayer: Relayer,
   readProvider: Provider,
-  params: GetClaimerProfitablePrizeTxsParams,
-): Promise<PopulatedTransaction[] | undefined> {
+  params: ExecuteClaimerProfitablePrizeTxsParams,
+): Promise<undefined> {
   const { chainId, feeRecipient } = params;
-
-  let transactionsPopulated: PopulatedTransaction[] | undefined = [];
 
   const contractsVersion = {
     major: 1,
@@ -88,7 +88,7 @@ export async function getClaimerProfitablePrizeTxs(
   if (unclaimedClaims.length === 0) {
     printAsterisks();
     console.log(chalk.yellow(`No prizes left to claim. Exiting ...`));
-    return [];
+    return;
   }
 
   // #3. Group claims by vault & tier
@@ -101,6 +101,8 @@ export async function getClaimerProfitablePrizeTxs(
     const [vault, tier] = key.split(',');
     const groupedClaims = value;
 
+    printSpacer();
+    printAsterisks();
     console.log(chalk.blueBright(`Processing Vault: ${vault} Tier ${tier} ...`));
 
     // #4. Decide if profitable or not
@@ -123,15 +125,34 @@ export async function getClaimerProfitablePrizeTxs(
     // It's profitable if there is at least 1 claim to claim
     // 5. Populate transaction
     if (claimPrizesParams.winners.length > 0) {
-      console.log(chalk.green('Claimer: Add Populated Claim Tx'));
-      const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
-      transactionsPopulated.push(tx);
+      console.log(chalk.green('Claimer: Execute Claim Transaction'));
+      printSpacer();
+
+      const populatedTx = await claimer.populateTransaction.claimPrizes(
+        ...Object.values(claimPrizesParams),
+      );
+
+      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
+      const isPrivate = chainSupportsFlashbots && params.useFlashbots;
+
+      console.log(chalk.greenBright.bold(`Flashbots (Private transaction) support:`, isPrivate));
+      console.log(chalk.greenBright.bold(`Sending transaction ...`));
+      let tx = await relayer.sendTransaction({
+        isPrivate,
+        data: populatedTx.data,
+        to: populatedTx.to,
+        gasLimit: 8000000,
+      });
+      console.log(tx);
+      const updatedTx = await relayer.query(tx.transactionId);
+      console.log(updatedTx);
+
+      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
     } else {
       console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
     }
   }
-
-  return transactionsPopulated;
 }
 
 /**
@@ -166,7 +187,6 @@ const calculateProfit = async (
   tier: number,
   claimer: Contract,
   unclaimedClaims: any,
-  // unclaimedClaims: Claim[],
   feeRecipient: string,
   marketRate: Contract,
   context: ClaimPrizeContext,
@@ -177,6 +197,7 @@ const calculateProfit = async (
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     gasTokenMarketRateUsd,
   );
+  console.log(unclaimedClaims);
 
   printSpacer();
   const gasCost = await getGasCost(
@@ -193,20 +214,16 @@ const calculateProfit = async (
   const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(
     context,
     claimer,
+    tier,
     unclaimedClaims,
     gasCost,
   );
 
   printSpacer();
-  // console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
-  // printSpacer();ƒ
+  console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
+  printSpacer();
 
   const claimsSlice = unclaimedClaims.slice(0, claimCount);
-  // vault: string,
-  // tier: number,
-  // winners: string[],
-  // prizeIndices: number[][],
-  // feeRecipient: string,
   const claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
   console.log(chalk.magenta('5b. Profit/Loss (USD):'));
@@ -224,7 +241,8 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  // const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  const profitable = true;
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
     'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
@@ -238,8 +256,7 @@ const calculateProfit = async (
 
   if (claimCount > 0) {
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
-
-    logClaims(claimsSlice);
+    // logClaims(claimsSlice);
   } else {
     console.log(chalk.yellow(`Unable to submit any optimal, profitable transactions.`));
   }
@@ -316,20 +333,20 @@ const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promis
   return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
 
-const logClaimSummary = (claims: Claim[], context: ClaimPrizeContext) => {
-  const tiersArray = context.tiers.rangeArray;
+// const logClaimSummary = (claims: Claim[], context: ClaimPrizeContext) => {
+//   const tiersArray = context.tiers.rangeArray;
 
-  let tierClaimsFiltered: { [index: number]: Claim[] } = {};
-  tiersArray.forEach((tierNum) => {
-    tierClaimsFiltered[tierNum] = claims.filter((claim) => claim.tier === tierNum);
-  });
+//   let tierClaimsFiltered: { [index: number]: Claim[] } = {};
+//   tiersArray.forEach((tierNum) => {
+//     tierClaimsFiltered[tierNum] = claims.filter((claim) => claim.tier === tierNum);
+//   });
 
-  tiersArray.forEach((tierNum) => {
-    const tierClaims = tierClaimsFiltered[tierNum];
-    const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
-    console.table({ Tier: { '#': tierWord, '# of Winners': tierClaims.length } });
-  });
-};
+//   tiersArray.forEach((tierNum) => {
+//     const tierClaims = tierClaimsFiltered[tierNum];
+//     const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
+//     console.table({ Tier: { '#': tierWord, '# of Winners': tierClaims.length } });
+//   });
+// };
 
 const buildParams = (
   vault: string,
@@ -373,7 +390,9 @@ const getGasCost = async (
 ) => {
   // 1. Gas cost for 1 claim:
   let claimsSlice = claims.slice(0, 1);
+  console.log(claimsSlice);
   let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
+  console.log(claimPrizesParams);
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimer, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
@@ -451,6 +470,7 @@ interface ClaimInfo {
 const getClaimInfo = async (
   context: ClaimPrizeContext,
   claimer: Contract,
+  tier: number,
   claims: Claim[],
   gasCost: any,
 ): Promise<ClaimInfo> => {
@@ -461,7 +481,7 @@ const getClaimInfo = async (
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     console.log(chalk.green(`Number of claims: ${numClaims}`));
-    const nextClaimFees = await claimer.computeTotalFees(numClaims);
+    const nextClaimFees = await claimer.computeTotalFees(tier, numClaims);
 
     // COSTS USD
     const claimCostUsd = gasCost.gasCostPerClaimUsd * numClaims;
@@ -494,17 +514,17 @@ const getClaimInfo = async (
     );
 
     // To push through a non-profitable tx for debugging:
-    // claimCount = numClaims;
-    // claimFees = nextClaimFees;
-    // if (numClaims === 3) {
-    //   return { claimCount, claimFeesUsd, totalCostUsd };
-    // }
-    if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
-      claimCount = numClaims;
-      claimFees = nextClaimFees;
-    } else {
-      break;
+    claimCount = numClaims;
+    claimFees = nextClaimFees;
+    if (numClaims === 1) {
+      return { claimCount, claimFeesUsd, totalCostUsd };
     }
+    // if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
+    //   claimCount = numClaims;
+    //   claimFees = nextClaimFees;
+    // } else {
+    //   break;
+    // }
   }
 
   return { claimCount, claimFeesUsd, totalCostUsd };
@@ -517,8 +537,6 @@ const fetchClaims = async (
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
   const uri = `https://raw.githubusercontent.com/pooltogether/v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
-  console.log('uri');
-  console.log(uri);
 
   try {
     const response = await fetch(uri);
