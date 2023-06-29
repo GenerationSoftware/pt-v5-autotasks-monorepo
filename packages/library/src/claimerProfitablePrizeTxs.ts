@@ -2,6 +2,7 @@ import { ethers, BigNumber, Contract } from 'ethers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
 import { Claim, getContract } from '@pooltogether/v5-utils-js';
+import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 
@@ -28,8 +29,10 @@ import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 
 interface ClaimPrizesParams {
-  drawId: string;
-  claims: Claim[];
+  vault: string;
+  tier: number;
+  winners: string[];
+  prizeIndices: number[][];
   feeRecipient: string;
 }
 
@@ -88,28 +91,44 @@ export async function getClaimerProfitablePrizeTxs(
     return [];
   }
 
-  // #3. Decide if profitable or not
-  printAsterisks();
-  console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
+  // #3. Group claims by vault & tier
+  const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
+  console.log('unclaimedClaimsGrouped');
+  console.log(unclaimedClaimsGrouped);
 
-  const claimPrizesParams = await calculateProfit(
-    readProvider,
-    chainId,
-    contracts,
-    claimer,
-    unclaimedClaims,
-    feeRecipient,
-    marketRate,
-    context,
-  );
+  for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
+    const [key, value] = vaultTier;
+    const [vault, tier] = key.split(',');
+    const groupedClaims = value;
 
-  // It's profitable if there is at least 1 claim to claim
-  if (claimPrizesParams.claims.length > 0) {
-    console.log(chalk.green('Claimer: Add Populated Claim Tx'));
-    const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
-    transactionsPopulated.push(tx);
-  } else {
-    console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
+    console.log(chalk.blueBright(`Processing Vault: ${vault} Tier ${tier} ...`));
+
+    // #4. Decide if profitable or not
+    printAsterisks();
+    console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
+
+    const claimPrizesParams = await calculateProfit(
+      readProvider,
+      chainId,
+      contracts,
+      vault,
+      Number(tier),
+      claimer,
+      groupedClaims,
+      feeRecipient,
+      marketRate,
+      context,
+    );
+
+    // It's profitable if there is at least 1 claim to claim
+    // 5. Populate transaction
+    if (claimPrizesParams.winners.length > 0) {
+      console.log(chalk.green('Claimer: Add Populated Claim Tx'));
+      const tx = await claimer.populateTransaction.claimPrizes(...Object.values(claimPrizesParams));
+      transactionsPopulated.push(tx);
+    } else {
+      console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
+    }
   }
 
   return transactionsPopulated;
@@ -143,8 +162,11 @@ const calculateProfit = async (
   readProvider: Provider,
   chainId: number,
   contracts: ContractsBlob,
+  vault: string,
+  tier: number,
   claimer: Contract,
-  unclaimedClaims: Claim[],
+  unclaimedClaims: any,
+  // unclaimedClaims: Claim[],
   feeRecipient: string,
   marketRate: Contract,
   context: ClaimPrizeContext,
@@ -160,7 +182,8 @@ const calculateProfit = async (
   const gasCost = await getGasCost(
     readProvider,
     chainId,
-    context,
+    vault,
+    tier,
     claimer,
     unclaimedClaims,
     feeRecipient,
@@ -179,7 +202,12 @@ const calculateProfit = async (
   // printSpacer();ƒ
 
   const claimsSlice = unclaimedClaims.slice(0, claimCount);
-  const claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
+  // vault: string,
+  // tier: number,
+  // winners: string[],
+  // prizeIndices: number[][],
+  // feeRecipient: string,
+  const claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
   console.log(chalk.magenta('5b. Profit/Loss (USD):'));
   printSpacer();
@@ -221,7 +249,9 @@ const calculateProfit = async (
 
 const logClaims = (claims: Claim[]) => {
   printSpacer();
-  claims.forEach((claim) => console.log(`${claim.vault}-${claim.winner}-${claim.tier}`));
+  claims.forEach((claim) =>
+    console.log(`${claim.vault}-${claim.winner}-${claim.tier}-${claim.prizeIndex}`),
+  );
   printSpacer();
   printSpacer();
 };
@@ -240,7 +270,7 @@ const getContext = async (
   const drawId = await prizePool.getLastCompletedDrawId();
 
   const numberOfTiers = await prizePool.numberOfTiers();
-  const rangeArray = Array.from({ length: numberOfTiers + 1 }, (value, index) => index);
+  const rangeArray = Array.from({ length: numberOfTiers }, (value, index) => index);
   const tiers: TiersContext = { numberOfTiers, rangeArray };
 
   const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
@@ -302,13 +332,31 @@ const logClaimSummary = (claims: Claim[], context: ClaimPrizeContext) => {
 };
 
 const buildParams = (
-  context: ClaimPrizeContext,
+  vault: string,
+  tier: number,
   claims: Claim[],
   feeRecipient: string,
 ): ClaimPrizesParams => {
+  let winners: string[] = [];
+  let prizeIndices: number[][] = [];
+
+  claims.forEach((claim) => {
+    winners.push(claim.winner);
+    // TODO: Can submit multiple prizes for 1 user address here:
+    // ie. vault, tier, winner, [prize 1, prize 2]
+    prizeIndices.push([claim.prizeIndex]);
+    // winners: string[],
+    // prizeIndices: number[][],
+  });
+
+  // prizeIndices[0][2]
+  // prizeIndices[1][1]
+
   return {
-    drawId: context.drawId,
-    claims,
+    vault,
+    tier,
+    winners,
+    prizeIndices,
     feeRecipient,
   };
 };
@@ -316,7 +364,8 @@ const buildParams = (
 const getGasCost = async (
   readProvider: Provider,
   chainId: number,
-  context: ClaimPrizeContext,
+  vault: string,
+  tier: number,
   claimer: Contract,
   claims: Claim[],
   feeRecipient: string,
@@ -324,7 +373,7 @@ const getGasCost = async (
 ) => {
   // 1. Gas cost for 1 claim:
   let claimsSlice = claims.slice(0, 1);
-  let claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
+  let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimer, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
@@ -340,7 +389,7 @@ const getGasCost = async (
 
   // 2. Gas cost for 2 claims:
   claimsSlice = claims.slice(0, 2);
-  claimPrizesParams = buildParams(context, claimsSlice, feeRecipient);
+  claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
   const estimatedGasLimitForTwo = await getEstimatedGasLimit(claimer, claimPrizesParams);
   if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
@@ -468,10 +517,13 @@ const fetchClaims = async (
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
   const uri = `https://raw.githubusercontent.com/pooltogether/v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
+  console.log('uri');
+  console.log(uri);
 
   try {
     const response = await fetch(uri);
     if (!response.ok) {
+      console.log(chalk.yellow(`Draw results not yet populated for new draw.`));
       throw new Error(response.statusText);
     }
     claims = await response.json();
