@@ -1,7 +1,7 @@
 {
-  "name": "@pooltogether/v5-autotasks-library",
-  "version": "0.0.1-beta.6",
-  "description": "Library of shared utils to run PoolTogether hyperstructure (v5) autotasks.",
+  "name": "@generationsoftware/pt-v5-autotasks-library",
+  "version": "0.0.1-beta.7",
+  "description": "Library of shared utils to run PoolTogether v5 hyperstructure autotasks.",
   "author": "PoolTogether Inc.",
   "homepage": "https://github.com/pooltogether/v5-autotasks/packages/library/README.md",
   "license": "ISC",
@@ -27,7 +27,7 @@
     "url": "https://github.com/pooltogether/v5-autotasks/issues"
   },
   "dependencies": {
-    "@pooltogether/v5-utils-js": "0.0.1-beta.23",
+    "@generationsoftware/pt-v5-utils-js": "0.0.1-beta.27",
     "chalk": "^4.1.2",
     "defender-relay-client": "1.39.0",
     "ethers": "5.7.2",

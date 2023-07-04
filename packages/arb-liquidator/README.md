@@ -1,4 +1,4 @@
-# @pooltogether/v5-autotasks-arb-liquidator
+# @generationsoftware/pt-v5-autotasks-arb-liquidator
 
 ![title image for PoolTogether Arbitrage Liquidator Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/arb-liquidator/arb-liquidator-img.png "title image for PoolTogether Arbitrage Liquidator Bot")
 

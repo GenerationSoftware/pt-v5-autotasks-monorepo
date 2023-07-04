@@ -4,7 +4,7 @@ Monorepo grouping PoolTogether hyperstructure (v5) bots as OpenZeppelin Defender
 
 ## Installation
 
-1. This library uses `yalc` to manage local dependencies. You will need to clone the `v5-utils-js` repo and publish it (you can publish it using `yarn start` after `yarn install` in the `v5-utils-js` directory).
+1. This library uses `yalc` to manage local dependencies. You will need to clone the `pt-v5-utils-js` repo and publish it (you can publish it using `yarn start` after `yarn install` in the `pt-v5-utils-js` directory).
 
 2. Following that, make sure to run `yarn yalcadd` before installing to setup local dependencies.
 

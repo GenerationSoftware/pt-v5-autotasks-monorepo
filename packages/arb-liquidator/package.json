@@ -1,5 +1,5 @@
 {
-  "name": "@pooltogether/v5-autotasks-arb-liquidator",
+  "name": "@generationsoftware/pt-v5-autotasks-arb-liquidator",
   "version": "0.0.1",
   "description": "Autotask to check if there are arbitrage profits from a network's liquidator.",
   "author": "PoolTogether Inc.",

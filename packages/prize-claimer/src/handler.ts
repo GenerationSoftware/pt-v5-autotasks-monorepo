@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
-import { PrizeClaimerConfigParams } from '@pooltogether/v5-autotasks-library';
+import { PrizeClaimerConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { executeTransactions } from './transactions';
 

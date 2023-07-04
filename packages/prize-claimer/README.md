@@ -1,4 +1,4 @@
-# @pooltogether/v5-autotasks-prize-claimer
+# @generationsoftware/pt-v5-autotasks-prize-claimer
 
 ![title image for PoolTogether Prize Claimer Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/prize-claimer/prize-claim-img.png "title image for PoolTogether Prize Claimer Bot")
 

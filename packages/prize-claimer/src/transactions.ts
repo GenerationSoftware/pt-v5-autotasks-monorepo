@@ -1,12 +1,12 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
-import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   executeClaimerProfitablePrizeTxs,
   PrizeClaimerConfigParams,
   FLASHBOTS_SUPPORTED_CHAINS,
   ExecuteClaimerProfitablePrizeTxsParams,
-} from '@pooltogether/v5-autotasks-library';
+} from '@generationsoftware/pt-v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
 import { Provider } from '@ethersproject/abstract-provider';

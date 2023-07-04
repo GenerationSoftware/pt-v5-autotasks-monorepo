@@ -1,7 +1,7 @@
 import esMain from 'es-main';
 import Configstore from 'configstore';
 
-import { askChainId } from '@pooltogether/v5-autotasks-library';
+import { askChainId } from '@generationsoftware/pt-v5-autotasks-library';
 
 import pkg from '../package.json';
 

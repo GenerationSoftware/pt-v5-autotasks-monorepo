@@ -1,12 +1,12 @@
 import chalk from 'chalk';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
-import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   getWithdrawClaimRewardsTx,
   printAsterisks,
   printSpacer,
-} from '@pooltogether/v5-autotasks-library';
+} from '@generationsoftware/pt-v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
 
 export const populateTransaction = async (params, readProvider): Promise<PopulatedTransaction> => {

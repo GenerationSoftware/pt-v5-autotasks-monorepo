@@ -1,5 +1,5 @@
 {
-  "name": "@pooltogether/v5-autotasks-withdraw-claim-rewards",
+  "name": "@generationsoftware/pt-v5-autotasks-withdraw-claim-rewards",
   "version": "0.0.1",
   "description": "Autotask to automatically sweep prize claim rewards PoolTogether Hyperstructure (v5) prizes.",
   "author": "PoolTogether Inc.",

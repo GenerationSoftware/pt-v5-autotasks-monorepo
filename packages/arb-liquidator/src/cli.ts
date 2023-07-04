@@ -6,8 +6,8 @@ import { ethers } from 'ethers';
 import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
-} from '@pooltogether/v5-autotasks-library';
-import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
+} from '@generationsoftware/pt-v5-autotasks-library';
+import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 

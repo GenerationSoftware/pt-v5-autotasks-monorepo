@@ -1,4 +1,4 @@
-# @pooltogether/v5-autotasks-yieldvault-mintrate
+# @generationsoftware/pt-v5-autotasks-yieldvault-mintrate
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
 

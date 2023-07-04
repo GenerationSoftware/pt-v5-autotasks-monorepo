@@ -3,11 +3,7 @@ import Configstore from 'configstore';
 import figlet from 'figlet';
 import chalk from 'chalk';
 import { ethers } from 'ethers';
-import {
-  printAsterisks,
-  printSpacer,
-  PrizeClaimerConfigParams,
-} from '@pooltogether/v5-autotasks-library';
+import { PrizeClaimerConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { executeTransactions } from './transactions';
 import { askQuestions } from './helpers/questions';
@@ -31,16 +27,6 @@ if (esMain(import.meta)) {
     apiSecret: config.RELAYER_API_SECRET,
   };
   await executeTransactions(fakeEvent, readProvider, params);
-
-  // printAsterisks();
-  // console.log(chalk.blue(`Sending transactions ...`));
-  // printSpacer();
-
-  // const fakeEvent = {
-  //   apiKey: config.RELAYER_API_KEY,
-  //   apiSecret: config.RELAYER_API_SECRET,
-  // };
-  // await processPopulatedTransactions(fakeEvent, populatedTxs, params);
 }
 
 export function main() {}

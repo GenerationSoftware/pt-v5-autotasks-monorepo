@@ -1,10 +1,10 @@
 import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { Claim, getContract } from '@pooltogether/v5-utils-js';
+import { Claim, getContract, flagClaimedRpc } from '@generationsoftware/pt-v5-utils-js';
+import { Relayer } from 'defender-relay-client';
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
-import { Relayer } from 'defender-relay-client';
 
 import {
   ContractsBlob,
@@ -75,11 +75,15 @@ export async function executeClaimerProfitablePrizeTxs(
 
   // #2. Get data from v5-draw-results
   const drawId = context.drawId.toString();
-  const claims = await fetchClaims(chainId, prizePool.address, drawId);
+  let claims = await fetchClaims(chainId, prizePool.address, drawId);
+
+  // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
+  claims = await flagClaimedRpc(readProvider, contracts, claims);
+
   const unclaimedClaims = claims.filter((claim) => !claim.claimed);
   const claimedClaims = claims.filter((claim) => claim.claimed);
   if (claimedClaims.length === 0) {
-    console.log(chalk.dim(`No claimed prizes in subgraph for draw #${drawId}.`));
+    console.log(chalk.dim(`No claimed prizes for draw #${drawId}.`));
   } else {
     console.log(chalk.dim(`${claimedClaims.length} prizes already claimed for draw #${drawId}.`));
   }
@@ -91,10 +95,10 @@ export async function executeClaimerProfitablePrizeTxs(
     return;
   }
 
-  // #3. Group claims by vault & tier
+  // #4. Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
-  console.log('unclaimedClaimsGrouped');
-  console.log(unclaimedClaimsGrouped);
+  // console.log('unclaimedClaimsGrouped');
+  // console.log(unclaimedClaimsGrouped);
 
   for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
     const [key, value] = vaultTier;
@@ -105,7 +109,7 @@ export async function executeClaimerProfitablePrizeTxs(
     printAsterisks();
     console.log(chalk.blueBright(`Processing Vault: ${vault} Tier ${tier} ...`));
 
-    // #4. Decide if profitable or not
+    // #5. Decide if profitable or not
     printAsterisks();
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
@@ -123,7 +127,7 @@ export async function executeClaimerProfitablePrizeTxs(
     );
 
     // It's profitable if there is at least 1 claim to claim
-    // 5. Populate transaction
+    // #6. Populate transaction
     if (claimPrizesParams.winners.length > 0) {
       console.log(chalk.green('Claimer: Execute Claim Transaction'));
       printSpacer();
@@ -137,15 +141,12 @@ export async function executeClaimerProfitablePrizeTxs(
 
       console.log(chalk.greenBright.bold(`Flashbots (Private transaction) support:`, isPrivate));
       console.log(chalk.greenBright.bold(`Sending transaction ...`));
-      let tx = await relayer.sendTransaction({
+      const tx = await relayer.sendTransaction({
         isPrivate,
         data: populatedTx.data,
         to: populatedTx.to,
         gasLimit: 8000000,
       });
-      console.log(tx);
-      const updatedTx = await relayer.query(tx.transactionId);
-      console.log(updatedTx);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
@@ -197,7 +198,6 @@ const calculateProfit = async (
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     gasTokenMarketRateUsd,
   );
-  console.log(unclaimedClaims);
 
   printSpacer();
   const gasCost = await getGasCost(

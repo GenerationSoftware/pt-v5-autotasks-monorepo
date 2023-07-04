@@ -8,7 +8,7 @@
   "scripts": {
     "lerna": "lerna",
     "publish": "npm run lerna publish --conventional-commits --exact --include-merged-tags",
-    "yalcadd": "npx yalc add @pooltogether/v5-utils-js --pure"
+    "yalcadd": "npx yalc add @generationsoftware/pt-v5-utils-js --pure"
   },
   "devDependencies": {
     "@types/node": "18.11.9",

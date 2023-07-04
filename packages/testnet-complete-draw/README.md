@@ -1,4 +1,4 @@
-# @pooltogether/v5-autotasks-testnet-prizepool
+# @generationsoftware/pt-v5-autotasks-testnet-prizepool
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to start and complete a draw on a TestNet PrizePool.
 

@@ -1,4 +1,4 @@
-# @pooltogether/v5-autotasks-draw-reserve
+# @generationsoftware/pt-v5-autotasks-draw-reserve
 
 ![title image for PoolTogether Draw Reserve Sweeper Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/draw-reserve/prize-claim-img.png "title image for PoolTogether Draw Reserve Sweeper Bot")
 

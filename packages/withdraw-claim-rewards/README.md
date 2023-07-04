@@ -1,4 +1,4 @@
-# @pooltogether/v5-autotasks-withdraw-claim-rewards
+# @generationsoftware/pt-v5-autotasks-withdraw-claim-rewards
 
 ![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/withdraw-claim-rewards/prize-claim-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot")
 
