@@ -19,8 +19,8 @@ export default defineConfig((opt) => {
       };
     },
     noExternal: [
-      '@pooltogether/v5-autotasks-library',
-      '@pooltogether/v5-utils-js',
+      '@generationsoftware/pt-v5-autotasks-library',
+      '@generationsoftware/pt-v5-utils-js',
       'ethereum-multicall',
       'configstore',
     ],

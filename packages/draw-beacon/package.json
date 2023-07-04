@@ -1,5 +1,5 @@
 {
-  "name": "@pooltogether/v5-autotasks-draw-beacon",
+  "name": "@generationsoftware/pt-v5-autotasks-draw-beacon",
   "version": "0.0.1",
   "description": "Autotask to start and complete a draw.",
   "author": "PoolTogether Inc.",

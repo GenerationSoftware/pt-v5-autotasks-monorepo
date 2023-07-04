@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { DistinctQuestion } from 'inquirer';
 
-import { populateConfig } from '@pooltogether/v5-autotasks-library';
+import { populateConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import Configstore from 'configstore';
 
 interface PACKAGE_CONFIG {

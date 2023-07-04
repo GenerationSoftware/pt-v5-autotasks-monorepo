@@ -1,5 +1,5 @@
 {
-  "name": "@pooltogether/v5-autotasks-yieldvault-mintrate",
+  "name": "@generationsoftware/pt-v5-autotasks-yieldvault-mintrate",
   "version": "0.0.1",
   "description": "Autotask to poke each YieldVault's MintRate.",
   "author": "PoolTogether Inc.",

@@ -1,7 +1,7 @@
 import { ethers, Contract, BigNumber } from 'ethers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
-import { getContract } from '@pooltogether/v5-utils-js';
+import { getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import {

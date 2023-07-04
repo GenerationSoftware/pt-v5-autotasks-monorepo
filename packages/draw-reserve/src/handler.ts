@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
-import { DrawReserveConfigParams } from '@pooltogether/v5-autotasks-library';
+import { DrawReserveConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 import { populateTransaction, processPopulatedTransaction } from './transactions';

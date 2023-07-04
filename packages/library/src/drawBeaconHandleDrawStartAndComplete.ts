@@ -1,19 +1,19 @@
-import { PopulatedTransaction } from "@ethersproject/contracts";
-import { getContract } from "@pooltogether/v5-utils-js";
+import { PopulatedTransaction } from '@ethersproject/contracts';
+import { getContract } from '@generationsoftware/pt-v5-utils-js';
 
-import { ContractsBlob, ProviderOptions } from "./types";
-// const debug = require("debug")("pt-autotask-lib");
+import { ContractsBlob, ProviderOptions } from './types';
+// const debug = require("debug")("pt-v5-autotask-lib");
 
 export async function drawBeaconHandleDrawStartAndComplete(
   contracts: ContractsBlob,
-  config: ProviderOptions
+  config: ProviderOptions,
 ): Promise<PopulatedTransaction | undefined> {
   const { chainId, provider } = config;
 
-  const drawBeacon = getContract("DrawBeacon", chainId, provider, contracts);
+  const drawBeacon = getContract('DrawBeacon', chainId, provider, contracts);
 
   if (!drawBeacon) {
-    throw new Error("DrawBeacon: Contract Unavailable");
+    throw new Error('DrawBeacon: Contract Unavailable');
   }
 
   const nextDrawId = await drawBeacon.getNextDrawId();
@@ -38,20 +38,20 @@ export async function drawBeaconHandleDrawStartAndComplete(
   let transactionPopulated: PopulatedTransaction | undefined;
 
   if (canStartDraw) {
-    console.log("DrawBeacon: Starting Draw");
+    console.log('DrawBeacon: Starting Draw');
     transactionPopulated = await drawBeacon.populateTransaction.startDraw();
   } else if (!canCompleteDraw) {
     console.log(
-      `DrawBeacon: Draw ${nextDrawId} not ready to start.\nBeaconPeriodEndAt: ${beaconPeriodEndAt}`
+      `DrawBeacon: Draw ${nextDrawId} not ready to start.\nBeaconPeriodEndAt: ${beaconPeriodEndAt}`,
     );
   }
 
   if (canCompleteDraw) {
-    console.log("DrawBeacon: Completing Draw");
+    console.log('DrawBeacon: Completing Draw');
     transactionPopulated = await drawBeacon.populateTransaction.completeDraw();
   } else if (!canStartDraw) {
     console.log(
-      `DrawBeacon: Draw ${nextDrawId} not ready to complete.\nIsRngRequested: ${isRngRequested}\nIsRngCompleted: ${isRngCompleted}`
+      `DrawBeacon: Draw ${nextDrawId} not ready to complete.\nIsRngRequested: ${isRngRequested}\nIsRngCompleted: ${isRngCompleted}`,
     );
   }
 

@@ -1,5 +1,5 @@
 {
-  "name": "@pooltogether/v5-autotasks-draw-reserve",
+  "name": "@generationsoftware/pt-v5-autotasks-draw-reserve",
   "version": "0.0.1",
   "description": "Autotask to automatically sweep draw reserve for bots who start & complete draws for the PoolTogether Hyperstructure (v5).",
   "author": "PoolTogether Inc.",

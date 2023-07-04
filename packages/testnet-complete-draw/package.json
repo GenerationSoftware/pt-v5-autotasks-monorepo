@@ -1,5 +1,5 @@
 {
-  "name": "@pooltogether/v5-autotasks-testnet-prizepool",
+  "name": "@generationsoftware/pt-v5-autotasks-testnet-prizepool",
   "version": "0.0.1",
   "description": "Autotask to start and complete a draw on a TestNet PrizePool.",
   "author": "PoolTogether Inc.",

@@ -2,11 +2,11 @@ import { Relayer } from 'defender-relay-client';
 import { ethers } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { downloadContractsBlob } from '@pooltogether/v5-utils-js';
+import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
-} from '@pooltogether/v5-autotasks-library';
+} from '@generationsoftware/pt-v5-autotasks-library';
 
 const handlerLoadParams = (
   signer: Provider | DefenderRelaySigner,

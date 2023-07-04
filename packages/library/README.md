@@ -1,17 +1,17 @@
-# @pooltogether/v5-autotasks-library
+# @generationsoftware/pt-v5-autotasks-library
 
 PoolTogether hyperstructure (v5) supporting functions for the bots.
 
 ## Install
 
 ```
-yarn add @pooltogether/v5-autotasks-library
+yarn add @generationsoftware/pt-v5-autotasks-library
 ```
 
 or
 
 ```
-npm install @pooltogether/v5-autotasks-library
+npm install @generationsoftware/pt-v5-autotasks-library
 ```
 
 ## Usage
@@ -19,8 +19,8 @@ npm install @pooltogether/v5-autotasks-library
 You can use this library in your own code, for instance if you would rather not use OpenZeppelin Defender for your automated/cron-based bots. Here's an example:
 
 ```ts
-import { downloadContractsBlob } from "@pooltogether/v5-utils-js";
-import { executeClaimerProfitablePrizeTxs } from "@pooltogether/v5-autotasks-library";
+import { downloadContractsBlob } from "@generationsoftware/pt-v5-utils-js";
+import { executeClaimerProfitablePrizeTxs } from "@generationsoftware/pt-v5-autotasks-library";
 
 interface Params {
   contracts: ContractsBlob;
