@@ -241,8 +241,9 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  // const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
-  const profitable = true;
+  // To push through a non-profitable tx for debugging:
+  // const profitable = true;
+  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
     'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
@@ -514,17 +515,17 @@ const getClaimInfo = async (
     );
 
     // To push through a non-profitable tx for debugging:
-    claimCount = numClaims;
-    claimFees = nextClaimFees;
-    if (numClaims === 1) {
-      return { claimCount, claimFeesUsd, totalCostUsd };
-    }
-    // if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
-    //   claimCount = numClaims;
-    //   claimFees = nextClaimFees;
-    // } else {
-    //   break;
+    // claimCount = numClaims;
+    // claimFees = nextClaimFees;
+    // if (numClaims === 1) {
+    //   return { claimCount, claimFeesUsd, totalCostUsd };
     // }
+    if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
+      claimCount = numClaims;
+      claimFees = nextClaimFees;
+    } else {
+      break;
+    }
   }
 
   return { claimCount, claimFeesUsd, totalCostUsd };
@@ -536,7 +537,7 @@ const fetchClaims = async (
   drawId: string,
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
-  const uri = `https://raw.githubusercontent.com/pooltogether/v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
+  const uri = `https://raw.githubusercontent.com/GenerationSoftware/pt-v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
 
   try {
     const response = await fetch(uri);
