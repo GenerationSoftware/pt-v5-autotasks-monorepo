@@ -97,32 +97,34 @@ export async function executeClaimerProfitablePrizeTxs(
 
   // #4. Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
-  // console.log('unclaimedClaimsGrouped');
-  // console.log(unclaimedClaimsGrouped);
 
   let canaryTierNotProfitable = false;
   for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
     const [key, value] = vaultTier;
     const [vault, tier] = key.split(',');
-    const groupedClaims = value;
+    const groupedClaims: any = value;
 
     printSpacer();
     printSpacer();
     printSpacer();
     printAsterisks();
 
-    console.log(chalk.blueBright(`Processing ...`));
-    console.log(chalk.blueBright(`Vault: ${vault}`));
-    console.log(chalk.blueBright(`Tier: ${tierWords(context, Number(tier))}`));
+    console.log(`Processing:`);
+    console.log(chalk.blueBright(`Vault:     ${vault}`));
+    console.log(chalk.blueBright(`Tier:      #${tierWords(context, Number(tier))}`));
+    console.log(chalk.blueBright(`# prizes:  ${groupedClaims.length}`));
 
     if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
+      printSpacer();
       console.log(
-        chalk.redBright(`Tier #${Number(tier)} (Canary tier) not profitable, skipping ...`),
+        chalk.redBright(`Tier #${tierWords(context, Number(tier))} not profitable, skipping ...`),
       );
+      printSpacer();
       continue;
     }
 
     // #5. Decide if profitable or not
+    printSpacer();
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
     const claimPrizesParams = await calculateProfit(
@@ -141,19 +143,22 @@ export async function executeClaimerProfitablePrizeTxs(
     // It's profitable if there is at least 1 claim to claim
     // #6. Populate transaction
     if (claimPrizesParams.winners.length > 0) {
+      printSpacer();
       console.log(
         chalk.green(`Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}`),
       );
+      printSpacer();
+
+      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
+      const isPrivate = chainSupportsFlashbots && params.useFlashbots;
+
+      console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
       printSpacer();
 
       const populatedTx = await claimer.populateTransaction.claimPrizes(
         ...Object.values(claimPrizesParams),
       );
 
-      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
-      const isPrivate = chainSupportsFlashbots && params.useFlashbots;
-
-      console.log(chalk.greenBright.bold(`Flashbots (Private transaction) support:`, isPrivate));
       console.log(chalk.greenBright.bold(`Sending transaction ...`));
       const tx = await relayer.sendTransaction({
         isPrivate,
@@ -167,7 +172,7 @@ export async function executeClaimerProfitablePrizeTxs(
     } else {
       console.log(
         chalk.yellow(
-          `Claimer: Not profitable to claim for Draw #${context.drawId}, Tier: ${tierWords(
+          `Not profitable to claim for Draw #${context.drawId}, Tier: #${tierWords(
             context,
             Number(tier),
           )}`,
@@ -178,9 +183,7 @@ export async function executeClaimerProfitablePrizeTxs(
         canaryTierNotProfitable = true;
       } else {
         console.log(
-          chalk.redBright(
-            `Claimer: Not profitable to claim any more tiers yet for Draw #${context.drawId}`,
-          ),
+          chalk.redBright(`Not profitable to claim any more tiers yet for Draw #${context.drawId}`),
         );
 
         break;
@@ -290,9 +293,9 @@ const calculateProfit = async (
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
     logClaims(claimsSlice);
   } else {
-    console.log(
-      chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
-    );
+    // console.log(
+    //   chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
+    // );
   }
 
   return claimPrizesParams;
@@ -374,21 +377,6 @@ const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promis
 
   return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
-
-// const logClaimSummary = (claims: Claim[], context: ClaimPrizeContext) => {
-//   const tiersArray = context.tiers.rangeArray;
-
-//   let tierClaimsFiltered: { [index: number]: Claim[] } = {};
-//   tiersArray.forEach((tierNum) => {
-//     tierClaimsFiltered[tierNum] = claims.filter((claim) => claim.tier === tierNum);
-//   });
-
-//   tiersArray.forEach((tierNum) => {
-//     const tierClaims = tierClaimsFiltered[tierNum];
-//     const tierWord = tiersArray.length - 1 === tierNum ? `${tierNum} (canary)` : `${tierNum}`;
-//     console.table({ Tier: { '#': tierWord, '# of Winners': tierClaims.length } });
-//   });
-// };
 
 const buildParams = (
   vault: string,
@@ -582,10 +570,11 @@ const getClaimInfo = async (
     //   return { claimCount, claimFeesUsd, totalCostUsd };
     // }
     if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
-      console.log(chalk.dim(`true`));
+      console.log('true');
       claimCount = numClaims;
       claimFees = nextClaimFees;
     } else {
+      console.log(`false`);
       break;
     }
   }
