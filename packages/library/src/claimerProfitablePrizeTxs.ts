@@ -169,6 +169,16 @@ export async function executeClaimerProfitablePrizeTxs(
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+      // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
+      //       re-submit transactions, effectively giving them different tx hashes
+      //       It is likely good enough for these types of transactions but could cause
+      //       issues if there are a lot of failures or gas price issues
+      //       See querying here:
+      //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
+      console.log('Waiting on transaction to be confirmed ...');
+      await readProvider.waitForTransaction(tx.hash);
+      console.log('Tx confirmed !');
     } else {
       console.log(
         chalk.yellow(
@@ -560,8 +570,8 @@ const getClaimInfo = async (
       chalk.dim(`($${nextClaimFeesUsd})`),
     );
     printSpacer();
-    console.log(chalk.dim(`if ((nextClaimFeesUsd - claimFeesUsd) > totalCostUsd)`));
-    console.log(chalk.dim(`($${nextClaimFeesUsd} - $${claimFeesUsd}) > $${totalCostUsd}`));
+    // console.log(chalk.dim(`if ((nextClaimFeesUsd - claimFeesUsd) > totalCostUsd)`));
+    // console.log(chalk.dim(`($${nextClaimFeesUsd} - $${claimFeesUsd}) > $${totalCostUsd}`));
 
     // To push through a non-profitable tx for debugging:
     // claimCount = numClaims;
