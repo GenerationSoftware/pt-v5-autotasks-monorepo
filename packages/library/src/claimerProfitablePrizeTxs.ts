@@ -66,7 +66,7 @@ export async function executeClaimerProfitablePrizeTxs(
   const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
   if (!claimer) {
-    throw new Error('Claimer: Contract Unavailable');
+    throw new Error('Contract Unavailable');
   }
 
   // #1. Get context about the prize pool prize token, etc
@@ -100,19 +100,29 @@ export async function executeClaimerProfitablePrizeTxs(
   // console.log('unclaimedClaimsGrouped');
   // console.log(unclaimedClaimsGrouped);
 
+  let canaryTierNotProfitable = false;
   for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
     const [key, value] = vaultTier;
     const [vault, tier] = key.split(',');
     const groupedClaims = value;
 
     printSpacer();
+    printSpacer();
+    printSpacer();
     printAsterisks();
+
     console.log(chalk.blueBright(`Processing ...`));
     console.log(chalk.blueBright(`Vault: ${vault}`));
-    console.log(chalk.blueBright(`Tier: ${Number(tier) + 1}`));
+    console.log(chalk.blueBright(`Tier: ${tierWords(context, Number(tier))}`));
+
+    if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
+      console.log(
+        chalk.redBright(`Tier #${Number(tier)} (Canary tier) not profitable, skipping ...`),
+      );
+      continue;
+    }
 
     // #5. Decide if profitable or not
-    printAsterisks();
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
     const claimPrizesParams = await calculateProfit(
@@ -131,7 +141,9 @@ export async function executeClaimerProfitablePrizeTxs(
     // It's profitable if there is at least 1 claim to claim
     // #6. Populate transaction
     if (claimPrizesParams.winners.length > 0) {
-      console.log(chalk.green('Claimer: Execute Claim Transaction'));
+      console.log(
+        chalk.green(`Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}`),
+      );
       printSpacer();
 
       const populatedTx = await claimer.populateTransaction.claimPrizes(
@@ -155,12 +167,31 @@ export async function executeClaimerProfitablePrizeTxs(
     } else {
       console.log(
         chalk.yellow(
-          `Claimer: Not profitable to claim for Draw #${context.drawId}, Tier: ${Number(tier) + 1}`,
+          `Claimer: Not profitable to claim for Draw #${context.drawId}, Tier: ${tierWords(
+            context,
+            Number(tier),
+          )}`,
         ),
       );
+
+      if (isCanary(context, Number(tier))) {
+        canaryTierNotProfitable = true;
+      } else {
+        console.log(
+          chalk.redBright(
+            `Claimer: Not profitable to claim any more tiers yet for Draw #${context.drawId}`,
+          ),
+        );
+
+        break;
+      }
     }
   }
 }
+
+const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {
+  return context.tiers.rangeArray.length - 1 === tier;
+};
 
 /**
  * Figures out how much gas is required to run the contract function
@@ -259,10 +290,20 @@ const calculateProfit = async (
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
     logClaims(claimsSlice);
   } else {
-    console.log(chalk.yellow(`Claiming tier #${tier + 1} is currently not profitable:`));
+    console.log(
+      chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
+    );
   }
 
   return claimPrizesParams;
+};
+
+const tierWords = (context: ClaimPrizeContext, tier: number) => {
+  const tiersArray = context.tiers.rangeArray;
+
+  const canaryWords = tiersArray.length - 1 === tier ? ' (Canary tier)' : '';
+
+  return `${tier + 1}${canaryWords}`;
 };
 
 const logClaims = (claims: Claim[]) => {
@@ -384,22 +425,8 @@ const getGasCost = async (
   feeRecipient: string,
   gasTokenMarketRateUsd: number,
 ) => {
-  printAsterisks();
-  printSpacer();
-  // console.log('claims');
-  // console.log(claims);
-  // printAsterisks();
-  // printSpacer();
-  // 1. Gas cost for 1 claim:
   let claimsSlice = claims.slice(0, 1);
-  // printSpacer();
-  // console.log('claimsSlice');
-  // console.log(claimsSlice);
-  printSpacer();
-
   let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
-  // console.log('claimPrizesParams');
-  // console.log(claimPrizesParams);
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimer, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
@@ -501,7 +528,6 @@ const getClaimInfo = async (
 
     const nextClaimFees = await claimer.computeTotalFees(tier, numClaims);
     printSpacer();
-    console.log(chalk.bgRed('nextClaimFees'));
 
     // COSTS USD
     const claimCostUsd = gasCost.gasCostPerClaimUsd * numClaims;
