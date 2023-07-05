@@ -107,7 +107,9 @@ export async function executeClaimerProfitablePrizeTxs(
 
     printSpacer();
     printAsterisks();
-    console.log(chalk.blueBright(`Processing Vault: ${vault} Tier ${tier} ...`));
+    console.log(chalk.blueBright(`Processing ...`));
+    console.log(chalk.blueBright(`Vault: ${vault}`));
+    console.log(chalk.blueBright(`Tier: ${Number(tier) + 1}`));
 
     // #5. Decide if profitable or not
     printAsterisks();
@@ -151,7 +153,11 @@ export async function executeClaimerProfitablePrizeTxs(
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
     } else {
-      console.log(chalk.yellow(`Claimer: Not profitable to claim for Draw #${context.drawId}`));
+      console.log(
+        chalk.yellow(
+          `Claimer: Not profitable to claim for Draw #${context.drawId}, Tier: ${Number(tier) + 1}`,
+        ),
+      );
     }
   }
 }
@@ -219,14 +225,11 @@ const calculateProfit = async (
     gasCost,
   );
 
-  printSpacer();
-  console.log(chalk.bgBlack.cyan(`5a. Gas costs for ${claimCount} claims:`));
-  printSpacer();
-
   const claimsSlice = unclaimedClaims.slice(0, claimCount);
   const claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
-  console.log(chalk.magenta('5b. Profit/Loss (USD):'));
+  printAsterisks();
+  console.log(chalk.magenta('5c. Profit/Loss (USD):'));
   printSpacer();
 
   // FEES USD
@@ -238,6 +241,7 @@ const calculateProfit = async (
         claimFeesUsd,
       )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
     ),
+    chalk.dim(`$${netProfitUsd} = ($${claimFeesUsd} - $${totalCostUsd})`),
   );
   printSpacer();
 
@@ -251,15 +255,11 @@ const calculateProfit = async (
   });
   printSpacer();
 
-  if (!profitable) {
-    console.log(chalk.yellow(`Claiming ${claimCount} claim(s) is currently not profitable:`));
-  }
-
   if (claimCount > 0) {
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
-    // logClaims(claimsSlice);
+    logClaims(claimsSlice);
   } else {
-    console.log(chalk.yellow(`Unable to submit any optimal, profitable transactions.`));
+    console.log(chalk.yellow(`Claiming tier #${tier + 1} is currently not profitable:`));
   }
 
   return claimPrizesParams;
@@ -363,12 +363,7 @@ const buildParams = (
     // TODO: Can submit multiple prizes for 1 user address here:
     // ie. vault, tier, winner, [prize 1, prize 2]
     prizeIndices.push([claim.prizeIndex]);
-    // winners: string[],
-    // prizeIndices: number[][],
   });
-
-  // prizeIndices[0][2]
-  // prizeIndices[1][1]
 
   return {
     vault,
@@ -389,11 +384,22 @@ const getGasCost = async (
   feeRecipient: string,
   gasTokenMarketRateUsd: number,
 ) => {
+  printAsterisks();
+  printSpacer();
+  // console.log('claims');
+  // console.log(claims);
+  // printAsterisks();
+  // printSpacer();
   // 1. Gas cost for 1 claim:
   let claimsSlice = claims.slice(0, 1);
-  console.log(claimsSlice);
+  // printSpacer();
+  // console.log('claimsSlice');
+  // console.log(claimsSlice);
+  printSpacer();
+
   let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
-  console.log(claimPrizesParams);
+  // console.log('claimPrizesParams');
+  // console.log(claimPrizesParams);
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimer, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
@@ -408,32 +414,40 @@ const getGasCost = async (
   }
 
   // 2. Gas cost for 2 claims:
-  claimsSlice = claims.slice(0, 2);
-  claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
+  let estimatedGasLimitForTwo;
+  if (claims.length > 1) {
+    claimsSlice = claims.slice(0, 2);
+    claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
-  const estimatedGasLimitForTwo = await getEstimatedGasLimit(claimer, claimPrizesParams);
-  if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
-    console.error(chalk.yellow('Estimated gas limit is 0 ...'));
-  } else {
-    logBigNumber(
-      'Estimated gas limit (2 prize claims):',
-      estimatedGasLimitForTwo,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
-    );
+    estimatedGasLimitForTwo = await getEstimatedGasLimit(claimer, claimPrizesParams);
+    if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
+      console.error(chalk.yellow('Estimated gas limit is 0 ...'));
+    } else {
+      logBigNumber(
+        'Estimated gas limit (2 prize claims):',
+        estimatedGasLimitForTwo,
+        NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+        NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+      );
+    }
   }
 
   // 3. Calculate how much for the initial tx and for subsequent tx's
   printSpacer();
-  const gasCostPerClaim = estimatedGasLimitForTwo.sub(estimatedGasLimitForOne);
-  const setupGasCost = estimatedGasLimitForOne.sub(gasCostPerClaim);
 
-  logBigNumber(
-    'Setup Gas Cost (wei):',
-    setupGasCost,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
-  );
+  const gasCostPerClaim =
+    claims.length > 1
+      ? estimatedGasLimitForTwo.sub(estimatedGasLimitForOne)
+      : estimatedGasLimitForOne;
+  const setupGasCost = claims.length > 1 && estimatedGasLimitForTwo.sub(gasCostPerClaim);
+  if (claims.length > 1) {
+    logBigNumber(
+      'Setup Gas Cost (wei):',
+      setupGasCost,
+      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+    );
+  }
   logBigNumber(
     'Gas Cost Per Claim (wei):',
     gasCostPerClaim,
@@ -450,6 +464,7 @@ const getGasCost = async (
     readProvider,
   );
   logStringValue(`Setup Gas Cost (USD):`, `$${roundTwoDecimalPlaces(setupGasCostUsd)}`);
+  console.log(chalk.dim(`$${setupGasCostUsd}`));
   const { maxFeeUsd: gasCostPerClaimUsd } = await getFeesUsd(
     chainId,
     gasCostPerClaim,
@@ -457,8 +472,8 @@ const getGasCost = async (
     readProvider,
   );
   logStringValue(`Gas Cost Per Claim (USD):`, `$${roundTwoDecimalPlaces(gasCostPerClaimUsd)}`);
+  console.log(chalk.dim(`$${gasCostPerClaimUsd}`));
 
-  // TODO: Refactor to setupGasCost: {usd: number, wei: BigNum}
   return { setupGasCost, gasCostPerClaim, setupGasCostUsd, gasCostPerClaimUsd };
 };
 
@@ -481,12 +496,24 @@ const getClaimInfo = async (
   let totalCostUsd = 0;
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
-    console.log(chalk.green(`Number of claims: ${numClaims}`));
+    printSpacer();
+    console.log(chalk.bgBlack.cyan(`5b. Profit for ${numClaims} claims:`));
+
     const nextClaimFees = await claimer.computeTotalFees(tier, numClaims);
+    printSpacer();
+    console.log(chalk.bgRed('nextClaimFees'));
 
     // COSTS USD
     const claimCostUsd = gasCost.gasCostPerClaimUsd * numClaims;
     totalCostUsd = gasCost.setupGasCostUsd + claimCostUsd;
+
+    printSpacer();
+
+    console.log(
+      chalk.green('Total Cost (USD):', `$${roundTwoDecimalPlaces(totalCostUsd)}`),
+      chalk.dim(`($${totalCostUsd})`),
+    );
+    printSpacer();
 
     // FEES USD
     claimFeesUsd =
@@ -498,7 +525,11 @@ const getClaimInfo = async (
       context.feeToken.decimals,
       context.feeToken.symbol,
     );
-    console.log(chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`));
+    console.log(
+      chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`),
+      chalk.dim(`($${claimFeesUsd})`),
+    );
+    printSpacer();
 
     const nextClaimFeesUsd =
       parseFloat(ethers.utils.formatUnits(nextClaimFees, context.feeToken.decimals)) *
@@ -512,7 +543,11 @@ const getClaimInfo = async (
     );
     console.log(
       chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
+      chalk.dim(`($${nextClaimFeesUsd})`),
     );
+    printSpacer();
+    console.log(chalk.dim(`if ((nextClaimFeesUsd - claimFeesUsd) > totalCostUsd)`));
+    console.log(chalk.dim(`($${nextClaimFeesUsd} - $${claimFeesUsd}) > $${totalCostUsd}`));
 
     // To push through a non-profitable tx for debugging:
     // claimCount = numClaims;
@@ -521,6 +556,7 @@ const getClaimInfo = async (
     //   return { claimCount, claimFeesUsd, totalCostUsd };
     // }
     if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
+      console.log(chalk.dim(`true`));
       claimCount = numClaims;
       claimFees = nextClaimFees;
     } else {
