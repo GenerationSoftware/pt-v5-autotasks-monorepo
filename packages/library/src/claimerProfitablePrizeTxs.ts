@@ -289,9 +289,7 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  // To push through a non-profitable tx for debugging:
-  // const profitable = true;
-  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  const profitable = claimCount > 1;
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
     'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
@@ -299,7 +297,7 @@ const calculateProfit = async (
   });
   printSpacer();
 
-  if (claimCount > 0) {
+  if (profitable) {
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
     logClaims(claimsSlice);
   } else {
@@ -570,21 +568,19 @@ const getClaimInfo = async (
       chalk.dim(`($${nextClaimFeesUsd})`),
     );
     printSpacer();
-    // console.log(chalk.dim(`if ((nextClaimFeesUsd - claimFeesUsd) > totalCostUsd)`));
-    // console.log(chalk.dim(`($${nextClaimFeesUsd} - $${claimFeesUsd}) > $${totalCostUsd}`));
 
-    // To push through a non-profitable tx for debugging:
+    // To push through 1 non-profitable tx for debugging:
+    // if (numClaims === 1) {
     // claimCount = numClaims;
     // claimFees = nextClaimFees;
-    // if (numClaims === 1) {
     //   return { claimCount, claimFeesUsd, totalCostUsd };
     // }
+
     if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
-      console.log('true');
       claimCount = numClaims;
       claimFees = nextClaimFees;
+      claimFeesUsd = nextClaimFeesUsd;
     } else {
-      console.log(`false`);
       break;
     }
   }
