@@ -290,12 +290,12 @@ const calculateProfit = async (
   printSpacer();
 
   const profitable = claimCount > 1;
-  logTable({
-    MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
-    'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-    'Profitable?': profitable ? '✔' : '✗',
-  });
-  printSpacer();
+  // logTable({
+  //   MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+  //   'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+  //   'Profitable?': profitable ? '✔' : '✗',
+  // });
+  // printSpacer();
 
   if (profitable) {
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
@@ -458,46 +458,58 @@ const getGasCost = async (
   // 3. Calculate how much for the initial tx and for subsequent tx's
   printSpacer();
 
-  const gasCostPerClaim =
+  const gasCostEachFollowingClaim =
     claims.length > 1
       ? estimatedGasLimitForTwo.sub(estimatedGasLimitForOne)
       : estimatedGasLimitForOne;
-  const setupGasCost = claims.length > 1 && estimatedGasLimitForTwo.sub(gasCostPerClaim);
-  if (claims.length > 1) {
-    logBigNumber(
-      'Setup Gas Cost (wei):',
-      setupGasCost,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
-    );
-  }
   logBigNumber(
-    'Gas Cost Per Claim (wei):',
-    gasCostPerClaim,
+    'Gas Cost: First Claim (wei):',
+    estimatedGasLimitForOne,
     NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
   );
 
+  if (claims.length > 1) {
+    logBigNumber(
+      'Gas Cost: Each Following Claim (wei):',
+      gasCostEachFollowingClaim,
+      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+    );
+  }
+
   // 4. Convert gas costs to USD
   printSpacer();
-  const { maxFeeUsd: setupGasCostUsd } = await getFeesUsd(
+  const { maxFeeUsd: gasCostOneClaimUsd } = await getFeesUsd(
     chainId,
-    setupGasCost,
+    estimatedGasLimitForOne,
     gasTokenMarketRateUsd,
     readProvider,
   );
-  logStringValue(`Setup Gas Cost (USD):`, `$${roundTwoDecimalPlaces(setupGasCostUsd)}`);
-  console.log(chalk.dim(`$${setupGasCostUsd}`));
-  const { maxFeeUsd: gasCostPerClaimUsd } = await getFeesUsd(
-    chainId,
-    gasCostPerClaim,
-    gasTokenMarketRateUsd,
-    readProvider,
+  console.log(
+    chalk.grey(`Gas Cost: First Claim (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostOneClaimUsd)}`),
+    chalk.dim(`$${gasCostOneClaimUsd}`),
   );
-  logStringValue(`Gas Cost Per Claim (USD):`, `$${roundTwoDecimalPlaces(gasCostPerClaimUsd)}`);
-  console.log(chalk.dim(`$${gasCostPerClaimUsd}`));
 
-  return { setupGasCost, gasCostPerClaim, setupGasCostUsd, gasCostPerClaimUsd };
+  const { maxFeeUsd: gasCostEachFollowingClaimUsd } = await getFeesUsd(
+    chainId,
+    gasCostEachFollowingClaim,
+    gasTokenMarketRateUsd,
+    readProvider,
+  );
+  if (claims.length > 1) {
+    console.log(
+      chalk.grey(`Gas Cost: Each Following Claim (USD):`),
+      chalk.yellow(`$${roundTwoDecimalPlaces(gasCostEachFollowingClaimUsd)}`),
+      chalk.dim(`$${gasCostEachFollowingClaimUsd}`),
+    );
+  }
+
+  return {
+    gasCostOneClaimUsd,
+    gasCostEachFollowingClaimUsd,
+  };
 };
 
 interface ClaimInfo {
@@ -517,17 +529,20 @@ const getClaimInfo = async (
   let claimFees = BigNumber.from(0);
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
+  let prevTotalFeesMinusCostUsd = 0;
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     printSpacer();
-    console.log(chalk.bgBlack.cyan(`5b. Profit for ${numClaims} claims:`));
+    console.log(chalk.bgBlack.cyan(`5b. Profit for ${numClaims} Claim(s):`));
 
     const nextClaimFees = await claimer.computeTotalFees(tier, numClaims);
     printSpacer();
 
     // COSTS USD
-    const claimCostUsd = gasCost.gasCostPerClaimUsd * numClaims;
-    totalCostUsd = gasCost.setupGasCostUsd + claimCostUsd;
+    const totalCostUsd =
+      numClaims === 1
+        ? gasCost.gasCostOneClaimUsd
+        : gasCost.gasCostOneClaimUsd + gasCost.gasCostEachFollowingClaimUsd * numClaims;
 
     printSpacer();
 
@@ -541,30 +556,38 @@ const getClaimInfo = async (
     claimFeesUsd =
       parseFloat(ethers.utils.formatUnits(claimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
-    logBigNumber(
-      'Claim Fees (WEI):',
-      claimFees,
-      context.feeToken.decimals,
-      context.feeToken.symbol,
-    );
-    console.log(
-      chalk.green('Claim Fees (USD):', `$${roundTwoDecimalPlaces(claimFeesUsd)}`),
-      chalk.dim(`($${claimFeesUsd})`),
-    );
-    printSpacer();
+    if (claimCount > 0) {
+      logBigNumber(
+        `Claim Fees: ${claimCount} Claim(s) (WEI):`,
+        claimFees,
+        context.feeToken.decimals,
+        context.feeToken.symbol,
+      );
+      console.log(
+        chalk.green(
+          `Claim Fees: ${claimCount} Claim(s) (USD):`,
+          `$${roundTwoDecimalPlaces(claimFeesUsd)}`,
+        ),
+        chalk.dim(`($${claimFeesUsd})`),
+      );
+      printSpacer();
+    }
 
     const nextClaimFeesUsd =
       parseFloat(ethers.utils.formatUnits(nextClaimFees, context.feeToken.decimals)) *
       context.feeTokenRateUsd;
 
     logBigNumber(
-      'Next Claim Fees (WEI):',
+      `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
       nextClaimFees,
       context.feeToken.decimals,
       context.feeToken.symbol,
     );
     console.log(
-      chalk.green('Next Claim Fees (USD):', `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`),
+      chalk.green(
+        `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
+        `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`,
+      ),
       chalk.dim(`($${nextClaimFeesUsd})`),
     );
     printSpacer();
@@ -576,7 +599,40 @@ const getClaimInfo = async (
     //   return { claimCount, claimFeesUsd, totalCostUsd };
     // }
 
-    if (nextClaimFeesUsd - claimFeesUsd > totalCostUsd) {
+    const feeDiff = nextClaimFeesUsd - claimFeesUsd;
+    console.log('feeDiff');
+    console.log(feeDiff);
+
+    console.log('');
+
+    // don't think this is necessary?
+    // const grossFeesGtCost = feeDiff > totalCostUsd;
+
+    console.log('MIN_PROFIT_THRESHOLD_USD');
+    console.log(MIN_PROFIT_THRESHOLD_USD);
+    console.log('');
+
+    const totalFeesMinusCostUsd = nextClaimFeesUsd - totalCostUsd;
+    console.log('totalFeesMinusCostUsd');
+    console.log(totalFeesMinusCostUsd);
+    console.log('');
+
+    console.log('prevTotalFeesMinusCostUsd');
+    console.log(prevTotalFeesMinusCostUsd);
+
+    console.log('');
+    console.log('totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd');
+    console.log(totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd);
+
+    console.log('');
+    console.log('totalFeesMinusCostUsd > MIN_PROFIT_THRESHOLD_USD');
+    console.log(totalFeesMinusCostUsd > MIN_PROFIT_THRESHOLD_USD);
+
+    if (
+      totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd &&
+      totalFeesMinusCostUsd > MIN_PROFIT_THRESHOLD_USD
+    ) {
+      prevTotalFeesMinusCostUsd = totalFeesMinusCostUsd;
       claimCount = numClaims;
       claimFees = nextClaimFees;
       claimFeesUsd = nextClaimFeesUsd;
