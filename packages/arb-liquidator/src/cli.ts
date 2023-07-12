@@ -19,7 +19,7 @@ console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
 
 if (esMain(import.meta)) {
-  const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: true });
+  const config = await askQuestions(new Configstore(pkg.name));
 
   const fakeEvent = {
     apiKey: config.RELAYER_API_KEY,

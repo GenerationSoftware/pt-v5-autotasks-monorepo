@@ -20,7 +20,7 @@ import {
   printAsterisks,
   printSpacer,
   getFeesUsd,
-  FLASHBOTS_SUPPORTED_CHAINS,
+  canUseIsPrivate,
   MARKET_RATE_CONTRACT_DECIMALS,
   getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
@@ -54,7 +54,7 @@ export async function executeClaimerProfitablePrizeTxs(
   readProvider: Provider,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<undefined> {
-  const { chainId, feeRecipient } = params;
+  const { chainId, feeRecipient, useFlashbots } = params;
 
   const contractsVersion = {
     major: 1,
@@ -149,8 +149,7 @@ export async function executeClaimerProfitablePrizeTxs(
       );
       printSpacer();
 
-      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
-      const isPrivate = chainSupportsFlashbots && params.useFlashbots;
+      const isPrivate = canUseIsPrivate(chainId, useFlashbots);
 
       console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
       printSpacer();

@@ -135,7 +135,7 @@ export const NETWORK_CONFIG_QUESTIONS: {
     name: 'USE_FLASHBOTS',
     type: 'list',
     message: chalk.green(
-      'Use Flashbots to keep transactions private from the mempool and reduce failures? (recommended)',
+      'Use Flashbots (only on ETH mainnet or goerli) to keep transactions private from the mempool and reduce failures?',
     ),
     choices: ['Yes', 'No'],
     filter(val) {
@@ -168,17 +168,13 @@ export const populateConfig = async <
 >(
   config: Configstore,
   {
-    askFlashbots,
     extraConfig,
   }: {
-    askFlashbots?: boolean;
     extraConfig?: {
       global?: DistinctQuestion[];
       network?: DistinctQuestion[];
     };
-  } = {
-    askFlashbots: true,
-  },
+  } = {},
 ): Promise<CHAIN_CONFIG & GLOBAL_CONFIG & NETWORK_CONFIG & G & N> => {
   const globalQuestions = [
     ...Object.values(GLOBAL_CONFIG_QUESTIONS),

@@ -14,7 +14,7 @@ console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
 
 if (esMain(import.meta)) {
-  const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: true });
+  const config = await askQuestions(new Configstore(pkg.name));
   const readProvider = new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID);
   const params: PrizeClaimerConfigParams = {
     chainId: config.CHAIN_ID,

@@ -27,7 +27,7 @@ export default defineConfig((opt) => {
       '@generationsoftware/pt-v5-utils-js',
       'ethereum-multicall',
       'configstore',
-      // 'lodash.groupby',
+      'lodash.groupby',
     ],
     format: 'cjs',
     entry: ['src/handler.ts'],

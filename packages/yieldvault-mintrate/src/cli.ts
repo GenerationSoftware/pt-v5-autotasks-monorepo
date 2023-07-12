@@ -12,7 +12,7 @@ console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('YieldVault MintRate Bot')));
 
 if (esMain(import.meta)) {
-  const config = await askQuestions(new Configstore(pkg.name), { askFlashbots: false });
+  const config = await askQuestions(new Configstore(pkg.name));
 
   const fakeEvent = {
     apiKey: config.RELAYER_API_KEY,
