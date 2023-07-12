@@ -7,9 +7,10 @@ import { populateTransaction, processPopulatedTransaction } from './transactions
 
 const handlerLoadParams = (relayerAddress): WithdrawClaimRewardsConfigParams => {
   return {
-    relayerAddress,
     chainId: Number(BUILD_CHAIN_ID),
+    relayerAddress,
     rewardsRecipient: BUILD_REWARDS_RECIPIENT,
+    minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
 };
 

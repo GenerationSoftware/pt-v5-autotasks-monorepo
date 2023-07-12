@@ -36,11 +36,6 @@ interface Stat {
 }
 
 /**
- * Only swap if we're going to make at least $5.00. This likely should be a config option
- */
-const MIN_PROFIT_THRESHOLD_USD = 3;
-
-/**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
  *
  * Curently this does not return PopulatedTransactions like the other bots as
@@ -53,8 +48,15 @@ export async function liquidatorArbitrageSwap(
   relayer: Relayer,
   params: ArbLiquidatorConfigParams,
 ) {
-  const { chainId, useFlashbots, swapRecipient, relayerAddress, readProvider, writeProvider } =
-    params;
+  const {
+    chainId,
+    relayerAddress,
+    readProvider,
+    writeProvider,
+    swapRecipient,
+    useFlashbots,
+    minProfitThresholdUsd,
+  } = params;
 
   // #1. Get contracts
   //
@@ -181,6 +183,7 @@ export async function liquidatorArbitrageSwap(
       swapExactAmountInParams,
       readProvider,
       context,
+      minProfitThresholdUsd,
     );
     if (!profitable) {
       console.log(
@@ -414,6 +417,7 @@ const calculateProfit = async (
   swapExactAmountInParams: SwapExactAmountInParams,
   readProvider: Provider,
   context: ArbLiquidatorContext,
+  minProfitThresholdUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
 
@@ -486,9 +490,9 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  const profitable = netProfitUsd > minProfitThresholdUsd;
   logTable({
-    MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+    MIN_PROFIT_THRESHOLD_USD: `$${minProfitThresholdUsd}`,
     'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     'Profitable?': profitable ? '✔' : '✗',
   });

@@ -1,9 +1,8 @@
 import chalk from 'chalk';
+import Configstore from 'configstore';
+import inquirer, { DistinctQuestion } from 'inquirer';
 
 import { CHAIN_IDS } from './network';
-import Configstore from 'configstore';
-import { DistinctQuestion } from 'inquirer';
-import inquirer from 'inquirer';
 
 export type CHAIN_CONFIG = {
   CHAIN_ID: number; // stores last-selected chain ID

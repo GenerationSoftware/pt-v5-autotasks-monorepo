@@ -38,11 +38,6 @@ interface ClaimPrizesParams {
 }
 
 /**
- * Only claim if we're going to make at least $0.01 (This likely should be a config option)
- */
-const MIN_PROFIT_THRESHOLD_USD = 0.01;
-
-/**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
  * to claim for them. The fees the claimer bot can earn increase exponentially over time.
  *
@@ -54,7 +49,7 @@ export async function executeClaimerProfitablePrizeTxs(
   readProvider: Provider,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<undefined> {
-  const { chainId, feeRecipient, useFlashbots } = params;
+  const { chainId, feeRecipient, useFlashbots, minProfitThresholdUsd } = params;
 
   const contractsVersion = {
     major: 1,
@@ -136,6 +131,7 @@ export async function executeClaimerProfitablePrizeTxs(
       claimer,
       groupedClaims,
       feeRecipient,
+      minProfitThresholdUsd,
       marketRate,
       context,
     );
@@ -238,6 +234,7 @@ const calculateProfit = async (
   claimer: Contract,
   unclaimedClaims: any,
   feeRecipient: string,
+  minProfitThresholdUsd: number,
   marketRate: Contract,
   context: ClaimPrizeContext,
 ): Promise<ClaimPrizesParams> => {
@@ -266,6 +263,7 @@ const calculateProfit = async (
     tier,
     unclaimedClaims,
     gasCost,
+    minProfitThresholdUsd,
   );
 
   const claimsSlice = unclaimedClaims.slice(0, claimCount);
@@ -290,7 +288,7 @@ const calculateProfit = async (
 
   const profitable = claimCount > 1;
   // logTable({
-  //   MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+  //   MIN_PROFIT_THRESHOLD_USD: `$${minProfitThresholdUsd}`,
   //   'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
   //   'Profitable?': profitable ? '✔' : '✗',
   // });
@@ -523,6 +521,7 @@ const getClaimInfo = async (
   tier: number,
   claims: Claim[],
   gasCost: any,
+  minProfitThresholdUsd: number,
 ): Promise<ClaimInfo> => {
   let claimCount = 0;
   let claimFees = BigNumber.from(0);
@@ -607,8 +606,8 @@ const getClaimInfo = async (
     // don't think this is necessary?
     // const grossFeesGtCost = feeDiff > totalCostUsd;
 
-    console.log('MIN_PROFIT_THRESHOLD_USD');
-    console.log(MIN_PROFIT_THRESHOLD_USD);
+    console.log('minProfitThresholdUsd');
+    console.log(minProfitThresholdUsd);
     console.log('');
 
     const totalFeesMinusCostUsd = nextClaimFeesUsd - totalCostUsd;
@@ -624,12 +623,12 @@ const getClaimInfo = async (
     console.log(totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd);
 
     console.log('');
-    console.log('totalFeesMinusCostUsd > MIN_PROFIT_THRESHOLD_USD');
-    console.log(totalFeesMinusCostUsd > MIN_PROFIT_THRESHOLD_USD);
+    console.log('totalFeesMinusCostUsd > minProfitThresholdUsd');
+    console.log(totalFeesMinusCostUsd > minProfitThresholdUsd);
 
     if (
       totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd &&
-      totalFeesMinusCostUsd > MIN_PROFIT_THRESHOLD_USD
+      totalFeesMinusCostUsd > minProfitThresholdUsd
     ) {
       prevTotalFeesMinusCostUsd = totalFeesMinusCostUsd;
       claimCount = numClaims;
