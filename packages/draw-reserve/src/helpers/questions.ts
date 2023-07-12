@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import inquirer, { DistinctQuestion } from 'inquirer';
+import { DistinctQuestion } from 'inquirer';
 
 import { populateConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import Configstore from 'configstore';
@@ -23,9 +23,8 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
   },
 };
 
-export const askQuestions = (config: Configstore, { askFlashbots }) => {
+export const askQuestions = (config: Configstore) => {
   return populateConfig<{}, PACKAGE_CONFIG>(config, {
-    askFlashbots,
     extraConfig: {
       network: [PACKAGE_QUESTIONS.RESERVE_RECIPIENT],
     },

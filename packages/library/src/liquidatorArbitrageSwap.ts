@@ -19,7 +19,7 @@ import {
   arbLiquidatorMulticall,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
-import { FLASHBOTS_SUPPORTED_CHAINS, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 
 interface SwapExactAmountInParams {
   liquidationPairAddress: string;
@@ -207,10 +207,11 @@ export async function liquidatorArbitrageSwap(
         ...Object.values(swapExactAmountInParams),
       );
 
-      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
+      const isPrivate = canUseIsPrivate(chainId, useFlashbots);
+      console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
 
       let transactionSentToNetwork = await relayer.sendTransaction({
-        isPrivate: chainSupportsFlashbots && useFlashbots,
+        isPrivate,
         data: transactionPopulated.data,
         to: transactionPopulated.to,
         gasLimit: 600000,

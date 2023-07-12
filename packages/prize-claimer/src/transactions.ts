@@ -4,7 +4,7 @@ import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   executeClaimerProfitablePrizeTxs,
   PrizeClaimerConfigParams,
-  FLASHBOTS_SUPPORTED_CHAINS,
+  canUseIsPrivate,
   ExecuteClaimerProfitablePrizeTxsParams,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
@@ -35,16 +35,17 @@ export const processPopulatedTransactions = async (
   populatedTxs: PopulatedTransaction[],
   params: PrizeClaimerConfigParams,
 ) => {
-  const { chainId } = params;
+  const { chainId, useFlashbots } = params;
   const relayer = new Relayer(event);
 
   try {
     if (populatedTxs.length > 0) {
-      const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
+      const isPrivate = canUseIsPrivate(chainId, useFlashbots);
+      console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
 
       for (const populatedTx of populatedTxs) {
         let transactionSentToNetwork = await relayer.sendTransaction({
-          isPrivate: chainSupportsFlashbots && params.useFlashbots,
+          isPrivate,
           data: populatedTx.data,
           to: populatedTx.to,
           gasLimit: 6000000,
