@@ -1,9 +1,9 @@
 import { Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractCallContext } from 'ethereum-multicall';
-import { getComplexMulticallResults } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, getComplexMulticallResults } from '@generationsoftware/pt-v5-utils-js';
 
-import { ContractsBlob, ArbLiquidatorContext, Token, TokenWithRate } from '../types';
+import { ArbLiquidatorContext, Token, TokenWithRate } from '../types';
 import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
 

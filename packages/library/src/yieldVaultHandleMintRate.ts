@@ -1,7 +1,5 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
-import { getContracts } from '@generationsoftware/pt-v5-utils-js';
-
-import { ContractsBlob } from './types';
+import { ContractsBlob, getContracts } from '@generationsoftware/pt-v5-utils-js';
 
 export async function yieldVaultHandleMintRate(
   contracts: ContractsBlob,

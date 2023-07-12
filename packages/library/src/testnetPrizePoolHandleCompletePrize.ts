@@ -1,7 +1,5 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
-import { getContract } from '@generationsoftware/pt-v5-utils-js';
-
-import { ContractsBlob } from './types';
+import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 
 export async function testnetPrizePoolHandleCompletePrize(
   contracts: ContractsBlob,

@@ -1,7 +1,7 @@
 import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
+import { ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 
-import { ContractsBlob } from '../types';
 import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from '../utils/network';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
