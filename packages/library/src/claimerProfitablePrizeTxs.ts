@@ -1,13 +1,19 @@
 import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { Claim, getContract, flagClaimedRpc } from '@generationsoftware/pt-v5-utils-js';
+import {
+  ContractsBlob,
+  Claim,
+  PrizePoolInfo,
+  getPrizePoolInfo,
+  getContract,
+  flagClaimedRpc,
+} from '@generationsoftware/pt-v5-utils-js';
 import { Relayer } from 'defender-relay-client';
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 
 import {
-  ContractsBlob,
   Token,
   ClaimPrizeContext,
   ExecuteClaimerProfitablePrizeTxsParams,
@@ -65,12 +71,16 @@ export async function executeClaimerProfitablePrizeTxs(
   }
 
   // #1. Get context about the prize pool prize token, etc
-  const context: ClaimPrizeContext = await getContext(prizePool, marketRate, readProvider);
+  const context: ClaimPrizeContext = await getContext(
+    contracts,
+    prizePool,
+    marketRate,
+    readProvider,
+  );
   printContext(context);
 
   // #2. Get data from v5-draw-results
-  const drawId = context.drawId.toString();
-  let claims = await fetchClaims(chainId, prizePool.address, drawId);
+  let claims = await fetchClaims(chainId, prizePool.address, context.drawId);
 
   // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
   claims = await flagClaimedRpc(readProvider, contracts, claims);
@@ -78,9 +88,11 @@ export async function executeClaimerProfitablePrizeTxs(
   const unclaimedClaims = claims.filter((claim) => !claim.claimed);
   const claimedClaims = claims.filter((claim) => claim.claimed);
   if (claimedClaims.length === 0) {
-    console.log(chalk.dim(`No claimed prizes for draw #${drawId}.`));
+    console.log(chalk.dim(`No claimed prizes for draw #${context.drawId}.`));
   } else {
-    console.log(chalk.dim(`${claimedClaims.length} prizes already claimed for draw #${drawId}.`));
+    console.log(
+      chalk.dim(`${claimedClaims.length} prizes already claimed for draw #${context.drawId}.`),
+    );
   }
   console.log(chalk.dim(`${unclaimedClaims.length} prizes remaining to be claimed...`));
 
@@ -329,16 +341,16 @@ const logClaims = (claims: Claim[]) => {
  * @returns {Promise} Promise of a ClaimPrizeContext object
  */
 const getContext = async (
+  contracts: ContractsBlob,
   prizePool: Contract,
   marketRate: Contract,
   readProvider: Provider,
 ): Promise<ClaimPrizeContext> => {
   const feeTokenAddress = await prizePool.prizeToken();
-  const drawId = await prizePool.getLastCompletedDrawId();
 
-  const numberOfTiers = await prizePool.numberOfTiers();
-  const rangeArray = Array.from({ length: numberOfTiers }, (value, index) => index);
-  const tiers: TiersContext = { numberOfTiers, rangeArray };
+  const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
+  const { drawId, numberOfTiers, tiersRangeArray } = prizePoolInfo;
+  const tiers: TiersContext = { numberOfTiers, rangeArray: tiersRangeArray };
 
   const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
@@ -645,7 +657,7 @@ const getClaimInfo = async (
 const fetchClaims = async (
   chainId: number,
   prizePoolAddress: string,
-  drawId: string,
+  drawId: number,
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
   const uri = `https://raw.githubusercontent.com/GenerationSoftware/pt-v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;

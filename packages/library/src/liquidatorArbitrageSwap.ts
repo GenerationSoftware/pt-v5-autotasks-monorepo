@@ -3,10 +3,10 @@ import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { Relayer } from 'defender-relay-client';
-import { getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ContractsBlob, ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
+import { ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
 import {
   logTable,
   logStringValue,

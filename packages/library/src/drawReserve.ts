@@ -1,10 +1,10 @@
 import { ethers, Contract, BigNumber } from 'ethers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { Provider } from '@ethersproject/providers';
-import { getContract } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ContractsBlob, Token, DrawReserveConfigParams, DrawReserveContext } from './types';
+import { Token, DrawReserveConfigParams, DrawReserveContext } from './types';
 import {
   logTable,
   logBigNumber,
