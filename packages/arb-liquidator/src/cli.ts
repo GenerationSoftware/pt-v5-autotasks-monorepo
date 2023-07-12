@@ -34,11 +34,12 @@ if (esMain(import.meta)) {
 
   const params: ArbLiquidatorConfigParams = {
     relayerAddress,
-    useFlashbots: config.USE_FLASHBOTS,
     writeProvider: signer,
     readProvider: new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID),
-    swapRecipient: config.SWAP_RECIPIENT,
     chainId: config.CHAIN_ID,
+    swapRecipient: config.SWAP_RECIPIENT,
+    useFlashbots: config.USE_FLASHBOTS,
+    minProfitThresholdUsd: Number(config.MIN_PROFIT_THRESHOLD_USD),
   };
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well

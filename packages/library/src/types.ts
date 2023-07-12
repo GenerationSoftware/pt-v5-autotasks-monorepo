@@ -83,6 +83,7 @@ export interface ExecuteClaimerProfitablePrizeTxsParams {
   chainId: number;
   feeRecipient: string;
   useFlashbots: boolean;
+  minProfitThresholdUsd: number;
 }
 
 export interface RelayerContext {
@@ -91,12 +92,13 @@ export interface RelayerContext {
 }
 
 export interface ArbLiquidatorConfigParams {
-  useFlashbots: boolean;
-  swapRecipient: string;
-  relayerAddress: string;
   chainId: number;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
+  swapRecipient: string;
+  relayerAddress: string;
+  useFlashbots: boolean;
+  minProfitThresholdUsd: number;
 }
 
 export interface ArbLiquidatorContext {
@@ -106,16 +108,11 @@ export interface ArbLiquidatorContext {
   relayer: RelayerContext;
 }
 
-export interface PrizeClaimerConfigParams {
-  useFlashbots: boolean;
-  feeRecipient: string;
-  chainId: number;
-}
-
 export interface WithdrawClaimRewardsConfigParams {
-  relayerAddress: string;
-  rewardsRecipient: string;
   chainId: number;
+  rewardsRecipient: string;
+  relayerAddress: string;
+  minProfitThresholdUsd: number;
 }
 
 export interface WithdrawClaimRewardsContext {

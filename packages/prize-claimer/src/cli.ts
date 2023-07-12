@@ -3,7 +3,7 @@ import Configstore from 'configstore';
 import figlet from 'figlet';
 import chalk from 'chalk';
 import { ethers } from 'ethers';
-import { PrizeClaimerConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
+import { ExecuteClaimerProfitablePrizeTxsParams } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { executeTransactions } from './transactions';
 import { askQuestions } from './helpers/questions';
@@ -16,10 +16,11 @@ console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
 if (esMain(import.meta)) {
   const config = await askQuestions(new Configstore(pkg.name));
   const readProvider = new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID);
-  const params: PrizeClaimerConfigParams = {
+  const params: ExecuteClaimerProfitablePrizeTxsParams = {
     chainId: config.CHAIN_ID,
     feeRecipient: config.FEE_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
+    minProfitThresholdUsd: Number(config.MIN_PROFIT_THRESHOLD_USD),
   };
 
   const fakeEvent = {

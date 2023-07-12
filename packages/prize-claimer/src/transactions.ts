@@ -3,9 +3,8 @@ import { RelayerParams } from 'defender-relay-client';
 import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   executeClaimerProfitablePrizeTxs,
-  PrizeClaimerConfigParams,
-  canUseIsPrivate,
   ExecuteClaimerProfitablePrizeTxsParams,
+  canUseIsPrivate,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
@@ -33,7 +32,7 @@ export const executeTransactions = async (
 export const processPopulatedTransactions = async (
   event: RelayerParams,
   populatedTxs: PopulatedTransaction[],
-  params: PrizeClaimerConfigParams,
+  params: ExecuteClaimerProfitablePrizeTxsParams,
 ) => {
   const { chainId, useFlashbots } = params;
   const relayer = new Relayer(event);

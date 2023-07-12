@@ -18,11 +18,12 @@ const handlerLoadParams = (
 
   return {
     relayerAddress,
-    useFlashbots: BUILD_USE_FLASHBOTS,
     writeProvider: signer,
     readProvider,
     chainId,
     swapRecipient: BUILD_SWAP_RECIPIENT,
+    useFlashbots: BUILD_USE_FLASHBOTS,
+    minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
 };
 

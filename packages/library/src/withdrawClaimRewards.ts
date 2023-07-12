@@ -28,12 +28,8 @@ import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 interface WithdrawClaimRewardsParams {
   amount: BigNumber;
   rewardsRecipient: string;
+  minProfitThresholdUsd: number;
 }
-
-/**
- * Only claim rewards if we're going to make at least X dollars
- */
-const MIN_PROFIT_THRESHOLD_USD = 1;
 
 /**
  * Creates a populated transaction object for a prize claimer to withdraw their claim rewards.
@@ -45,7 +41,7 @@ export async function getWithdrawClaimRewardsTx(
   readProvider: Provider,
   params: WithdrawClaimRewardsConfigParams,
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, rewardsRecipient, relayerAddress } = params;
+  const { chainId, rewardsRecipient, relayerAddress, minProfitThresholdUsd } = params;
 
   const contractsVersion = {
     major: 1,
@@ -91,6 +87,7 @@ export async function getWithdrawClaimRewardsTx(
   const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
     rewardsRecipient,
     amount,
+    minProfitThresholdUsd,
   };
 
   // #3. Decide if profitable or not
@@ -191,6 +188,8 @@ const calculateProfit = async (
   withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
   readProvider: Provider,
 ): Promise<Boolean> => {
+  const { minProfitThresholdUsd } = withdrawClaimRewardsParams;
+
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
 
   printAsterisks();
@@ -250,9 +249,9 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  const profitable = netProfitUsd > MIN_PROFIT_THRESHOLD_USD;
+  const profitable = netProfitUsd > minProfitThresholdUsd;
   logTable({
-    MIN_PROFIT_THRESHOLD_USD: `$${MIN_PROFIT_THRESHOLD_USD}`,
+    MIN_PROFIT_THRESHOLD_USD: `$${minProfitThresholdUsd}`,
     'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     'Profitable?': profitable ? '✔' : '✗',
   });
