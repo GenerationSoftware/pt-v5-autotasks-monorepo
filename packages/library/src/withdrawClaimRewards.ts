@@ -23,7 +23,6 @@ import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 interface WithdrawClaimRewardsParams {
   amount: BigNumber;
   rewardsRecipient: string;
-  minProfitThresholdUsd: number;
 }
 
 /**
@@ -82,7 +81,6 @@ export async function getWithdrawClaimRewardsTx(
   const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
     rewardsRecipient,
     amount,
-    minProfitThresholdUsd,
   };
 
   // #3. Decide if profitable or not
@@ -94,6 +92,7 @@ export async function getWithdrawClaimRewardsTx(
     rewardsTokenUsd,
     withdrawClaimRewardsParams,
     readProvider,
+    minProfitThresholdUsd,
   );
   if (!profitable) {
     printAsterisks();
@@ -182,9 +181,8 @@ const calculateProfit = async (
   rewardsTokenUsd: number,
   withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
   readProvider: Provider,
+  minProfitThresholdUsd: number,
 ): Promise<Boolean> => {
-  const { minProfitThresholdUsd } = withdrawClaimRewardsParams;
-
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
 
   printAsterisks();
