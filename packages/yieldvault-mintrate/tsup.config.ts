@@ -21,7 +21,7 @@ export default defineConfig((opt) => {
     noExternal: [
       '@generationsoftware/pt-v5-autotasks-library',
       '@generationsoftware/pt-v5-utils-js',
-      'ethereum-multicall',
+      'ethers-multicall-provider',
       'configstore',
     ],
     format: 'cjs',

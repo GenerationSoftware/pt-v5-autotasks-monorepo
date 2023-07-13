@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "defender-relay-client": "1.39.0",
-    "ethereum-multicall": "^2.17.0",
+    "ethers-multicall-provider": "^3.0.5",
     "figlet": "^1.6.0",
     "tsdx": "^0.14.1"
   },

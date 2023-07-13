@@ -26,7 +26,7 @@ export default defineConfig((opt) => {
       'inquirer',
       '@generationsoftware/pt-v5-autotasks-library',
       '@generationsoftware/pt-v5-utils-js',
-      'ethereum-multicall',
+      'ethers-multicall-provider',
       'configstore',
     ],
     format: 'cjs',
