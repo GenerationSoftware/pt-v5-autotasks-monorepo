@@ -16,8 +16,5 @@
     "prettier": "2.7.1",
     "typescript": "4.8.4"
   },
-  "packageManager": "yarn@3.5.0",
-  "dependencies": {
-    "@generationsoftware/pt-v5-utils-js": "file:.yalc/@generationsoftware/pt-v5-utils-js"
-  }
+  "packageManager": "yarn@3.5.0"
 }
