@@ -1,8 +1,6 @@
-# @generationsoftware/pt-v5-autotasks-draw-reserve
+# @generationsoftware/pt-v5-autotasks-draw-auction
 
-![title image for PoolTogether Draw Reserve Sweeper Bot](https://github.com/pooltogether/v5-autotasks/raw/main/packages/draw-reserve/prize-claim-img.png "title image for PoolTogether Draw Reserve Sweeper Bot")
-
-PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to sweep any rewards a draw start & complete bot has accumulated on the prize pool.
+PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to start the RNG (random number generator) process and complete draws using the resulting winning random number.
 
 ## Usage
 
@@ -32,19 +30,17 @@ RELAYER_API_SECRET: OZ Defender-specific
 JSON_RPC_URI: Network-specific
 ```
 
-The following one is unique to the draw reserve bot:
+The following one is unique to the prize claimer bot:
 
 ```
-RESERVE_RECIPIENT: EVM account that will receive the claim reserve
+REWARD_RECIPIENT: Who will receive the profit for starting and completing the RNG?
 ```
-
-Once the config has been saved with all of those variables, the script will run `withdrawReserve()` and attempt to send a transaction.
 
 If everything looks good, you can upload the task to OZ Defender to be run periodically.
 
 ### 2. Update autotask
 
-With the config in place from step 1, you can update the autotask on OZ Defender using:
+With the config in place from step 1, you can build and update the autotask on OpenZeppelin Defender using:
 
 ```
 yarn update

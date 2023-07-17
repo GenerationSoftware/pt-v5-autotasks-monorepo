@@ -42,7 +42,7 @@ The following one is unique to the prize claimer bot:
 FEE_RECIPIENT: Who will receive the profit for claiming on other's behalf
 ```
 
-Once the config has been saved with all of those variables, the script will run `executeClaimerProfitablePrizeTxs()` and attempt to send multicall batched transactions through Flashbots bundles.
+Once the config has been saved with all of those variables, the script will run `executeClaimerProfitablePrizeTxs()` and attempt to send prize claim transactions.
 
 If everything looks good, you can upload the task to OZ Defender to be run periodically.
 
