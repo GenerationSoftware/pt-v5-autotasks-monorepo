@@ -70,12 +70,11 @@ export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
 }
 
-export interface DrawReserveConfigParams {
-  relayerAddress: string;
-  reserveRecipient: string;
+export interface DrawAuctionConfigParams {
   chainId: number;
+  rewardRecipient: string;
+  useFlashbots: boolean;
+  minProfitThresholdUsd: number;
 }
 
-export interface DrawReserveContext {
-  reserveToken: TokenWithRate;
-}
+export interface DrawAuctionContext {}

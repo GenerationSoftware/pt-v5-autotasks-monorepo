@@ -1,9 +1,9 @@
 {
-  "name": "@generationsoftware/pt-v5-autotasks-draw-reserve",
+  "name": "@generationsoftware/pt-v5-autotasks-draw-auction",
   "version": "0.0.1",
-  "description": "Autotask to automatically sweep draw reserve for bots who start & complete draws for the PoolTogether Hyperstructure (v5).",
+  "description": "Autotask to automatically start and complete PoolTogether Hyperstructure (v5) prize pool draws.",
   "author": "PoolTogether Inc.",
-  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/draw-reserve/README.md",
+  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/draw-auction/README.md",
   "license": "ISC",
   "type": "module",
   "main": "dist/handler.js",
@@ -35,6 +35,9 @@
     "configstore": "^6.0.0",
     "defender-relay-client": "1.39.0",
     "figlet": "^1.6.0",
+    "graphql-request": "^5.2.0",
+    "lodash.groupby": "^4.6.0",
+    "node-fetch": "^3.3.1",
     "tsdx": "^0.14.1"
   },
   "devDependencies": {
@@ -45,6 +48,8 @@
     "dotenv": "16.0.3",
     "es-main": "1.2.0",
     "ts-node": "10.9.1",
-    "tsup": "^6.7.0"
+    "tsup": "^6.7.0",
+    "typescript": "4.7.4",
+    "yalc": "^1.0.0-pre.53"
   }
 }

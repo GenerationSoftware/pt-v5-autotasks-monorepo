@@ -3,7 +3,7 @@ export { drawBeaconHandleDrawStartAndComplete } from './drawBeaconHandleDrawStar
 export { liquidatorArbitrageSwap } from './liquidatorArbitrageSwap';
 export { yieldVaultHandleMintRate } from './yieldVaultHandleMintRate';
 export { getWithdrawClaimRewardsTx } from './withdrawClaimRewards';
-export { getWithdrawReserveTx } from './drawReserve';
+export { prepareDrawAuctionTxs } from './drawAuction';
 
 export { testnetPrizePoolHandleCompletePrize } from './testnetPrizePoolHandleCompletePrize';
 

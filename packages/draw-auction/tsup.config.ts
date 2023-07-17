@@ -17,7 +17,7 @@ export default defineConfig((opt) => {
         ...(options.define ?? {}),
         BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
         BUILD_JSON_RPC_URI: `'${config.get(`${CHAIN_ID}.JSON_RPC_URI`)}'`,
-        BUILD_RESERVE_RECIPIENT: `'${config.get(`${CHAIN_ID}.RESERVE_RECIPIENT`)}'`,
+        BUILD_REWARD_RECIPIENT: `'${config.get(`${CHAIN_ID}.REWARD_RECIPIENT`)}'`,
         BUILD_USE_FLASHBOTS: `'${config.get(`${CHAIN_ID}.USE_FLASHBOTS`)}'`,
         BUILD_MIN_PROFIT_THRESHOLD_USD: `'${config.get(`${CHAIN_ID}.MIN_PROFIT_THRESHOLD_USD`)}'`,
       };
