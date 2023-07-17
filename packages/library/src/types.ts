@@ -77,4 +77,7 @@ export interface DrawAuctionConfigParams {
   minProfitThresholdUsd: number;
 }
 
-export interface DrawAuctionContext {}
+export interface DrawAuctionContext {
+  gasTokenMarketRateUsd: number;
+  isRNGAuctionOpen: boolean;
+}
