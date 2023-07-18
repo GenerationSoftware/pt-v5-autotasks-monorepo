@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers';
+import { Contract, BigNumber } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
@@ -80,4 +80,13 @@ export interface DrawAuctionConfigParams {
 export interface DrawAuctionContext {
   gasTokenMarketRateUsd: number;
   isRNGAuctionOpen: boolean;
+  currentRewardPortionRng: number;
+  rewardToken: TokenWithRate;
+}
+
+export interface AuctionContracts {
+  prizePoolContract: Contract;
+  rngAuctionContract: Contract;
+  drawAuctionContract: Contract;
+  marketRateContract: Contract;
 }
