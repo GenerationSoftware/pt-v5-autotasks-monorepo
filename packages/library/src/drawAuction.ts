@@ -13,10 +13,10 @@ import {
   printSpacer,
   getFeesUsd,
   canUseIsPrivate,
-  getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
 } from './utils';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { getDrawAuctionContextMulticall } from './utils/getDrawAuctionContextMulticall';
 
 // RNGAuction.sol;
 // interface StartRngRequestParams {
@@ -31,21 +31,12 @@ interface TxParams {
   rewardRecipient: string;
 }
 
-// // RNGAuction.sol;
-//
-// isRNGRequested;
-// isRNGCompleted;
-// isRNGAuctionOpen;
-
-// rngAuctionElapsedTime;
-// getRNGRequest;
-// getRNGRequestId;
-// getRNGService;
-// getDrawPeriodOffset;
-// getDrawPeriod;
-// getAuctionDuration;
-
-// startRNGRequest;
+interface AuctionContracts {
+  prizePoolContract: Contract;
+  rngAuctionContract: Contract;
+  drawAuctionContract: Contract;
+  marketRateContract: Contract;
+}
 
 // // DrawAuction.sol
 //
@@ -55,44 +46,31 @@ interface TxParams {
 
 // originChainId;
 
-const getDrawAuctionContracts = (
+const getAuctionContracts = (
   chainId: number,
   readProvider: Provider,
   contracts: ContractsBlob,
-) => {
-  const contractsVersion = {
+): AuctionContracts => {
+  const version = {
     major: 1,
     minor: 0,
     patch: 0,
   };
-  const rngAuctionContract = getContract(
-    'RNGAuction',
-    chainId,
-    readProvider,
-    contracts,
-    contractsVersion,
-  );
-  const drawAuctionContract = getContract(
-    'DrawAuction',
-    chainId,
-    readProvider,
-    contracts,
-    contractsVersion,
-  );
-  const marketRateContract = getContract(
-    'MarketRate',
-    chainId,
-    readProvider,
-    contracts,
-    contractsVersion,
-  );
+  const prizePoolContract = getContract('PrizePool', chainId, readProvider, contracts, version);
+  const rngAuctionContract = getContract('RNGAuction', chainId, readProvider, contracts, version);
+  const drawAuctionContract = getContract('DrawAuction', chainId, readProvider, contracts, version);
+  const marketRateContract = getContract('MarketRate', chainId, readProvider, contracts, version);
 
-  return { rngAuctionContract, drawAuctionContract, marketRateContract };
+  if (!prizePoolContract || !rngAuctionContract || !drawAuctionContract) {
+    throw new Error('Contract Unavailable');
+  }
+
+  return { prizePoolContract, rngAuctionContract, drawAuctionContract, marketRateContract };
 };
 
 /**
- * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
- * to claim for them. The fees the drawAuction bot can earn increase exponentially over time.
+ * Figures out the current state of the RNG / Draw Auction and if it's profitable
+ * to run any of the transactions, populates and returns the tx object
  *
  * @returns {undefined} void function
  */
@@ -104,35 +82,19 @@ export async function prepareDrawAuctionTxs(
 ): Promise<undefined> {
   const { chainId, rewardRecipient, useFlashbots, minProfitThresholdUsd } = params;
 
-  const { rngAuctionContract, drawAuctionContract, marketRateContract } = getDrawAuctionContracts(
-    chainId,
-    readProvider,
-    contracts,
-  );
-
-  if (!rngAuctionContract || !drawAuctionContract) {
-    throw new Error('Contract Unavailable');
-  }
+  const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
 
   // TODO: Figure out how to get drawAuction, rngAuction contracts ... ?
 
   // #1. Get context about the prize pool prize token, etc
-  const context: DrawAuctionContext = await getContext(
-    chainId,
+  const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
     readProvider,
-    contracts,
-    rngAuctionContract,
-    drawAuctionContract,
-    marketRateContract,
+    auctionContracts,
   );
+
   printContext(chainId, context);
 
-  // #2. Get data from v5-draw-results
-  // let claims = await fetchClaims(chainId, prizePool.address, context.drawId);
-
-  const nothingToDo = rngAuctionContract.isRNGAuctionOpen;
-
-  if (nothingToDo) {
+  if (!context.isRNGAuctionOpen) {
     printAsterisks();
     console.log(chalk.yellow(`Currently no profitable transactions to make. Exiting ...`));
     return;
@@ -148,11 +110,8 @@ export async function prepareDrawAuctionTxs(
   const profitable = await calculateProfit(
     readProvider,
     chainId,
-    contracts,
-    drawAuctionContract,
-    rewardRecipient,
-    minProfitThresholdUsd,
-    marketRateContract,
+    auctionContracts,
+    params,
     context,
   );
 
@@ -168,9 +127,10 @@ export async function prepareDrawAuctionTxs(
     printSpacer();
 
     const txParams = buildParams(rewardRecipient);
-    const populatedTx = await drawAuctionContract.populateTransaction.startRNGRequest(
-      ...Object.values(txParams),
-    );
+    const populatedTx =
+      await auctionContracts.rngAuctionContract.populateTransaction.startRNGRequest(
+        ...Object.values(txParams),
+      );
 
     console.log(chalk.greenBright.bold(`Sending transaction ...`));
     const tx = await relayer.sendTransaction({
@@ -201,12 +161,14 @@ export async function prepareDrawAuctionTxs(
  * @returns {Promise} Promise of a BigNumber with the gas limit
  */
 const getEstimatedGasLimit = async (
-  drawAuction: Contract,
+  auctionContracts: AuctionContracts,
   txParams: TxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await drawAuction.estimateGas.claimPrizes(...Object.values(txParams));
+    estimatedGasLimit = await auctionContracts.rngAuctionContract.estimateGas.startRNGRequest(
+      ...Object.values(txParams),
+    );
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -222,27 +184,19 @@ const getEstimatedGasLimit = async (
 const calculateProfit = async (
   readProvider: Provider,
   chainId: number,
-  contracts: ContractsBlob,
-  drawAuctionContract: Contract,
-  rewardRecipient: string,
-  minProfitThresholdUsd: number,
-  marketRateContract: Contract,
+  auctionContracts: AuctionContracts,
+  params: DrawAuctionConfigParams,
   context: DrawAuctionContext,
 ): Promise<boolean> => {
   printSpacer();
-  const totalCostUsd = await getGasCost(
-    readProvider,
-    chainId,
-    drawAuctionContract,
-    rewardRecipient,
-    context.gasTokenMarketRateUsd,
-  );
+  const totalCostUsd = await getGasCost(readProvider, chainId, auctionContracts, params, context);
 
   printAsterisks();
   console.log(chalk.magenta('5c. Profit/Loss (USD):'));
   printSpacer();
 
-  const rewardUsd = 1234.123;
+  const reward = context.currentRewardPortionRng;
+  const rewardUsd = context.rewardToken.assetRateUsd * reward;
 
   // FEES USD
   const netProfitUsd = rewardUsd - totalCostUsd;
@@ -257,9 +211,9 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  const profitable = netProfitUsd > minProfitThresholdUsd;
+  const profitable = netProfitUsd > params.minProfitThresholdUsd;
   logTable({
-    MIN_PROFIT_THRESHOLD_USD: `$${minProfitThresholdUsd}`,
+    MIN_PROFIT_THRESHOLD_USD: `$${params.minProfitThresholdUsd}`,
     'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     'Profitable?': profitable ? '✔' : '✗',
   });
@@ -274,27 +228,6 @@ const calculateProfit = async (
   }
 
   return profitable;
-};
-
-/**
- * Gather information about the draw auction
- * and the last drawId
- * @returns {Promise} Promise of a DrawAuctionContext object
- */
-const getContext = async (
-  chainId: number,
-  readProvider: Provider,
-  contracts: ContractsBlob,
-  rngAuctionContract: Contract,
-  drawAuctionContract: Contract,
-  marketRateContract: Contract,
-): Promise<DrawAuctionContext> => {
-  printSpacer();
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRateContract);
-
-  const isRNGAuctionOpen = await rngAuctionContract.isRNGAuctionOpen();
-
-  return { gasTokenMarketRateUsd, isRNGAuctionOpen };
 };
 
 /**
@@ -323,13 +256,13 @@ const buildParams = (rewardRecipient: string): TxParams => {
 const getGasCost = async (
   readProvider: Provider,
   chainId: number,
-  drawAuction: Contract,
-  rewardRecipient: string,
-  gasTokenMarketRateUsd: number,
+  auctionContracts: AuctionContracts,
+  params: DrawAuctionConfigParams,
+  context: DrawAuctionContext,
 ): Promise<number> => {
-  let txParams = buildParams(rewardRecipient);
+  let txParams = buildParams(params.rewardRecipient);
 
-  let estimatedGasLimit = await getEstimatedGasLimit(drawAuction, txParams);
+  let estimatedGasLimit = await getEstimatedGasLimit(auctionContracts, txParams);
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
   } else {
@@ -355,7 +288,7 @@ const getGasCost = async (
   const { maxFeeUsd: gasCostUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
-    gasTokenMarketRateUsd,
+    context.gasTokenMarketRateUsd,
     readProvider,
   );
   console.log(

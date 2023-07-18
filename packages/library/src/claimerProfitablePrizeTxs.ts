@@ -13,24 +13,18 @@ import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 
-import {
-  Token,
-  ClaimPrizeContext,
-  ExecuteClaimerProfitablePrizeTxsParams,
-  TiersContext,
-} from './types';
+import { ClaimPrizeContext, ExecuteClaimerProfitablePrizeTxsParams, TiersContext } from './types';
 import {
   logTable,
   logStringValue,
   logBigNumber,
   printAsterisks,
   printSpacer,
-  getFeesUsd,
   canUseIsPrivate,
-  MARKET_RATE_CONTRACT_DECIMALS,
-  getGasTokenMarketRateUsd,
   roundTwoDecimalPlaces,
-  parseBigNumberAsFloat,
+  getFeesUsd,
+  getGasTokenMarketRateUsd,
+  getTokenRateUsd,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
@@ -251,7 +245,7 @@ const calculateProfit = async (
   context: ClaimPrizeContext,
 ): Promise<ClaimPrizesParams> => {
   printSpacer();
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(marketRate);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     gasTokenMarketRateUsd,
@@ -361,7 +355,7 @@ const getContext = async (
     symbol: await tokenInContract.symbol(),
   };
 
-  const feeTokenRateUsd = await getFeeTokenRateUsd(marketRate, feeToken);
+  const feeTokenRateUsd = await getTokenRateUsd(marketRate, feeToken);
 
   return { feeToken, drawId, feeTokenRateUsd, tiers };
 };
@@ -382,17 +376,6 @@ const printContext = (context) => {
     `Fee Token ${context.feeToken.symbol} MarketRate USD: `,
     `$${context.feeTokenRateUsd}`,
   );
-};
-
-/**
- * Finds the spot price of the fee token in USD
- * @returns {number} feeTokenRateUsd
- */
-const getFeeTokenRateUsd = async (marketRate: Contract, feeToken: Token): Promise<number> => {
-  const feeTokenAddress = feeToken.address;
-  const feeTokenRate = await marketRate.priceFeed(feeTokenAddress, 'USD');
-
-  return parseBigNumberAsFloat(feeTokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
 
 const buildParams = (

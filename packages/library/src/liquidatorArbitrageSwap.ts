@@ -421,7 +421,7 @@ const calculateProfit = async (
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
 
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(marketRate);
 
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
@@ -440,7 +440,7 @@ const calculateProfit = async (
     gasTokenMarketRateUsd,
     readProvider,
   );
-  // const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+  // const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd( marketRate);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     gasTokenMarketRateUsd,

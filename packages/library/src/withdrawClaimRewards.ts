@@ -183,7 +183,7 @@ const calculateProfit = async (
   readProvider: Provider,
   minProfitThresholdUsd: number,
 ): Promise<Boolean> => {
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(contracts, marketRate);
+  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(marketRate);
 
   printAsterisks();
   console.log(chalk.blue('3. Current gas costs for transaction:'));

@@ -2,7 +2,9 @@ import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 
-import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from '../utils/network';
+import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from './network';
+import { Token } from '../types';
+import { parseBigNumberAsFloat } from '../utils';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
@@ -56,17 +58,20 @@ export const getFeesUsd = async (
  *
  * @returns {number} The spot price for the Native Gas Token in USD
  **/
-export const getGasTokenMarketRateUsd = async (contracts: ContractsBlob, marketRate: Contract) => {
-  // const wethContract = contracts.contracts.find(
-  //   contract =>
-  //     contract.tokens &&
-  //     contract.tokens.find(token => token.extensions.underlyingAsset.symbol === "WETH")
-  // );
-  // const wethAddress = wethContract.tokens[0].extensions.underlyingAsset.address;
-  // const wethRate = await marketRate.priceFeed(wethAddress, "USD");
-
+export const getGasTokenMarketRateUsd = async (marketRate: Contract) => {
   const nativeTokenAddress = TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS;
   const gasTokenRate = await marketRate.priceFeed(nativeTokenAddress, 'USD');
 
   return parseFloat(ethers.utils.formatUnits(gasTokenRate, MARKET_RATE_CONTRACT_DECIMALS));
+};
+
+/**
+ * Finds the spot price of a token in USD
+ * @returns {number} tokenRateUsd
+ */
+export const getTokenRateUsd = async (marketRate: Contract, token: Token): Promise<number> => {
+  const tokenAddress = token.address;
+  const tokenRate = await marketRate.priceFeed(tokenAddress, 'USD');
+
+  return parseBigNumberAsFloat(tokenRate, MARKET_RATE_CONTRACT_DECIMALS);
 };
