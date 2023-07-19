@@ -84,6 +84,8 @@ export interface DrawAuctionContext {
   rngCurrentRewardPortion: BigNumber;
   drawIsAuctionComplete: boolean;
   drawCurrentRewardPortion: BigNumber;
+  rngRewardUsd: number;
+  drawRewardUsd: number;
 }
 
 export interface AuctionContracts {
