@@ -1,4 +1,5 @@
 import { BigNumber, Contract } from 'ethers';
+import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import { Relayer } from 'defender-relay-client';
@@ -72,7 +73,7 @@ export async function prepareDrawAuctionTxs(
   readProvider: Provider,
   params: DrawAuctionConfigParams,
 ): Promise<undefined> {
-  const { chainId, rewardRecipient } = params;
+  const { chainId } = params;
 
   const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
 
@@ -84,9 +85,9 @@ export async function prepareDrawAuctionTxs(
 
   printContext(chainId, context);
 
-  if (!context.isRngAuctionOpen) {
+  if (context.rngIsAuctionComplete || context.drawIsAuctionComplete) {
     printAsterisks();
-    console.log(chalk.yellow(`Currently no profitable transactions to make. Exiting ...`));
+    console.log(chalk.yellow(`Currently no RNG or Draw auctions to complete. Exiting ...`));
     return;
   }
 
@@ -94,16 +95,7 @@ export async function prepareDrawAuctionTxs(
   printAsterisks();
 
   // #5. Decide if profitable or not
-  printSpacer();
-  console.log(chalk.blue(`5a. Calculating profit ...`));
-
-  const profitable = await calculateProfit(
-    readProvider,
-    chainId,
-    auctionContracts,
-    params,
-    context,
-  );
+  const profitable = await calculateProfit(readProvider, auctionContracts, params, context);
 
   // #6. Populate transaction
   if (profitable) {
@@ -173,38 +165,42 @@ const getEstimatedGasLimit = async (
  */
 const calculateProfit = async (
   readProvider: Provider,
-  chainId: number,
   auctionContracts: AuctionContracts,
   params: DrawAuctionConfigParams,
   context: DrawAuctionContext,
 ): Promise<boolean> => {
   printSpacer();
-  const totalCostUsd = await getGasCost(readProvider, chainId, auctionContracts, params, context);
+  printSpacer();
+  console.log(chalk.blue(`2. Calculating profit ...`));
+  const totalCostUsd = await getGasCost(readProvider, auctionContracts, params, context);
 
   printAsterisks();
-  console.log(chalk.magenta('5c. Profit/Loss (USD):'));
+  console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
-  const reward = context.currentRewardPortionRng;
-  console.log('reward');
-  console.log(reward);
-  console.log(reward.toString());
+  const rngReward = context.rngCurrentRewardPortion;
+  console.log('rngReward');
+  console.log(rngReward);
+  console.log(rngReward.toString());
 
-  const rewardUsd = context.rewardToken.assetRateUsd * reward;
-  console.log('rewardUsd');
-  console.log(rewardUsd);
-  console.log(rewardUsd.toString());
+  const rngRewardUsd =
+    parseFloat(formatUnits(rngReward, context.rewardToken.decimals)) *
+    context.rewardToken.assetRateUsd;
+
+  console.log('rngRewardUsd');
+  console.log(rngRewardUsd);
+  console.log(rngRewardUsd.toString());
 
   // FEES USD
-  const netProfitUsd = rewardUsd - totalCostUsd;
+  const netProfitUsd = rngRewardUsd - totalCostUsd;
   console.log(chalk.magenta('Net profit = (Earned fees - Gas cost [Max])'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-        rewardUsd,
+        rngRewardUsd,
       )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
     ),
-    chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${totalCostUsd})`),
+    chalk.dim(`$${netProfitUsd} = ($${rngRewardUsd} - $${totalCostUsd})`),
   );
   printSpacer();
 
@@ -237,11 +233,12 @@ const printContext = (chainId, context) => {
   printSpacer();
 
   logStringValue(
-    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    `2. Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     context.gasTokenMarketRateUsd,
   );
 
-  logStringValue(`Is RNG Auction open?: `, `${context.isRngAuctionOpen}`);
+  logStringValue(`3. (RNG) Auction complete? `, `${context.rngIsAuctionComplete}`);
+  logStringValue(`4. (RNG) Current reward portion: `, `${context.rngCurrentRewardPortion}`);
 };
 
 const buildParams = (rewardRecipient: string): TxParams => {
@@ -252,7 +249,6 @@ const buildParams = (rewardRecipient: string): TxParams => {
 
 const getGasCost = async (
   readProvider: Provider,
-  chainId: number,
   auctionContracts: AuctionContracts,
   params: DrawAuctionConfigParams,
   context: DrawAuctionContext,
@@ -266,8 +262,8 @@ const getGasCost = async (
     logBigNumber(
       'Estimated gas limit:',
       estimatedGasLimit,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-      NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+      NETWORK_NATIVE_TOKEN_INFO[params.chainId].decimals,
+      NETWORK_NATIVE_TOKEN_INFO[params.chainId].symbol,
     );
   }
 
@@ -276,14 +272,14 @@ const getGasCost = async (
   logBigNumber(
     'Gas Cost (wei):',
     estimatedGasLimit,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+    NETWORK_NATIVE_TOKEN_INFO[params.chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[params.chainId].symbol,
   );
 
   // 3. Convert gas costs to USD
   printSpacer();
   const { maxFeeUsd: gasCostUsd } = await getFeesUsd(
-    chainId,
+    params.chainId,
     estimatedGasLimit,
     context.gasTokenMarketRateUsd,
     readProvider,

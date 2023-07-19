@@ -78,10 +78,12 @@ export interface DrawAuctionConfigParams {
 }
 
 export interface DrawAuctionContext {
-  gasTokenMarketRateUsd: number;
-  isRngAuctionOpen: boolean;
-  currentRewardPortionRng: number;
   rewardToken: TokenWithRate;
+  gasTokenMarketRateUsd: number;
+  rngIsAuctionComplete: boolean;
+  rngCurrentRewardPortion: BigNumber;
+  drawIsAuctionComplete: boolean;
+  drawCurrentRewardPortion: BigNumber;
 }
 
 export interface AuctionContracts {
