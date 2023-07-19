@@ -1,5 +1,4 @@
 import { BigNumber, Contract } from 'ethers';
-import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import { Relayer } from 'defender-relay-client';
@@ -20,15 +19,7 @@ import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { getDrawAuctionContextMulticall } from './utils/getDrawAuctionContextMulticall';
 
 // RNGAuction.sol;
-// interface StartRngRequestParams {
-//   rewardRecipient: string;
-// }
-
-// interface CompleteDrawParams {
-//   rewardRecipient: string;
-// }
-
-interface TxParams {
+interface CompleteAuctionTxParams {
   rewardRecipient: string;
 }
 
@@ -77,7 +68,7 @@ export async function prepareDrawAuctionTxs(
 
   const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
 
-  // #1. Get context about the prize pool prize token, etc
+  // #1. Get info about the prize pool prize/reserve token, auction states, etc.
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
     readProvider,
     auctionContracts,
@@ -94,36 +85,22 @@ export async function prepareDrawAuctionTxs(
   printSpacer();
   printAsterisks();
 
+  // #2. Figure out if we need to run completeAuction on RNGAuction or DrawAuction contract
+  const contract = determineContractToUse(context, auctionContracts);
+
+  // #3. Estimate gas costs
+  const totalCostUsd = await getGasCost(readProvider, contract, params, context);
+
+  // #4. Find reward in USD
+  const rewardUsd =
+    contract === auctionContracts.rngAuctionContract ? context.rngRewardUsd : context.drawRewardUsd;
+
   // #5. Decide if profitable or not
-  const profitable = await calculateProfit(readProvider, auctionContracts, params, context);
+  const profitable = await calculateProfit(params, rewardUsd, totalCostUsd);
 
   // #6. Populate transaction
   if (profitable) {
-    printSpacer();
-    console.log(chalk.green(`Execute Start RNG Auction`));
-    printSpacer();
-
-    const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
-
-    console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-    printSpacer();
-
-    const txParams = buildParams(params.rewardRecipient);
-    const populatedTx =
-      await auctionContracts.rngAuctionContract.populateTransaction.startRNGRequest(
-        ...Object.values(txParams),
-      );
-
-    console.log(chalk.greenBright.bold(`Sending transaction ...`));
-    const tx = await relayer.sendTransaction({
-      isPrivate,
-      data: populatedTx.data,
-      to: populatedTx.to,
-      gasLimit: 8000000,
-    });
-
-    console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-    console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+    const tx = await sendTransaction(relayer, auctionContracts, params);
 
     // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
     //       re-submit transactions, effectively giving them different tx hashes
@@ -134,6 +111,10 @@ export async function prepareDrawAuctionTxs(
     console.log('Waiting on transaction to be confirmed ...');
     await readProvider.waitForTransaction(tx.hash);
     console.log('Tx confirmed !');
+  } else {
+    console.log(
+      chalk.yellow(`Completing current auction currently not profitable. Will try again soon ...`),
+    );
   }
 }
 
@@ -143,13 +124,13 @@ export async function prepareDrawAuctionTxs(
  * @returns {Promise} Promise of a BigNumber with the gas limit
  */
 const getEstimatedGasLimit = async (
-  auctionContracts: AuctionContracts,
-  txParams: TxParams,
+  contract: Contract,
+  completeAuctionTxParams: CompleteAuctionTxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await auctionContracts.rngAuctionContract.estimateGas.startRNGRequest(
-      ...Object.values(txParams),
+    estimatedGasLimit = await contract.estimateGas.completeAuction(
+      ...Object.values(completeAuctionTxParams),
     );
   } catch (e) {
     console.log(chalk.red(e));
@@ -164,43 +145,28 @@ const getEstimatedGasLimit = async (
  * @returns {Promise} Promise of a boolean for profitability
  */
 const calculateProfit = async (
-  readProvider: Provider,
-  auctionContracts: AuctionContracts,
   params: DrawAuctionConfigParams,
-  context: DrawAuctionContext,
+  rewardUsd: number,
+  totalCostUsd: number,
 ): Promise<boolean> => {
   printSpacer();
   printSpacer();
   console.log(chalk.blue(`2. Calculating profit ...`));
-  const totalCostUsd = await getGasCost(readProvider, auctionContracts, params, context);
 
   printAsterisks();
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
-  const rngReward = context.rngCurrentRewardPortion;
-  console.log('rngReward');
-  console.log(rngReward);
-  console.log(rngReward.toString());
-
-  const rngRewardUsd =
-    parseFloat(formatUnits(rngReward, context.rewardToken.decimals)) *
-    context.rewardToken.assetRateUsd;
-
-  console.log('rngRewardUsd');
-  console.log(rngRewardUsd);
-  console.log(rngRewardUsd.toString());
-
   // FEES USD
-  const netProfitUsd = rngRewardUsd - totalCostUsd;
+  const netProfitUsd = rewardUsd - totalCostUsd;
   console.log(chalk.magenta('Net profit = (Earned fees - Gas cost [Max])'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-        rngRewardUsd,
+        rewardUsd,
       )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
     ),
-    chalk.dim(`$${netProfitUsd} = ($${rngRewardUsd} - $${totalCostUsd})`),
+    chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${totalCostUsd})`),
   );
   printSpacer();
 
@@ -211,14 +177,6 @@ const calculateProfit = async (
     'Profitable?': profitable ? '✔' : '✗',
   });
   printSpacer();
-
-  if (profitable) {
-    console.log(chalk.yellow(`Submitting transaction:`));
-  } else {
-    // console.log(
-    //   chalk.yellow(`Starting RNG currently not profitable.`),
-    // );
-  }
 
   return profitable;
 };
@@ -241,7 +199,7 @@ const printContext = (chainId, context) => {
   logStringValue(`4. (RNG) Current reward portion: `, `${context.rngCurrentRewardPortion}`);
 };
 
-const buildParams = (rewardRecipient: string): TxParams => {
+const buildParams = (rewardRecipient: string): CompleteAuctionTxParams => {
   return {
     rewardRecipient,
   };
@@ -249,13 +207,13 @@ const buildParams = (rewardRecipient: string): TxParams => {
 
 const getGasCost = async (
   readProvider: Provider,
-  auctionContracts: AuctionContracts,
+  contract: Contract,
   params: DrawAuctionConfigParams,
   context: DrawAuctionContext,
 ): Promise<number> => {
-  let txParams = buildParams(params.rewardRecipient);
+  let completeAuctionTxParams = buildParams(params.rewardRecipient);
 
-  let estimatedGasLimit = await getEstimatedGasLimit(auctionContracts, txParams);
+  let estimatedGasLimit = await getEstimatedGasLimit(contract, completeAuctionTxParams);
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
   } else {
@@ -291,4 +249,49 @@ const getGasCost = async (
   );
 
   return gasCostUsd;
+};
+
+const determineContractToUse = (
+  context: DrawAuctionContext,
+  auctionContracts: AuctionContracts,
+): Contract => {
+  let contract = !context.rngIsAuctionComplete
+    ? auctionContracts.rngAuctionContract
+    : auctionContracts.drawAuctionContract;
+
+  return contract;
+};
+
+const sendTransaction = async (
+  relayer: Relayer,
+  auctionContracts: AuctionContracts,
+  params: DrawAuctionConfigParams,
+) => {
+  console.log(chalk.yellow(`Submitting transaction:`));
+  printSpacer();
+  console.log(chalk.green(`Execute Start RNG Auction`));
+  printSpacer();
+
+  const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
+
+  console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+  printSpacer();
+
+  const completeAuctionTxParams = buildParams(params.rewardRecipient);
+  const populatedTx = await auctionContracts.rngAuctionContract.populateTransaction.completeAuction(
+    ...Object.values(completeAuctionTxParams),
+  );
+
+  console.log(chalk.greenBright.bold(`Sending transaction ...`));
+  const tx = await relayer.sendTransaction({
+    isPrivate,
+    data: populatedTx.data,
+    to: populatedTx.to,
+    gasLimit: 8000000,
+  });
+
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+  return tx;
 };

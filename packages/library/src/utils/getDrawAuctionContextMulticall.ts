@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
@@ -80,6 +81,31 @@ export const getDrawAuctionContextMulticall = async (
   const drawIsAuctionComplete = results[DRAW_IS_AUCTION_COMPLETE];
   const drawCurrentRewardPortion = results[DRAW_CURRENT_REWARD_PORTION_KEY];
 
+  // 5c. Reward
+  // rng
+  console.log('rngCurrentRewardPortion');
+  console.log(rngCurrentRewardPortion);
+  console.log(rngCurrentRewardPortion.toString());
+
+  const rngRewardUsd =
+    parseFloat(formatUnits(rngCurrentRewardPortion, rewardToken.decimals)) *
+    rewardToken.assetRateUsd;
+
+  console.log('rngRewardUsd');
+  console.log(rngRewardUsd);
+
+  // draw
+  console.log('drawCurrentRewardPortion');
+  console.log(drawCurrentRewardPortion);
+  console.log(drawCurrentRewardPortion.toString());
+
+  const drawRewardUsd =
+    parseFloat(formatUnits(drawCurrentRewardPortion, rewardToken.decimals)) *
+    rewardToken.assetRateUsd;
+
+  console.log('drawRewardUsd');
+  console.log(drawRewardUsd);
+
   return {
     rewardToken,
     gasTokenMarketRateUsd,
@@ -87,5 +113,7 @@ export const getDrawAuctionContextMulticall = async (
     rngCurrentRewardPortion,
     drawIsAuctionComplete,
     drawCurrentRewardPortion,
+    rngRewardUsd,
+    drawRewardUsd,
   };
 };
