@@ -38,14 +38,6 @@ interface AuctionContracts {
   marketRateContract: Contract;
 }
 
-// // DrawAuction.sol
-//
-// auctionName;
-//
-// completeDraw;
-
-// originChainId;
-
 const getAuctionContracts = (
   chainId: number,
   readProvider: Provider,
@@ -80,11 +72,9 @@ export async function prepareDrawAuctionTxs(
   readProvider: Provider,
   params: DrawAuctionConfigParams,
 ): Promise<undefined> {
-  const { chainId, rewardRecipient, useFlashbots, minProfitThresholdUsd } = params;
+  const { chainId, rewardRecipient } = params;
 
   const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
-
-  // TODO: Figure out how to get drawAuction, rngAuction contracts ... ?
 
   // #1. Get context about the prize pool prize token, etc
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
@@ -94,7 +84,7 @@ export async function prepareDrawAuctionTxs(
 
   printContext(chainId, context);
 
-  if (!context.isRNGAuctionOpen) {
+  if (!context.isRngAuctionOpen) {
     printAsterisks();
     console.log(chalk.yellow(`Currently no profitable transactions to make. Exiting ...`));
     return;
@@ -121,12 +111,12 @@ export async function prepareDrawAuctionTxs(
     console.log(chalk.green(`Execute Start RNG Auction`));
     printSpacer();
 
-    const isPrivate = canUseIsPrivate(chainId, useFlashbots);
+    const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
 
     console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
     printSpacer();
 
-    const txParams = buildParams(rewardRecipient);
+    const txParams = buildParams(params.rewardRecipient);
     const populatedTx =
       await auctionContracts.rngAuctionContract.populateTransaction.startRNGRequest(
         ...Object.values(txParams),
@@ -177,7 +167,7 @@ const getEstimatedGasLimit = async (
 };
 
 /**
- * Determines if the claim transaction will be profitable
+ * Determines if the transaction will be profitable
  *
  * @returns {Promise} Promise of a boolean for profitability
  */
@@ -196,7 +186,14 @@ const calculateProfit = async (
   printSpacer();
 
   const reward = context.currentRewardPortionRng;
+  console.log('reward');
+  console.log(reward);
+  console.log(reward.toString());
+
   const rewardUsd = context.rewardToken.assetRateUsd * reward;
+  console.log('rewardUsd');
+  console.log(rewardUsd);
+  console.log(rewardUsd.toString());
 
   // FEES USD
   const netProfitUsd = rewardUsd - totalCostUsd;
@@ -244,7 +241,7 @@ const printContext = (chainId, context) => {
     context.gasTokenMarketRateUsd,
   );
 
-  logStringValue(`Is RNG Auction open?: `, `${context.isRNGAuctionOpen}`);
+  logStringValue(`Is RNG Auction open?: `, `${context.isRngAuctionOpen}`);
 };
 
 const buildParams = (rewardRecipient: string): TxParams => {

@@ -79,7 +79,7 @@ export interface DrawAuctionConfigParams {
 
 export interface DrawAuctionContext {
   gasTokenMarketRateUsd: number;
-  isRNGAuctionOpen: boolean;
+  isRngAuctionOpen: boolean;
   currentRewardPortionRng: number;
   rewardToken: TokenWithRate;
 }
