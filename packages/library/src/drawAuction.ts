@@ -93,7 +93,9 @@ export async function prepareDrawAuctionTxs(
 
   // #4. Find reward in USD
   const rewardUsd =
-    contract === auctionContracts.rngAuctionContract ? context.rngRewardUsd : context.drawRewardUsd;
+    contract === auctionContracts.rngAuctionContract
+      ? context.rngExpectedRewardUsd
+      : context.drawExpectedRewardUsd;
 
   // #5. Decide if profitable or not
   const profitable = await calculateProfit(params, rewardUsd, totalCostUsd);
@@ -190,16 +192,55 @@ const printContext = (chainId, context) => {
   console.log(chalk.blue.bold(`1. Reward token: ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol}`));
   printSpacer();
 
+  logBigNumber(
+    `2. RNG Fee:`,
+    context.rngFee,
+    context.rngFeeToken.decimals,
+    context.rngFeeToken.symbol,
+  );
+
+  printSpacer();
   logStringValue(
     `2. Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     context.gasTokenMarketRateUsd,
   );
 
+  printSpacer();
   logStringValue(`3a. (RNG) Auction complete? `, `${context.rngIsAuctionComplete}`);
-  logStringValue(`3b. (RNG) Current reward portion: `, `${context.rngCurrentRewardPortion}`);
+  logBigNumber(
+    `3b. (RNG) Expected Reward:`,
+    context.rngExpectedReward,
+    context.rewardToken.decimals,
+    context.rewardToken.symbol,
+  );
+  console.log(
+    chalk.grey(`(RNG) Expected Reward (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(context.rngExpectedRewardUsd)}`),
+    chalk.dim(`$${context.rngExpectedRewardUsd}`),
+  );
 
+  printSpacer();
   logStringValue(`4a. (Draw) Auction complete? `, `${context.drawIsAuctionComplete}`);
-  logStringValue(`4b. (Draw) Current reward portion: `, `${context.drawCurrentRewardPortion}`);
+  logBigNumber(
+    `4b. (Draw) Expected Reward:`,
+    context.drawExpectedReward,
+    context.rewardToken.decimals,
+    context.rewardToken.symbol,
+  );
+  console.log(
+    chalk.grey(`(Draw) Expected Reward (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(context.drawExpectedRewardUsd)}`),
+    chalk.dim(`$${context.drawExpectedRewardUsd}`),
+  );
+
+  console.log('rng fee token!');
+  console.log('rng fee token!');
+  console.log('rng fee token!');
+  console.log('rng fee token!');
+  // const rngFeeUsd =
+  //   parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
+  // console.log('rngFeeUsd');
+  // console.log(rngFeeUsd);
 };
 
 const buildParams = (rewardRecipient: string): CompleteAuctionTxParams => {
