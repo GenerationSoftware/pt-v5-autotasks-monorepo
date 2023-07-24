@@ -7,16 +7,17 @@ import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 import { AuctionContracts, DrawAuctionContext, TokenWithRate } from '../types';
 import { getGasTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
+// import { VrfRngAbi } from '../abis/VrfRngAbi';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
 const REWARD_DECIMALS_KEY = 'reward-decimals';
 const REWARD_NAME_KEY = 'reward-name';
 const REWARD_SYMBOL_KEY = 'reward-symbol';
-const RNG_IS_AUCTION_COMPLETE = 'rng-isAuctionOpen';
-const RNG_CURRENT_REWARD_PORTION_KEY = 'rng-currentRewardPortion';
-const DRAW_IS_AUCTION_COMPLETE = 'draw-isAuctionOpen';
-const DRAW_CURRENT_REWARD_PORTION_KEY = 'draw-currentRewardPortion';
+const RNG_IS_AUCTION_OPEN = 'rng-isAuctionOpen';
+const RNG_EXPECTED_REWARD_KEY = 'rng-currentRewardPortion';
+const DRAW_IS_AUCTION_OPEN = 'draw-isAuctionOpen';
+const DRAW_EXPECTED_REWARD_KEY = 'draw-currentRewardPortion';
 const PRICE_FEED_PREFIX_KEY = 'priceFeed';
 
 /**
@@ -35,7 +36,10 @@ export const getDrawAuctionContextMulticall = async (
 
   let queries: Record<string, any> = {};
 
-  // 1. Info about the reward token (prize token)
+  // 1. Prize Pool Info
+  const prizePoolReserve = auctionContracts.prizePoolContract.reserve();
+
+  // 2. Info about the reward token (prize token)
   const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, readProvider);
 
@@ -46,19 +50,21 @@ export const getDrawAuctionContextMulticall = async (
   queries[`${PRICE_FEED_PREFIX_KEY}-${rewardTokenAddress}`] =
     auctionContracts.marketRateContract.priceFeed(rewardTokenAddress, 'USD');
 
-  // 2. Native token (gas token) market rate in USD
+  // 3. Native token (gas token) market rate in USD
   const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(auctionContracts.marketRateContract);
 
-  // // 3. Auction info
-  // 3a. RNG Auction
-  queries[RNG_IS_AUCTION_COMPLETE] = auctionContracts.rngAuctionContract.isAuctionComplete();
-  queries[RNG_CURRENT_REWARD_PORTION_KEY] =
-    auctionContracts.rngAuctionContract.currentRewardPortion();
+  // // 4. Auction info
+  // 4a. RNG Auction
+  queries[RNG_IS_AUCTION_OPEN] = auctionContracts.rngAuctionContract.isAuctionComplete();
+  queries[RNG_EXPECTED_REWARD_KEY] =
+    auctionContracts.rngAuctionContract.expectedReward(prizePoolReserve);
 
-  // 3b. Draw Auction
-  queries[DRAW_IS_AUCTION_COMPLETE] = auctionContracts.drawAuctionContract.isAuctionComplete();
-  queries[DRAW_CURRENT_REWARD_PORTION_KEY] =
-    auctionContracts.drawAuctionContract.currentRewardPortion();
+  // 4b. Draw Auction
+  queries[DRAW_IS_AUCTION_OPEN] = auctionContracts.drawAuctionContract.isAuctionComplete();
+  queries[DRAW_EXPECTED_REWARD_KEY] =
+    auctionContracts.drawAuctionContract.expectedReward(prizePoolReserve);
+
+  // -------------------------------
 
   //
   // 5. Get and process results
@@ -75,33 +81,30 @@ export const getDrawAuctionContextMulticall = async (
   };
 
   // 5b. Results: Auction Info
-  const rngIsAuctionComplete = results[RNG_IS_AUCTION_COMPLETE];
-  const rngCurrentRewardPortion = results[RNG_CURRENT_REWARD_PORTION_KEY];
+  const rngIsAuctionComplete = results[RNG_IS_AUCTION_OPEN];
+  const rngExpectedReward = results[RNG_EXPECTED_REWARD_KEY];
 
-  const drawIsAuctionComplete = results[DRAW_IS_AUCTION_COMPLETE];
-  const drawCurrentRewardPortion = results[DRAW_CURRENT_REWARD_PORTION_KEY];
+  const drawIsAuctionComplete = results[DRAW_IS_AUCTION_OPEN];
+  const drawExpectedReward = results[DRAW_EXPECTED_REWARD_KEY];
 
   // 5c. Reward
   // rng
-  console.log('rngCurrentRewardPortion');
-  console.log(rngCurrentRewardPortion);
-  console.log(rngCurrentRewardPortion.toString());
+  console.log('rngExpectedReward');
+  console.log(rngExpectedReward);
+  console.log(rngExpectedReward.toString());
 
   const rngRewardUsd =
-    parseFloat(formatUnits(rngCurrentRewardPortion, rewardToken.decimals)) *
-    rewardToken.assetRateUsd;
-
+    parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
   console.log('rngRewardUsd');
   console.log(rngRewardUsd);
 
   // draw
-  console.log('drawCurrentRewardPortion');
-  console.log(drawCurrentRewardPortion);
-  console.log(drawCurrentRewardPortion.toString());
+  console.log('drawExpectedReward');
+  console.log(drawExpectedReward);
+  console.log(drawExpectedReward.toString());
 
   const drawRewardUsd =
-    parseFloat(formatUnits(drawCurrentRewardPortion, rewardToken.decimals)) *
-    rewardToken.assetRateUsd;
+    parseFloat(formatUnits(drawExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
 
   console.log('drawRewardUsd');
   console.log(drawRewardUsd);
@@ -110,10 +113,11 @@ export const getDrawAuctionContextMulticall = async (
     rewardToken,
     gasTokenMarketRateUsd,
     rngIsAuctionComplete,
-    rngCurrentRewardPortion,
+    rngExpectedReward,
     drawIsAuctionComplete,
-    drawCurrentRewardPortion,
+    drawExpectedReward,
     rngRewardUsd,
     drawRewardUsd,
+    prizePoolReserve,
   };
 };
