@@ -195,8 +195,11 @@ const printContext = (chainId, context) => {
     context.gasTokenMarketRateUsd,
   );
 
-  logStringValue(`3. (RNG) Auction complete? `, `${context.rngIsAuctionComplete}`);
-  logStringValue(`4. (RNG) Current reward portion: `, `${context.rngCurrentRewardPortion}`);
+  logStringValue(`3a. (RNG) Auction complete? `, `${context.rngIsAuctionComplete}`);
+  logStringValue(`3b. (RNG) Current reward portion: `, `${context.rngCurrentRewardPortion}`);
+
+  logStringValue(`4a. (Draw) Auction complete? `, `${context.drawIsAuctionComplete}`);
+  logStringValue(`4b. (Draw) Current reward portion: `, `${context.drawCurrentRewardPortion}`);
 };
 
 const buildParams = (rewardRecipient: string): CompleteAuctionTxParams => {

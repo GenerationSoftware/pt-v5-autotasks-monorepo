@@ -81,11 +81,12 @@ export interface DrawAuctionContext {
   rewardToken: TokenWithRate;
   gasTokenMarketRateUsd: number;
   rngIsAuctionComplete: boolean;
-  rngCurrentRewardPortion: BigNumber;
+  rngExpectedReward: BigNumber;
   drawIsAuctionComplete: boolean;
-  drawCurrentRewardPortion: BigNumber;
+  drawExpectedReward: BigNumber;
   rngRewardUsd: number;
   drawRewardUsd: number;
+  prizePoolReserve: BigNumber;
 }
 
 export interface AuctionContracts {
