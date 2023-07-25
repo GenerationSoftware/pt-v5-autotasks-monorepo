@@ -4,10 +4,10 @@ import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 
-import { AuctionContracts, DrawAuctionContext, TokenWithRate, Token } from '../types';
-import { getGasTokenMarketRateUsd } from './getUsd';
+import { AuctionContracts, DrawAuctionContext, TokenWithRate } from '../types';
+import { getGasTokenMarketRateUsd, getEthMainnetMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
-import { VrfRngAbi } from '../abis/VrfRngAbi';
+// import { VrfRngAbi } from '../abis/VrfRngAbi';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -94,21 +94,31 @@ export const getDrawAuctionContextMulticall = async (
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   // 6a. Results: Reward Token
-  const rewardTokenPriceFeedResults = results[`${PRICE_FEED_PREFIX_KEY}-${rewardTokenAddress}`];
+  const rewardTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
+    results[REWARD_SYMBOL_KEY],
+    rewardTokenAddress,
+  );
+  // const rewardTokenPriceFeedResults = results[`${PRICE_FEED_PREFIX_KEY}-${rewardTokenAddress}`];
+  // assetRateUsd: rewardTokenPriceFeedResults,
   const rewardToken: TokenWithRate = {
     address: rewardTokenAddress,
     decimals: results[REWARD_DECIMALS_KEY],
     name: results[REWARD_NAME_KEY],
     symbol: results[REWARD_SYMBOL_KEY],
-    assetRateUsd: rewardTokenPriceFeedResults,
+    assetRateUsd: rewardTokenMarketRateUsd,
   };
 
   // 6b. Results: RNG Auction Service Info
-  const rngFeeToken: Token = {
+  const rngFeeTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
+    results[RNG_FEE_TOKEN_SYMBOL_KEY],
+    rngFeeTokenAddress,
+  );
+  const rngFeeToken: TokenWithRate = {
     address: rngFeeTokenAddress,
     decimals: results[RNG_FEE_TOKEN_DECIMALS_KEY],
     name: results[RNG_FEE_TOKEN_NAME_KEY],
     symbol: results[RNG_FEE_TOKEN_SYMBOL_KEY],
+    assetRateUsd: rngFeeTokenMarketRateUsd,
   };
   console.log('rngFeeToken');
   console.log(rngFeeToken);

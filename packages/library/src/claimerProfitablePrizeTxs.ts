@@ -24,7 +24,7 @@ import {
   roundTwoDecimalPlaces,
   getFeesUsd,
   getGasTokenMarketRateUsd,
-  getTokenRateUsd,
+  getEthMainnetMarketRateUsd,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
@@ -355,7 +355,8 @@ const getContext = async (
     symbol: await tokenInContract.symbol(),
   };
 
-  const feeTokenRateUsd = await getTokenRateUsd(marketRate, feeToken);
+  const feeTokenRateUsd = await getEthMainnetMarketRateUsd(feeToken.symbol, feeToken.address);
+  // const feeTokenRateUsd = await getTokenRateUsd(marketRate, feeToken);
 
   return { feeToken, drawId, feeTokenRateUsd, tiers };
 };
