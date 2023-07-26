@@ -72,20 +72,6 @@ export const getNativeTokenMarketRateUsd = async (chainId: number): Promise<numb
 };
 
 /**
- * TESTNET: Finds the spot price of a token in USD
- * @returns {number} tokenRateUsd
- */
-// export const getTestnetTokenRateUsd = async (
-//   marketRate: Contract,
-//   token: Token,
-// ): Promise<number> => {
-//   const tokenAddress = token.address;
-//   const tokenRate = await marketRate.priceFeed(tokenAddress, 'USD');
-
-//   return parseBigNumberAsFloat(tokenRate, MARKET_RATE_CONTRACT_DECIMALS);
-// };
-
-/**
  * Finds the spot price of a token in USD (from ETH Mainnet only)
  * @returns {number} tokenRateUsd
  */
