@@ -1,7 +1,9 @@
-import { BigNumber, Contract } from 'ethers';
+import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
+import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { Relayer } from 'defender-relay-client';
+import { formatUnits } from '@ethersproject/units';
 import chalk from 'chalk';
 
 import { DrawAuctionContext, DrawAuctionConfigParams } from './types';
@@ -17,6 +19,7 @@ import {
 } from './utils';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { getDrawAuctionContextMulticall } from './utils/getDrawAuctionContextMulticall';
+import { ERC20Abi } from './abis/ERC20Abi';
 
 // RNGAuction.sol;
 interface CompleteAuctionTxParams {
@@ -61,10 +64,9 @@ const getAuctionContracts = (
 export async function prepareDrawAuctionTxs(
   contracts: ContractsBlob,
   relayer: Relayer,
-  readProvider: Provider,
   params: DrawAuctionConfigParams,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey } = params;
+  const { chainId, relayerAddress, writeProvider, readProvider, covalentApiKey } = params;
 
   const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
 
@@ -72,12 +74,13 @@ export async function prepareDrawAuctionTxs(
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
     readProvider,
     auctionContracts,
+    relayerAddress,
     covalentApiKey,
   );
 
   printContext(chainId, context);
 
-  if (context.rngIsAuctionComplete || context.drawIsAuctionComplete) {
+  if (!context.rngIsAuctionOpen && !context.drawIsAuctionOpen) {
     printAsterisks();
     console.log(chalk.yellow(`Currently no RNG or Draw auctions to complete. Exiting ...`));
     return;
@@ -89,19 +92,22 @@ export async function prepareDrawAuctionTxs(
   // #2. Figure out if we need to run completeAuction on RNGAuction or DrawAuction contract
   const contract = determineContractToUse(context, auctionContracts);
 
-  // #3. Estimate gas costs
+  // #3. If there is an RNG Fee, figure out if the bot can afford it
+  await optionallyIncreaseRngFeeAllowance(writeProvider, relayerAddress, context);
+
+  // #4. Estimate gas costs
   const totalCostUsd = await getGasCost(readProvider, contract, params, context);
 
-  // #4. Find reward in USD
+  // #5. Find reward in USD
   const rewardUsd =
     contract === auctionContracts.rngAuctionContract
       ? context.rngExpectedRewardUsd
       : context.drawExpectedRewardUsd;
 
-  // #5. Decide if profitable or not
+  // #6. Decide if profitable or not
   const profitable = await calculateProfit(params, rewardUsd, totalCostUsd);
 
-  // #6. Populate transaction
+  // #7. Populate transaction
   if (profitable) {
     const tx = await sendTransaction(relayer, auctionContracts, params);
 
@@ -207,7 +213,7 @@ const printContext = (chainId, context) => {
   );
 
   printSpacer();
-  logStringValue(`3a. (RNG) Auction complete? `, `${context.rngIsAuctionComplete}`);
+  logStringValue(`3a. (RNG) Auction open? `, `${context.rngIsAuctionOpen}`);
   logBigNumber(
     `3b. (RNG) Expected Reward:`,
     context.rngExpectedReward,
@@ -221,7 +227,7 @@ const printContext = (chainId, context) => {
   );
 
   printSpacer();
-  logStringValue(`4a. (Draw) Auction complete? `, `${context.drawIsAuctionComplete}`);
+  logStringValue(`4a. (Draw) Auction open? `, `${context.drawIsAuctionOpen}`);
   logBigNumber(
     `4b. (Draw) Expected Reward:`,
     context.drawExpectedReward,
@@ -300,7 +306,7 @@ const determineContractToUse = (
   context: DrawAuctionContext,
   auctionContracts: AuctionContracts,
 ): Contract => {
-  let contract = !context.rngIsAuctionComplete
+  let contract = context.rngIsAuctionOpen
     ? auctionContracts.rngAuctionContract
     : auctionContracts.drawAuctionContract;
 
@@ -339,4 +345,73 @@ const sendTransaction = async (
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
   return tx;
+};
+
+const optionallyIncreaseRngFeeAllowance = async (
+  writeProvider: Provider | DefenderRelaySigner,
+  relayerAddress: string,
+  context: DrawAuctionContext,
+) => {
+  if (context.rngIsAuctionOpen && context.rngFeeAmount.gt(0)) {
+    // Bot/Relayer can't afford RNG fee
+    if (context.relayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
+      const diff = context.rngFeeAmount.sub(context.relayer.rngFeeTokenBalance);
+      const diffStr = parseFloat(formatUnits(diff, context.rngFeeToken.decimals));
+
+      console.warn(
+        chalk.yellow(
+          `Need to increase relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
+        ),
+      );
+    }
+
+    // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
+    approve(writeProvider, relayerAddress, context);
+  }
+};
+
+/**
+ * Allowance - Give permission to the RngAuction contract to spend our Relayer/Bot's
+ * RNG Fee Token (likely LINK). We will set allowance to max as we trust the security of the
+ * RngAuction contract (you may want to change this!)
+ * @returns {undefined} - void function
+ */
+const approve = async (
+  writeProvider: Provider | DefenderRelaySigner,
+  relayerAddress: string,
+  context: DrawAuctionContext,
+) => {
+  try {
+    const rngFeeTokenContract = new ethers.Contract(
+      context.rngFeeToken.address,
+      ERC20Abi,
+      writeProvider,
+    );
+
+    const allowance = context.relayer.rngFeeTokenAllowance;
+
+    if (allowance.lt(context.rngFeeAmount)) {
+      console.log(
+        chalk.bgBlack.yellowBright(
+          `Increasing relayer '${relayerAddress}' ${context.rngFeeToken.symbol} allowance for the RngAuction to maximum ...`,
+        ),
+      );
+
+      const tx = await rngFeeTokenContract.approve(
+        context.rngFeeToken.address,
+        ethers.constants.MaxInt256,
+      );
+      await tx.wait();
+
+      const newAllowanceResult = await rngFeeTokenContract.functions.allowance(
+        relayerAddress,
+        context.rngFeeToken.address,
+      );
+      logStringValue('New allowance:', newAllowanceResult[0].toString());
+    } else {
+      console.log(chalk.green('Sufficient allowance ✔'));
+    }
+  } catch (error) {
+    console.log(chalk.red('error: ', error));
+  }
 };

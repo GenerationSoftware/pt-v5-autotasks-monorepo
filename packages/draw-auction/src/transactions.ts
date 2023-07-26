@@ -12,7 +12,6 @@ import chalk from 'chalk';
 
 export const executeTransactions = async (
   event: RelayerParams,
-  readProvider: Provider,
   params: DrawAuctionConfigParams,
 ): Promise<PopulatedTransaction[]> => {
   let populatedTxs: PopulatedTransaction[] = [];
@@ -21,7 +20,7 @@ export const executeTransactions = async (
 
   try {
     const contracts = await downloadContractsBlob(params.chainId);
-    await prepareDrawAuctionTxs(contracts, relayer, readProvider, params);
+    await prepareDrawAuctionTxs(contracts, relayer, params);
   } catch (e) {
     console.error(e);
   }

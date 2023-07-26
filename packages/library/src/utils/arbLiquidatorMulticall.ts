@@ -5,7 +5,7 @@ import {
   getEthersMulticallProviderResults,
 } from '@generationsoftware/pt-v5-utils-js';
 
-import { ArbLiquidatorContext, Token, TokenWithRate } from '../types';
+import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
 import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
 
@@ -140,7 +140,7 @@ export const arbLiquidatorMulticall = async (
     assetRateUsd: vaultUnderlyingAssetAssetRateUsd,
   };
 
-  const relayer = {
+  const relayer: ArbLiquidatorRelayerContext = {
     tokenInBalance: BigNumber.from(results['tokenIn-balanceOf']),
     tokenInAllowance: BigNumber.from(results['tokenIn-allowance']),
   };

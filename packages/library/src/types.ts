@@ -2,9 +2,14 @@ import { Contract, BigNumber } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
-export interface RelayerContext {
+export interface ArbLiquidatorRelayerContext {
   tokenInAllowance: BigNumber;
   tokenInBalance: BigNumber;
+}
+
+export interface DrawAuctionRelayerContext {
+  rngFeeTokenAllowance: BigNumber;
+  rngFeeTokenBalance: BigNumber;
 }
 
 export interface ProviderOptions {
@@ -58,7 +63,7 @@ export interface ArbLiquidatorContext {
   tokenIn: TokenWithRate;
   tokenOut: Token;
   tokenOutUnderlyingAsset: TokenWithRate;
-  relayer: RelayerContext;
+  relayer: ArbLiquidatorRelayerContext;
 }
 
 export interface WithdrawClaimRewardsConfigParams {
@@ -75,6 +80,9 @@ export interface WithdrawClaimRewardsContext {
 
 export interface DrawAuctionConfigParams {
   chainId: number;
+  readProvider: BaseProvider;
+  writeProvider: Provider | DefenderRelaySigner;
+  relayerAddress: string;
   rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -85,14 +93,15 @@ export interface DrawAuctionContext {
   prizePoolReserve: BigNumber;
   gasTokenMarketRateUsd: number;
   rewardToken: TokenWithRate;
-  rngFeeAmount: BigNumber;
   rngFeeToken: Token;
-  rngIsAuctionComplete: boolean;
+  rngFeeAmount: BigNumber;
+  rngIsAuctionOpen: boolean;
   rngExpectedReward: BigNumber;
   rngExpectedRewardUsd: number;
-  drawIsAuctionComplete: boolean;
+  drawIsAuctionOpen: boolean;
   drawExpectedReward: BigNumber;
   drawExpectedRewardUsd: number;
+  relayer: DrawAuctionRelayerContext;
 }
 
 export interface AuctionContracts {
