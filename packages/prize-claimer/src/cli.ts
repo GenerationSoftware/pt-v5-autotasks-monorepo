@@ -21,6 +21,7 @@ if (esMain(import.meta)) {
     feeRecipient: config.FEE_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
     minProfitThresholdUsd: Number(config.MIN_PROFIT_THRESHOLD_USD),
+    covalentApiKey: config.COVALENT_API_KEY,
   };
 
   const fakeEvent = {

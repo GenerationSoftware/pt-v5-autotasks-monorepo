@@ -13,6 +13,7 @@ const handlerLoadParams = (
   relayerAddress: string,
 ): ArbLiquidatorConfigParams => {
   const chainId = Number(BUILD_CHAIN_ID);
+  const covalentApiKey = BUILD_COVALENT_API_KEY;
 
   const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, chainId);
 
@@ -21,6 +22,7 @@ const handlerLoadParams = (
     writeProvider: signer,
     readProvider,
     chainId,
+    covalentApiKey,
     swapRecipient: BUILD_SWAP_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),

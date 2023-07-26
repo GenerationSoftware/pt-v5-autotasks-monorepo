@@ -7,6 +7,7 @@ import { executeTransactions } from './transactions';
 const handlerLoadParams = (): ExecuteClaimerProfitablePrizeTxsParams => {
   return {
     chainId: Number(BUILD_CHAIN_ID),
+    covalentApiKey: BUILD_COVALENT_API_KEY,
     feeRecipient: BUILD_FEE_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
