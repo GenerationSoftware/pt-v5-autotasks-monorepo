@@ -49,7 +49,7 @@ export async function executeClaimerProfitablePrizeTxs(
   readProvider: Provider,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<undefined> {
-  const { chainId, feeRecipient, useFlashbots, minProfitThresholdUsd } = params;
+  const { chainId, covalentApiKey, feeRecipient, useFlashbots, minProfitThresholdUsd } = params;
 
   const contractsVersion = {
     major: 1,
@@ -70,6 +70,7 @@ export async function executeClaimerProfitablePrizeTxs(
     prizePool,
     marketRate,
     readProvider,
+    covalentApiKey,
   );
   printContext(context);
 
@@ -339,6 +340,7 @@ const getContext = async (
   prizePool: Contract,
   marketRate: Contract,
   readProvider: Provider,
+  covalentApiKey?: string,
 ): Promise<ClaimPrizeContext> => {
   const feeTokenAddress = await prizePool.prizeToken();
 
@@ -355,7 +357,11 @@ const getContext = async (
     symbol: await tokenInContract.symbol(),
   };
 
-  const feeTokenRateUsd = await getEthMainnetMarketRateUsd(feeToken.symbol, feeToken.address);
+  const feeTokenRateUsd = await getEthMainnetMarketRateUsd(
+    feeToken.symbol,
+    feeToken.address,
+    covalentApiKey,
+  );
   // const feeTokenRateUsd = await getTokenRateUsd(marketRate, feeToken);
 
   return { feeToken, drawId, feeTokenRateUsd, tiers };

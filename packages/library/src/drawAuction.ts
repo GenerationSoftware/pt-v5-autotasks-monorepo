@@ -64,7 +64,7 @@ export async function prepareDrawAuctionTxs(
   readProvider: Provider,
   params: DrawAuctionConfigParams,
 ): Promise<undefined> {
-  const { chainId } = params;
+  const { chainId, covalentApiKey } = params;
 
   const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
 
@@ -72,6 +72,7 @@ export async function prepareDrawAuctionTxs(
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
     readProvider,
     auctionContracts,
+    covalentApiKey,
   );
 
   printContext(chainId, context);

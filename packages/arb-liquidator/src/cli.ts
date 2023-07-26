@@ -36,6 +36,7 @@ if (esMain(import.meta)) {
     relayerAddress,
     writeProvider: signer,
     readProvider: new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID),
+    covalentApiKey: config.COVALENT_API_KEY,
     chainId: config.CHAIN_ID,
     swapRecipient: config.SWAP_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,

@@ -30,6 +30,7 @@ if (esMain(import.meta)) {
     rewardsRecipient: config.REWARDS_RECIPIENT,
     chainId: config.CHAIN_ID,
     minProfitThresholdUsd: Number(config.MIN_PROFIT_THRESHOLD_USD),
+    covalentApiKey: config.COVALENT_API_KEY,
   };
 
   const readProvider = new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID);

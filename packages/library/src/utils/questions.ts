@@ -19,6 +19,7 @@ export type NETWORK_CONFIG = {
   RELAYER_API_SECRET: string;
   JSON_RPC_URI: string;
   USE_FLASHBOTS: boolean;
+  COVALENT_API_KEY?: string;
 };
 
 export async function askChainId(config: Configstore) {
@@ -129,6 +130,11 @@ export const NETWORK_CONFIG_QUESTIONS: {
         return 'Please enter your JSON RPC URI.';
       }
     },
+  },
+  COVALENT_API_KEY: {
+    name: 'COVALENT_API_KEY',
+    type: 'password',
+    message: chalk.green('(Optional) Enter your Covalent API key for USD price lookups:'),
   },
   USE_FLASHBOTS: {
     name: 'USE_FLASHBOTS',

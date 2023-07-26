@@ -35,6 +35,7 @@ const PRICE_FEED_PREFIX_KEY = 'priceFeed';
 export const getDrawAuctionContextMulticall = async (
   readProvider: Provider,
   auctionContracts: AuctionContracts,
+  covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(readProvider);
@@ -91,12 +92,17 @@ export const getDrawAuctionContextMulticall = async (
 
   //
   // 6. Get and process results
-  const results = await getEthersMulticallProviderResults(multicallProvider, queries);
+  const results = await getEthersMulticallProviderResults(
+    multicallProvider,
+    queries,
+    covalentApiKey,
+  );
 
   // 6a. Results: Reward Token
   const rewardTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
     results[REWARD_SYMBOL_KEY],
     rewardTokenAddress,
+    covalentApiKey,
   );
   // const rewardTokenPriceFeedResults = results[`${PRICE_FEED_PREFIX_KEY}-${rewardTokenAddress}`];
   // assetRateUsd: rewardTokenPriceFeedResults,
@@ -112,6 +118,7 @@ export const getDrawAuctionContextMulticall = async (
   const rngFeeTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
     results[RNG_FEE_TOKEN_SYMBOL_KEY],
     rngFeeTokenAddress,
+    covalentApiKey,
   );
   const rngFeeToken: TokenWithRate = {
     address: rngFeeTokenAddress,

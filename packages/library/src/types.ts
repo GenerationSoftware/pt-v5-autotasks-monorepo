@@ -40,6 +40,7 @@ export interface ExecuteClaimerProfitablePrizeTxsParams {
   feeRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
+  covalentApiKey?: string;
 }
 
 export interface ArbLiquidatorConfigParams {
@@ -50,6 +51,7 @@ export interface ArbLiquidatorConfigParams {
   relayerAddress: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
+  covalentApiKey?: string;
 }
 
 export interface ArbLiquidatorContext {
@@ -64,6 +66,7 @@ export interface WithdrawClaimRewardsConfigParams {
   rewardsRecipient: string;
   relayerAddress: string;
   minProfitThresholdUsd: number;
+  covalentApiKey?: string;
 }
 
 export interface WithdrawClaimRewardsContext {
@@ -75,6 +78,7 @@ export interface DrawAuctionConfigParams {
   rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
+  covalentApiKey?: string;
 }
 
 export interface DrawAuctionContext {

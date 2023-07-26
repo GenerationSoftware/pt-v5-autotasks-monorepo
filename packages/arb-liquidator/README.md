@@ -32,6 +32,7 @@ AUTOTASK_ID: OZ Defender-specific
 RELAYER_API_KEY: OZ Defender-specific
 RELAYER_API_SECRET: OZ Defender-specific
 JSON_RPC_URI: Network-specific
+COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
 ```
 
 The following is unique to the Arb Liquidator bot:

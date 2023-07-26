@@ -24,6 +24,8 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
   80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
 };
 
+const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
+
 /**
  * Gather info on current fees from the chain
  *
@@ -93,19 +95,20 @@ export const getTokenRateUsd = async (marketRate: Contract, token: Token): Promi
 export const getEthMainnetMarketRateUsd = async (
   symbol: string,
   tokenAddress: string,
+  covalentApiKey?: string,
 ): Promise<number> => {
   let marketRateUsd;
 
-  // try {
-  //   marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
-  // } catch (err) {
-  //   console.log(err);
-  // }
+  try {
+    marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
+  } catch (err) {
+    console.log(err);
+  }
 
   try {
-    // if (!marketRateUsd) {
-    marketRateUsd = await getCovalentMarketRateUsd(tokenAddress);
-    // }
+    if (!marketRateUsd && covalentApiKey) {
+      marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
+    }
   } catch (err) {
     console.log(err);
   }
@@ -136,17 +139,18 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
   return marketRate;
 };
 
-export const getCovalentMarketRateUsd = async (tokenAddress: string): Promise<number> => {
+export const getCovalentMarketRateUsd = async (
+  tokenAddress: string,
+  covalentApiKey: string,
+): Promise<number> => {
   const address = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress];
-  const COVALENT_API_KEY = '';
-  const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 
   let rateUsd;
   try {
     const url = new URL(
       `${COVALENT_API_URL}/pricing/historical_by_addresses_v2/eth-mainnet/usd/${address}/`,
     );
-    url.searchParams.set('key', COVALENT_API_KEY);
+    url.searchParams.set('key', covalentApiKey);
     url.searchParams.set('from', getDateXDaysAgo(3));
     const response = await fetch(url.toString());
 
