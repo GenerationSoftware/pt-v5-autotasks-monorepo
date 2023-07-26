@@ -1,16 +1,23 @@
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 
-import { AuctionContracts, DrawAuctionContext, TokenWithRate } from '../types';
+import {
+  AuctionContracts,
+  DrawAuctionContext,
+  DrawAuctionRelayerContext,
+  TokenWithRate,
+} from '../types';
 import { getGasTokenMarketRateUsd, getEthMainnetMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 // import { VrfRngAbi } from '../abis/VrfRngAbi';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
+const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rng-fee-token-balanceOf-bot';
+const RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY = 'rng-auction-allowance-bot-rng-fee-token';
 const RNG_FEE_TOKEN_DECIMALS_KEY = 'rng-fee-token-decimals';
 const RNG_FEE_TOKEN_NAME_KEY = 'rng-fee-token-decimals';
 const RNG_FEE_TOKEN_SYMBOL_KEY = 'rng-fee-token-decimals';
@@ -35,6 +42,7 @@ const PRICE_FEED_PREFIX_KEY = 'priceFeed';
 export const getDrawAuctionContextMulticall = async (
   readProvider: Provider,
   auctionContracts: AuctionContracts,
+  relayerAddress: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
@@ -63,6 +71,13 @@ export const getDrawAuctionContextMulticall = async (
   queries[RNG_FEE_TOKEN_NAME_KEY] = rngFeeTokenContract.name();
   queries[RNG_FEE_TOKEN_SYMBOL_KEY] = rngFeeTokenContract.symbol();
 
+  queries[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY] = rngFeeTokenContract.balanceOf(relayerAddress);
+
+  queries[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
+    relayerAddress,
+    auctionContracts.rngAuctionContract.address,
+  );
+
   // 3. Info about the reward token (prize token)
   const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, readProvider);
@@ -79,12 +94,12 @@ export const getDrawAuctionContextMulticall = async (
 
   // // 5. Auction info
   // 5a. RNG Auction
-  queries[RNG_IS_AUCTION_OPEN] = auctionContracts.rngAuctionContract.isAuctionComplete();
+  queries[RNG_IS_AUCTION_OPEN] = auctionContracts.rngAuctionContract.isAuctionOpen();
   queries[RNG_EXPECTED_REWARD_KEY] =
     auctionContracts.rngAuctionContract.expectedReward(prizePoolReserve);
 
   // 5b. Draw Auction
-  queries[DRAW_IS_AUCTION_OPEN] = auctionContracts.drawAuctionContract.isAuctionComplete();
+  queries[DRAW_IS_AUCTION_OPEN] = auctionContracts.drawAuctionContract.isAuctionOpen();
   queries[DRAW_EXPECTED_REWARD_KEY] =
     auctionContracts.drawAuctionContract.expectedReward(prizePoolReserve);
 
@@ -92,11 +107,7 @@ export const getDrawAuctionContextMulticall = async (
 
   //
   // 6. Get and process results
-  const results = await getEthersMulticallProviderResults(
-    multicallProvider,
-    queries,
-    covalentApiKey,
-  );
+  const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   // 6a. Results: Reward Token
   const rewardTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
@@ -131,10 +142,10 @@ export const getDrawAuctionContextMulticall = async (
   console.log(rngFeeToken);
 
   // 6b. Results: Auction Info
-  const rngIsAuctionComplete = results[RNG_IS_AUCTION_OPEN];
+  const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN];
   const rngExpectedReward = results[RNG_EXPECTED_REWARD_KEY];
 
-  const drawIsAuctionComplete = results[DRAW_IS_AUCTION_OPEN];
+  const drawIsAuctionOpen = results[DRAW_IS_AUCTION_OPEN];
   const drawExpectedReward = results[DRAW_EXPECTED_REWARD_KEY];
 
   // 6c. Results: Rng Reward
@@ -158,17 +169,31 @@ export const getDrawAuctionContextMulticall = async (
   console.log('drawExpectedRewardUsd');
   console.log(drawExpectedRewardUsd);
 
+  const relayer: DrawAuctionRelayerContext = {
+    rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
+    rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
+  };
+  // const rngFeeTokenBalance = results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY];
+  console.log('rngFeeTokenBalance');
+  console.log(relayer.rngFeeTokenBalance);
+  console.log(relayer.rngFeeTokenBalance.toString());
+
+  console.log('rngFeeTokenAllowance');
+  console.log(relayer.rngFeeTokenAllowance);
+  console.log(relayer.rngFeeTokenAllowance.toString());
+
   return {
+    prizePoolReserve,
+    gasTokenMarketRateUsd,
     rewardToken,
     rngFeeToken,
     rngFeeAmount,
-    gasTokenMarketRateUsd,
-    rngIsAuctionComplete,
+    rngIsAuctionOpen,
     rngExpectedReward,
-    drawIsAuctionComplete,
-    drawExpectedReward,
     rngExpectedRewardUsd,
+    drawIsAuctionOpen,
+    drawExpectedReward,
     drawExpectedRewardUsd,
-    prizePoolReserve,
+    relayer,
   };
 };
