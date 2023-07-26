@@ -210,7 +210,7 @@ const printContext = (chainId, context) => {
   printSpacer();
   logStringValue(
     `2. Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    context.gasTokenMarketRateUsd,
+    `$${context.gasTokenMarketRateUsd}`,
   );
 
   printSpacer();

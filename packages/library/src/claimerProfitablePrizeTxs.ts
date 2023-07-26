@@ -247,7 +247,7 @@ const calculateProfit = async (
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    nativeTokenMarketRateUsd,
+    `$${nativeTokenMarketRateUsd}`,
   );
 
   printSpacer();
