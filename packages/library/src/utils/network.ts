@@ -10,8 +10,6 @@ export const NETWORK_NATIVE_TOKEN_INFO = {
   80001: { decimals: 18, symbol: 'MATIC' },
 };
 
-export const TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000';
-
 export const canUseIsPrivate = (chainId, useFlashbots) => {
   const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
   const isPrivate = chainSupportsFlashbots && useFlashbots;

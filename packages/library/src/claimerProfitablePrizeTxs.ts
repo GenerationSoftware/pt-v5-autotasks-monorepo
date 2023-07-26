@@ -23,8 +23,8 @@ import {
   canUseIsPrivate,
   roundTwoDecimalPlaces,
   getFeesUsd,
-  getGasTokenMarketRateUsd,
-  getEthMainnetMarketRateUsd,
+  getEthMainnetTokenMarketRateUsd,
+  getNativeTokenMarketRateUsd,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
@@ -132,7 +132,6 @@ export async function executeClaimerProfitablePrizeTxs(
     const claimPrizesParams = await calculateProfit(
       readProvider,
       chainId,
-      contracts,
       vault,
       Number(tier),
       claimer,
@@ -235,7 +234,6 @@ const getEstimatedGasLimit = async (
 const calculateProfit = async (
   readProvider: Provider,
   chainId: number,
-  contracts: ContractsBlob,
   vault: string,
   tier: number,
   claimer: Contract,
@@ -246,10 +244,10 @@ const calculateProfit = async (
   context: ClaimPrizeContext,
 ): Promise<ClaimPrizesParams> => {
   printSpacer();
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(marketRate);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
   );
 
   printSpacer();
@@ -261,7 +259,7 @@ const calculateProfit = async (
     claimer,
     unclaimedClaims,
     feeRecipient,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
   );
 
   const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(
@@ -357,7 +355,7 @@ const getContext = async (
     symbol: await tokenInContract.symbol(),
   };
 
-  const feeTokenRateUsd = await getEthMainnetMarketRateUsd(
+  const feeTokenRateUsd = await getEthMainnetTokenMarketRateUsd(
     feeToken.symbol,
     feeToken.address,
     covalentApiKey,

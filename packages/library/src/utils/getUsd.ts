@@ -1,16 +1,15 @@
-import { ethers, BigNumber, Contract } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import chalk from 'chalk';
 
-import { TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS } from './network';
-import { Token } from '../types';
-import { parseBigNumberAsFloat } from '../utils';
+import { NETWORK_NATIVE_TOKEN_INFO } from './network';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
 const SYMBOL_TO_COINGECKO_LOOKUP = {
   POOL: 'pooltogether',
   LINK: 'link',
+  ETH: 'ethereum',
 };
 
 const ADDRESS_TO_COVALENT_LOOKUP = {
@@ -64,37 +63,35 @@ export const getFeesUsd = async (
 };
 
 /**
- * TESTNET: Gets the current USD value of Native Gas Token for Current Chain
- * On testnet: Search testnet contract blob to get wETH contract then ask MarketRate contract
- * TODO: 0x spot API/DEX subgraphs/other sources for production rates
+ * Gets the current USD value of Native Gas Token for Current Chain
  *
  * @returns {number} The spot price for the Native Gas Token in USD
  **/
-export const getGasTokenMarketRateUsd = async (marketRate: Contract) => {
-  const nativeTokenAddress = TESTNET_NETWORK_NATIVE_TOKEN_ADDRESS;
-  const gasTokenRate = await marketRate.priceFeed(nativeTokenAddress, 'USD');
-
-  return parseFloat(ethers.utils.formatUnits(gasTokenRate, MARKET_RATE_CONTRACT_DECIMALS));
+export const getNativeTokenMarketRateUsd = async (chainId: number): Promise<number> => {
+  return await getEthMainnetTokenMarketRateUsd(NETWORK_NATIVE_TOKEN_INFO[chainId].symbol);
 };
 
 /**
  * TESTNET: Finds the spot price of a token in USD
  * @returns {number} tokenRateUsd
  */
-export const getTokenRateUsd = async (marketRate: Contract, token: Token): Promise<number> => {
-  const tokenAddress = token.address;
-  const tokenRate = await marketRate.priceFeed(tokenAddress, 'USD');
+// export const getTestnetTokenRateUsd = async (
+//   marketRate: Contract,
+//   token: Token,
+// ): Promise<number> => {
+//   const tokenAddress = token.address;
+//   const tokenRate = await marketRate.priceFeed(tokenAddress, 'USD');
 
-  return parseBigNumberAsFloat(tokenRate, MARKET_RATE_CONTRACT_DECIMALS);
-};
+//   return parseBigNumberAsFloat(tokenRate, MARKET_RATE_CONTRACT_DECIMALS);
+// };
 
 /**
  * Finds the spot price of a token in USD (from ETH Mainnet only)
  * @returns {number} tokenRateUsd
  */
-export const getEthMainnetMarketRateUsd = async (
+export const getEthMainnetTokenMarketRateUsd = async (
   symbol: string,
-  tokenAddress: string,
+  tokenAddress?: string,
   covalentApiKey?: string,
 ): Promise<number> => {
   let marketRateUsd;
@@ -106,15 +103,12 @@ export const getEthMainnetMarketRateUsd = async (
   }
 
   try {
-    if (!marketRateUsd && covalentApiKey) {
+    if (!marketRateUsd && Boolean(tokenAddress) && Boolean(covalentApiKey)) {
       marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
     }
   } catch (err) {
     console.log(err);
   }
-
-  console.log('marketRateUsd');
-  console.log(marketRateUsd);
 
   return marketRateUsd;
 };
