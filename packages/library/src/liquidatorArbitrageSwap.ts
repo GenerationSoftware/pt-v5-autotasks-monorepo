@@ -14,7 +14,7 @@ import {
   printAsterisks,
   printSpacer,
   getFeesUsd,
-  getGasTokenMarketRateUsd,
+  getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   arbLiquidatorMulticall,
 } from './utils';
@@ -177,8 +177,6 @@ export async function liquidatorArbitrageSwap(
     //
     const { estimatedProfitUsd, profitable } = await calculateProfit(
       chainId,
-      contracts,
-      marketRate,
       liquidationRouter,
       swapExactAmountInParams,
       readProvider,
@@ -411,8 +409,6 @@ const checkBalance = async (
  */
 const calculateProfit = async (
   chainId: number,
-  contracts: ContractsBlob,
-  marketRate: Contract,
   liquidationRouter: Contract,
   swapExactAmountInParams: SwapExactAmountInParams,
   readProvider: Provider,
@@ -421,7 +417,7 @@ const calculateProfit = async (
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
 
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(marketRate);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
@@ -437,13 +433,12 @@ const calculateProfit = async (
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
     readProvider,
   );
-  // const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd( marketRate);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
   );
 
   printSpacer();

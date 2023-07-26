@@ -10,7 +10,7 @@ import {
   DrawAuctionRelayerContext,
   TokenWithRate,
 } from '../types';
-import { getGasTokenMarketRateUsd, getEthMainnetMarketRateUsd } from './getUsd';
+import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 // import { VrfRngAbi } from '../abis/VrfRngAbi';
 
@@ -40,6 +40,7 @@ const PRICE_FEED_PREFIX_KEY = 'priceFeed';
  * @returns DrawAuctionContext
  */
 export const getDrawAuctionContextMulticall = async (
+  chainId: number,
   readProvider: Provider,
   auctionContracts: AuctionContracts,
   relayerAddress: string,
@@ -90,7 +91,7 @@ export const getDrawAuctionContextMulticall = async (
     auctionContracts.marketRateContract.priceFeed(rewardTokenAddress, 'USD');
 
   // 4. Native token (gas token) market rate in USD
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(auctionContracts.marketRateContract);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
   // // 5. Auction info
   // 5a. RNG Auction
@@ -110,7 +111,7 @@ export const getDrawAuctionContextMulticall = async (
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   // 6a. Results: Reward Token
-  const rewardTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
+  const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
     results[REWARD_SYMBOL_KEY],
     rewardTokenAddress,
     covalentApiKey,
@@ -126,7 +127,7 @@ export const getDrawAuctionContextMulticall = async (
   };
 
   // 6b. Results: RNG Auction Service Info
-  const rngFeeTokenMarketRateUsd = await getEthMainnetMarketRateUsd(
+  const rngFeeTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
     results[RNG_FEE_TOKEN_SYMBOL_KEY],
     rngFeeTokenAddress,
     covalentApiKey,
@@ -184,7 +185,7 @@ export const getDrawAuctionContextMulticall = async (
 
   return {
     prizePoolReserve,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
     rewardToken,
     rngFeeToken,
     rngFeeAmount,

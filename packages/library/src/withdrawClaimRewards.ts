@@ -14,7 +14,7 @@ import {
   parseBigNumberAsFloat,
   MARKET_RATE_CONTRACT_DECIMALS,
   getFeesUsd,
-  getGasTokenMarketRateUsd,
+  getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
@@ -86,8 +86,6 @@ export async function getWithdrawClaimRewardsTx(
   // #3. Decide if profitable or not
   const profitable = await calculateProfit(
     chainId,
-    contracts,
-    marketRate,
     prizePool,
     rewardsTokenUsd,
     withdrawClaimRewardsParams,
@@ -175,15 +173,13 @@ const getRewardsTokenRateUsd = async (
  */
 const calculateProfit = async (
   chainId: number,
-  contracts: ContractsBlob,
-  marketRate: Contract,
   prizePool: Contract,
   rewardsTokenUsd: number,
   withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
   readProvider: Provider,
   minProfitThresholdUsd: number,
 ): Promise<Boolean> => {
-  const gasTokenMarketRateUsd = await getGasTokenMarketRateUsd(marketRate);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
   printAsterisks();
   console.log(chalk.blue('3. Current gas costs for transaction:'));
@@ -199,12 +195,12 @@ const calculateProfit = async (
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
     readProvider,
   );
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
   );
 
   printSpacer();

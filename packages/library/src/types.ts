@@ -91,7 +91,7 @@ export interface DrawAuctionConfigParams {
 
 export interface DrawAuctionContext {
   prizePoolReserve: BigNumber;
-  gasTokenMarketRateUsd: number;
+  nativeTokenMarketRateUsd: number;
   rewardToken: TokenWithRate;
   rngFeeToken: Token;
   rngFeeAmount: BigNumber;

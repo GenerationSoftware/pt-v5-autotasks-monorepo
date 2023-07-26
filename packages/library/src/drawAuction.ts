@@ -72,6 +72,7 @@ export async function prepareDrawAuctionTxs(
 
   // #1. Get info about the prize pool prize/reserve token, auction states, etc.
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
+    chainId,
     readProvider,
     auctionContracts,
     relayerAddress,
@@ -290,7 +291,7 @@ const getGasCost = async (
   const { maxFeeUsd: gasCostUsd } = await getFeesUsd(
     params.chainId,
     estimatedGasLimit,
-    context.gasTokenMarketRateUsd,
+    context.nativeTokenMarketRateUsd,
     readProvider,
   );
   console.log(
