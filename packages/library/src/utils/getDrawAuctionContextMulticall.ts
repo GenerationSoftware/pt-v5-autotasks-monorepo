@@ -184,8 +184,11 @@ export const getDrawAuctionContextMulticall = async (
   console.log(relayer.rngFeeTokenAllowance);
   console.log(relayer.rngFeeTokenAllowance.toString());
 
-  const rngFeeUsd =
-    parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
+  let rngFeeUsd = 0;
+  if (rngIsAuctionOpen) {
+    rngFeeUsd =
+      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
+  }
   console.log('rngFeeUsd');
   console.log(rngFeeUsd);
 

@@ -173,17 +173,30 @@ const calculateProfit = async (
 
   const grossProfitUsd = rewardUsd;
   console.log(chalk.magenta('(Gross Profit) = Reward'));
-
   const netProfitUsd = grossProfitUsd - gasCostUsd - rngFeeUsd;
-  console.log(chalk.magenta('(Net profit) = (Gross Profit) - (Gas Fees [Max]) - (RNG Fee)'));
-  console.log(
-    chalk.greenBright(
-      `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-        rewardUsd,
-      )} - $${roundTwoDecimalPlaces(gasCostUsd)}) - $${roundTwoDecimalPlaces(rngFeeUsd)})`,
-    ),
-    chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd}) - $${rngFeeUsd})`),
-  );
+
+  if (rngFeeUsd === 0) {
+    console.log(chalk.magenta('(Net profit) = (Gross Profit) - (Gas Fees [Max])'));
+    console.log(
+      chalk.greenBright(
+        `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
+          rewardUsd,
+        )} - $${roundTwoDecimalPlaces(gasCostUsd)})`,
+      ),
+      chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd})`),
+    );
+  } else {
+    console.log(chalk.magenta('(Net profit) = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
+    console.log(
+      chalk.greenBright(
+        `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
+          rewardUsd,
+        )} - $${roundTwoDecimalPlaces(gasCostUsd)}) - $${roundTwoDecimalPlaces(rngFeeUsd)})`,
+      ),
+      chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${rngFeeUsd})`),
+    );
+  }
+
   printSpacer();
 
   const profitable = netProfitUsd > params.minProfitThresholdUsd;
