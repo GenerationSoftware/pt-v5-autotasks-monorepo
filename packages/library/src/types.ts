@@ -95,6 +95,7 @@ export interface DrawAuctionContext {
   rewardToken: TokenWithRate;
   rngFeeToken: Token;
   rngFeeAmount: BigNumber;
+  rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
   rngExpectedReward: BigNumber;
   rngExpectedRewardUsd: number;

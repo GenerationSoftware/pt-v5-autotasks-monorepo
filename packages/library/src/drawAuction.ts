@@ -97,7 +97,7 @@ export async function prepareDrawAuctionTxs(
   await optionallyIncreaseRngFeeAllowance(writeProvider, relayerAddress, context);
 
   // #4. Estimate gas costs
-  const totalCostUsd = await getGasCost(readProvider, contract, params, context);
+  const gasCostUsd = await getGasCost(readProvider, contract, params, context);
 
   // #5. Find reward in USD
   const rewardUsd =
@@ -106,7 +106,7 @@ export async function prepareDrawAuctionTxs(
       : context.drawExpectedRewardUsd;
 
   // #6. Decide if profitable or not
-  const profitable = await calculateProfit(params, rewardUsd, totalCostUsd);
+  const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context.rngFeeUsd);
 
   // #7. Populate transaction
   if (profitable) {
@@ -150,14 +150,18 @@ const getEstimatedGasLimit = async (
 };
 
 /**
- * Determines if the transaction will be profitable
+ * Determines if the transaction will be profitable.
+ *
+ * Takes into account the cost of gas, the cost of the reward fee (in the case of an RngAuction start request),
+ * and the rewards earned.
  *
  * @returns {Promise} Promise of a boolean for profitability
  */
 const calculateProfit = async (
   params: DrawAuctionConfigParams,
   rewardUsd: number,
-  totalCostUsd: number,
+  gasCostUsd: number,
+  rngFeeUsd: number,
 ): Promise<boolean> => {
   printSpacer();
   printSpacer();
@@ -167,23 +171,25 @@ const calculateProfit = async (
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
-  // FEES USD
-  const netProfitUsd = rewardUsd - totalCostUsd;
-  console.log(chalk.magenta('Net profit = (Earned fees - Gas cost [Max])'));
+  const grossProfitUsd = rewardUsd;
+  console.log(chalk.magenta('(Gross Profit) = Reward'));
+
+  const netProfitUsd = grossProfitUsd - gasCostUsd - rngFeeUsd;
+  console.log(chalk.magenta('(Net profit) = (Gross Profit) - (Gas Fees [Max]) - (RNG Fee)'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
         rewardUsd,
-      )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
+      )} - $${roundTwoDecimalPlaces(gasCostUsd)}) - $${roundTwoDecimalPlaces(rngFeeUsd)})`,
     ),
-    chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${totalCostUsd})`),
+    chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd}) - $${rngFeeUsd})`),
   );
   printSpacer();
 
   const profitable = netProfitUsd > params.minProfitThresholdUsd;
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${params.minProfitThresholdUsd}`,
-    'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+    'Net Profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
     'Profitable?': profitable ? '✔' : '✗',
   });
   printSpacer();
@@ -242,13 +248,8 @@ const printContext = (chainId, context) => {
   );
 
   console.log('rng fee token!');
-  console.log('rng fee token!');
-  console.log('rng fee token!');
-  console.log('rng fee token!');
-  // const rngFeeUsd =
-  //   parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
-  // console.log('rngFeeUsd');
-  // console.log(rngFeeUsd);
+  console.log('rngFeeUsd');
+  console.log(context.rngFeeUsd);
 };
 
 const buildParams = (rewardRecipient: string): CompleteAuctionTxParams => {
