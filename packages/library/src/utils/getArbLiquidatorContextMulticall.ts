@@ -26,7 +26,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * @param vaults vaults to query through
  * @returns
  */
-export const arbLiquidatorMulticall = async (
+export const getArbLiquidatorContextMulticall = async (
   marketRate: Contract,
   liquidationRouter: Contract,
   liquidationPair: Contract,
