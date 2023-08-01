@@ -16,7 +16,8 @@ import {
   getFeesUsd,
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
-  arbLiquidatorMulticall,
+  getArbLiquidatorContextMulticall,
+  getLiquidationPairsMulticall,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
@@ -60,7 +61,7 @@ export async function liquidatorArbitrageSwap(
 
   // #1. Get contracts
   //
-  const { liquidationPairs, liquidationRouter, marketRate } = getLiquidationContracts(
+  const { liquidationPairs, liquidationRouter, marketRate } = await getLiquidationContracts(
     contracts,
     params,
   );
@@ -298,14 +299,14 @@ const approve = async (
  * @returns {Promise} All of the LiquidationPair contracts, the LiquidationRouter contract
  *                    and the MarketRate contract initialized as ethers contracts
  */
-const getLiquidationContracts = (
+const getLiquidationContracts = async (
   contracts: ContractsBlob,
   params: ArbLiquidatorConfigParams,
-): {
+): Promise<{
   liquidationPairs: Contract[];
   liquidationRouter: Contract;
   marketRate: Contract;
-} => {
+}> => {
   const { chainId, readProvider, writeProvider } = params;
 
   const contractsVersion = {
@@ -314,13 +315,15 @@ const getLiquidationContracts = (
     patch: 0,
   };
 
-  const liquidationPairs = getContracts(
-    'LiquidationPair',
+  const liquidationPairFactory = getContract(
+    'LiquidationPairFactory',
     chainId,
     readProvider,
     contracts,
     contractsVersion,
   );
+  const liquidationPairs = await getLiquidationPairsMulticall(liquidationPairFactory, readProvider);
+
   const liquidationRouter = getContract(
     'LiquidationRouter',
     chainId,
@@ -349,7 +352,7 @@ const getContext = async (
   readProvider: Provider,
   relayerAddress: string,
 ): Promise<ArbLiquidatorContext> => {
-  const context: ArbLiquidatorContext = await arbLiquidatorMulticall(
+  const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
     marketRate,
     liquidationRouter,
     liquidationPair,
