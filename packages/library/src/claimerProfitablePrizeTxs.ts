@@ -68,7 +68,6 @@ export async function executeClaimerProfitablePrizeTxs(
   const context: ClaimPrizeContext = await getContext(
     contracts,
     prizePool,
-    marketRate,
     readProvider,
     covalentApiKey,
   );
@@ -336,7 +335,6 @@ const logClaims = (claims: Claim[]) => {
 const getContext = async (
   contracts: ContractsBlob,
   prizePool: Contract,
-  marketRate: Contract,
   readProvider: Provider,
   covalentApiKey?: string,
 ): Promise<ClaimPrizeContext> => {
@@ -360,7 +358,6 @@ const getContext = async (
     feeToken.address,
     covalentApiKey,
   );
-  // const feeTokenRateUsd = await getTokenRateUsd(marketRate, feeToken);
 
   return { feeToken, drawId, feeTokenRateUsd, tiers };
 };
