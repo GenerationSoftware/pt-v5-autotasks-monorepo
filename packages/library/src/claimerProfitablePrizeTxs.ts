@@ -49,7 +49,7 @@ export async function executeClaimerProfitablePrizeTxs(
   readProvider: Provider,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, feeRecipient, useFlashbots, minProfitThresholdUsd } = params;
+  const { chainId, covalentApiKey, useFlashbots } = params;
 
   const contractsVersion = {
     major: 1,
@@ -58,7 +58,6 @@ export async function executeClaimerProfitablePrizeTxs(
   };
   const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
   const claimer = getContract('Claimer', chainId, readProvider, contracts, contractsVersion);
-  const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
   if (!claimer) {
     throw new Error('Contract Unavailable');
@@ -130,15 +129,12 @@ export async function executeClaimerProfitablePrizeTxs(
 
     const claimPrizesParams = await calculateProfit(
       readProvider,
-      chainId,
       vault,
       Number(tier),
       claimer,
       groupedClaims,
-      feeRecipient,
-      minProfitThresholdUsd,
-      marketRate,
       context,
+      params,
     );
 
     // It's profitable if there is at least 1 claim to claim
@@ -232,16 +228,15 @@ const getEstimatedGasLimit = async (
  */
 const calculateProfit = async (
   readProvider: Provider,
-  chainId: number,
   vault: string,
   tier: number,
   claimer: Contract,
   unclaimedClaims: any,
-  feeRecipient: string,
-  minProfitThresholdUsd: number,
-  marketRate: Contract,
   context: ClaimPrizeContext,
+  params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<ClaimPrizesParams> => {
+  const { chainId, minProfitThresholdUsd, feeRecipient } = params;
+
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
   logStringValue(
