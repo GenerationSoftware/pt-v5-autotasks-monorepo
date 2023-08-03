@@ -344,13 +344,13 @@ const getContext = async (
   const { drawId, numberOfTiers, tiersRangeArray } = prizePoolInfo;
   const tiers: TiersContext = { numberOfTiers, rangeArray: tiersRangeArray };
 
-  const tokenInContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
+  const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
   const feeToken = {
     address: feeTokenAddress,
-    decimals: await tokenInContract.decimals(),
-    name: await tokenInContract.name(),
-    symbol: await tokenInContract.symbol(),
+    decimals: await feeTokenContract.decimals(),
+    name: await feeTokenContract.name(),
+    symbol: await feeTokenContract.symbol(),
   };
 
   const feeTokenRateUsd = await getEthMainnetTokenMarketRateUsd(
