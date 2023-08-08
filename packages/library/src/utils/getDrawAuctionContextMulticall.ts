@@ -74,7 +74,9 @@ export const getDrawAuctionContextMulticall = async (
   console.log('rngFeeAmount');
   console.log(rngFeeAmount);
   console.log(rngFeeAmount.toString());
-  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+
+  const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
+  if (rngFeeTokenIsSet) {
     const rngFeeTokenContract = new ethers.Contract(rngFeeTokenAddress, ERC20Abi, readProvider);
     queries[RNG_FEE_TOKEN_DECIMALS_KEY] = rngFeeTokenContract.decimals();
     queries[RNG_FEE_TOKEN_NAME_KEY] = rngFeeTokenContract.name();
@@ -138,7 +140,7 @@ export const getDrawAuctionContextMulticall = async (
   // 6b. Results: RNG Auction Service Info
   let rngFeeTokenMarketRateUsd;
   let rngFeeToken: TokenWithRate;
-  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+  if (rngFeeTokenIsSet) {
     console.log('rngFeeTokenAddress');
     console.log(rngFeeTokenAddress);
     rngFeeTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -178,7 +180,7 @@ export const getDrawAuctionContextMulticall = async (
 
   // 6c. Results: Rng Reward
   let rngExpectedRewardUsd;
-  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+  if (rngFeeTokenIsSet) {
     console.log('rngExpectedReward');
     console.log(rngExpectedReward);
     console.log(rngExpectedReward.toString());
@@ -232,7 +234,7 @@ export const getDrawAuctionContextMulticall = async (
 
   // 6e. Results: Rng Fee
   let relayer: DrawAuctionRelayerContext;
-  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+  if (rngFeeTokenIsSet) {
     relayer = {
       rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
       rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
@@ -252,7 +254,7 @@ export const getDrawAuctionContextMulticall = async (
   }
 
   let rngFeeUsd = 0;
-  if (rngIsAuctionOpen && rngFeeTokenAddress !== ZERO_ADDRESS) {
+  if (rngIsAuctionOpen && rngFeeTokenIsSet) {
     rngFeeUsd =
       parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
   }
@@ -263,6 +265,7 @@ export const getDrawAuctionContextMulticall = async (
     // prizePoolReserve,
     nativeTokenMarketRateUsd,
     rewardToken,
+    rngFeeTokenIsSet,
     rngFeeToken,
     rngFeeAmount,
     rngFeeUsd,

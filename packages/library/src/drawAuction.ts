@@ -224,15 +224,18 @@ const calculateProfit = async (
  */
 const printContext = (chainId, context) => {
   printAsterisks();
-  console.log(chalk.blue.bold(`1. Reward token: ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol}`));
-  printSpacer();
+  console.log(chalk.blue.bold(`1a. Reward token: ${context.rewardToken.symbol}`));
 
-  logBigNumber(
-    `2. RNG Fee:`,
-    context.rngFee,
-    context.rngFeeToken.decimals,
-    context.rngFeeToken.symbol,
-  );
+  if (context.rngFeeTokenIsSet) {
+    printSpacer();
+    console.log(chalk.blue.bold(`1b. RNG Fee token: ${context.rngFeeToken.symbol}`));
+    logBigNumber(
+      `1c. RNG Fee:`,
+      context.rngFee,
+      context.rngFeeToken.decimals,
+      context.rngFeeToken.symbol,
+    );
+  }
 
   printSpacer();
   logStringValue(
