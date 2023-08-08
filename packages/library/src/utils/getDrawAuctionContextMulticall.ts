@@ -12,7 +12,7 @@ import {
 } from '../types';
 import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
-// import { VrfRngAbi } from '../abis/VrfRngAbi';
+import { VrfRngAbi } from '../abis/VrfRngAbi';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -26,11 +26,17 @@ const REWARD_DECIMALS_KEY = 'reward-decimals';
 const REWARD_NAME_KEY = 'reward-name';
 const REWARD_SYMBOL_KEY = 'reward-symbol';
 
-const RNG_IS_AUCTION_OPEN = 'rng-isAuctionOpen';
-const RNG_EXPECTED_REWARD_KEY = 'rng-expectedReward';
-const DRAW_IS_AUCTION_OPEN = 'draw-isAuctionOpen';
-const DRAW_EXPECTED_REWARD_KEY = 'draw-expectedReward';
+const RNG_LAST_AUCTION_RESULT_KEY = 'rng-lastAuctionResultKey';
+const RNG_IS_AUCTION_OPEN_KEY = 'rng-isAuctionOpen';
+const RNG_IS_RNG_COMPLETE_KEY = 'rng-isRngComplete';
+const RNG_CURRENT_FRACTIONAL_REWARD_KEY = 'rng-expectedReward';
+
+const RNG_RELAY_LAST_SEQUENCE_ID_KEY = 'rngRelay-lastSequenceId';
+const RNG_RELAY_CURRENT_FRACTIONAL_REWARD_KEY = 'rngRelay-expectedReward';
+
 const PRICE_FEED_PREFIX_KEY = 'priceFeed';
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 /**
  * Gather information about the draw auction, the prize (ie. reserve, reward) token
@@ -44,6 +50,7 @@ export const getDrawAuctionContextMulticall = async (
   readProvider: Provider,
   auctionContracts: AuctionContracts,
   relayerAddress: string,
+  rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
@@ -52,57 +59,60 @@ export const getDrawAuctionContextMulticall = async (
   let queries: Record<string, any> = {};
 
   // 1. Prize Pool Info
-  const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
+  // const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
 
   // 2. RNG Auction Service Info
-  const rngService = await auctionContracts.rngAuctionContract.getRngService();
+  const rngService = await auctionContracts.rngAuctionContract.getNextRngService();
   const rngServiceContract = new ethers.Contract(rngService, VrfRngAbi, readProvider);
   const rngServiceRequestFee = await rngServiceContract.getRequestFee();
 
   const rngFeeTokenAddress = rngServiceRequestFee[0];
   console.log('rngFeeTokenAddress');
+  console.log(rngFeeTokenAddress);
   console.log(rngFeeTokenAddress.toString());
   const rngFeeAmount = rngServiceRequestFee[1];
   console.log('rngFeeAmount');
   console.log(rngFeeAmount);
   console.log(rngFeeAmount.toString());
-  const rngFeeTokenContract = new ethers.Contract(rngFeeTokenAddress, ERC20Abi, readProvider);
+  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+    const rngFeeTokenContract = new ethers.Contract(rngFeeTokenAddress, ERC20Abi, readProvider);
+    queries[RNG_FEE_TOKEN_DECIMALS_KEY] = rngFeeTokenContract.decimals();
+    queries[RNG_FEE_TOKEN_NAME_KEY] = rngFeeTokenContract.name();
+    queries[RNG_FEE_TOKEN_SYMBOL_KEY] = rngFeeTokenContract.symbol();
 
-  queries[RNG_FEE_TOKEN_DECIMALS_KEY] = rngFeeTokenContract.decimals();
-  queries[RNG_FEE_TOKEN_NAME_KEY] = rngFeeTokenContract.name();
-  queries[RNG_FEE_TOKEN_SYMBOL_KEY] = rngFeeTokenContract.symbol();
+    queries[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY] = rngFeeTokenContract.balanceOf(relayerAddress);
 
-  queries[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY] = rngFeeTokenContract.balanceOf(relayerAddress);
-
-  queries[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
-    relayerAddress,
-    auctionContracts.rngAuctionContract.address,
-  );
+    queries[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
+      relayerAddress,
+      auctionContracts.rngAuctionContract.address,
+    );
+  }
 
   // 3. Info about the reward token (prize token)
   const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
+  console.log('rewardTokenAddress');
+  console.log(rewardTokenAddress);
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, readProvider);
 
   queries[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
   queries[REWARD_NAME_KEY] = rewardTokenContract.name();
   queries[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
 
-  queries[`${PRICE_FEED_PREFIX_KEY}-${rewardTokenAddress}`] =
-    auctionContracts.marketRateContract.priceFeed(rewardTokenAddress, 'USD');
-
   // 4. Native token (gas token) market rate in USD
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
   // // 5. Auction info
   // 5a. RNG Auction
-  queries[RNG_IS_AUCTION_OPEN] = auctionContracts.rngAuctionContract.isAuctionOpen();
-  queries[RNG_EXPECTED_REWARD_KEY] =
-    auctionContracts.rngAuctionContract.expectedReward(prizePoolReserve);
+  queries[RNG_LAST_AUCTION_RESULT_KEY] = auctionContracts.rngAuctionContract.getLastAuctionResult();
+  queries[RNG_IS_AUCTION_OPEN_KEY] = auctionContracts.rngAuctionContract.isAuctionOpen();
+  queries[RNG_IS_RNG_COMPLETE_KEY] = auctionContracts.rngAuctionContract.isRngComplete();
+  queries[RNG_CURRENT_FRACTIONAL_REWARD_KEY] =
+    auctionContracts.rngAuctionContract.currentFractionalReward();
+  // currentFractionalReward;
 
   // 5b. Draw Auction
-  queries[DRAW_IS_AUCTION_OPEN] = auctionContracts.drawAuctionContract.isAuctionOpen();
-  queries[DRAW_EXPECTED_REWARD_KEY] =
-    auctionContracts.drawAuctionContract.expectedReward(prizePoolReserve);
+  queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] =
+    auctionContracts.rngRelayAuctionContract.lastSequenceId();
 
   // -------------------------------
 
@@ -116,8 +126,7 @@ export const getDrawAuctionContextMulticall = async (
     rewardTokenAddress,
     covalentApiKey,
   );
-  // const rewardTokenPriceFeedResults = results[`${PRICE_FEED_PREFIX_KEY}-${rewardTokenAddress}`];
-  // assetRateUsd: rewardTokenPriceFeedResults,
+
   const rewardToken: TokenWithRate = {
     address: rewardTokenAddress,
     decimals: results[REWARD_DECIMALS_KEY],
@@ -127,65 +136,123 @@ export const getDrawAuctionContextMulticall = async (
   };
 
   // 6b. Results: RNG Auction Service Info
-  const rngFeeTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
-    results[RNG_FEE_TOKEN_SYMBOL_KEY],
-    rngFeeTokenAddress,
-    covalentApiKey,
-  );
-  const rngFeeToken: TokenWithRate = {
-    address: rngFeeTokenAddress,
-    decimals: results[RNG_FEE_TOKEN_DECIMALS_KEY],
-    name: results[RNG_FEE_TOKEN_NAME_KEY],
-    symbol: results[RNG_FEE_TOKEN_SYMBOL_KEY],
-    assetRateUsd: rngFeeTokenMarketRateUsd,
-  };
-  console.log('rngFeeToken');
-  console.log(rngFeeToken);
+  let rngFeeTokenMarketRateUsd;
+  let rngFeeToken: TokenWithRate;
+  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+    console.log('rngFeeTokenAddress');
+    console.log(rngFeeTokenAddress);
+    rngFeeTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
+      results[RNG_FEE_TOKEN_SYMBOL_KEY],
+      rngFeeTokenAddress,
+      covalentApiKey,
+    );
+    rngFeeToken = {
+      address: rngFeeTokenAddress,
+      decimals: results[RNG_FEE_TOKEN_DECIMALS_KEY],
+      name: results[RNG_FEE_TOKEN_NAME_KEY],
+      symbol: results[RNG_FEE_TOKEN_SYMBOL_KEY],
+      assetRateUsd: rngFeeTokenMarketRateUsd,
+    };
+    console.log('rngFeeToken');
+    console.log(rngFeeToken);
+  }
 
   // 6b. Results: Auction Info
-  const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN];
-  const rngExpectedReward = results[RNG_EXPECTED_REWARD_KEY];
+  const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
+  const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
+  const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
+  const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
 
-  const drawIsAuctionOpen = results[DRAW_IS_AUCTION_OPEN];
-  const drawExpectedReward = results[DRAW_EXPECTED_REWARD_KEY];
+  console.log('rngRelayLastSequenceId');
+  console.log(rngRelayLastSequenceId);
+
+  const lastSequenceCompleted = await auctionContracts.rngRelayAuctionContract.isSequenceCompleted(
+    rngRelayLastSequenceId,
+  );
+  console.log('lastSequenceCompleted');
+  console.log(lastSequenceCompleted);
+  const rngRelayIsAuctionOpen =
+    rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
+  console.log('rngRelayIsAuctionOpen');
+  console.log(rngRelayIsAuctionOpen);
 
   // 6c. Results: Rng Reward
-  console.log('rngExpectedReward');
-  console.log(rngExpectedReward);
-  console.log(rngExpectedReward.toString());
+  let rngExpectedRewardUsd;
+  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+    console.log('rngExpectedReward');
+    console.log(rngExpectedReward);
+    console.log(rngExpectedReward.toString());
 
-  const rngExpectedRewardUsd =
-    parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
-  console.log('rngExpectedRewardUsd');
-  console.log(rngExpectedRewardUsd);
+    rngExpectedRewardUsd =
+      parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
+    console.log('rngExpectedRewardUsd');
+    console.log(rngExpectedRewardUsd);
+  }
 
   // 6d. Results: Draw Reward
-  console.log('drawExpectedReward');
-  console.log(drawExpectedReward);
-  console.log(drawExpectedReward.toString());
+  let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
+  if (rngRelayIsAuctionOpen) {
+    console.log('compute rng relay reward fraction...');
+    const [randomNumber, completedAt] =
+      await auctionContracts.rngAuctionContract.callStatic.getRngResults();
+    console.log('completedAt');
+    console.log(completedAt);
+    const rngLastAuctionResult = await auctionContracts.rngAuctionContract.getLastAuctionResult();
+    const elapsedTime = Date.now() - completedAt;
+    const rngRelayRewardFraction =
+      await auctionContracts.rngRelayAuctionContract.computeRewardFraction(elapsedTime);
 
-  const drawExpectedRewardUsd =
-    parseFloat(formatUnits(drawExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
+    console.log('rngRelayRewardFraction');
+    console.log(rngRelayRewardFraction);
 
-  console.log('drawExpectedRewardUsd');
-  console.log(drawExpectedRewardUsd);
+    const auctionResult = {
+      rewardFraction: rngRelayRewardFraction,
+      recipient: rewardRecipient,
+    };
+
+    const auctionResults = [];
+    auctionResults[0] = rngLastAuctionResult;
+    auctionResults[1] = auctionResult;
+
+    const rngRelayExpectedReward = await auctionContracts.rngRelayAuctionContract.computeRewards(
+      auctionResults,
+    );
+
+    console.log('rngRelayExpectedReward');
+    console.log(rngRelayExpectedReward);
+    console.log(rngRelayExpectedReward.toString());
+
+    rngRelayExpectedRewardUsd =
+      parseFloat(formatUnits(rngRelayExpectedReward, rewardToken.decimals)) *
+      rewardToken.assetRateUsd;
+
+    console.log('rngRelayExpectedRewardUsd');
+    console.log(rngRelayExpectedRewardUsd);
+  }
 
   // 6e. Results: Rng Fee
-  const relayer: DrawAuctionRelayerContext = {
-    rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
-    rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
-  };
-  // const rngFeeTokenBalance = results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY];
-  console.log('rngFeeTokenBalance');
-  console.log(relayer.rngFeeTokenBalance);
-  console.log(relayer.rngFeeTokenBalance.toString());
+  let relayer: DrawAuctionRelayerContext;
+  if (rngFeeTokenAddress !== ZERO_ADDRESS) {
+    relayer = {
+      rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
+      rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
+    };
 
-  console.log('rngFeeTokenAllowance');
-  console.log(relayer.rngFeeTokenAllowance);
-  console.log(relayer.rngFeeTokenAllowance.toString());
+    console.log('relayer');
+    console.log(relayer);
+
+    // const rngFeeTokenBalance = results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY];
+    console.log('rngFeeTokenBalance');
+    console.log(relayer.rngFeeTokenBalance);
+    console.log(relayer.rngFeeTokenBalance.toString());
+
+    console.log('rngFeeTokenAllowance');
+    console.log(relayer.rngFeeTokenAllowance);
+    console.log(relayer.rngFeeTokenAllowance.toString());
+  }
 
   let rngFeeUsd = 0;
-  if (rngIsAuctionOpen) {
+  if (rngIsAuctionOpen && rngFeeTokenAddress !== ZERO_ADDRESS) {
     rngFeeUsd =
       parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
   }
@@ -193,18 +260,19 @@ export const getDrawAuctionContextMulticall = async (
   console.log(rngFeeUsd);
 
   return {
-    prizePoolReserve,
+    // prizePoolReserve,
     nativeTokenMarketRateUsd,
     rewardToken,
     rngFeeToken,
     rngFeeAmount,
     rngFeeUsd,
     rngIsAuctionOpen,
+    rngIsRngComplete,
     rngExpectedReward,
     rngExpectedRewardUsd,
-    drawIsAuctionOpen,
-    drawExpectedReward,
-    drawExpectedRewardUsd,
+    rngRelayIsAuctionOpen,
+    rngRelayExpectedReward,
+    rngRelayExpectedRewardUsd,
     relayer,
   };
 };
