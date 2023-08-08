@@ -29,12 +29,9 @@ const REWARD_SYMBOL_KEY = 'reward-symbol';
 const RNG_LAST_AUCTION_RESULT_KEY = 'rng-lastAuctionResultKey';
 const RNG_IS_AUCTION_OPEN_KEY = 'rng-isAuctionOpen';
 const RNG_IS_RNG_COMPLETE_KEY = 'rng-isRngComplete';
-const RNG_CURRENT_FRACTIONAL_REWARD_KEY = 'rng-expectedReward';
+const RNG_CURRENT_FRACTIONAL_REWARD_KEY = 'rng-currentFractionalReward';
 
 const RNG_RELAY_LAST_SEQUENCE_ID_KEY = 'rngRelay-lastSequenceId';
-const RNG_RELAY_CURRENT_FRACTIONAL_REWARD_KEY = 'rngRelay-expectedReward';
-
-const PRICE_FEED_PREFIX_KEY = 'priceFeed';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -102,9 +99,8 @@ export const getDrawAuctionContextMulticall = async (
   queries[RNG_IS_RNG_COMPLETE_KEY] = auctionContracts.rngAuctionContract.isRngComplete();
   queries[RNG_CURRENT_FRACTIONAL_REWARD_KEY] =
     auctionContracts.rngAuctionContract.currentFractionalReward();
-  // currentFractionalReward;
 
-  // 5b. Draw Auction
+  // 5b. RngRelay Auction
   queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] =
     auctionContracts.rngRelayAuctionContract.lastSequenceId();
 
@@ -154,6 +150,8 @@ export const getDrawAuctionContextMulticall = async (
   // 6b. Results: Auction Info
   const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
   const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
+  console.log('rngRelayLastSequenceId');
+  console.log(rngRelayLastSequenceId);
   const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
   const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
 
