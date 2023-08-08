@@ -67,13 +67,7 @@ export const getDrawAuctionContextMulticall = async (
   const rngServiceRequestFee = await rngServiceContract.getRequestFee();
 
   const rngFeeTokenAddress = rngServiceRequestFee[0];
-  console.log('rngFeeTokenAddress');
-  console.log(rngFeeTokenAddress);
-  console.log(rngFeeTokenAddress.toString());
   const rngFeeAmount = rngServiceRequestFee[1];
-  console.log('rngFeeAmount');
-  console.log(rngFeeAmount);
-  console.log(rngFeeAmount.toString());
 
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
   if (rngFeeTokenIsSet) {
@@ -92,8 +86,6 @@ export const getDrawAuctionContextMulticall = async (
 
   // 3. Info about the reward token (prize token)
   const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
-  console.log('rewardTokenAddress');
-  console.log(rewardTokenAddress);
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, readProvider);
 
   queries[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
@@ -165,31 +157,15 @@ export const getDrawAuctionContextMulticall = async (
   const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
   const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
 
-  console.log('rngRelayLastSequenceId');
-  console.log(rngRelayLastSequenceId);
-
   const lastSequenceCompleted = await auctionContracts.rngRelayAuctionContract.isSequenceCompleted(
     rngRelayLastSequenceId,
   );
-  console.log('lastSequenceCompleted');
-  console.log(lastSequenceCompleted);
   const rngRelayIsAuctionOpen =
     rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
-  console.log('rngRelayIsAuctionOpen');
-  console.log(rngRelayIsAuctionOpen);
 
   // 6c. Results: Rng Reward
-  let rngExpectedRewardUsd;
-  if (rngFeeTokenIsSet) {
-    console.log('rngExpectedReward');
-    console.log(rngExpectedReward);
-    console.log(rngExpectedReward.toString());
-
-    rngExpectedRewardUsd =
-      parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
-    console.log('rngExpectedRewardUsd');
-    console.log(rngExpectedRewardUsd);
-  }
+  const rngExpectedRewardUsd =
+    parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
 
   // 6d. Results: Draw Reward
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
@@ -257,9 +233,9 @@ export const getDrawAuctionContextMulticall = async (
   if (rngIsAuctionOpen && rngFeeTokenIsSet) {
     rngFeeUsd =
       parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
+    console.log('rngFeeUsd');
+    console.log(rngFeeUsd);
   }
-  console.log('rngFeeUsd');
-  console.log(rngFeeUsd);
 
   return {
     // prizePoolReserve,
