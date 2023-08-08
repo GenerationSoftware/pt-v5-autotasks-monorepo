@@ -211,7 +211,7 @@ const calculateProfit = async (
   logTable({
     MIN_PROFIT_THRESHOLD_USD: `$${params.minProfitThresholdUsd}`,
     'Net Profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-    'Profitable?': profitable ? '✔' : '✗',
+    'Profitable?': checkOrX(profitable),
   });
   printSpacer();
 
@@ -224,13 +224,27 @@ const calculateProfit = async (
  */
 const printContext = (chainId, context) => {
   printAsterisks();
-  console.log(chalk.blue.bold(`1a. Reward token: ${context.rewardToken.symbol}`));
+  printSpacer();
+  console.log(chalk.blue.bold(`1. Tokens:`));
 
+  printSpacer();
+  logStringValue(
+    `1a. Native/Gas Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    `$${context.nativeTokenMarketRateUsd}`,
+  );
+  logStringValue(
+    `1b. Reward Token ${context.rewardToken.symbol} Market Rate (USD):`,
+    `$${context.rewardToken.assetRateUsd}`,
+  );
+
+  printSpacer();
+  logStringValue(
+    `1d. RNG Fee token:`,
+    context.rngFeeTokenIsSet ? context.rngFeeToken.symbol : 'n/a',
+  );
   if (context.rngFeeTokenIsSet) {
-    printSpacer();
-    console.log(chalk.blue.bold(`1b. RNG Fee token: ${context.rngFeeToken.symbol}`));
     logBigNumber(
-      `1c. RNG Fee:`,
+      `1e. RNG Fee amount:`,
       context.rngFee,
       context.rngFeeToken.decimals,
       context.rngFeeToken.symbol,
@@ -238,42 +252,46 @@ const printContext = (chainId, context) => {
   }
 
   printSpacer();
-  logStringValue(
-    `2. Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    `$${context.gasTokenMarketRateUsd}`,
-  );
+  printSpacer();
+  console.log(chalk.blue.bold(`2. Rng Auction State:`));
 
   printSpacer();
-  logStringValue(`3a. (RngAuction) Auction open? `, `${context.rngIsAuctionOpen}`);
+  logStringValue(`2a. (RngAuction) Auction open? `, `${checkOrX(context.rngIsAuctionOpen)}`);
+  printSpacer();
   logBigNumber(
-    `3b. (RngAuction) Expected Reward:`,
+    `2b. (RngAuction) Expected Reward:`,
     context.rngExpectedReward,
     context.rewardToken.decimals,
     context.rewardToken.symbol,
   );
   console.log(
-    chalk.grey(`(RngAuction) Expected Reward (USD):`),
+    chalk.grey(`2c. (RngAuction) Expected Reward (USD):`),
     chalk.yellow(`$${roundTwoDecimalPlaces(context.rngExpectedRewardUsd)}`),
     chalk.dim(`$${context.rngExpectedRewardUsd}`),
   );
 
   printSpacer();
-  logStringValue(`4a. (RngRelayAuction) Auction open? `, `${context.rngRelayIsAuctionOpen}`);
-  logBigNumber(
-    `4b. (RngRelayAuction) Expected Reward:`,
-    context.drawExpectedReward,
-    context.rewardToken.decimals,
-    context.rewardToken.symbol,
-  );
-  console.log(
-    chalk.grey(`(RngRelayAuction) Expected Reward (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(context.rngRelayExpectedRewardUsd)}`),
-    chalk.dim(`$${context.rngRelayExpectedRewardUsd}`),
-  );
+  printSpacer();
+  console.log(chalk.blue.bold(`2. RngRelay Auction State:`));
 
-  console.log('rng fee token!');
-  console.log('rngFeeUsd');
-  console.log(context.rngFeeUsd);
+  printSpacer();
+  logStringValue(
+    `3a. (RngRelayAuction) Auction open? `,
+    `${checkOrX(context.rngRelayIsAuctionOpen)}`,
+  );
+  if (context.rngRelayIsAuctionOpen) {
+    logBigNumber(
+      `3b. (RngRelayAuction) Expected Reward:`,
+      context.rngRelayExpectedReward,
+      context.rewardToken.decimals,
+      context.rewardToken.symbol,
+    );
+    console.log(
+      chalk.grey(`3c. (RngRelayAuction) Expected Reward (USD):`),
+      chalk.yellow(`$${roundTwoDecimalPlaces(context.rngRelayExpectedRewardUsd)}`),
+      chalk.dim(`$${context.rngRelayExpectedRewardUsd}`),
+    );
+  }
 };
 
 const buildParams = (rewardRecipient: string): CompleteAuctionTxParams => {
@@ -440,4 +458,8 @@ const approve = async (
   } catch (error) {
     console.log(chalk.red('error: ', error));
   }
+};
+
+const checkOrX = (bool: boolean): string => {
+  return bool ? '✔' : '✗';
 };

@@ -83,8 +83,6 @@ export const getEthMainnetTokenMarketRateUsd = async (
   let marketRateUsd;
 
   try {
-    console.log('cg symbol');
-    console.log(symbol);
     marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
   } catch (err) {
     console.log(err);
@@ -113,8 +111,6 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
       throw new Error(response.statusText);
     }
     marketRate = await response.json();
-    console.log(marketRate);
-    console.log(marketRate[coingeckoTicker]);
     marketRate = marketRate[coingeckoTicker]?.usd;
   } catch (err) {
     console.log(err);
