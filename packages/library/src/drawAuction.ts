@@ -21,7 +21,7 @@ import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { getDrawAuctionContextMulticall } from './utils/getDrawAuctionContextMulticall';
 import { ERC20Abi } from './abis/ERC20Abi';
 
-// RNGAuction.sol;
+// RngAuction.sol;
 interface CompleteAuctionTxParams {
   rewardRecipient: string;
 }
@@ -29,7 +29,7 @@ interface CompleteAuctionTxParams {
 interface AuctionContracts {
   prizePoolContract: Contract;
   rngAuctionContract: Contract;
-  drawAuctionContract: Contract;
+  rngRelayAuctionContract: Contract;
   marketRateContract: Contract;
 }
 
@@ -44,19 +44,25 @@ const getAuctionContracts = (
     patch: 0,
   };
   const prizePoolContract = getContract('PrizePool', chainId, readProvider, contracts, version);
-  const rngAuctionContract = getContract('RNGAuction', chainId, readProvider, contracts, version);
-  const drawAuctionContract = getContract('DrawAuction', chainId, readProvider, contracts, version);
+  const rngAuctionContract = getContract('RngAuction', chainId, readProvider, contracts, version);
+  const rngRelayAuctionContract = getContract(
+    'RngRelayAuction',
+    chainId,
+    readProvider,
+    contracts,
+    version,
+  );
   const marketRateContract = getContract('MarketRate', chainId, readProvider, contracts, version);
 
-  if (!prizePoolContract || !rngAuctionContract || !drawAuctionContract) {
+  if (!prizePoolContract || !rngAuctionContract || !rngRelayAuctionContract) {
     throw new Error('Contract Unavailable');
   }
 
-  return { prizePoolContract, rngAuctionContract, drawAuctionContract, marketRateContract };
+  return { prizePoolContract, rngAuctionContract, rngRelayAuctionContract, marketRateContract };
 };
 
 /**
- * Figures out the current state of the RNG / Draw Auction and if it's profitable
+ * Figures out the current state of the Rng / RngRelay Auction and if it's profitable
  * to run any of the transactions, populates and returns the tx object
  *
  * @returns {undefined} void function
@@ -66,7 +72,8 @@ export async function prepareDrawAuctionTxs(
   relayer: Relayer,
   params: DrawAuctionConfigParams,
 ): Promise<undefined> {
-  const { chainId, relayerAddress, writeProvider, readProvider, covalentApiKey } = params;
+  const { chainId, relayerAddress, rewardRecipient, writeProvider, readProvider, covalentApiKey } =
+    params;
 
   const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
 
@@ -76,21 +83,22 @@ export async function prepareDrawAuctionTxs(
     readProvider,
     auctionContracts,
     relayerAddress,
+    rewardRecipient,
     covalentApiKey,
   );
 
   printContext(chainId, context);
 
-  if (!context.rngIsAuctionOpen && !context.drawIsAuctionOpen) {
+  if (!context.rngIsAuctionOpen && !context.rngRelayIsAuctionOpen) {
     printAsterisks();
-    console.log(chalk.yellow(`Currently no RNG or Draw auctions to complete. Exiting ...`));
+    console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
     return;
   }
 
   printSpacer();
   printAsterisks();
 
-  // #2. Figure out if we need to run completeAuction on RNGAuction or DrawAuction contract
+  // #2. Figure out if we need to run completeAuction on RngAuction or RngRelayAuction contract
   const contract = determineContractToUse(context, auctionContracts);
 
   // #3. If there is an RNG Fee, figure out if the bot can afford it
@@ -103,7 +111,7 @@ export async function prepareDrawAuctionTxs(
   const rewardUsd =
     contract === auctionContracts.rngAuctionContract
       ? context.rngExpectedRewardUsd
-      : context.drawExpectedRewardUsd;
+      : context.rngRelayExpectedRewardUsd;
 
   // #6. Decide if profitable or not
   const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context.rngFeeUsd);
@@ -233,31 +241,31 @@ const printContext = (chainId, context) => {
   );
 
   printSpacer();
-  logStringValue(`3a. (RNG) Auction open? `, `${context.rngIsAuctionOpen}`);
+  logStringValue(`3a. (RngAuction) Auction open? `, `${context.rngIsAuctionOpen}`);
   logBigNumber(
-    `3b. (RNG) Expected Reward:`,
+    `3b. (RngAuction) Expected Reward:`,
     context.rngExpectedReward,
     context.rewardToken.decimals,
     context.rewardToken.symbol,
   );
   console.log(
-    chalk.grey(`(RNG) Expected Reward (USD):`),
+    chalk.grey(`(RngAuction) Expected Reward (USD):`),
     chalk.yellow(`$${roundTwoDecimalPlaces(context.rngExpectedRewardUsd)}`),
     chalk.dim(`$${context.rngExpectedRewardUsd}`),
   );
 
   printSpacer();
-  logStringValue(`4a. (Draw) Auction open? `, `${context.drawIsAuctionOpen}`);
+  logStringValue(`4a. (RngRelayAuction) Auction open? `, `${context.rngRelayIsAuctionOpen}`);
   logBigNumber(
-    `4b. (Draw) Expected Reward:`,
+    `4b. (RngRelayAuction) Expected Reward:`,
     context.drawExpectedReward,
     context.rewardToken.decimals,
     context.rewardToken.symbol,
   );
   console.log(
-    chalk.grey(`(Draw) Expected Reward (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(context.drawExpectedRewardUsd)}`),
-    chalk.dim(`$${context.drawExpectedRewardUsd}`),
+    chalk.grey(`(RngRelayAuction) Expected Reward (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(context.rngRelayExpectedRewardUsd)}`),
+    chalk.dim(`$${context.rngRelayExpectedRewardUsd}`),
   );
 
   console.log('rng fee token!');
@@ -323,7 +331,7 @@ const determineContractToUse = (
 ): Contract => {
   let contract = context.rngIsAuctionOpen
     ? auctionContracts.rngAuctionContract
-    : auctionContracts.drawAuctionContract;
+    : auctionContracts.rngRelayAuctionContract;
 
   return contract;
 };

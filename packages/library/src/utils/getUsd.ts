@@ -13,7 +13,7 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
 };
 
 const ADDRESS_TO_COVALENT_LOOKUP = {
-  '0x09f06F4BC026fB75E0064747edd49D371D20D434': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL Sepolia -> ETH
+  '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL Sepolia -> ETH
   '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK Sepolia -> ETH
 };
 
@@ -83,6 +83,8 @@ export const getEthMainnetTokenMarketRateUsd = async (
   let marketRateUsd;
 
   try {
+    console.log('cg symbol');
+    console.log(symbol);
     marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
   } catch (err) {
     console.log(err);
@@ -111,7 +113,9 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
       throw new Error(response.statusText);
     }
     marketRate = await response.json();
-    marketRate = marketRate[coingeckoTicker].usd;
+    console.log(marketRate);
+    console.log(marketRate[coingeckoTicker]);
+    marketRate = marketRate[coingeckoTicker]?.usd;
   } catch (err) {
     console.log(err);
   }
@@ -123,7 +127,7 @@ export const getCovalentMarketRateUsd = async (
   tokenAddress: string,
   covalentApiKey: string,
 ): Promise<number> => {
-  const address = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress];
+  const address = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress.toLowerCase()];
 
   let rateUsd;
   try {

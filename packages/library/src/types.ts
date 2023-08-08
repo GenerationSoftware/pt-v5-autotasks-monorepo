@@ -90,24 +90,25 @@ export interface DrawAuctionConfigParams {
 }
 
 export interface DrawAuctionContext {
-  prizePoolReserve: BigNumber;
+  // prizePoolReserve: BigNumber;
   nativeTokenMarketRateUsd: number;
   rewardToken: TokenWithRate;
   rngFeeToken: Token;
   rngFeeAmount: BigNumber;
   rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
+  rngIsRngComplete: boolean;
   rngExpectedReward: BigNumber;
   rngExpectedRewardUsd: number;
-  drawIsAuctionOpen: boolean;
-  drawExpectedReward: BigNumber;
-  drawExpectedRewardUsd: number;
+  rngRelayIsAuctionOpen: boolean;
+  rngRelayExpectedReward: BigNumber;
+  rngRelayExpectedRewardUsd: number;
   relayer: DrawAuctionRelayerContext;
 }
 
 export interface AuctionContracts {
   prizePoolContract: Contract;
   rngAuctionContract: Contract;
-  drawAuctionContract: Contract;
+  rngRelayAuctionContract: Contract;
   marketRateContract: Contract;
 }
