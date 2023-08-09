@@ -22,11 +22,11 @@ import { getDrawAuctionContextMulticall } from './utils/getDrawAuctionContextMul
 import { ERC20Abi } from './abis/ERC20Abi';
 
 const RNG_AUCTION_KEY = 'RngAuction';
-const RNG_RELAY_AUCTION_KEY = 'RngAuction';
+const RNG_RELAY_AUCTION_KEY = 'RngRelayAuction';
 
 const CONTRACTS = {
-  RNG_AUCTION_KEY: RNG_AUCTION_KEY,
-  RNG_RELAY_AUCTION_KEY: RNG_RELAY_AUCTION_KEY,
+  [RNG_AUCTION_KEY]: RNG_AUCTION_KEY,
+  [RNG_RELAY_AUCTION_KEY]: RNG_RELAY_AUCTION_KEY,
 };
 
 interface StartRngRequestTxParams {
@@ -151,16 +151,16 @@ export async function prepareDrawAuctionTxs(
 
   // #5. Find reward in USD
   const rewardUsd =
-    selectedContract === CONTRACTS[RNG_AUCTION_KEY]
+    selectedContract === RNG_AUCTION_KEY
       ? context.rngExpectedRewardUsd
       : context.rngRelayExpectedRewardUsd;
 
   // #6. Decide if profitable or not
-  const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context.rngFeeUsd);
+  const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context);
 
   // #7. Populate transaction
   if (profitable) {
-    const tx = await sendTransaction(relayer, auctionContracts, params);
+    const tx = await sendTransaction(relayer, selectedContract, auctionContracts, params);
 
     // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
     //       re-submit transactions, effectively giving them different tx hashes
@@ -230,7 +230,7 @@ const calculateProfit = async (
   params: DrawAuctionConfigParams,
   rewardUsd: number,
   gasCostUsd: number,
-  rngFeeUsd: number,
+  context: DrawAuctionContext,
 ): Promise<boolean> => {
   printSpacer();
   printSpacer();
@@ -242,9 +242,21 @@ const calculateProfit = async (
 
   const grossProfitUsd = rewardUsd;
   console.log(chalk.magenta('(Gross Profit) = Reward'));
-  const netProfitUsd = grossProfitUsd - gasCostUsd - rngFeeUsd;
+  const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeUsd;
 
-  if (rngFeeUsd === 0) {
+  if (context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
+    console.log(chalk.magenta('(Net profit) = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
+    console.log(
+      chalk.greenBright(
+        `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
+          rewardUsd,
+        )} - $${roundTwoDecimalPlaces(gasCostUsd)}) - $${roundTwoDecimalPlaces(
+          context.rngFeeUsd,
+        )})`,
+      ),
+      chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${context.rngFeeUsd})`),
+    );
+  } else {
     console.log(chalk.magenta('(Net profit) = (Gross Profit) - (Gas Fees [Max])'));
     console.log(
       chalk.greenBright(
@@ -253,16 +265,6 @@ const calculateProfit = async (
         )} - $${roundTwoDecimalPlaces(gasCostUsd)})`,
       ),
       chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd})`),
-    );
-  } else {
-    console.log(chalk.magenta('(Net profit) = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
-    console.log(
-      chalk.greenBright(
-        `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-          rewardUsd,
-        )} - $${roundTwoDecimalPlaces(gasCostUsd)}) - $${roundTwoDecimalPlaces(rngFeeUsd)})`,
-      ),
-      chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${rngFeeUsd})`),
     );
   }
 
@@ -378,9 +380,6 @@ const getGasCost = async (
   let estimatedGasLimit;
   if (selectedContract === RNG_AUCTION_KEY) {
     const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
-    console.log('');
-    console.log('using getStartRngRequestEstimatedGasLimit');
-    console.log('');
     estimatedGasLimit = await getStartRngRequestEstimatedGasLimit(
       auctionContracts.rngAuctionContract,
       startRngRequestTxParams,
@@ -390,9 +389,6 @@ const getGasCost = async (
       auctionContracts.rngAuctionContract.address,
       params.rewardRecipient,
     );
-    console.log('');
-    console.log('using getRelayEstimatedGasLimit');
-    console.log('');
     estimatedGasLimit = await getRelayEstimatedGasLimit(
       auctionContracts.rngAuctionRelayerDirect,
       relayTxParams,
@@ -437,41 +433,46 @@ const getGasCost = async (
 };
 
 const determineContractToUse = (context: DrawAuctionContext): string => {
-  return context.rngIsAuctionOpen ? CONTRACTS['RngAuction'] : CONTRACTS['RngRelayAuction'];
+  return context.rngIsAuctionOpen ? CONTRACTS[RNG_AUCTION_KEY] : CONTRACTS[RNG_RELAY_AUCTION_KEY];
 };
 
 const sendTransaction = async (
   relayer: Relayer,
+  selectedContract: string,
   auctionContracts: AuctionContracts,
   params: DrawAuctionConfigParams,
 ) => {
-  console.log(chalk.yellow(`Submitting transaction:`));
-  printSpacer();
-  console.log(chalk.green(`Execute RngAuction#startRngRequest`));
-  printSpacer();
+  if (selectedContract === RNG_AUCTION_KEY) {
+    console.log(chalk.yellow(`Submitting transaction:`));
+    console.log(chalk.green(`Execute RngAuction#startRngRequest`));
+    printSpacer();
 
-  const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
+    const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
 
-  console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-  printSpacer();
+    console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+    printSpacer();
 
-  const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
-  const populatedTx = await auctionContracts.rngAuctionContract.populateTransaction.completeAuction(
-    ...Object.values(startRngRequestTxParams),
-  );
+    const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
+    const populatedTx =
+      await auctionContracts.rngAuctionContract.populateTransaction.startRngRequest(
+        ...Object.values(startRngRequestTxParams),
+      );
 
-  console.log(chalk.greenBright.bold(`Sending transaction ...`));
-  const tx = await relayer.sendTransaction({
-    isPrivate,
-    data: populatedTx.data,
-    to: populatedTx.to,
-    gasLimit: 8000000,
-  });
+    console.log(chalk.greenBright.bold(`Sending transaction ...`));
+    const tx = await relayer.sendTransaction({
+      isPrivate,
+      data: populatedTx.data,
+      to: populatedTx.to,
+      gasLimit: 8000000,
+    });
 
-  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+    console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+    console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
-  return tx;
+    return tx;
+  } else {
+    console.log('implement me!');
+  }
 };
 
 const optionallyIncreaseRngFeeAllowance = async (

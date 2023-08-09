@@ -159,8 +159,6 @@ export const getDrawAuctionContextMulticall = async (
   // 6d. Results: Auction Info
   const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
   const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
-  console.log('rngRelayLastSequenceId');
-  console.log(rngRelayLastSequenceId);
   const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
   const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
 
