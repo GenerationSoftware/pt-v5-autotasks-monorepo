@@ -16,15 +16,17 @@ import { VrfRngAbi } from '../abis/VrfRngAbi';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
-const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rng-fee-token-balanceOf-bot';
-const RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY = 'rng-auction-allowance-bot-rng-fee-token';
-const RNG_FEE_TOKEN_DECIMALS_KEY = 'rng-fee-token-decimals';
-const RNG_FEE_TOKEN_NAME_KEY = 'rng-fee-token-decimals';
-const RNG_FEE_TOKEN_SYMBOL_KEY = 'rng-fee-token-decimals';
+// const PRIZE_POOL_HAS_NEXT_DRAW_FINISHED_KEY = 'prizePool-hasNextDrawFinished';
 
-const REWARD_DECIMALS_KEY = 'reward-decimals';
-const REWARD_NAME_KEY = 'reward-name';
-const REWARD_SYMBOL_KEY = 'reward-symbol';
+const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rngFeeToken-balanceOfBot';
+const RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY = 'rngAuction-allowanceBotRngFeeToken';
+const RNG_FEE_TOKEN_DECIMALS_KEY = 'rngFeeToken-decimals';
+const RNG_FEE_TOKEN_NAME_KEY = 'rngFeeToken-decimals';
+const RNG_FEE_TOKEN_SYMBOL_KEY = 'rngFeeToken-decimals';
+
+const REWARD_DECIMALS_KEY = 'rewardToken-decimals';
+const REWARD_NAME_KEY = 'rewardToken-name';
+const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
 
 const RNG_LAST_AUCTION_RESULT_KEY = 'rng-lastAuctionResultKey';
 const RNG_IS_AUCTION_OPEN_KEY = 'rng-isAuctionOpen';
@@ -57,6 +59,8 @@ export const getDrawAuctionContextMulticall = async (
 
   // 1. Prize Pool Info
   // const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
+  // queries[PRIZE_POOL_HAS_NEXT_DRAW_FINISHED_KEY] =
+  //   auctionContracts.prizePoolContract.hasNextDrawFinished();
 
   // 2. RNG Auction Service Info
   const rngService = await auctionContracts.rngAuctionContract.getNextRngService();
@@ -110,7 +114,12 @@ export const getDrawAuctionContextMulticall = async (
   // 6. Get and process results
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
-  // 6a. Results: Reward Token
+  // 6a. Results: Prize Pool
+  // const prizePoolHasNextDrawFinished = results[PRIZE_POOL_HAS_NEXT_DRAW_FINISHED_KEY];
+  // console.log('prizePoolHasNextDrawFinished');
+  // console.log(prizePoolHasNextDrawFinished);
+
+  // 6b. Results: Reward Token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
     results[REWARD_SYMBOL_KEY],
     rewardTokenAddress,
@@ -125,7 +134,7 @@ export const getDrawAuctionContextMulticall = async (
     assetRateUsd: rewardTokenMarketRateUsd,
   };
 
-  // 6b. Results: RNG Auction Service Info
+  // 6c. Results: RNG Auction Service Info
   let rngFeeTokenMarketRateUsd;
   let rngFeeToken: TokenWithRate;
   if (rngFeeTokenIsSet) {
@@ -147,7 +156,7 @@ export const getDrawAuctionContextMulticall = async (
     console.log(rngFeeToken);
   }
 
-  // 6b. Results: Auction Info
+  // 6d. Results: Auction Info
   const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
   const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
   console.log('rngRelayLastSequenceId');
@@ -161,11 +170,11 @@ export const getDrawAuctionContextMulticall = async (
   const rngRelayIsAuctionOpen =
     rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
 
-  // 6c. Results: Rng Reward
+  // 6e. Results: Rng Reward
   const rngExpectedRewardUsd =
     parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
 
-  // 6d. Results: Draw Reward
+  // 6f. Results: Draw Reward
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
   if (rngRelayIsAuctionOpen) {
     console.log('compute rng relay reward fraction...');
@@ -206,7 +215,7 @@ export const getDrawAuctionContextMulticall = async (
     console.log(rngRelayExpectedRewardUsd);
   }
 
-  // 6e. Results: Rng Fee
+  // 6g. Results: Rng Fee
   let relayer: DrawAuctionRelayerContext;
   if (rngFeeTokenIsSet) {
     relayer = {
@@ -237,6 +246,7 @@ export const getDrawAuctionContextMulticall = async (
 
   return {
     // prizePoolReserve,
+    // prizePoolHasNextDrawFinished,
     nativeTokenMarketRateUsd,
     rewardToken,
     rngFeeTokenIsSet,

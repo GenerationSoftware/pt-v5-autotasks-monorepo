@@ -6,7 +6,7 @@ import { Relayer } from 'defender-relay-client';
 import { formatUnits } from '@ethersproject/units';
 import chalk from 'chalk';
 
-import { DrawAuctionContext, DrawAuctionConfigParams } from './types';
+import { AuctionContracts, DrawAuctionContext, DrawAuctionConfigParams } from './types';
 import {
   logTable,
   logStringValue,
@@ -21,16 +21,21 @@ import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { getDrawAuctionContextMulticall } from './utils/getDrawAuctionContextMulticall';
 import { ERC20Abi } from './abis/ERC20Abi';
 
-// RngAuction.sol;
-interface CompleteAuctionTxParams {
+const RNG_AUCTION_KEY = 'RngAuction';
+const RNG_RELAY_AUCTION_KEY = 'RngAuction';
+
+const CONTRACTS = {
+  RNG_AUCTION_KEY: RNG_AUCTION_KEY,
+  RNG_RELAY_AUCTION_KEY: RNG_RELAY_AUCTION_KEY,
+};
+
+interface StartRngRequestTxParams {
   rewardRecipient: string;
 }
 
-interface AuctionContracts {
-  prizePoolContract: Contract;
-  rngAuctionContract: Contract;
-  rngRelayAuctionContract: Contract;
-  marketRateContract: Contract;
+interface RelayTxParams {
+  rngAuctionAddress: string;
+  rewardRecipient: string;
 }
 
 const getAuctionContracts = (
@@ -52,13 +57,24 @@ const getAuctionContracts = (
     contracts,
     version,
   );
-  const marketRateContract = getContract('MarketRate', chainId, readProvider, contracts, version);
+  const rngAuctionRelayerDirect = getContract(
+    'RngAuctionRelayerDirect',
+    chainId,
+    readProvider,
+    contracts,
+    version,
+  );
 
   if (!prizePoolContract || !rngAuctionContract || !rngRelayAuctionContract) {
     throw new Error('Contract Unavailable');
   }
 
-  return { prizePoolContract, rngAuctionContract, rngRelayAuctionContract, marketRateContract };
+  return {
+    prizePoolContract,
+    rngAuctionContract,
+    rngRelayAuctionContract,
+    rngAuctionRelayerDirect,
+  };
 };
 
 /**
@@ -99,17 +115,43 @@ export async function prepareDrawAuctionTxs(
   printAsterisks();
 
   // #2. Figure out if we need to run completeAuction on RngAuction or RngRelayAuction contract
-  const contract = determineContractToUse(context, auctionContracts);
+  const selectedContract = determineContractToUse(context);
 
   // #3. If there is an RNG Fee, figure out if the bot can afford it
   await optionallyIncreaseRngFeeAllowance(writeProvider, relayerAddress, context);
 
+  //     UD2x18 rewardFraction = rngAuction.currentFractionalReward();
+
+  // AuctionResult memory auctionResult = AuctionResult({
+  //   rewardFraction: rewardFraction,
+  //   recipient: address(this)
+  // });
+
+  // AuctionResult[] memory auctionResults = new AuctionResult[](1);
+  // auctionResults[0] = auctionResult;
+
+  // uint256[] memory rewards = rngRelayAuction.computeRewards(auctionResults);
+
+  // if (rewards[0] > minimum) {
+  //   rngAuction.startRngRequest(address(this));
+  //   uint profit = rewards[0] - minimum;
+  //   // console2.log("RngAuction TRIGGERED!!!!!!!!!!!!!! profit:", profit);
+  // } else {
+  //   // console2.log("RngAuction does not meet minimum", rewards[0], minimum);
+  // }
+
   // #4. Estimate gas costs
-  const gasCostUsd = await getGasCost(readProvider, contract, params, context);
+  const gasCostUsd = await getGasCost(
+    readProvider,
+    selectedContract,
+    auctionContracts,
+    params,
+    context,
+  );
 
   // #5. Find reward in USD
   const rewardUsd =
-    contract === auctionContracts.rngAuctionContract
+    selectedContract === CONTRACTS[RNG_AUCTION_KEY]
       ? context.rngExpectedRewardUsd
       : context.rngRelayExpectedRewardUsd;
 
@@ -137,19 +179,38 @@ export async function prepareDrawAuctionTxs(
 }
 
 /**
- * Figures out how much gas is required to run the contract function
+ * Figures out how much gas is required to run the RngAuction startRngRequest contract function
  *
  * @returns {Promise} Promise of a BigNumber with the gas limit
  */
-const getEstimatedGasLimit = async (
+const getStartRngRequestEstimatedGasLimit = async (
   contract: Contract,
-  completeAuctionTxParams: CompleteAuctionTxParams,
+  startRngRequestTxParams: StartRngRequestTxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await contract.estimateGas.completeAuction(
-      ...Object.values(completeAuctionTxParams),
+    estimatedGasLimit = await contract.estimateGas.startRngRequest(
+      ...Object.values(startRngRequestTxParams),
     );
+  } catch (e) {
+    console.log(chalk.red(e));
+  }
+
+  return estimatedGasLimit;
+};
+
+/**
+ * Figures out how much gas is required to run the RngRelayAuction relay contract function
+ *
+ * @returns {Promise} Promise of a BigNumber with the gas limit
+ */
+const getRelayEstimatedGasLimit = async (
+  contract: Contract,
+  relayTxParams: RelayTxParams,
+): Promise<BigNumber> => {
+  let estimatedGasLimit;
+  try {
+    estimatedGasLimit = await contract.estimateGas.relay(...Object.values(relayTxParams));
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -272,7 +333,7 @@ const printContext = (chainId, context) => {
 
   printSpacer();
   printSpacer();
-  console.log(chalk.blue.bold(`2. RngRelay Auction State:`));
+  console.log(chalk.blue.bold(`3. RngRelay Auction State:`));
 
   printSpacer();
   logStringValue(
@@ -294,21 +355,50 @@ const printContext = (chainId, context) => {
   }
 };
 
-const buildParams = (rewardRecipient: string): CompleteAuctionTxParams => {
+const buildStartRngRequestParams = (rewardRecipient: string): StartRngRequestTxParams => {
   return {
+    rewardRecipient,
+  };
+};
+
+const buildRelayParams = (rngAuctionAddress: string, rewardRecipient: string): RelayTxParams => {
+  return {
+    rngAuctionAddress,
     rewardRecipient,
   };
 };
 
 const getGasCost = async (
   readProvider: Provider,
-  contract: Contract,
+  selectedContract: string,
+  auctionContracts: AuctionContracts,
   params: DrawAuctionConfigParams,
   context: DrawAuctionContext,
 ): Promise<number> => {
-  let completeAuctionTxParams = buildParams(params.rewardRecipient);
+  let estimatedGasLimit;
+  if (selectedContract === RNG_AUCTION_KEY) {
+    const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
+    console.log('');
+    console.log('using getStartRngRequestEstimatedGasLimit');
+    console.log('');
+    estimatedGasLimit = await getStartRngRequestEstimatedGasLimit(
+      auctionContracts.rngAuctionContract,
+      startRngRequestTxParams,
+    );
+  } else {
+    const relayTxParams = buildRelayParams(
+      auctionContracts.rngAuctionContract.address,
+      params.rewardRecipient,
+    );
+    console.log('');
+    console.log('using getRelayEstimatedGasLimit');
+    console.log('');
+    estimatedGasLimit = await getRelayEstimatedGasLimit(
+      auctionContracts.rngAuctionRelayerDirect,
+      relayTxParams,
+    );
+  }
 
-  let estimatedGasLimit = await getEstimatedGasLimit(contract, completeAuctionTxParams);
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
   } else {
@@ -346,15 +436,8 @@ const getGasCost = async (
   return gasCostUsd;
 };
 
-const determineContractToUse = (
-  context: DrawAuctionContext,
-  auctionContracts: AuctionContracts,
-): Contract => {
-  let contract = context.rngIsAuctionOpen
-    ? auctionContracts.rngAuctionContract
-    : auctionContracts.rngRelayAuctionContract;
-
-  return contract;
+const determineContractToUse = (context: DrawAuctionContext): string => {
+  return context.rngIsAuctionOpen ? CONTRACTS['RngAuction'] : CONTRACTS['RngRelayAuction'];
 };
 
 const sendTransaction = async (
@@ -364,7 +447,7 @@ const sendTransaction = async (
 ) => {
   console.log(chalk.yellow(`Submitting transaction:`));
   printSpacer();
-  console.log(chalk.green(`Execute Start RNG Auction`));
+  console.log(chalk.green(`Execute RngAuction#startRngRequest`));
   printSpacer();
 
   const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
@@ -372,9 +455,9 @@ const sendTransaction = async (
   console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
   printSpacer();
 
-  const completeAuctionTxParams = buildParams(params.rewardRecipient);
+  const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
   const populatedTx = await auctionContracts.rngAuctionContract.populateTransaction.completeAuction(
-    ...Object.values(completeAuctionTxParams),
+    ...Object.values(startRngRequestTxParams),
   );
 
   console.log(chalk.greenBright.bold(`Sending transaction ...`));
