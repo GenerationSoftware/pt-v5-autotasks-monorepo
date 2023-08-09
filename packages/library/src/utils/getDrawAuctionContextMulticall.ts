@@ -106,8 +106,7 @@ export const getDrawAuctionContextMulticall = async (
     auctionContracts.rngAuctionContract.currentFractionalReward();
 
   // 5b. RngRelay Auction
-  queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] =
-    auctionContracts.rngRelayAuctionContract.lastSequenceId();
+  queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] = auctionContracts.rngAuctionContract.lastSequenceId();
 
   // -------------------------------
 
@@ -176,9 +175,8 @@ export const getDrawAuctionContextMulticall = async (
   console.log('lastSequenceCompleted');
   console.log(lastSequenceCompleted);
 
-  const rngRelayIsAuctionOpen = rngIsRngComplete;
-  // const rngRelayIsAuctionOpen =
-  //   rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
+  const rngRelayIsAuctionOpen =
+    rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
 
   // 6e. Results: Rng Reward
   const rngExpectedRewardUsd =
@@ -193,22 +191,14 @@ export const getDrawAuctionContextMulticall = async (
     printSpacer();
     const [randomNumber, completedAt] =
       await auctionContracts.rngAuctionContract.callStatic.getRngResults();
-    console.log('completedAt');
-    console.log(Number(completedAt.toString()));
     const rngLastAuctionResult = await auctionContracts.rngAuctionContract.getLastAuctionResult();
     const elapsedTime = Math.floor(Date.now() / 1000) - Number(completedAt.toString());
+
     printSpacer();
-    console.log('Math.floor(Date.now() / 1000)');
-    console.log(Math.floor(Date.now() / 1000));
-    printSpacer();
-    console.log('elapsedTime');
-    console.log(elapsedTime);
     const rngRelayRewardFraction =
       await auctionContracts.rngRelayAuctionContract.computeRewardFraction(elapsedTime);
 
     printSpacer();
-    console.log('rngRelayRewardFraction');
-    console.log(rngRelayRewardFraction);
 
     const auctionResult = {
       rewardFraction: rngRelayRewardFraction,

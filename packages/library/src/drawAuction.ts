@@ -209,10 +209,22 @@ const getRelayEstimatedGasLimit = async (
   relayTxParams: RelayTxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
+  console.log('relayTxParams');
+  console.log(relayTxParams);
   try {
-    console.log(Object.values(relayTxParams));
-    console.log({ ...Object.values(relayTxParams) });
-    estimatedGasLimit = await contract.estimateGas.relay(...Object.values(relayTxParams));
+    // console.log(Object.values(relayTxParams));
+    // console.log({ ...Object.values(relayTxParams) });
+    console.log(relayTxParams['rngAuctionAddress'], relayTxParams['rewardRecipient']);
+    estimatedGasLimit = contract.estimateGas.relay(
+      relayTxParams['rngAuctionAddress'],
+      relayTxParams['rewardRecipient'],
+    );
+
+    const tx = contract.relay(relayTxParams['rngAuctionAddress'], relayTxParams['rewardRecipient']);
+    console.log('tx');
+    console.log(tx);
+    // estimatedGasLimit = await contract.estimateGas.relay(relayTxParams[0], relayTxParams[1]);
+    // estimatedGasLimit = await contract.estimateGas.relay(...Object.values(relayTxParams));
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -395,6 +407,8 @@ const getGasCost = async (
       auctionContracts.rngAuctionContract.address,
       params.rewardRecipient,
     );
+    console.log('relayTxParams');
+    console.log(relayTxParams);
     estimatedGasLimit = await getRelayEstimatedGasLimit(
       auctionContracts.rngAuctionRelayerDirect,
       relayTxParams,
