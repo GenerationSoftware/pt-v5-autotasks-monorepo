@@ -91,6 +91,7 @@ export interface DrawAuctionConfigParams {
 
 export interface DrawAuctionContext {
   // prizePoolReserve: BigNumber;
+  // prizePoolHasNextDrawFinished: boolean;
   nativeTokenMarketRateUsd: number;
   rngFeeTokenIsSet: boolean;
   rewardToken: TokenWithRate;
@@ -110,6 +111,6 @@ export interface DrawAuctionContext {
 export interface AuctionContracts {
   prizePoolContract: Contract;
   rngAuctionContract: Contract;
+  rngAuctionRelayerDirect: Contract;
   rngRelayAuctionContract: Contract;
-  marketRateContract: Contract;
 }
