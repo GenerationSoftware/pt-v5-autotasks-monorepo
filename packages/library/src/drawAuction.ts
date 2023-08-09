@@ -210,6 +210,8 @@ const getRelayEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
+    console.log(Object.values(relayTxParams));
+    console.log({ ...Object.values(relayTxParams) });
     estimatedGasLimit = await contract.estimateGas.relay(...Object.values(relayTxParams));
   } catch (e) {
     console.log(chalk.red(e));
@@ -302,12 +304,13 @@ const printContext = (chainId, context) => {
 
   printSpacer();
   logStringValue(
-    `1d. RNG Fee token:`,
+    `1c. RNG Fee token:`,
     context.rngFeeTokenIsSet ? context.rngFeeToken.symbol : 'n/a',
   );
+  // TODO: Make this like the ones above where it shows the LINK or whatever RngToken market rate USD
   if (context.rngFeeTokenIsSet) {
     logBigNumber(
-      `1e. RNG Fee amount:`,
+      `1d. RNG Fee amount:`,
       context.rngFee,
       context.rngFeeToken.decimals,
       context.rngFeeToken.symbol,
@@ -320,18 +323,21 @@ const printContext = (chainId, context) => {
 
   printSpacer();
   logStringValue(`2a. (RngAuction) Auction open? `, `${checkOrX(context.rngIsAuctionOpen)}`);
-  printSpacer();
-  logBigNumber(
-    `2b. (RngAuction) Expected Reward:`,
-    context.rngExpectedReward,
-    context.rewardToken.decimals,
-    context.rewardToken.symbol,
-  );
-  console.log(
-    chalk.grey(`2c. (RngAuction) Expected Reward (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(context.rngExpectedRewardUsd)}`),
-    chalk.dim(`$${context.rngExpectedRewardUsd}`),
-  );
+
+  if (context.rngIsAuctionOpen) {
+    printSpacer();
+    logBigNumber(
+      `2b. (RngAuction) Expected Reward:`,
+      context.rngExpectedReward,
+      context.rewardToken.decimals,
+      context.rewardToken.symbol,
+    );
+    console.log(
+      chalk.grey(`2c. (RngAuction) Expected Reward (USD):`),
+      chalk.yellow(`$${roundTwoDecimalPlaces(context.rngExpectedRewardUsd)}`),
+      chalk.dim(`$${context.rngExpectedRewardUsd}`),
+    );
+  }
 
   printSpacer();
   printSpacer();

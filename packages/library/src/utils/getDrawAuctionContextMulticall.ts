@@ -13,6 +13,7 @@ import {
 import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { VrfRngAbi } from '../abis/VrfRngAbi';
+import { printSpacer } from './logging';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -165,26 +166,47 @@ export const getDrawAuctionContextMulticall = async (
   const lastSequenceCompleted = await auctionContracts.rngRelayAuctionContract.isSequenceCompleted(
     rngRelayLastSequenceId,
   );
-  const rngRelayIsAuctionOpen =
-    rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
+  console.log('rngRelayLastSequenceId');
+  console.log(rngRelayLastSequenceId);
+  printSpacer();
+
+  console.log('rngIsRngComplete');
+  console.log(rngIsRngComplete);
+  printSpacer();
+  console.log('lastSequenceCompleted');
+  console.log(lastSequenceCompleted);
+
+  const rngRelayIsAuctionOpen = rngIsRngComplete;
+  // const rngRelayIsAuctionOpen =
+  //   rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
 
   // 6e. Results: Rng Reward
   const rngExpectedRewardUsd =
     parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
 
-  // 6f. Results: Draw Reward
+  // 6f. Results: Draw/Relayer Reward
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
   if (rngRelayIsAuctionOpen) {
+    printSpacer();
+
     console.log('compute rng relay reward fraction...');
+    printSpacer();
     const [randomNumber, completedAt] =
       await auctionContracts.rngAuctionContract.callStatic.getRngResults();
     console.log('completedAt');
-    console.log(completedAt);
+    console.log(Number(completedAt.toString()));
     const rngLastAuctionResult = await auctionContracts.rngAuctionContract.getLastAuctionResult();
-    const elapsedTime = Date.now() - completedAt;
+    const elapsedTime = Math.floor(Date.now() / 1000) - Number(completedAt.toString());
+    printSpacer();
+    console.log('Math.floor(Date.now() / 1000)');
+    console.log(Math.floor(Date.now() / 1000));
+    printSpacer();
+    console.log('elapsedTime');
+    console.log(elapsedTime);
     const rngRelayRewardFraction =
       await auctionContracts.rngRelayAuctionContract.computeRewardFraction(elapsedTime);
 
+    printSpacer();
     console.log('rngRelayRewardFraction');
     console.log(rngRelayRewardFraction);
 
@@ -197,16 +219,15 @@ export const getDrawAuctionContextMulticall = async (
     auctionResults[0] = rngLastAuctionResult;
     auctionResults[1] = auctionResult;
 
-    const rngRelayExpectedReward = await auctionContracts.rngRelayAuctionContract.computeRewards(
-      auctionResults,
-    );
+    const rngRelayExpectedReward =
+      await auctionContracts.rngRelayAuctionContract.callStatic.computeRewards(auctionResults);
 
     console.log('rngRelayExpectedReward');
-    console.log(rngRelayExpectedReward);
-    console.log(rngRelayExpectedReward.toString());
+    console.log(rngRelayExpectedReward[1]);
+    console.log(rngRelayExpectedReward[1].toString());
 
     rngRelayExpectedRewardUsd =
-      parseFloat(formatUnits(rngRelayExpectedReward, rewardToken.decimals)) *
+      parseFloat(formatUnits(rngRelayExpectedReward[1], rewardToken.decimals)) *
       rewardToken.assetRateUsd;
 
     console.log('rngRelayExpectedRewardUsd');
