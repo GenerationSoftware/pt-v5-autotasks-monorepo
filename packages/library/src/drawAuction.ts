@@ -1,4 +1,4 @@
-import { ethers, BigNumber, Contract } from 'ethers';
+import { ethers, BigNumber, Contract, PopulatedTransaction } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
@@ -451,65 +451,46 @@ const sendTransaction = async (
   auctionContracts: AuctionContracts,
   params: DrawAuctionConfigParams,
 ) => {
+  const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
+  console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+  printSpacer();
+
+  console.log(chalk.yellow(`Submitting transaction:`));
+
+  let populatedTx: PopulatedTransaction;
   if (selectedContract === RNG_AUCTION_KEY) {
-    console.log(chalk.yellow(`Submitting transaction:`));
     console.log(chalk.green(`Execute RngAuction#startRngRequest`));
     printSpacer();
 
-    const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
-
-    console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-    printSpacer();
-
     const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
-    const populatedTx =
-      await auctionContracts.rngAuctionContract.populateTransaction.startRngRequest(
-        ...Object.values(startRngRequestTxParams),
-      );
-
-    console.log(chalk.greenBright.bold(`Sending transaction ...`));
-    const tx = await relayer.sendTransaction({
-      isPrivate,
-      data: populatedTx.data,
-      to: populatedTx.to,
-      gasLimit: 8000000,
-    });
-
-    console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-    console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-    return tx;
+    populatedTx = await auctionContracts.rngAuctionContract.populateTransaction.startRngRequest(
+      ...Object.values(startRngRequestTxParams),
+    );
   } else {
-    console.log(chalk.yellow(`Submitting transaction:`));
     console.log(chalk.green(`Execute RngAuctionRelayerDirect#relay`));
-    printSpacer();
-
-    const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
-
-    console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
     printSpacer();
 
     const relayTxParams = buildRelayParams(
       auctionContracts.rngRelayAuctionContract.address,
       params.rewardRecipient,
     );
-    const populatedTx = await auctionContracts.rngAuctionRelayerDirect.populateTransaction.relay(
+    populatedTx = await auctionContracts.rngAuctionRelayerDirect.populateTransaction.relay(
       ...Object.values(relayTxParams),
     );
-
-    console.log(chalk.greenBright.bold(`Sending transaction ...`));
-    const tx = await relayer.sendTransaction({
-      isPrivate,
-      data: populatedTx.data,
-      to: populatedTx.to,
-      gasLimit: 8000000,
-    });
-
-    console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-    console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-    return tx;
   }
+
+  console.log(chalk.greenBright.bold(`Sending transaction ...`));
+  const tx = await relayer.sendTransaction({
+    isPrivate,
+    data: populatedTx.data,
+    to: populatedTx.to,
+    gasLimit: 8000000,
+  });
+
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+  return tx;
 };
 
 const optionallyIncreaseRngFeeAllowance = async (
