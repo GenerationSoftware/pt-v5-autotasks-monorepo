@@ -34,7 +34,7 @@ interface StartRngRequestTxParams {
 }
 
 interface RelayTxParams {
-  rngAuctionAddress: string;
+  rngRelayAuctionAddress: string;
   rewardRecipient: string;
 }
 
@@ -209,22 +209,8 @@ const getRelayEstimatedGasLimit = async (
   relayTxParams: RelayTxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
-  console.log('relayTxParams');
-  console.log(relayTxParams);
   try {
-    // console.log(Object.values(relayTxParams));
-    // console.log({ ...Object.values(relayTxParams) });
-    console.log(relayTxParams['rngAuctionAddress'], relayTxParams['rewardRecipient']);
-    estimatedGasLimit = contract.estimateGas.relay(
-      relayTxParams['rngAuctionAddress'],
-      relayTxParams['rewardRecipient'],
-    );
-
-    const tx = contract.relay(relayTxParams['rngAuctionAddress'], relayTxParams['rewardRecipient']);
-    console.log('tx');
-    console.log(tx);
-    // estimatedGasLimit = await contract.estimateGas.relay(relayTxParams[0], relayTxParams[1]);
-    // estimatedGasLimit = await contract.estimateGas.relay(...Object.values(relayTxParams));
+    estimatedGasLimit = await contract.estimateGas.relay(...Object.values(relayTxParams));
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -381,9 +367,12 @@ const buildStartRngRequestParams = (rewardRecipient: string): StartRngRequestTxP
   };
 };
 
-const buildRelayParams = (rngAuctionAddress: string, rewardRecipient: string): RelayTxParams => {
+const buildRelayParams = (
+  rngRelayAuctionAddress: string,
+  rewardRecipient: string,
+): RelayTxParams => {
   return {
-    rngAuctionAddress,
+    rngRelayAuctionAddress,
     rewardRecipient,
   };
 };
@@ -404,7 +393,7 @@ const getGasCost = async (
     );
   } else {
     const relayTxParams = buildRelayParams(
-      auctionContracts.rngAuctionContract.address,
+      auctionContracts.rngRelayAuctionContract.address,
       params.rewardRecipient,
     );
     console.log('relayTxParams');
@@ -491,7 +480,35 @@ const sendTransaction = async (
 
     return tx;
   } else {
-    console.log('implement me!');
+    console.log(chalk.yellow(`Submitting transaction:`));
+    console.log(chalk.green(`Execute RngAuctionRelayerDirect#relay`));
+    printSpacer();
+
+    const isPrivate = canUseIsPrivate(params.chainId, params.useFlashbots);
+
+    console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+    printSpacer();
+
+    const relayTxParams = buildRelayParams(
+      auctionContracts.rngRelayAuctionContract.address,
+      params.rewardRecipient,
+    );
+    const populatedTx = await auctionContracts.rngAuctionRelayerDirect.populateTransaction.relay(
+      ...Object.values(relayTxParams),
+    );
+
+    console.log(chalk.greenBright.bold(`Sending transaction ...`));
+    const tx = await relayer.sendTransaction({
+      isPrivate,
+      data: populatedTx.data,
+      to: populatedTx.to,
+      gasLimit: 8000000,
+    });
+
+    console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+    console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+    return tx;
   }
 };
 
