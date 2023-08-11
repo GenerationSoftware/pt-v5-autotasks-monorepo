@@ -330,7 +330,6 @@ const getLiquidationContracts = async (
   contracts: ContractsBlob,
   params: ArbLiquidatorConfigParams,
 ): Promise<{
-  liquidationPairs: Contract[];
   liquidationRouter: Contract;
   marketRate: Contract;
 }> => {
