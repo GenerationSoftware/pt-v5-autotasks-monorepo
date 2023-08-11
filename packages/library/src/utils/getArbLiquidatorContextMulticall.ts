@@ -6,7 +6,7 @@ import {
 } from '@generationsoftware/pt-v5-utils-js';
 
 import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
-import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS } from '../utils';
+import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS, printSpacer } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
 
 import { ethers } from 'ethers';
@@ -56,11 +56,24 @@ export const getArbLiquidatorContextMulticall = async (
   queries[`tokenOut-symbol`] = tokenOutContract.symbol();
 
   // // 3. VAULT UNDERLYING ASSET TOKEN
-  const vaultContract = contracts.contracts.find(
+  const vaultContractData = contracts.contracts.find(
     (contract) => contract.type === 'Vault' && contract.address === tokenOutAddress,
   );
-  const vaultUnderlyingAsset = vaultContract.tokens[0].extensions.underlyingAsset;
+  const vaultContract = new ethers.Contract(
+    vaultContractData.address,
+    vaultContractData.abi,
+    readProvider,
+  );
+  const vaultUnderlyingAsset = vaultContractData.tokens[0].extensions.underlyingAsset;
   const vaultUnderlyingAssetAddress = vaultUnderlyingAsset.address;
+
+  printSpacer();
+  printSpacer();
+  console.log('vaultContract.asset');
+  console.log(vaultContract);
+  console.log(await vaultContract.asset());
+  console.log(await vaultContract.asset());
+  printSpacer();
 
   const vaultUnderlyingAssetContract = new ethers.Contract(
     vaultUnderlyingAssetAddress,
