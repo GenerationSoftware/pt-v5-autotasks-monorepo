@@ -3,7 +3,12 @@ import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { Relayer } from 'defender-relay-client';
-import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
+import {
+  ContractsBlob,
+  getContract,
+  getContracts,
+  getSubgraphVaults,
+} from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import { ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
@@ -61,28 +66,47 @@ export async function liquidatorArbitrageSwap(
 
   // #1. Get contracts
   //
-  const { liquidationPairs, liquidationRouter, marketRate } = await getLiquidationContracts(
-    contracts,
-    params,
-  );
+  const { liquidationRouter, marketRate } = await getLiquidationContracts(contracts, params);
+
+  const vaults = await getSubgraphVaults(chainId);
+  if (vaults.length === 0) {
+    throw new Error('Claimer: No vaults found in subgraph');
+  }
 
   // Loop through all liquidation pairs
   printSpacer();
-  console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
+  // console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
   const stats: Stat[] = [];
-  for (let i = 0; i < liquidationPairs.length; i++) {
+  for (let i = 0; i < vaults.length; i++) {
     printSpacer();
     printSpacer();
     printSpacer();
     printAsterisks();
-    const liquidationPair = liquidationPairs[i];
-    console.log(`LiquidationPair #${i + 1}`);
-    console.log(liquidationPair.address);
+    const vault = vaults[i];
+    // const liquidationPair = liquidationPairs[i];
+    console.log(`Vault #${i + 1}`);
+    console.log(vault.id);
+    // console.log(`LiquidationPair #${i + 1}`);
+    // console.log(liquidationPair.address);
+
+    // GET FIRST VAULT FOR ABI TODO: RE-WRITE THIS!
+    const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
+    const liquidationPairData = contracts.contracts.find(
+      (contract) => contract.type === 'LiquidationPair',
+    );
+    const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
+    const liquidationPair = await vaultContract.liquidationPair();
+    const liquidationPairContract = new ethers.Contract(
+      liquidationPair,
+      liquidationPairData.abi,
+      readProvider,
+    );
+    console.log(liquidationPair);
 
     const context: ArbLiquidatorContext = await getContext(
       marketRate,
       liquidationRouter,
-      liquidationPair,
+      liquidationPairContract,
       contracts,
       readProvider,
       relayerAddress,
@@ -96,14 +120,17 @@ export async function liquidatorArbitrageSwap(
     //
     console.log(chalk.blue(`1. Amounts:`));
 
-    const { exactAmountIn, amountOutMin } = await calculateAmounts(liquidationPair, context);
+    const { exactAmountIn, amountOutMin } = await calculateAmounts(
+      liquidationPairContract,
+      context,
+    );
     if (amountOutMin.eq(0)) {
       stats.push({
         pair,
         estimatedProfitUsd: 0,
         error: `amountOutMin is 0`,
       });
-      logNextPair(liquidationPair, liquidationPairs);
+      logNextPair(liquidationPair, vaults);
       continue;
     }
 
@@ -132,7 +159,7 @@ export async function liquidatorArbitrageSwap(
         estimatedProfitUsd: 0,
         error: errorMsg,
       });
-      logNextPair(liquidationPair, liquidationPairs);
+      logNextPair(liquidationPair, vaults);
       continue;
     }
 
@@ -164,7 +191,7 @@ export async function liquidatorArbitrageSwap(
         estimatedProfitUsd: 0,
         error: `Unable to retrieve 'amountOutEstimate' from contract`,
       });
-      logNextPair(liquidationPair, liquidationPairs);
+      logNextPair(liquidationPair, vaults);
       continue;
     }
     logBigNumber(
@@ -195,7 +222,7 @@ export async function liquidatorArbitrageSwap(
         estimatedProfitUsd: 0,
         error: `Not profitable`,
       });
-      logNextPair(liquidationPair, liquidationPairs);
+      logNextPair(liquidationPair, vaults);
       continue;
     }
 
@@ -315,14 +342,14 @@ const getLiquidationContracts = async (
     patch: 0,
   };
 
-  const liquidationPairFactory = getContract(
-    'LiquidationPairFactory',
-    chainId,
-    readProvider,
-    contracts,
-    contractsVersion,
-  );
-  const liquidationPairs = await getLiquidationPairsMulticall(liquidationPairFactory, readProvider);
+  // const liquidationPairFactory = getContract(
+  //   'LiquidationPairFactory',
+  //   chainId,
+  //   readProvider,
+  //   contracts,
+  //   contractsVersion,
+  // );
+  // const liquidationPairs = await getLiquidationPairsMulticall(liquidationPairFactory, readProvider);
 
   const liquidationRouter = getContract(
     'LiquidationRouter',
@@ -333,7 +360,7 @@ const getLiquidationContracts = async (
   );
   const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
-  return { liquidationPairs, liquidationRouter, marketRate };
+  return { liquidationRouter, marketRate };
 };
 
 /**
@@ -564,8 +591,8 @@ const calculateAmounts = async (
   };
 };
 
-const logNextPair = (liquidationPair, liquidationPairs) => {
-  if (liquidationPair !== liquidationPairs[liquidationPairs.length - 1]) {
+const logNextPair = (liquidationPair, vaults) => {
+  if (liquidationPair !== vaults[vaults.length - 1]) {
     console.warn(chalk.yellow(`Moving to next pair ...`));
   }
 };
