@@ -7,6 +7,7 @@ import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
 } from '@generationsoftware/pt-v5-autotasks-library';
+import fetch from 'node-fetch';
 
 const handlerLoadParams = (
   signer: Provider | DefenderRelaySigner,
@@ -41,7 +42,7 @@ export async function handler(event) {
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
-    const contracts = await downloadContractsBlob(params.chainId);
+    const contracts = await downloadContractsBlob(params.chainId, fetch);
     await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
     throw new Error(error);
