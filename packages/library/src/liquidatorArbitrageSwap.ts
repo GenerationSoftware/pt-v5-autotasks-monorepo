@@ -3,15 +3,10 @@ import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { Relayer } from 'defender-relay-client';
-import {
-  ContractsBlob,
-  getContract,
-  getContracts,
-  getSubgraphVaults,
-} from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, getContract, getSubgraphVaults } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
+import { ArbLiquidatorConfigParams, ArbLiquidatorContext, VaultPopulated } from './types';
 import {
   logTable,
   logStringValue,
@@ -66,28 +61,27 @@ export async function liquidatorArbitrageSwap(
 
   // #1. Get contracts
   //
-  const { liquidationRouter, liquidationPairs, marketRate } = await getLiquidationContracts(
-    contracts,
-    params,
-  );
+  const { liquidationRouterContract, liquidationPairContracts, marketRateContract } =
+    await getLiquidationContracts(contracts, params);
 
-  const vaults = await getSubgraphVaults(chainId);
-  if (vaults.length === 0) {
-    throw new Error('Claimer: No vaults found in subgraph');
-  }
+  const vaultsPopulated: VaultPopulated[] = await getVaultsPopulated(
+    chainId,
+    readProvider,
+    contracts,
+  );
 
   // Loop through all liquidation pairs
   printSpacer();
-  console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
+  console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairContracts.length} `));
   const stats: Stat[] = [];
   // for (let i = 0; i < vaults.length; i++) {
-  for (let i = 0; i < liquidationPairs.length; i++) {
+  for (let i = 0; i < liquidationPairContracts.length; i++) {
     printSpacer();
     printSpacer();
     printSpacer();
     printAsterisks();
     // const vault = vaults[i];
-    const liquidationPair = liquidationPairs[i];
+    const liquidationPair = liquidationPairContracts[i];
     // console.log(`Vault #${i + 1}`);
     // console.log(vault.id);
     console.log(`LiquidationPair #${i + 1}`);
@@ -108,14 +102,23 @@ export async function liquidatorArbitrageSwap(
     // const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
     // const liquidationPair = await vaultContract.liquidationPair();
     // const liquidationPair = await vaultContract.liquidationPair();
+    const vaultPopulated = vaultsPopulated.find(
+      (vaultPopulated) => vaultPopulated.liquidationPair === liquidationPairContract.address,
+    );
+    const vaultUnderlyingAssetAddress = vaultPopulated?.asset;
+    if (!vaultUnderlyingAssetAddress) {
+      console.log(chalk.yellow('Could not find matching Vault for LiquidationPair'));
+      logNextPair(liquidationPair, liquidationPairContracts);
+      continue;
+    }
 
     // console.log(liquidationPair);
 
-    const context: ArbLiquidatorContext = await getContext(
-      marketRate,
-      liquidationRouter,
+    const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
+      marketRateContract,
+      liquidationRouterContract,
       liquidationPairContract,
-      contracts,
+      vaultUnderlyingAssetAddress,
       readProvider,
       relayerAddress,
     );
@@ -132,15 +135,13 @@ export async function liquidatorArbitrageSwap(
       liquidationPairContract,
       context,
     );
-    console.log('amountIn');
-    console.log(amountIn);
     if (amountOut.eq(0)) {
       stats.push({
         pair,
         estimatedProfitUsd: 0,
         error: `amountOut is 0`,
       });
-      logNextPair(liquidationPair, vaults);
+      logNextPair(liquidationPair, liquidationPairContracts);
       continue;
     }
 
@@ -177,13 +178,13 @@ export async function liquidatorArbitrageSwap(
         estimatedProfitUsd: 0,
         error: errorMsg,
       });
-      logNextPair(liquidationPair, vaults);
+      logNextPair(liquidationPair, liquidationPairContracts);
       continue;
     }
 
     // #4. Get allowance approval (necessary before upcoming static call)
     //
-    await approve(amountIn, liquidationRouter, writeProvider, relayerAddress, context);
+    await approve(amountIn, liquidationRouterContract, writeProvider, relayerAddress, context);
 
     // #5. Test tx to get estimated return of tokenOut
     //
@@ -211,7 +212,7 @@ export async function liquidatorArbitrageSwap(
     //     estimatedProfitUsd: 0,
     //     error: `Unable to retrieve 'amountOutEstimate' from contract`,
     //   });
-    //   logNextPair(liquidationPair, vaults);
+    //   logNextPair(liquidationPair, liquidationPairContracts);
     //   continue;
     // }
     // logBigNumber(
@@ -225,7 +226,7 @@ export async function liquidatorArbitrageSwap(
     //
     const { estimatedProfitUsd, profitable } = await calculateProfit(
       chainId,
-      liquidationRouter,
+      liquidationRouterContract,
       swapExactAmountOutParams,
       readProvider,
       context,
@@ -243,7 +244,7 @@ export async function liquidatorArbitrageSwap(
         estimatedProfitUsd: 0,
         error: `Not profitable`,
       });
-      logNextPair(liquidationPair, vaults);
+      logNextPair(liquidationPair, liquidationPairContracts);
       continue;
     }
 
@@ -253,7 +254,7 @@ export async function liquidatorArbitrageSwap(
       console.log(chalk.blue('6. Populating swap transaction ...'));
       printSpacer();
 
-      transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountOut(
+      transactionPopulated = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
         ...Object.values(swapExactAmountOutParams),
       );
 
@@ -351,9 +352,9 @@ const getLiquidationContracts = async (
   contracts: ContractsBlob,
   params: ArbLiquidatorConfigParams,
 ): Promise<{
-  liquidationRouter: Contract;
-  liquidationPairs: Contract[];
-  marketRate: Contract;
+  liquidationRouterContract: Contract;
+  liquidationPairContracts: Contract[];
+  marketRateContract: Contract;
 }> => {
   const { chainId, readProvider, writeProvider } = params;
 
@@ -363,53 +364,34 @@ const getLiquidationContracts = async (
     patch: 0,
   };
 
-  const liquidationPairFactory = getContract(
+  const liquidationPairFactoryContract = getContract(
     'LiquidationPairFactory',
     chainId,
     readProvider,
     contracts,
     contractsVersion,
   );
-  const liquidationPairs = await getLiquidationPairsMulticall(liquidationPairFactory, readProvider);
+  const liquidationPairContracts = await getLiquidationPairsMulticall(
+    liquidationPairFactoryContract,
+    readProvider,
+  );
 
-  const liquidationRouter = getContract(
+  const liquidationRouterContract = getContract(
     'LiquidationRouter',
     chainId,
     writeProvider,
     contracts,
     contractsVersion,
   );
-  const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
-
-  return { liquidationRouter, liquidationPairs, marketRate };
-};
-
-/**
- * Gather information about this specific liquidation pair
- * `tokenIn` is the token to supply (likely the prize token, which is probably POOL),
- * This gets complicated because `tokenOut` is the Vault/Yield token, not the
- * underlying asset which is likely the desired token (ie. DAI, USDC) - the desired
- * token is called `tokenOutUnderlyingAsset`
- * @returns {Promise} Promise of an ArbLiquidatorContext object with all the data about this pair
- */
-const getContext = async (
-  marketRate: Contract,
-  liquidationRouter: Contract,
-  liquidationPair: Contract,
-  contracts: ContractsBlob,
-  readProvider: Provider,
-  relayerAddress: string,
-): Promise<ArbLiquidatorContext> => {
-  const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
-    marketRate,
-    liquidationRouter,
-    liquidationPair,
-    contracts,
+  const marketRateContract = getContract(
+    'MarketRate',
+    chainId,
     readProvider,
-    relayerAddress,
+    contracts,
+    contractsVersion,
   );
 
-  return context;
+  return { liquidationRouterContract, liquidationPairContracts, marketRateContract };
 };
 
 const printContext = (context) => {
@@ -612,8 +594,37 @@ const calculateAmounts = async (
   };
 };
 
-const logNextPair = (liquidationPair, vaults) => {
-  if (liquidationPair !== vaults[vaults.length - 1]) {
+const logNextPair = (liquidationPair, liquidationPairContracts) => {
+  if (liquidationPair !== liquidationPairContracts[liquidationPairContracts.length - 1]) {
     console.warn(chalk.yellow(`Moving to next pair ...`));
   }
+};
+
+const getVaultsPopulated = async (
+  chainId: number,
+  readProvider: Provider,
+  contracts: ContractsBlob,
+): Promise<VaultPopulated[]> => {
+  const vaults = await getSubgraphVaults(chainId);
+
+  if (vaults.length === 0) {
+    throw new Error('No vaults found in subgraph');
+  }
+
+  // Get Vault ABI
+  const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
+
+  const populatedVaults: VaultPopulated[] = [];
+  for (let vault of vaults) {
+    const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
+
+    const asset = await vaultContract.asset();
+    const liquidationPair = await vaultContract.liquidationPair();
+
+    const vaultPopulated: VaultPopulated = { vaultContract, liquidationPair, asset };
+
+    populatedVaults.push(vaultPopulated);
+  }
+
+  return populatedVaults;
 };

@@ -114,3 +114,9 @@ export interface AuctionContracts {
   rngAuctionRelayerDirect: Contract;
   rngRelayAuctionContract: Contract;
 }
+
+export interface VaultPopulated {
+  vaultContract: Contract;
+  liquidationPair: string;
+  asset: string;
+}
