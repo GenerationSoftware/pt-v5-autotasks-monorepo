@@ -27,11 +27,11 @@ import {
 import { ERC20Abi } from './abis/ERC20Abi';
 import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 
-interface SwapExactAmountInParams {
+interface SwapExactAmountOutParams {
   liquidationPairAddress: string;
   swapRecipient: string;
-  exactAmountIn: BigNumber;
-  amountOutMin: BigNumber;
+  amountOut: BigNumber;
+  amountInMin: BigNumber;
 }
 
 interface Stat {
@@ -66,7 +66,10 @@ export async function liquidatorArbitrageSwap(
 
   // #1. Get contracts
   //
-  const { liquidationRouter, marketRate } = await getLiquidationContracts(contracts, params);
+  const { liquidationRouter, liquidationPairs, marketRate } = await getLiquidationContracts(
+    contracts,
+    params,
+  );
 
   const vaults = await getSubgraphVaults(chainId);
   if (vaults.length === 0) {
@@ -75,33 +78,38 @@ export async function liquidatorArbitrageSwap(
 
   // Loop through all liquidation pairs
   printSpacer();
-  // console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
+  console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairs.length} `));
   const stats: Stat[] = [];
-  for (let i = 0; i < vaults.length; i++) {
+  // for (let i = 0; i < vaults.length; i++) {
+  for (let i = 0; i < liquidationPairs.length; i++) {
     printSpacer();
     printSpacer();
     printSpacer();
     printAsterisks();
-    const vault = vaults[i];
-    // const liquidationPair = liquidationPairs[i];
-    console.log(`Vault #${i + 1}`);
-    console.log(vault.id);
-    // console.log(`LiquidationPair #${i + 1}`);
-    // console.log(liquidationPair.address);
+    // const vault = vaults[i];
+    const liquidationPair = liquidationPairs[i];
+    // console.log(`Vault #${i + 1}`);
+    // console.log(vault.id);
+    console.log(`LiquidationPair #${i + 1}`);
+    console.log(liquidationPair.address);
 
-    // GET FIRST VAULT FOR ABI TODO: RE-WRITE THIS!
-    const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
     const liquidationPairData = contracts.contracts.find(
       (contract) => contract.type === 'LiquidationPair',
     );
-    const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
-    const liquidationPair = await vaultContract.liquidationPair();
     const liquidationPairContract = new ethers.Contract(
-      liquidationPair,
+      liquidationPair.address,
       liquidationPairData.abi,
       readProvider,
     );
-    console.log(liquidationPair);
+
+    // GET FIRST VAULT FOR ABI TODO: RE-WRITE THIS!
+    // const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
+
+    // const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
+    // const liquidationPair = await vaultContract.liquidationPair();
+    // const liquidationPair = await vaultContract.liquidationPair();
+
+    // console.log(liquidationPair);
 
     const context: ArbLiquidatorContext = await getContext(
       marketRate,
@@ -120,15 +128,17 @@ export async function liquidatorArbitrageSwap(
     //
     console.log(chalk.blue(`1. Amounts:`));
 
-    const { exactAmountIn, amountOutMin } = await calculateAmounts(
+    const { amountOut, amountIn, amountInMin } = await calculateAmounts(
       liquidationPairContract,
       context,
     );
-    if (amountOutMin.eq(0)) {
+    console.log('amountIn');
+    console.log(amountIn);
+    if (amountOut.eq(0)) {
       stats.push({
         pair,
         estimatedProfitUsd: 0,
-        error: `amountOutMin is 0`,
+        error: `amountOut is 0`,
       });
       logNextPair(liquidationPair, vaults);
       continue;
@@ -136,14 +146,22 @@ export async function liquidatorArbitrageSwap(
 
     // #3. Print balance of tokenIn for relayer
     //
-    const sufficientBalance = await checkBalance(context, exactAmountIn);
+    // env.router().swapExactAmountOut(
+    //   LiquidationPair(address(env.pair())),
+    //   address(this),
+    //   amountOut,
+    //   uint(uMAX_SD59x18 / 1e18), // NOTE: uMAX_SD59x18/1e18 for DaLiquidator
+    //   // type(uint).max // NOTE: type(uint).max for CgdaLiquidator
+    // );
+
+    const sufficientBalance = await checkBalance(context, amountIn);
 
     if (sufficientBalance) {
       console.log(chalk.green('Sufficient balance ✔'));
     } else {
       console.log(chalk.red('Insufficient balance ✗'));
 
-      const diff = exactAmountIn.sub(context.relayer.tokenInBalance);
+      const diff = amountIn.sub(context.relayer.tokenInBalance);
       const increaseAmount = ethers.utils.formatUnits(diff, context.tokenIn.decimals);
       const errorMsg = `Relayer ${
         context.tokenIn.symbol
@@ -165,51 +183,54 @@ export async function liquidatorArbitrageSwap(
 
     // #4. Get allowance approval (necessary before upcoming static call)
     //
-    await approve(exactAmountIn, liquidationRouter, writeProvider, relayerAddress, context);
+    await approve(amountIn, liquidationRouter, writeProvider, relayerAddress, context);
 
     // #5. Test tx to get estimated return of tokenOut
     //
     printAsterisks();
     console.log(chalk.blue.bold(`3. Getting amount to receive ...`));
-    const swapExactAmountInParams: SwapExactAmountInParams = {
+    console.log('liquidationPair.address');
+    console.log(liquidationPair.address);
+    const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
-      exactAmountIn,
-      amountOutMin,
+      amountOut,
+      amountInMin,
     };
 
-    let amountOutEstimate;
-    try {
-      amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
-        ...Object.values(swapExactAmountInParams),
-      );
-    } catch (e) {
-      console.error(chalk.red(e));
-      console.warn(chalk.yellow(`Unable to retrieve 'amountOutEstimate' from contract.`));
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error: `Unable to retrieve 'amountOutEstimate' from contract`,
-      });
-      logNextPair(liquidationPair, vaults);
-      continue;
-    }
-    logBigNumber(
-      `Estimated amount of tokenOut to receive:`,
-      amountOutEstimate,
-      context.tokenOut.decimals,
-      context.tokenOut.symbol,
-    );
+    // let amountOutEstimate;
+    // try {
+    //   amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
+    //     ...Object.values(swapExactAmountOutParams),
+    //   );
+    // } catch (e) {
+    //   console.error(chalk.red(e));
+    //   console.warn(chalk.yellow(`Unable to retrieve 'amountOutEstimate' from contract.`));
+    //   stats.push({
+    //     pair,
+    //     estimatedProfitUsd: 0,
+    //     error: `Unable to retrieve 'amountOutEstimate' from contract`,
+    //   });
+    //   logNextPair(liquidationPair, vaults);
+    //   continue;
+    // }
+    // logBigNumber(
+    //   `Estimated amount of tokenOut to receive:`,
+    //   amountOutEstimate,
+    //   context.tokenOut.decimals,
+    //   context.tokenOut.symbol,
+    // );
 
     // #6. Decide if profitable or not
     //
     const { estimatedProfitUsd, profitable } = await calculateProfit(
       chainId,
       liquidationRouter,
-      swapExactAmountInParams,
+      swapExactAmountOutParams,
       readProvider,
       context,
       minProfitThresholdUsd,
+      amountIn,
     );
     if (!profitable) {
       console.log(
@@ -232,8 +253,8 @@ export async function liquidatorArbitrageSwap(
       console.log(chalk.blue('6. Populating swap transaction ...'));
       printSpacer();
 
-      transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountIn(
-        ...Object.values(swapExactAmountInParams),
+      transactionPopulated = await liquidationRouter.populateTransaction.swapExactAmountOut(
+        ...Object.values(swapExactAmountOutParams),
       );
 
       const isPrivate = canUseIsPrivate(chainId, useFlashbots);
@@ -283,7 +304,7 @@ export async function liquidatorArbitrageSwap(
  * @returns {undefined} - void function
  */
 const approve = async (
-  exactAmountIn: BigNumber,
+  amountIn: BigNumber,
   liquidationRouter: Contract,
   writeProvider: Provider | DefenderRelaySigner,
   relayerAddress: string,
@@ -298,7 +319,7 @@ const approve = async (
 
     const allowance = context.relayer.tokenInAllowance;
 
-    if (allowance.lt(exactAmountIn)) {
+    if (allowance.lt(amountIn)) {
       console.log(
         chalk.bgBlack.yellowBright(
           `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum ...`,
@@ -331,6 +352,7 @@ const getLiquidationContracts = async (
   params: ArbLiquidatorConfigParams,
 ): Promise<{
   liquidationRouter: Contract;
+  liquidationPairs: Contract[];
   marketRate: Contract;
 }> => {
   const { chainId, readProvider, writeProvider } = params;
@@ -341,14 +363,14 @@ const getLiquidationContracts = async (
     patch: 0,
   };
 
-  // const liquidationPairFactory = getContract(
-  //   'LiquidationPairFactory',
-  //   chainId,
-  //   readProvider,
-  //   contracts,
-  //   contractsVersion,
-  // );
-  // const liquidationPairs = await getLiquidationPairsMulticall(liquidationPairFactory, readProvider);
+  const liquidationPairFactory = getContract(
+    'LiquidationPairFactory',
+    chainId,
+    readProvider,
+    contracts,
+    contractsVersion,
+  );
+  const liquidationPairs = await getLiquidationPairsMulticall(liquidationPairFactory, readProvider);
 
   const liquidationRouter = getContract(
     'LiquidationRouter',
@@ -359,7 +381,7 @@ const getLiquidationContracts = async (
   );
   const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
-  return { liquidationRouter, marketRate };
+  return { liquidationRouter, liquidationPairs, marketRate };
 };
 
 /**
@@ -439,12 +461,13 @@ const checkBalance = async (
 const calculateProfit = async (
   chainId: number,
   liquidationRouter: Contract,
-  swapExactAmountInParams: SwapExactAmountInParams,
+  swapExactAmountOutParams: SwapExactAmountOutParams,
   readProvider: Provider,
   context: ArbLiquidatorContext,
   minProfitThresholdUsd: number,
+  amountIn: BigNumber,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
-  const { amountOutMin, exactAmountIn } = swapExactAmountInParams;
+  const { amountOut, amountInMin } = swapExactAmountOutParams;
 
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
@@ -453,11 +476,16 @@ const calculateProfit = async (
 
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountIn(
-      ...Object.values(swapExactAmountInParams),
+    estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
+      ...Object.values(swapExactAmountOutParams),
     );
   } catch (e) {
     console.error(chalk.red(e));
+
+    console.log(chalk.yellow('---'));
+    console.log(chalk.yellow('Could not estimate gas costs!'));
+    console.log(chalk.yellow('---'));
+    return { estimatedProfitUsd: 0, profitable: false };
   }
   const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
     chainId,
@@ -485,10 +513,10 @@ const calculateProfit = async (
   printSpacer();
 
   const tokenOutUnderlyingAssetUsd =
-    parseFloat(ethers.utils.formatUnits(amountOutMin, context.tokenOut.decimals)) *
+    parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
     context.tokenOutUnderlyingAsset.assetRateUsd;
   const tokenInUsd =
-    parseFloat(ethers.utils.formatUnits(exactAmountIn, context.tokenIn.decimals)) *
+    parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
     context.tokenIn.assetRateUsd;
 
   const grossProfitUsd = tokenOutUnderlyingAssetUsd - tokenInUsd;
@@ -533,60 +561,54 @@ const calculateAmounts = async (
   liquidationPair: Contract,
   context: ArbLiquidatorContext,
 ): Promise<{
-  exactAmountIn: BigNumber;
-  amountOutMin: BigNumber;
+  amountOut: BigNumber;
+  amountIn: BigNumber;
+  amountInMin: BigNumber;
 }> => {
-  const maxAmountOut = await liquidationPair.callStatic.maxAmountOut();
+  const amountOut = await liquidationPair.callStatic.maxAmountOut();
   logBigNumber(
     `Max amount out available:`,
-    maxAmountOut,
+    amountOut,
     context.tokenOut.decimals,
     context.tokenOut.symbol,
   );
 
-  if (maxAmountOut.eq(0)) {
+  if (amountOut.eq(0)) {
     console.warn(
       chalk.bgBlack.yellowBright(
         `Max amount out available is 0: (Not enough interest accrued ... Is yield deposited and draws have completed?)`,
       ),
     );
     return {
-      exactAmountIn: BigNumber.from(0),
-      amountOutMin: BigNumber.from(0),
+      amountOut: BigNumber.from(0),
+      amountIn: BigNumber.from(0),
+      amountInMin: BigNumber.from(0),
     };
   }
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
   // TODO: Should this be calculated automatically or a config param?
-  // const divisor = 100;
-  const divisor = 50;
-  // if (divisor !== 1) {
-  logStringValue('Divide max amount out by:', Math.round(divisor));
-  // }
-  const wantedAmountOut = maxAmountOut.div(divisor);
-  // const wantedAmountOut = maxAmountOut;
+  const divisor = 2;
+  const wantedAmountOut = amountOut.div(divisor);
   logBigNumber(
     'Wanted amount out:',
     wantedAmountOut,
     context.tokenOut.decimals,
     context.tokenOut.symbol,
   );
+
   printSpacer();
 
-  const exactAmountIn = await liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
-  logBigNumber('Exact amount in:', exactAmountIn, context.tokenIn.decimals, context.tokenIn.symbol);
+  // Necessary for determining profit
+  const amountIn = await liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
+  logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
-  const amountOutMin = await liquidationPair.callStatic.computeExactAmountOut(exactAmountIn);
-  logBigNumber(
-    'Amount out minimum:',
-    amountOutMin,
-    context.tokenOut.decimals,
-    context.tokenOut.symbol,
-  );
+  const amountInMin = ethers.constants.MaxInt256;
 
   return {
-    exactAmountIn,
-    amountOutMin,
+    amountOut,
+    amountIn,
+    amountInMin,
   };
 };
 
