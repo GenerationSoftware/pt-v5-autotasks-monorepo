@@ -70,7 +70,7 @@ export const getArbLiquidatorContextMulticall = async (
   printSpacer();
   printSpacer();
   console.log('vaultContract.asset');
-  console.log(vaultContract);
+  // console.log(vaultContract);
   console.log(await vaultContract.asset());
   console.log(await vaultContract.asset());
   printSpacer();
