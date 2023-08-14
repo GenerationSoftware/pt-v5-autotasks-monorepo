@@ -80,10 +80,7 @@ export async function liquidatorArbitrageSwap(
     printSpacer();
     printSpacer();
     printAsterisks();
-    // const vault = vaults[i];
     const liquidationPair = liquidationPairContracts[i];
-    // console.log(`Vault #${i + 1}`);
-    // console.log(vault.id);
     console.log(`LiquidationPair #${i + 1}`);
     console.log(liquidationPair.address);
 
@@ -96,12 +93,7 @@ export async function liquidatorArbitrageSwap(
       readProvider,
     );
 
-    // GET FIRST VAULT FOR ABI TODO: RE-WRITE THIS!
-    // const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
-
-    // const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
-    // const liquidationPair = await vaultContract.liquidationPair();
-    // const liquidationPair = await vaultContract.liquidationPair();
+    // Check if we have the corresponding vault to get the underlying asset's value for determining profitability
     const vaultPopulated = vaultsPopulated.find(
       (vaultPopulated) => vaultPopulated.liquidationPair === liquidationPairContract.address,
     );
@@ -111,8 +103,6 @@ export async function liquidatorArbitrageSwap(
       logNextPair(liquidationPair, liquidationPairContracts);
       continue;
     }
-
-    // console.log(liquidationPair);
 
     const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
       marketRateContract,
