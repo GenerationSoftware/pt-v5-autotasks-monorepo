@@ -13,7 +13,13 @@ import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 
-import { ClaimPrizeContext, ExecuteClaimerProfitablePrizeTxsParams, TiersContext } from './types';
+import {
+  ClaimPrizeContext,
+  ExecuteClaimerProfitablePrizeTxsParams,
+  TiersContext,
+  Token,
+  TokenWithRate,
+} from './types';
 import {
   logTable,
   logStringValue,
@@ -57,9 +63,15 @@ export async function executeClaimerProfitablePrizeTxs(
     patch: 0,
   };
   const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
-  const claimer = getContract('Claimer', chainId, readProvider, contracts, contractsVersion);
+  const claimerContract = getContract(
+    'Claimer',
+    chainId,
+    readProvider,
+    contracts,
+    contractsVersion,
+  );
 
-  if (!claimer) {
+  if (!claimerContract) {
     throw new Error('Contract Unavailable');
   }
 
@@ -131,7 +143,7 @@ export async function executeClaimerProfitablePrizeTxs(
       readProvider,
       vault,
       Number(tier),
-      claimer,
+      claimerContract,
       groupedClaims,
       context,
       params,
@@ -151,7 +163,7 @@ export async function executeClaimerProfitablePrizeTxs(
       console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
       printSpacer();
 
-      const populatedTx = await claimer.populateTransaction.claimPrizes(
+      const populatedTx = await claimerContract.populateTransaction.claimPrizes(
         ...Object.values(claimPrizesParams),
       );
 
@@ -208,12 +220,14 @@ const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {
  * @returns {Promise} Promise of a BigNumber with the gas limit
  */
 const getEstimatedGasLimit = async (
-  claimer: Contract,
+  claimerContract: Contract,
   claimPrizesParams: ClaimPrizesParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await claimer.estimateGas.claimPrizes(...Object.values(claimPrizesParams));
+    estimatedGasLimit = await claimerContract.estimateGas.claimPrizes(
+      ...Object.values(claimPrizesParams),
+    );
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -230,7 +244,7 @@ const calculateProfit = async (
   readProvider: Provider,
   vault: string,
   tier: number,
-  claimer: Contract,
+  claimerContract: Contract,
   unclaimedClaims: any,
   context: ClaimPrizeContext,
   params: ExecuteClaimerProfitablePrizeTxsParams,
@@ -250,7 +264,7 @@ const calculateProfit = async (
     chainId,
     vault,
     tier,
-    claimer,
+    claimerContract,
     unclaimedClaims,
     feeRecipient,
     nativeTokenMarketRateUsd,
@@ -258,7 +272,7 @@ const calculateProfit = async (
 
   const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(
     context,
-    claimer,
+    claimerContract,
     tier,
     unclaimedClaims,
     gasCost,
@@ -341,20 +355,23 @@ const getContext = async (
 
   const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
-  const feeToken = {
+  const feeTokenBasic: Token = {
     address: feeTokenAddress,
     decimals: await feeTokenContract.decimals(),
     name: await feeTokenContract.name(),
     symbol: await feeTokenContract.symbol(),
   };
 
-  const feeTokenRateUsd = await getEthMainnetTokenMarketRateUsd(
-    feeToken.symbol,
-    feeToken.address,
-    covalentApiKey,
-  );
+  const feeToken: TokenWithRate = {
+    ...feeTokenBasic,
+    assetRateUsd: await getEthMainnetTokenMarketRateUsd(
+      feeTokenBasic.symbol,
+      feeTokenBasic.address,
+      covalentApiKey,
+    ),
+  };
 
-  return { feeToken, drawId, feeTokenRateUsd, tiers };
+  return { feeToken, drawId, tiers };
 };
 
 /**
@@ -371,7 +388,7 @@ const printContext = (context) => {
   logStringValue('Draw ID:', context.drawId);
   logStringValue(
     `Fee Token ${context.feeToken.symbol} MarketRate USD: `,
-    `$${context.feeTokenRateUsd}`,
+    `$${context.feeToken.assetRateUsd}`,
   );
 };
 
@@ -405,7 +422,7 @@ const getGasCost = async (
   chainId: number,
   vault: string,
   tier: number,
-  claimer: Contract,
+  claimerContract: Contract,
   claims: Claim[],
   feeRecipient: string,
   gasTokenMarketRateUsd: number,
@@ -413,7 +430,7 @@ const getGasCost = async (
   let claimsSlice = claims.slice(0, 1);
   let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
-  let estimatedGasLimitForOne = await getEstimatedGasLimit(claimer, claimPrizesParams);
+  let estimatedGasLimitForOne = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
   } else {
@@ -431,7 +448,7 @@ const getGasCost = async (
     claimsSlice = claims.slice(0, 2);
     claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
 
-    estimatedGasLimitForTwo = await getEstimatedGasLimit(claimer, claimPrizesParams);
+    estimatedGasLimitForTwo = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
     if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
       console.error(chalk.yellow('Estimated gas limit is 0 ...'));
     } else {
@@ -509,7 +526,7 @@ interface ClaimInfo {
 
 const getClaimInfo = async (
   context: ClaimPrizeContext,
-  claimer: Contract,
+  claimerContract: Contract,
   tier: number,
   claims: Claim[],
   gasCost: any,
@@ -525,7 +542,10 @@ const getClaimInfo = async (
     printSpacer();
     console.log(chalk.bgBlack.cyan(`5b. Profit for ${numClaims} Claim(s):`));
 
-    const nextClaimFees = await claimer.computeTotalFees(tier, numClaims);
+    const nextClaimFees = await claimerContract.functions['computeTotalFees(uint8,uint256)'](
+      tier,
+      numClaims,
+    );
     printSpacer();
 
     // COSTS USD
@@ -545,7 +565,7 @@ const getClaimInfo = async (
     // FEES USD
     claimFeesUsd =
       parseFloat(ethers.utils.formatUnits(claimFees, context.feeToken.decimals)) *
-      context.feeTokenRateUsd;
+      context.feeToken.assetRateUsd;
     if (claimCount > 0) {
       logBigNumber(
         `Claim Fees: ${claimCount} Claim(s) (WEI):`,
@@ -564,8 +584,8 @@ const getClaimInfo = async (
     }
 
     const nextClaimFeesUsd =
-      parseFloat(ethers.utils.formatUnits(nextClaimFees, context.feeToken.decimals)) *
-      context.feeTokenRateUsd;
+      parseFloat(ethers.utils.formatUnits(nextClaimFees.toString(), context.feeToken.decimals)) *
+      context.feeToken.assetRateUsd;
 
     logBigNumber(
       `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
