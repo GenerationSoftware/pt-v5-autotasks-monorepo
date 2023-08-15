@@ -34,9 +34,8 @@ export interface TiersContext {
 }
 
 export interface ClaimPrizeContext {
-  feeToken: Token;
+  feeToken: TokenWithRate;
   drawId: number;
-  feeTokenRateUsd: number;
   tiers: TiersContext;
 }
 
