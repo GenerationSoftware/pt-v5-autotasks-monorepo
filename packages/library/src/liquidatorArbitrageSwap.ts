@@ -79,7 +79,10 @@ export async function liquidatorArbitrageSwap(
 
   // Loop through all liquidation pairs
   printSpacer();
-  console.log(chalk.white.bgBlack(` # of Liquidation Pairs: ${liquidationPairContracts.length} `));
+  console.log(chalk.white.bgBlack(` # of Vaults (Subgraph): ${vaultsWithContext.length} `));
+  console.log(
+    chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
+  );
   const stats: Stat[] = [];
   // for (let i = 0; i < vaults.length; i++) {
   for (let i = 0; i < liquidationPairContracts.length; i++) {
