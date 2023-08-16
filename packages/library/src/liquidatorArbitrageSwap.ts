@@ -6,7 +6,7 @@ import { Relayer } from 'defender-relay-client';
 import { ContractsBlob, getContract, getSubgraphVaults } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ArbLiquidatorConfigParams, ArbLiquidatorContext, VaultPopulated } from './types';
+import { ArbLiquidatorConfigParams, ArbLiquidatorContext, VaultWithContext } from './types';
 import {
   logTable,
   logStringValue,
@@ -21,6 +21,7 @@ import {
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { getVaultsWithContextMulticall } from './utils/getVaultsWithContextMulticall';
 
 interface SwapExactAmountOutParams {
   liquidationPairAddress: string;
@@ -61,10 +62,16 @@ export async function liquidatorArbitrageSwap(
 
   // #1. Get contracts
   //
+  printSpacer();
+  console.log('Starting ...');
+
   const { liquidationRouterContract, liquidationPairContracts, marketRateContract } =
     await getLiquidationContracts(contracts, params);
 
-  const vaultsPopulated: VaultPopulated[] = await getVaultsPopulated(
+  printSpacer();
+  console.log('Collecting information about vaults ...');
+
+  const vaultsWithContext: VaultWithContext[] = await getVaultsContext(
     chainId,
     readProvider,
     contracts,
@@ -94,10 +101,10 @@ export async function liquidatorArbitrageSwap(
     );
 
     // Check if we have the corresponding vault to get the underlying asset's value for determining profitability
-    const vaultPopulated = vaultsPopulated.find(
-      (vaultPopulated) => vaultPopulated.liquidationPair === liquidationPairContract.address,
+    const vaultWithContext = vaultsWithContext.find(
+      (vaultWithContext) => vaultWithContext.liquidationPair === liquidationPairContract.address,
     );
-    const vaultUnderlyingAssetAddress = vaultPopulated?.asset;
+    const vaultUnderlyingAssetAddress = vaultWithContext?.asset;
     if (!vaultUnderlyingAssetAddress) {
       console.log(chalk.yellow('Could not find matching Vault for LiquidationPair'));
       logNextPair(liquidationPair, liquidationPairContracts);
@@ -178,17 +185,8 @@ export async function liquidatorArbitrageSwap(
 
     // #5. Test tx to get estimated return of tokenOut
     //
-    printAsterisks();
-    console.log(chalk.blue.bold(`3. Getting amount to receive ...`));
-    console.log('liquidationPair.address');
-    console.log(liquidationPair.address);
-    const swapExactAmountOutParams: SwapExactAmountOutParams = {
-      liquidationPairAddress: liquidationPair.address,
-      swapRecipient,
-      amountOut,
-      amountInMin,
-    };
-
+    // printAsterisks();
+    // console.log(chalk.blue.bold(`3. Getting amount to receive ...`));
     // let amountOutEstimate;
     // try {
     //   amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
@@ -212,16 +210,45 @@ export async function liquidatorArbitrageSwap(
     //   context.tokenOut.symbol,
     // );
 
-    // #6. Decide if profitable or not
-    //
+    // #6. Find an estimated amount of gas cost
+    const swapExactAmountOutParams: SwapExactAmountOutParams = {
+      liquidationPairAddress: liquidationPair.address,
+      swapRecipient,
+      amountOut,
+      amountInMin,
+    };
+
+    let maxFeeUsd;
+    try {
+      maxFeeUsd = await getGasCost(
+        chainId,
+        liquidationRouterContract,
+        swapExactAmountOutParams,
+        readProvider,
+      );
+    } catch (e) {
+      console.error(chalk.red(e));
+
+      console.log(chalk.yellow('---'));
+      console.log(chalk.yellow('Could not estimate gas costs!'));
+      console.log(chalk.yellow('---'));
+
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Could not get gas cost`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
+      continue;
+    }
+
+    // #7. Decide if profitable or not
     const { estimatedProfitUsd, profitable } = await calculateProfit(
-      chainId,
-      liquidationRouterContract,
       swapExactAmountOutParams,
-      readProvider,
       context,
       minProfitThresholdUsd,
       amountIn,
+      maxFeeUsd,
     );
     if (!profitable) {
       console.log(
@@ -238,7 +265,7 @@ export async function liquidatorArbitrageSwap(
       continue;
     }
 
-    // #7. Finally, populate tx when profitable
+    // #8. Finally, populate tx when profitable
     try {
       let transactionPopulated: PopulatedTransaction | undefined;
       console.log(chalk.blue('6. Populating swap transaction ...'));
@@ -431,54 +458,13 @@ const checkBalance = async (
  * @returns {Promise} Promise boolean of profitability
  */
 const calculateProfit = async (
-  chainId: number,
-  liquidationRouter: Contract,
   swapExactAmountOutParams: SwapExactAmountOutParams,
-  readProvider: Provider,
   context: ArbLiquidatorContext,
   minProfitThresholdUsd: number,
   amountIn: BigNumber,
+  maxFeeUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   const { amountOut, amountInMin } = swapExactAmountOutParams;
-
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
-
-  printAsterisks();
-  console.log(chalk.blue('4. Current gas costs for transaction:'));
-
-  let estimatedGasLimit;
-  try {
-    estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
-      ...Object.values(swapExactAmountOutParams),
-    );
-  } catch (e) {
-    console.error(chalk.red(e));
-
-    console.log(chalk.yellow('---'));
-    console.log(chalk.yellow('Could not estimate gas costs!'));
-    console.log(chalk.yellow('---'));
-    return { estimatedProfitUsd: 0, profitable: false };
-  }
-  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
-    chainId,
-    estimatedGasLimit,
-    nativeTokenMarketRateUsd,
-    readProvider,
-  );
-  logStringValue(
-    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    `$${nativeTokenMarketRateUsd}`,
-  );
-
-  printSpacer();
-  logBigNumber(
-    'Estimated gas limit:',
-    estimatedGasLimit,
-    18,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
-  );
-
-  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
 
   printAsterisks();
   console.log(chalk.blue('5. Profit/Loss (USD):'));
@@ -526,6 +512,51 @@ const calculateProfit = async (
 };
 
 /**
+ * Get the gas cost for the tx
+ * @returns {Promise} Promise with the maximum gas fee in USD
+ */
+const getGasCost = async (
+  chainId: number,
+  liquidationRouter: Contract,
+  swapExactAmountOutParams: SwapExactAmountOutParams,
+  readProvider: Provider,
+): Promise<number> => {
+  const { amountOut } = swapExactAmountOutParams;
+
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+
+  printAsterisks();
+  console.log(chalk.blue('4. Current gas costs for transaction:'));
+
+  const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
+    ...Object.values(swapExactAmountOutParams),
+  );
+
+  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+    chainId,
+    estimatedGasLimit,
+    nativeTokenMarketRateUsd,
+    readProvider,
+  );
+  logStringValue(
+    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    `$${nativeTokenMarketRateUsd}`,
+  );
+
+  printSpacer();
+  logBigNumber(
+    'Estimated gas limit:',
+    estimatedGasLimit,
+    18,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+
+  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+
+  return maxFeeUsd;
+};
+
+/**
  * Calculates necessary input parameters for the swap call based on current state of the contracts
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
@@ -557,6 +588,7 @@ const calculateAmounts = async (
       amountInMin: BigNumber.from(0),
     };
   }
+
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
   // TODO: Should this be calculated automatically or a config param?
@@ -578,7 +610,7 @@ const calculateAmounts = async (
   const amountInMin = ethers.constants.MaxInt256;
 
   return {
-    amountOut,
+    amountOut: wantedAmountOut,
     amountIn,
     amountInMin,
   };
@@ -590,31 +622,16 @@ const logNextPair = (liquidationPair, liquidationPairContracts) => {
   }
 };
 
-const getVaultsPopulated = async (
+const getVaultsContext = async (
   chainId: number,
   readProvider: Provider,
   contracts: ContractsBlob,
-): Promise<VaultPopulated[]> => {
+): Promise<VaultWithContext[]> => {
   const vaults = await getSubgraphVaults(chainId);
 
   if (vaults.length === 0) {
     throw new Error('No vaults found in subgraph');
   }
 
-  // Get Vault ABI
-  const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
-
-  const populatedVaults: VaultPopulated[] = [];
-  for (let vault of vaults) {
-    const vaultContract = new ethers.Contract(vault.id, vaultContractData.abi, readProvider);
-
-    const asset = await vaultContract.asset();
-    const liquidationPair = await vaultContract.liquidationPair();
-
-    const vaultPopulated: VaultPopulated = { vaultContract, liquidationPair, asset };
-
-    populatedVaults.push(vaultPopulated);
-  }
-
-  return populatedVaults;
+  return await getVaultsWithContextMulticall(vaults, readProvider, contracts);
 };

@@ -114,8 +114,9 @@ export interface AuctionContracts {
   rngRelayAuctionContract: Contract;
 }
 
-export interface VaultPopulated {
+export interface VaultWithContext {
+  id: string;
   vaultContract: Contract;
-  liquidationPair: string;
-  asset: string;
+  liquidationPair?: string;
+  asset?: string;
 }
