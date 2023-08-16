@@ -1,15 +1,8 @@
 import { Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
-import chalk from 'chalk';
 
-import {
-  ArbLiquidatorContext,
-  ArbLiquidatorRelayerContext,
-  VaultPopulated,
-  Token,
-  TokenWithRate,
-} from '../types';
+import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
 import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS, printSpacer } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
 
