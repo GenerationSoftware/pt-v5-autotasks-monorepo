@@ -17,7 +17,7 @@ import { printSpacer } from './logging';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
-// const PRIZE_POOL_HAS_NEXT_DRAW_FINISHED_KEY = 'prizePool-hasNextDrawFinished';
+const PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY = 'prizePool-openDrawEndsAt';
 
 const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rngFeeToken-balanceOfBot';
 const RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY = 'rngAuction-allowanceBotRngFeeToken';
@@ -59,9 +59,7 @@ export const getDrawAuctionContextMulticall = async (
   let queries: Record<string, any> = {};
 
   // 1. Prize Pool Info
-  // const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
-  // queries[PRIZE_POOL_HAS_NEXT_DRAW_FINISHED_KEY] =
-  //   auctionContracts.prizePoolContract.hasNextDrawFinished();
+  queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] = auctionContracts.prizePoolContract.openDrawEndsAt();
 
   // 2. RNG Auction Service Info
   const rngService = await auctionContracts.rngAuctionContract.getNextRngService();
@@ -115,9 +113,7 @@ export const getDrawAuctionContextMulticall = async (
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   // 6a. Results: Prize Pool
-  // const prizePoolHasNextDrawFinished = results[PRIZE_POOL_HAS_NEXT_DRAW_FINISHED_KEY];
-  // console.log('prizePoolHasNextDrawFinished');
-  // console.log(prizePoolHasNextDrawFinished);
+  const prizePoolOpenDrawEndsAt = Number(results[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY]);
 
   // 6b. Results: Reward Token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -165,15 +161,6 @@ export const getDrawAuctionContextMulticall = async (
   const lastSequenceCompleted = await auctionContracts.rngRelayAuctionContract.isSequenceCompleted(
     rngRelayLastSequenceId,
   );
-  console.log('rngRelayLastSequenceId');
-  console.log(rngRelayLastSequenceId);
-  printSpacer();
-
-  console.log('rngIsRngComplete');
-  console.log(rngIsRngComplete);
-  printSpacer();
-  console.log('lastSequenceCompleted');
-  console.log(lastSequenceCompleted);
 
   const rngRelayIsAuctionOpen =
     rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
@@ -254,8 +241,7 @@ export const getDrawAuctionContextMulticall = async (
   }
 
   return {
-    // prizePoolReserve,
-    // prizePoolHasNextDrawFinished,
+    prizePoolOpenDrawEndsAt,
     nativeTokenMarketRateUsd,
     rewardToken,
     rngFeeTokenIsSet,
@@ -269,6 +255,7 @@ export const getDrawAuctionContextMulticall = async (
     rngRelayIsAuctionOpen,
     rngRelayExpectedReward,
     rngRelayExpectedRewardUsd,
+    rngRelayLastSequenceId,
     relayer,
   };
 };
