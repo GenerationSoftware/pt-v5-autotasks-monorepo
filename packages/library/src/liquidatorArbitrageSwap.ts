@@ -131,10 +131,7 @@ export async function liquidatorArbitrageSwap(
     //
     console.log(chalk.blue(`1. Amounts:`));
 
-    const { amountOut, amountIn, amountInMin } = await calculateAmounts(
-      liquidationPairContract,
-      context,
-    );
+    const { amountOut } = await calculateAmountOut(liquidationPairContract, context);
     if (amountOut.eq(0)) {
       stats.push({
         pair,
@@ -144,6 +141,20 @@ export async function liquidatorArbitrageSwap(
       logNextPair(liquidationPair, liquidationPairContracts);
       continue;
     }
+
+    const getAmountInValues = async () => {
+      try {
+        return calculateAmountIn(liquidationPairContract, context, amountOut);
+      } catch (e) {
+        console.error(chalk.red(e));
+
+        console.log(chalk.yellow('---'));
+        console.log(chalk.yellow('Could not estimate gas costs!'));
+        console.log(chalk.yellow('---'));
+      }
+    };
+
+    const { amountIn, amountInMin } = await getAmountInValues();
 
     // #3. Print balance of tokenIn for relayer
     //
@@ -563,13 +574,11 @@ const getGasCost = async (
  * Calculates necessary input parameters for the swap call based on current state of the contracts
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
-const calculateAmounts = async (
+const calculateAmountOut = async (
   liquidationPair: Contract,
   context: ArbLiquidatorContext,
 ): Promise<{
   amountOut: BigNumber;
-  amountIn: BigNumber;
-  amountInMin: BigNumber;
 }> => {
   const amountOut = await liquidationPair.callStatic.maxAmountOut();
   logBigNumber(
@@ -587,8 +596,6 @@ const calculateAmounts = async (
     );
     return {
       amountOut: BigNumber.from(0),
-      amountIn: BigNumber.from(0),
-      amountInMin: BigNumber.from(0),
     };
   }
 
@@ -604,16 +611,32 @@ const calculateAmounts = async (
     context.tokenOut.symbol,
   );
 
+  return {
+    amountOut: wantedAmountOut,
+  };
+};
+
+/**
+ * Calculates necessary input parameters for the swap call based on current state of the contracts
+ * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
+ */
+const calculateAmountIn = async (
+  liquidationPair: Contract,
+  context: ArbLiquidatorContext,
+  amountOut: BigNumber,
+): Promise<{
+  amountIn: BigNumber;
+  amountInMin: BigNumber;
+}> => {
   printSpacer();
 
   // Necessary for determining profit
-  const amountIn = await liquidationPair.callStatic.computeExactAmountIn(wantedAmountOut);
+  const amountIn: BigNumber = await liquidationPair.callStatic.computeExactAmountIn(amountOut);
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
   const amountInMin = ethers.constants.MaxInt256;
 
   return {
-    amountOut: wantedAmountOut,
     amountIn,
     amountInMin,
   };
