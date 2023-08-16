@@ -564,7 +564,7 @@ const getClaimInfo = async (
 
     // FEES USD
     claimFeesUsd =
-      parseFloat(ethers.utils.formatUnits(claimFees, context.feeToken.decimals)) *
+      parseFloat(ethers.utils.formatUnits(claimFees.toString(), context.feeToken.decimals)) *
       context.feeToken.assetRateUsd;
     if (claimCount > 0) {
       logBigNumber(
