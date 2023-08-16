@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Autotask to poke each YieldVault's MintRate.",
   "author": "PoolTogether Inc.",
-  "homepage": "https://github.com/pooltogether/v5-autotasks/packages/yieldvault-mintrate/README.md",
+  "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/yieldvault-mintrate/README.md",
   "license": "ISC",
   "type": "module",
   "main": "dist/handler.js",
@@ -16,7 +16,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pooltogether/v5-autotasks.git"
+    "url": "git+https://github.com/generationsoftware/pt-v5-autotasks.git"
   },
   "private": true,
   "scripts": {
@@ -29,7 +29,7 @@
     "update": "npm run build && npm run updatetask"
   },
   "bugs": {
-    "url": "https://github.com/pooltogether/v5-autotasks/issues"
+    "url": "https://github.com/generationsoftware/pt-v5-autotasks/issues"
   },
   "dependencies": {
     "defender-relay-client": "1.39.0",
