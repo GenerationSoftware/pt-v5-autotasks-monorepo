@@ -89,8 +89,7 @@ export interface DrawAuctionConfigParams {
 }
 
 export interface DrawAuctionContext {
-  // prizePoolReserve: BigNumber;
-  // prizePoolHasNextDrawFinished: boolean;
+  prizePoolOpenDrawEndsAt: number;
   nativeTokenMarketRateUsd: number;
   rngFeeTokenIsSet: boolean;
   rewardToken: TokenWithRate;
@@ -104,6 +103,7 @@ export interface DrawAuctionContext {
   rngRelayIsAuctionOpen: boolean;
   rngRelayExpectedReward: BigNumber;
   rngRelayExpectedRewardUsd: number;
+  rngRelayLastSequenceId: number;
   relayer: DrawAuctionRelayerContext;
 }
 

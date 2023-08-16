@@ -148,6 +148,13 @@ export async function prepareDrawAuctionTxs(
     params,
     context,
   );
+  if (gasCostUsd === 0) {
+    printAsterisks();
+    console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
+    return;
+  }
+  console.log('gasCostUsd');
+  console.log(gasCostUsd);
 
   // #5. Find reward in USD
   const rewardUsd =
@@ -338,6 +345,12 @@ const printContext = (chainId, context) => {
   }
 
   printSpacer();
+  logStringValue(
+    `Can start RNG in:`,
+    `${(context.prizePoolOpenDrawEndsAt - Math.ceil(Date.now() / 1000)) / 60} minutes`,
+  );
+
+  printSpacer();
   printSpacer();
   console.log(chalk.blue.bold(`3. RngRelay Auction State:`));
 
@@ -359,6 +372,9 @@ const printContext = (chainId, context) => {
       chalk.dim(`$${context.rngRelayExpectedRewardUsd}`),
     );
   }
+
+  printSpacer();
+  logStringValue(`Relay Last Seq. ID:`, `${context.rngRelayLastSequenceId}`);
 };
 
 const buildStartRngRequestParams = (rewardRecipient: string): StartRngRequestTxParams => {
@@ -406,6 +422,7 @@ const getGasCost = async (
 
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
+    return 0;
   } else {
     logBigNumber(
       'Estimated gas limit:',

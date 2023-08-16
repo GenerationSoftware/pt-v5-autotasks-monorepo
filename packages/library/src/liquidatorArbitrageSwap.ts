@@ -602,7 +602,7 @@ const calculateAmountOut = async (
   // Needs to be based on how much the bot owner has of tokenIn
   // as well as how big of a trade they're willing to do
   // TODO: Should this be calculated automatically or a config param?
-  const divisor = 2;
+  const divisor = 1;
   const wantedAmountOut = amountOut.div(divisor);
   logBigNumber(
     'Wanted amount out:',
