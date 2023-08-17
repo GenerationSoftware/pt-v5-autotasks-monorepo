@@ -7,7 +7,7 @@ import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
+import { ContractData, downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
@@ -46,6 +46,9 @@ if (esMain(import.meta)) {
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
     const contracts = await downloadContractsBlob(config.CHAIN_ID);
+
+    // await drip(contracts, signer);
+
     await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
     throw new Error(error);
@@ -53,3 +56,19 @@ if (esMain(import.meta)) {
 }
 
 export function main() {}
+
+async function drip(contracts, signer) {
+  // Faucet
+  const faucetContractData = contracts.contracts.find(
+    (contract) => contract.type === 'TokenFaucet',
+  );
+  const faucetContract = new ethers.Contract(
+    '0xcb0a8a7a1d37e35881461a3971148dd432746401',
+    faucetContractData.abi,
+    signer,
+  );
+  const poolTokenAddress = '0x68A100A3729Fc04ab26Fb4C0862Df22CEec2f18B';
+  const tx = await faucetContract.drip(poolTokenAddress);
+  console.log(tx.hash);
+  // Faucet
+}
