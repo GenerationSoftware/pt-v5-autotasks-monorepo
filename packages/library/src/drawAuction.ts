@@ -153,8 +153,6 @@ export async function prepareDrawAuctionTxs(
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
     return;
   }
-  console.log('gasCostUsd');
-  console.log(gasCostUsd);
 
   // #5. Find reward in USD
   const rewardUsd =
@@ -333,7 +331,7 @@ const printContext = (chainId, context) => {
     printSpacer();
     logBigNumber(
       `2b. (RngAuction) Expected Reward:`,
-      context.rngExpectedReward,
+      context.rngExpectedReward.toString(),
       context.rewardToken.decimals,
       context.rewardToken.symbol,
     );
@@ -362,7 +360,7 @@ const printContext = (chainId, context) => {
   if (context.rngRelayIsAuctionOpen) {
     logBigNumber(
       `3b. (RngRelayAuction) Expected Reward:`,
-      context.rngRelayExpectedReward,
+      context.rngRelayExpectedReward.toString(),
       context.rewardToken.decimals,
       context.rewardToken.symbol,
     );
@@ -412,8 +410,6 @@ const getGasCost = async (
       auctionContracts.rngRelayAuctionContract.address,
       params.rewardRecipient,
     );
-    console.log('relayTxParams');
-    console.log(relayTxParams);
     estimatedGasLimit = await getRelayEstimatedGasLimit(
       auctionContracts.rngAuctionRelayerDirect,
       relayTxParams,
