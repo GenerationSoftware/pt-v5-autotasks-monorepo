@@ -199,16 +199,9 @@ export const getDrawAuctionContextMulticall = async (
     const rngRelayExpectedReward =
       await auctionContracts.rngRelayAuctionContract.callStatic.computeRewards(auctionResults);
 
-    console.log('rngRelayExpectedReward');
-    console.log(rngRelayExpectedReward[1]);
-    console.log(rngRelayExpectedReward[1].toString());
-
     rngRelayExpectedRewardUsd =
-      parseFloat(formatUnits(rngRelayExpectedReward[1], rewardToken.decimals)) *
+      parseFloat(formatUnits(rngRelayExpectedReward[1].toString(), rewardToken.decimals)) *
       rewardToken.assetRateUsd;
-
-    console.log('rngRelayExpectedRewardUsd');
-    console.log(rngRelayExpectedRewardUsd);
   }
 
   // 6g. Results: Rng Fee
