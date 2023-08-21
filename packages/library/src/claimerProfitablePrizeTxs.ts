@@ -604,8 +604,8 @@ const getClaimInfo = async (
 
     // To push through 1 non-profitable tx for debugging:
     // if (numClaims === 1) {
-    // claimCount = numClaims;
-    // claimFees = nextClaimFees;
+    //   claimCount = numClaims;
+    //   claimFees = nextClaimFees;
     //   return { claimCount, claimFeesUsd, totalCostUsd };
     // }
 
@@ -613,28 +613,25 @@ const getClaimInfo = async (
     console.log('feeDiff');
     console.log(feeDiff);
 
-    console.log('');
-
-    // don't think this is necessary?
-    // const grossFeesGtCost = feeDiff > totalCostUsd;
+    printSpacer();
 
     console.log('minProfitThresholdUsd');
     console.log(minProfitThresholdUsd);
-    console.log('');
+    printSpacer();
 
     const totalFeesMinusCostUsd = nextClaimFeesUsd - totalCostUsd;
     console.log('totalFeesMinusCostUsd');
     console.log(totalFeesMinusCostUsd);
-    console.log('');
+    printSpacer();
 
     console.log('prevTotalFeesMinusCostUsd');
     console.log(prevTotalFeesMinusCostUsd);
 
-    console.log('');
+    printSpacer();
     console.log('totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd');
     console.log(totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd);
 
-    console.log('');
+    printSpacer();
     console.log('totalFeesMinusCostUsd > minProfitThresholdUsd');
     console.log(totalFeesMinusCostUsd > minProfitThresholdUsd);
 

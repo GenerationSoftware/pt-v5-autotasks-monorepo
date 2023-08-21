@@ -8,12 +8,13 @@ import {
   printSpacer,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
+import fetch from 'node-fetch';
 
 export const populateTransaction = async (params, readProvider): Promise<PopulatedTransaction> => {
   let populatedTx: PopulatedTransaction;
 
   try {
-    const contracts = await downloadContractsBlob(params.chainId);
+    const contracts = await downloadContractsBlob(params.chainId, fetch);
     populatedTx = await getWithdrawClaimRewardsTx(contracts, readProvider, params);
   } catch (e) {
     console.error(e);
@@ -31,7 +32,7 @@ export const processPopulatedTransaction = async (
   try {
     if (populatedTx) {
       printAsterisks();
-      console.log(chalk.blue(`4. Sending transactions ...`));
+      console.log(chalk.blue(`4. Sending transaction ...`));
       printSpacer();
 
       let transactionSentToNetwork = await relayer.sendTransaction({
