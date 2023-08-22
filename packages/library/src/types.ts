@@ -29,8 +29,8 @@ export interface TokenWithRate extends Token {
 }
 
 export interface TiersContext {
-  numberOfTiers: number;
-  rangeArray: number[];
+  numTiers: number;
+  tiersRangeArray: number[];
 }
 
 export interface ClaimPrizeContext {

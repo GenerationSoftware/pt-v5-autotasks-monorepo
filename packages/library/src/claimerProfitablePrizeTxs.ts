@@ -211,7 +211,7 @@ export async function executeClaimerProfitablePrizeTxs(
 }
 
 const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {
-  return context.tiers.rangeArray.length - 1 === tier;
+  return context.tiers.tiersRangeArray.length - 1 === tier;
 };
 
 /**
@@ -320,7 +320,7 @@ const calculateProfit = async (
 };
 
 const tierWords = (context: ClaimPrizeContext, tier: number) => {
-  const tiersArray = context.tiers.rangeArray;
+  const tiersArray = context.tiers.tiersRangeArray;
 
   const canaryWords = tiersArray.length - 1 === tier ? ' (Canary tier)' : '';
 
@@ -350,8 +350,8 @@ const getContext = async (
   const feeTokenAddress = await prizePool.prizeToken();
 
   const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
-  const { drawId, numberOfTiers, tiersRangeArray } = prizePoolInfo;
-  const tiers: TiersContext = { numberOfTiers, rangeArray: tiersRangeArray };
+  const { drawId, numTiers, tiersRangeArray } = prizePoolInfo;
+  const tiers: TiersContext = { numTiers, tiersRangeArray };
 
   const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
 
