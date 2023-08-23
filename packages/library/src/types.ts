@@ -88,30 +88,38 @@ export interface DrawAuctionConfigParams {
   covalentApiKey?: string;
 }
 
-export interface DrawAuctionContext {
-  prizePoolOpenDrawEndsAt: number;
-  nativeTokenMarketRateUsd: number;
+export interface RngDrawAuctionContext {
   rngFeeTokenIsSet: boolean;
-  rewardToken: TokenWithRate;
   rngFeeToken: Token;
   rngFeeAmount: BigNumber;
   rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
   rngIsRngComplete: boolean;
   rngExpectedReward: BigNumber;
-  rngExpectedRewardUsd: number;
+  relayer: DrawAuctionRelayerContext;
+}
+
+export interface RelayDrawAuctionContext {
+  prizePoolOpenDrawEndsAt: number;
+  rewardToken: TokenWithRate;
   rngRelayIsAuctionOpen: boolean;
   rngRelayExpectedReward: BigNumber;
   rngRelayExpectedRewardUsd: number;
   rngRelayLastSequenceId: number;
-  relayer: DrawAuctionRelayerContext;
+}
+
+export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuctionContext {
+  rngNativeTokenMarketRateUsd: number;
+  relayNativeTokenMarketRateUsd: number;
+  rngExpectedRewardUsd?: number;
 }
 
 export interface AuctionContracts {
   prizePoolContract: Contract;
   rngAuctionContract: Contract;
-  rngAuctionRelayerDirect: Contract;
   rngRelayAuctionContract: Contract;
+  rngAuctionRelayerRemoteOwner: Contract;
+  rngAuctionRelayerDirect?: Contract;
 }
 
 export interface VaultWithContext {
