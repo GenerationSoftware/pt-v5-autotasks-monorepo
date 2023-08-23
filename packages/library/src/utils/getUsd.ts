@@ -13,12 +13,17 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
 };
 
 const ADDRESS_TO_COVALENT_LOOKUP = {
-  '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL Sepolia -> ETH
-  '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK Sepolia -> ETH
+  '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Sepolia -> ETH
+  '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> ETH
+  '0x94DC94FE29Ff0E591a284619622B493fbf3A64E8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism Goerli -> ETH
+  '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> ETH
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
   1: 1,
+  5: 1, // goerli
+  10: 1, // optimism
+  420: 1, // opt goerli
   11155111: 0.01, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
   80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
 };
