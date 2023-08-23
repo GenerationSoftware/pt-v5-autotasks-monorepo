@@ -34,16 +34,17 @@ export async function askChainId(config: Configstore) {
     message: chalk.green('Which network?'),
     choices: [
       ...(previousNetworkName ? [`Last Used (${previousNetworkName})`] : []),
-      'Mumbai',
+      'Mainnet',
+      'Optimism',
       'Goerli',
       'Sepolia',
-      'Mainnet',
+      'Optimism Goerli',
     ],
     filter(val: string) {
       if (val.startsWith('Last Used')) {
         val = previousNetworkName;
       }
-      return CHAIN_IDS[val.toLowerCase()];
+      return CHAIN_IDS[camelize(val)];
     },
   });
   config.set('CHAIN_ID', CHAIN_ID);
@@ -261,3 +262,11 @@ export const populateConfig = async <
   // Return flattened config:
   return flattenedConfig as any;
 };
+
+function camelize(str) {
+  return str
+    .replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+      return index === 0 ? word.toLowerCase() : word.toUpperCase();
+    })
+    .replace(/\s+/g, '');
+}
