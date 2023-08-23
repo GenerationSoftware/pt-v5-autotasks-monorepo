@@ -1,6 +1,10 @@
 import { ethers, BigNumber, Contract, PopulatedTransaction } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
+import {
+  ContractsBlob,
+  getContract,
+  downloadContractsBlob,
+} from '@generationsoftware/pt-v5-utils-js';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { Relayer } from 'defender-relay-client';
 import { formatUnits } from '@ethersproject/units';
@@ -39,40 +43,75 @@ interface RelayTxParams {
 }
 
 const getAuctionContracts = (
-  chainId: number,
-  readProvider: Provider,
-  contracts: ContractsBlob,
+  rngChainId: number,
+  relayChainId: number,
+  rngReadProvider: Provider,
+  relayReadProvider: Provider,
+  rngContracts: ContractsBlob,
+  relayContracts: ContractsBlob,
 ): AuctionContracts => {
   const version = {
     major: 1,
     minor: 0,
     patch: 0,
   };
-  const prizePoolContract = getContract('PrizePool', chainId, readProvider, contracts, version);
-  const rngAuctionContract = getContract('RngAuction', chainId, readProvider, contracts, version);
+
+  // Start RNG Request Chain Contracts
+  const rngAuctionContract = getContract(
+    'RngAuction',
+    rngChainId,
+    rngReadProvider,
+    rngContracts,
+    version,
+  );
+  let rngAuctionRelayerDirect: Contract;
+  try {
+    rngAuctionRelayerDirect = getContract(
+      'RngAuctionRelayerDirect',
+      rngChainId,
+      rngReadProvider,
+      rngContracts,
+      version,
+    );
+  } catch (e) {
+    // console.warn(e);
+    printSpacer();
+    console.log(
+      chalk.yellow(
+        'No RngAuctionRelayerDirect contract found on the L1 RNG chain, perhaps PrizePool does not exist on this chain?',
+      ),
+    );
+    printSpacer();
+  }
+
+  // Relayer / PrizePool Chain Contracts
+  const prizePoolContract = getContract(
+    'PrizePool',
+    relayChainId,
+    relayReadProvider,
+    relayContracts,
+    version,
+  );
   const rngRelayAuctionContract = getContract(
     'RngRelayAuction',
-    chainId,
-    readProvider,
-    contracts,
+    relayChainId,
+    relayReadProvider,
+    relayContracts,
     version,
   );
-  const rngAuctionRelayerDirect = getContract(
-    'RngAuctionRelayerDirect',
-    chainId,
-    readProvider,
-    contracts,
+  const rngAuctionRelayerRemoteOwner = getContract(
+    'RngAuctionRelayerRemoteOwner',
+    rngChainId,
+    rngReadProvider,
+    rngContracts,
     version,
   );
-
-  if (!prizePoolContract || !rngAuctionContract || !rngRelayAuctionContract) {
-    throw new Error('Contract Unavailable');
-  }
 
   return {
     prizePoolContract,
     rngAuctionContract,
     rngRelayAuctionContract,
+    rngAuctionRelayerRemoteOwner,
     rngAuctionRelayerDirect,
   };
 };
@@ -91,12 +130,30 @@ export async function prepareDrawAuctionTxs(
   const { chainId, relayerAddress, rewardRecipient, writeProvider, readProvider, covalentApiKey } =
     params;
 
-  const auctionContracts = getAuctionContracts(chainId, readProvider, contracts);
+  const rngChainId = chainId;
+  const relayChainId = 420;
+
+  const rngReadProvider = readProvider;
+  const relayReadProvider = new ethers.providers.JsonRpcProvider('', Number(relayChainId));
+
+  const rngContracts = contracts;
+  const relayContracts = await downloadContractsBlob(relayChainId);
+
+  const auctionContracts = getAuctionContracts(
+    rngChainId,
+    relayChainId,
+    rngReadProvider,
+    relayReadProvider,
+    rngContracts,
+    relayContracts,
+  );
 
   // #1. Get info about the prize pool prize/reserve token, auction states, etc.
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
-    chainId,
-    readProvider,
+    rngChainId,
+    rngReadProvider,
+    relayChainId,
+    relayReadProvider,
     auctionContracts,
     relayerAddress,
     rewardRecipient,

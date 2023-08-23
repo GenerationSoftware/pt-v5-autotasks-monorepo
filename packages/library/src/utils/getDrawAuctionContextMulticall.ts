@@ -9,6 +9,8 @@ import {
   DrawAuctionContext,
   DrawAuctionRelayerContext,
   TokenWithRate,
+  RngDrawAuctionContext,
+  RelayDrawAuctionContext,
 } from '../types';
 import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
@@ -22,8 +24,8 @@ const PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY = 'prizePool-openDrawEndsAt';
 const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rngFeeToken-balanceOfBot';
 const RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY = 'rngAuction-allowanceBotRngFeeToken';
 const RNG_FEE_TOKEN_DECIMALS_KEY = 'rngFeeToken-decimals';
-const RNG_FEE_TOKEN_NAME_KEY = 'rngFeeToken-decimals';
-const RNG_FEE_TOKEN_SYMBOL_KEY = 'rngFeeToken-decimals';
+const RNG_FEE_TOKEN_NAME_KEY = 'rngFeeToken-name';
+const RNG_FEE_TOKEN_SYMBOL_KEY = 'rngFeeToken-symbol';
 
 const REWARD_DECIMALS_KEY = 'rewardToken-decimals';
 const REWARD_NAME_KEY = 'rewardToken-name';
@@ -39,27 +41,82 @@ const RNG_RELAY_LAST_SEQUENCE_ID_KEY = 'rngRelay-lastSequenceId';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 /**
- * Gather information about the draw auction, the prize (ie. reserve, reward) token
+ * Combines the two DrawAuction Multicalls, one for the RNG Chain and one for the Relay/PrizePool chain
  *
- * @param readProvider a read-capable provider for the chain that should be queried
+ * @param rngChainId chain ID that starts the RNG Request
+ * @param rngReadProvider a read-capable provider for the RNG chain that should be queried
+ * @param relayChainId chain ID that relays and finishes the auction
+ * @param relayReadProvider a read-capable provider for the Relay/PrizePool chain that should be queried
  * @param auctionContracts AuctionContracts, a collection of ethers contracts to use for querying
+ * @param relayerAddress the bot's address
+ * @param rewardRecipient the account which will receive rewards for submitting RNG requests and finishing auctions
+ * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns DrawAuctionContext
  */
 export const getDrawAuctionContextMulticall = async (
-  chainId: number,
-  readProvider: Provider,
+  rngChainId: number,
+  rngReadProvider: Provider,
+  relayChainId: number,
+  relayReadProvider: Provider,
   auctionContracts: AuctionContracts,
   relayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
+  // 2. Rng Info
+  const rngContext = await getRngMulticall(
+    rngReadProvider,
+    auctionContracts,
+    relayerAddress,
+    covalentApiKey,
+  );
+
+  // 2. Relay info
+  const relayContext = await getRelayMulticall(
+    relayReadProvider,
+    auctionContracts,
+    rewardRecipient,
+    rngContext,
+    covalentApiKey,
+  );
+
+  // 3. Native tokens (gas tokens) market rates in USD
+  const rngNativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(rngChainId);
+  const relayNativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(relayChainId);
+
+  // 4. Fees & Rewards
+  const rngExpectedRewardUsd =
+    parseFloat(formatUnits(rngContext.rngExpectedReward, relayContext.rewardToken.decimals)) *
+    relayContext.rewardToken.assetRateUsd;
+
+  return {
+    ...rngContext,
+    ...relayContext,
+    rngNativeTokenMarketRateUsd,
+    relayNativeTokenMarketRateUsd,
+    rngExpectedRewardUsd,
+  };
+};
+
+// Gather information about the PrizePool, RNG Relay contracts and token (ie. reserve, reward)
+
+/**
+ * Gather information about the RNG Start Contracts
+ *
+ * @param readProvider a read-capable provider for the chain that should be queried
+ * @param auctionContracts AuctionContracts, a collection of ethers contracts to use for querying
+ * @returns DrawAuctionContext
+ */
+export const getRngMulticall = async (
+  readProvider: Provider,
+  auctionContracts: AuctionContracts,
+  relayerAddress: string,
+  covalentApiKey?: string,
+): Promise<RngDrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(readProvider);
 
   let queries: Record<string, any> = {};
-
-  // 1. Prize Pool Info
-  queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] = auctionContracts.prizePoolContract.openDrawEndsAt();
 
   // 2. RNG Auction Service Info
   const rngService = await auctionContracts.rngAuctionContract.getNextRngService();
@@ -84,17 +141,6 @@ export const getDrawAuctionContextMulticall = async (
     );
   }
 
-  // 3. Info about the reward token (prize token)
-  const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
-  const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, readProvider);
-
-  queries[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
-  queries[REWARD_NAME_KEY] = rewardTokenContract.name();
-  queries[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
-
-  // 4. Native token (gas token) market rate in USD
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
-
   // // 5. Auction info
   // 5a. RNG Auction
   queries[RNG_LAST_AUCTION_RESULT_KEY] = auctionContracts.rngAuctionContract.getLastAuctionResult();
@@ -103,10 +149,97 @@ export const getDrawAuctionContextMulticall = async (
   queries[RNG_CURRENT_FRACTIONAL_REWARD_KEY] =
     auctionContracts.rngAuctionContract.currentFractionalReward();
 
-  // 5b. RngRelay Auction
-  queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] = auctionContracts.rngAuctionContract.lastSequenceId();
-
   // -------------------------------
+
+  //
+  // 6. Get and process results
+  const results = await getEthersMulticallProviderResults(multicallProvider, queries);
+
+  // 6b. Results: RNG Auction Service Info
+  let rngFeeTokenMarketRateUsd;
+  let rngFeeToken: TokenWithRate;
+  if (rngFeeTokenIsSet) {
+    rngFeeTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
+      results[RNG_FEE_TOKEN_SYMBOL_KEY],
+      rngFeeTokenAddress,
+      covalentApiKey,
+    );
+    rngFeeToken = {
+      address: rngFeeTokenAddress,
+      decimals: results[RNG_FEE_TOKEN_DECIMALS_KEY],
+      name: results[RNG_FEE_TOKEN_NAME_KEY],
+      symbol: results[RNG_FEE_TOKEN_SYMBOL_KEY],
+      assetRateUsd: rngFeeTokenMarketRateUsd,
+    };
+  }
+
+  // 6d. Results: Auction Info
+  const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
+  const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
+  const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
+  printSpacer();
+
+  // 6g. Results: Rng Fee
+  let relayer: DrawAuctionRelayerContext;
+  if (rngFeeTokenIsSet) {
+    relayer = {
+      rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
+      rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
+    };
+  }
+
+  let rngFeeUsd = 0;
+  if (rngFeeTokenIsSet) {
+    rngFeeUsd =
+      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
+  }
+
+  return {
+    rngFeeTokenIsSet,
+    rngFeeToken,
+    rngFeeAmount,
+    rngFeeUsd,
+    rngIsAuctionOpen,
+    rngIsRngComplete,
+    rngExpectedReward,
+    relayer,
+  };
+};
+
+/**
+ * Gather information about the RNG Start Contracts
+ *
+ * @param readProvider a read-capable provider for the chain that should be queried
+ * @param auctionContracts AuctionContracts, a collection of ethers contracts to use for querying
+ * @returns DrawAuctionContext
+ */
+export const getRelayMulticall = async (
+  readProvider: Provider,
+  auctionContracts: AuctionContracts,
+  rewardRecipient: string,
+  rngContext: RngDrawAuctionContext,
+  covalentApiKey?: string,
+): Promise<RelayDrawAuctionContext> => {
+  // @ts-ignore Provider == BaseProvider
+  const multicallProvider = MulticallWrapper.wrap(readProvider);
+
+  let queries: Record<string, any> = {};
+
+  // 1. Prize Pool Info
+  const pp = await auctionContracts.prizePoolContract.openDrawEndsAt();
+  queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] = auctionContracts.prizePoolContract.openDrawEndsAt();
+
+  // 3. Info about the reward token (prize token)
+  const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
+  const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, readProvider);
+
+  queries[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
+  queries[REWARD_NAME_KEY] = rewardTokenContract.name();
+  queries[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
+
+  // // 5. Auction info
+  // 5a. RngRelay Auction
+  queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] = auctionContracts.rngAuctionContract.lastSequenceId();
 
   //
   // 6. Get and process results
@@ -130,45 +263,15 @@ export const getDrawAuctionContextMulticall = async (
     assetRateUsd: rewardTokenMarketRateUsd,
   };
 
-  // 6c. Results: RNG Auction Service Info
-  let rngFeeTokenMarketRateUsd;
-  let rngFeeToken: TokenWithRate;
-  if (rngFeeTokenIsSet) {
-    console.log('rngFeeTokenAddress');
-    console.log(rngFeeTokenAddress);
-    rngFeeTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
-      results[RNG_FEE_TOKEN_SYMBOL_KEY],
-      rngFeeTokenAddress,
-      covalentApiKey,
-    );
-    rngFeeToken = {
-      address: rngFeeTokenAddress,
-      decimals: results[RNG_FEE_TOKEN_DECIMALS_KEY],
-      name: results[RNG_FEE_TOKEN_NAME_KEY],
-      symbol: results[RNG_FEE_TOKEN_SYMBOL_KEY],
-      assetRateUsd: rngFeeTokenMarketRateUsd,
-    };
-    console.log('rngFeeToken');
-    console.log(rngFeeToken);
-  }
-
   // 6d. Results: Auction Info
-  const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
   const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
-  const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
-  const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
-  printSpacer();
 
   const lastSequenceCompleted = await auctionContracts.rngRelayAuctionContract.isSequenceCompleted(
     rngRelayLastSequenceId,
   );
 
   const rngRelayIsAuctionOpen =
-    rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted;
-
-  // 6e. Results: Rng Reward
-  const rngExpectedRewardUsd =
-    parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
+    rngRelayLastSequenceId > 0 && rngContext.rngIsRngComplete && !lastSequenceCompleted;
 
   // 6f. Results: Draw/Relayer Reward
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
@@ -203,51 +306,16 @@ export const getDrawAuctionContextMulticall = async (
       rewardToken.assetRateUsd;
   }
 
-  // 6g. Results: Rng Fee
-  let relayer: DrawAuctionRelayerContext;
-  if (rngFeeTokenIsSet) {
-    relayer = {
-      rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
-      rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
-    };
-
-    console.log('relayer');
-    console.log(relayer);
-
-    // const rngFeeTokenBalance = results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY];
-    console.log('rngFeeTokenBalance');
-    console.log(relayer.rngFeeTokenBalance);
-    console.log(relayer.rngFeeTokenBalance.toString());
-
-    console.log('rngFeeTokenAllowance');
-    console.log(relayer.rngFeeTokenAllowance);
-    console.log(relayer.rngFeeTokenAllowance.toString());
-  }
-
-  let rngFeeUsd = 0;
-  if (rngIsAuctionOpen && rngFeeTokenIsSet) {
-    rngFeeUsd =
-      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
-    console.log('rngFeeUsd');
-    console.log(rngFeeUsd);
-  }
+  // 6e. Results: Rng Reward
+  // const rngExpectedRewardUsd =
+  //   parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
 
   return {
     prizePoolOpenDrawEndsAt,
-    nativeTokenMarketRateUsd,
     rewardToken,
-    rngFeeTokenIsSet,
-    rngFeeToken,
-    rngFeeAmount,
-    rngFeeUsd,
-    rngIsAuctionOpen,
-    rngIsRngComplete,
-    rngExpectedReward,
-    rngExpectedRewardUsd,
     rngRelayIsAuctionOpen,
     rngRelayExpectedReward,
     rngRelayExpectedRewardUsd,
     rngRelayLastSequenceId,
-    relayer,
   };
 };
