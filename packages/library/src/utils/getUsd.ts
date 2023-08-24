@@ -23,7 +23,7 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
   1: 1,
   5: 1, // goerli
   10: 1, // optimism
-  420: 1, // opt goerli
+  420: 0.02, // opt goerli
   11155111: 0.01, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
   80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
 };
