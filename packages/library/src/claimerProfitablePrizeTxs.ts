@@ -273,7 +273,7 @@ const calculateProfit = async (
     unclaimedClaims,
     feeRecipient,
     nativeTokenMarketRateUsd,
-    BigNumber.from('100'),
+    '100',
   );
 
   const { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
@@ -440,7 +440,7 @@ const getGasCost = async (
   claims: Claim[],
   feeRecipient: string,
   gasTokenMarketRateUsd: number,
-  estimateMinFee: BigNumber,
+  estimateMinFee: string,
 ) => {
   let claimsSlice = claims.slice(0, 1);
   let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient, estimateMinFee);
