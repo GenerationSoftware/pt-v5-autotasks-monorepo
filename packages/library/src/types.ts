@@ -61,7 +61,7 @@ export interface ArbLiquidatorConfigParams {
 export interface ArbLiquidatorContext {
   tokenIn: TokenWithRate;
   tokenOut: Token;
-  tokenOutUnderlyingAsset: TokenWithRate;
+  underlyingAssetToken: TokenWithRate;
   relayer: ArbLiquidatorRelayerContext;
 }
 

@@ -653,8 +653,7 @@ const getClaimInfo = async (
     console.log('totalFeesMinusCostUsd > minProfitThresholdUsd');
     console.log(totalFeesMinusCostUsd > minProfitThresholdUsd);
 
-    console.log('minVrgdaFeePerClaim');
-    console.log(minVrgdaFeePerClaim);
+    printSpacer();
 
     if (
       totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd &&
@@ -664,7 +663,11 @@ const getClaimInfo = async (
       claimCount = numClaims;
       claimFees = nextClaimFees;
       minVrgdaFeePerClaim = nextClaimFees.toString();
+      console.log('minVrgdaFeePerClaim');
+      console.log(minVrgdaFeePerClaim);
       claimFeesUsd = nextClaimFeesUsd;
+      console.log('claimFeesUsd');
+      console.log(claimFeesUsd);
     } else {
       break;
     }

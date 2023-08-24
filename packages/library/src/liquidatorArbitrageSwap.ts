@@ -72,20 +72,12 @@ export async function liquidatorArbitrageSwap(
   printSpacer();
   console.log('Collecting information about vaults ...');
 
-  const vaultsWithContext: VaultWithContext[] = await getVaultsContext(
-    chainId,
-    readProvider,
-    contracts,
-  );
-
   // Loop through all liquidation pairs
   printSpacer();
-  console.log(chalk.white.bgBlack(` # of Vaults (Subgraph): ${vaultsWithContext.length} `));
   console.log(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
   const stats: Stat[] = [];
-  // for (let i = 0; i < vaults.length; i++) {
   for (let i = 0; i < liquidationPairContracts.length; i++) {
     printSpacer();
     printSpacer();
@@ -104,22 +96,12 @@ export async function liquidatorArbitrageSwap(
       readProvider,
     );
 
-    // Check if we have the corresponding vault to get the underlying asset's value for determining profitability
-    const vaultWithContext = vaultsWithContext.find(
-      (vaultWithContext) => vaultWithContext.liquidationPair === liquidationPairContract.address,
-    );
-    const vaultUnderlyingAssetAddress = vaultWithContext?.asset;
-    if (!vaultUnderlyingAssetAddress) {
-      console.log(chalk.yellow('Could not find matching Vault for LiquidationPair'));
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
-
+    const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
     const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
       marketRateContract,
       liquidationRouterContract,
       liquidationPairContract,
-      vaultUnderlyingAssetAddress,
+      vaultContractData,
       readProvider,
       relayerAddress,
     );
@@ -129,7 +111,6 @@ export async function liquidatorArbitrageSwap(
     printAsterisks();
 
     // #2. Calculate amounts
-    //
     console.log(chalk.blue(`1. Amounts:`));
 
     const { amountOut } = await calculateAmountOut(liquidationPairContract, context);
@@ -156,17 +137,19 @@ export async function liquidatorArbitrageSwap(
     };
 
     const { amountIn, amountInMin } = await getAmountInValues();
+    console.log('amountIn');
+    console.log(amountIn);
+    if (amountIn.eq(0)) {
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `amountIn is 0`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
+      continue;
+    }
 
     // #3. Print balance of tokenIn for relayer
-    //
-    // env.router().swapExactAmountOut(
-    //   LiquidationPair(address(env.pair())),
-    //   address(this),
-    //   amountOut,
-    //   uint(uMAX_SD59x18 / 1e18), // NOTE: uMAX_SD59x18/1e18 for DaLiquidator
-    //   // type(uint).max // NOTE: type(uint).max for CgdaLiquidator
-    // );
-
     const sufficientBalance = await checkBalance(context, amountIn);
 
     if (sufficientBalance) {
@@ -198,34 +181,7 @@ export async function liquidatorArbitrageSwap(
     //
     await approve(amountIn, liquidationRouterContract, writeProvider, relayerAddress, context);
 
-    // #5. Test tx to get estimated return of tokenOut
-    //
-    // printAsterisks();
-    // console.log(chalk.blue.bold(`3. Getting amount to receive ...`));
-    // let amountOutEstimate;
-    // try {
-    //   amountOutEstimate = await liquidationRouter.callStatic.swapExactAmountIn(
-    //     ...Object.values(swapExactAmountOutParams),
-    //   );
-    // } catch (e) {
-    //   console.error(chalk.red(e));
-    //   console.warn(chalk.yellow(`Unable to retrieve 'amountOutEstimate' from contract.`));
-    //   stats.push({
-    //     pair,
-    //     estimatedProfitUsd: 0,
-    //     error: `Unable to retrieve 'amountOutEstimate' from contract`,
-    //   });
-    //   logNextPair(liquidationPair, liquidationPairContracts);
-    //   continue;
-    // }
-    // logBigNumber(
-    //   `Estimated amount of tokenOut to receive:`,
-    //   amountOutEstimate,
-    //   context.tokenOut.decimals,
-    //   context.tokenOut.symbol,
-    // );
-
-    // #6. Find an estimated amount of gas cost
+    // #5. Find an estimated amount of gas cost
     const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
@@ -258,7 +214,7 @@ export async function liquidatorArbitrageSwap(
       continue;
     }
 
-    // #7. Decide if profitable or not
+    // #6. Decide if profitable or not
     const { estimatedProfitUsd, profitable } = await calculateProfit(
       swapExactAmountOutParams,
       context,
@@ -281,7 +237,7 @@ export async function liquidatorArbitrageSwap(
       continue;
     }
 
-    // #8. Finally, populate tx when profitable
+    // #7. Finally, populate tx when profitable
     try {
       let transactionPopulated: PopulatedTransaction | undefined;
       console.log(chalk.blue('6. Populating swap transaction ...'));
@@ -435,7 +391,7 @@ const printContext = (context) => {
   logTable({
     tokenIn: context.tokenIn,
     tokenOut: context.tokenOut,
-    tokenOutUnderlyingAsset: context.tokenOutUnderlyingAsset,
+    underlyingAssetToken: context.underlyingAssetToken,
   });
   logBigNumber(
     `Relayer ${context.tokenIn.symbol} balance:`,
@@ -486,21 +442,21 @@ const calculateProfit = async (
   console.log(chalk.blue('5. Profit/Loss (USD):'));
   printSpacer();
 
-  const tokenOutUnderlyingAssetUsd =
+  const underlyingAssetTokenUsd =
     parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
-    context.tokenOutUnderlyingAsset.assetRateUsd;
+    context.underlyingAssetToken.assetRateUsd;
   const tokenInUsd =
     parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
     context.tokenIn.assetRateUsd;
 
-  const grossProfitUsd = tokenOutUnderlyingAssetUsd - tokenInUsd;
+  const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
   const netProfitUsd = grossProfitUsd - maxFeeUsd;
 
   console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
-        tokenOutUnderlyingAssetUsd,
+        underlyingAssetTokenUsd,
       )} - $${roundTwoDecimalPlaces(tokenInUsd)}`,
     ),
   );

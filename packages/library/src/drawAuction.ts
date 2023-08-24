@@ -231,11 +231,11 @@ export async function prepareDrawAuctionTxs(
     params,
     context,
   );
-  // if (gasCostUsd === 0) {
-  //   printAsterisks();
-  //   console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
-  //   return;
-  // }
+  if (gasCostUsd === 0) {
+    printAsterisks();
+    console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
+    return;
+  }
 
   // #5. Find reward in USD
   const rewardUsd =

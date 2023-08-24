@@ -1,6 +1,9 @@
 import { Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import {
+  ContractData,
+  getEthersMulticallProviderResults,
+} from '@generationsoftware/pt-v5-utils-js';
 
 import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
 import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS, printSpacer } from '../utils';
@@ -14,14 +17,13 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 /**
  * Gather information about this specific liquidation pair
  * `tokenIn` is the token to supply (likely the prize token, which is probably POOL),
- * This gets complicated because `tokenOut` is the Vault/Yield token, not the underlying
- * asset which is likely the desired token (ie. DAI, USDC) - the desired
- * token is called `tokenOutUnderlyingAsset`
+ * `tokenOut` is either the Vault (vault shares, ERC4626 with .asset() as the underlying ERC20)
+ * or a straight up ERC20 token (ie. DAI, USDC)
  *
  * @param marketRateContract ethers contract instance for the marketRate contract
  * @param liquidationRouterContract ethers contract instance for the liquidationRouter contract
  * @param liquidationPairContract ethers contract instance for the liquidationPair contract
- * @param vaultUnderlyingAssetAddress address of the original ERC20 which the interest-bearing token is tied to
+ * @param vaultContractData Vault contract blob containing Vault abi
  * @param readProvider a read-capable provider for the chain that should be queried
  * @param contracts blob of contracts to pull PrizePool abi/etc from
  * @returns
@@ -30,7 +32,7 @@ export const getArbLiquidatorContextMulticall = async (
   marketRateContract: Contract,
   liquidationRouterContract: Contract,
   liquidationPairContract: Contract,
-  vaultUnderlyingAssetAddress: string,
+  vaultContractData: ContractData,
   readProvider: Provider,
   relayerAddress: string,
 ): Promise<ArbLiquidatorContext> => {
@@ -58,15 +60,39 @@ export const getArbLiquidatorContextMulticall = async (
   printSpacer();
   printSpacer();
 
-  const vaultUnderlyingAssetContract = new ethers.Contract(
-    vaultUnderlyingAssetAddress,
+  // Find out if this LiquidationPair's tokenOut is an ERC4626 Vault or a straight-up ERC20 token
+  const liquidationPairTokenOutAsVault = new ethers.Contract(
+    tokenOutAddress,
+    vaultContractData.abi,
+    multicallProvider,
+  );
+  let underlyingAssetAddress;
+  try {
+    underlyingAssetAddress = await liquidationPairTokenOutAsVault.asset();
+    console.log('underlyingAssetAddress');
+    console.log(underlyingAssetAddress);
+  } catch (e) {
+    console.error(e);
+    console.log('---');
+    console.error(e);
+  }
+
+  if (!underlyingAssetAddress) {
+    underlyingAssetAddress = tokenOutAddress;
+
+    console.log('underlyingAssetAddress 2');
+    console.log(underlyingAssetAddress);
+  }
+
+  const underlyingAssetContract = new ethers.Contract(
+    underlyingAssetAddress,
     ERC20Abi,
     multicallProvider,
   );
 
-  queries[`vaultUnderlyingAsset-decimals`] = vaultUnderlyingAssetContract.decimals();
-  queries[`vaultUnderlyingAsset-name`] = vaultUnderlyingAssetContract.name();
-  queries[`vaultUnderlyingAsset-symbol`] = vaultUnderlyingAssetContract.symbol();
+  queries[`underlyingAsset-decimals`] = underlyingAssetContract.decimals();
+  queries[`underlyingAsset-name`] = underlyingAssetContract.name();
+  queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
   // 4. RELAYER tokenIn BALANCE
   queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
@@ -79,8 +105,8 @@ export const getArbLiquidatorContextMulticall = async (
 
   // 6. MarketRate Calls
   queries[`priceFeed-${tokenInAddress}`] = marketRateContract.priceFeed(tokenInAddress, 'USD');
-  queries[`priceFeed-${vaultUnderlyingAssetAddress}`] = marketRateContract.priceFeed(
-    vaultUnderlyingAssetAddress,
+  queries[`priceFeed-${underlyingAssetAddress}`] = marketRateContract.priceFeed(
+    underlyingAssetAddress,
     'USD',
   );
 
@@ -112,17 +138,17 @@ export const getArbLiquidatorContextMulticall = async (
   };
 
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
-  const vaultUnderlyingAssetPriceFeedResults = results[`priceFeed-${vaultUnderlyingAssetAddress}`];
-  const vaultUnderlyingAssetAssetRateUsd = parseBigNumberAsFloat(
-    BigNumber.from(vaultUnderlyingAssetPriceFeedResults),
+  const underlyingAssetPriceFeedResults = results[`priceFeed-${underlyingAssetAddress}`];
+  const underlyingAssetAssetRateUsd = parseBigNumberAsFloat(
+    BigNumber.from(underlyingAssetPriceFeedResults),
     MARKET_RATE_CONTRACT_DECIMALS,
   );
-  const vaultUnderlyingAssetUnderlyingAsset: TokenWithRate = {
-    address: vaultUnderlyingAssetAddress,
-    decimals: results['vaultUnderlyingAsset-decimals'],
-    name: results['vaultUnderlyingAsset-name'],
-    symbol: results['vaultUnderlyingAsset-symbol'],
-    assetRateUsd: vaultUnderlyingAssetAssetRateUsd,
+  const underlyingAssetToken: TokenWithRate = {
+    address: underlyingAssetAddress,
+    decimals: results['underlyingAsset-decimals'],
+    name: results['underlyingAsset-name'],
+    symbol: results['underlyingAsset-symbol'],
+    assetRateUsd: underlyingAssetAssetRateUsd,
   };
 
   const relayer: ArbLiquidatorRelayerContext = {
@@ -133,7 +159,7 @@ export const getArbLiquidatorContextMulticall = async (
   return {
     tokenIn,
     tokenOut,
-    tokenOutUnderlyingAsset: vaultUnderlyingAssetUnderlyingAsset,
+    underlyingAssetToken,
     relayer,
   };
 };
