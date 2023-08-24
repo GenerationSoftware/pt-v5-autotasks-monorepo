@@ -78,9 +78,12 @@ export interface WithdrawClaimRewardsContext {
 }
 
 export interface DrawAuctionConfigParams {
-  chainId: number;
-  readProvider: BaseProvider;
-  writeProvider: Provider | DefenderRelaySigner;
+  rngChainId: number;
+  relayChainId: number;
+  rngReadProvider: BaseProvider;
+  relayReadProvider: BaseProvider;
+  rngWriteProvider: Provider | DefenderRelaySigner;
+  relayWriteProvider: Provider | DefenderRelaySigner;
   relayerAddress: string;
   rewardRecipient: string;
   useFlashbots: boolean;
@@ -116,6 +119,7 @@ export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuct
 
 export interface AuctionContracts {
   prizePoolContract: Contract;
+  chainlinkVRFV2DirectRngAuctionHelper: Contract;
   rngAuctionContract: Contract;
   rngRelayAuctionContract: Contract;
   rngAuctionRelayerRemoteOwner: Contract;

@@ -7,13 +7,23 @@ import { executeTransactions } from './transactions';
 
 const handlerLoadParams = (
   relayerAddress: string,
-  writeProvider: DefenderRelayProvider,
+  rngWriteProvider: DefenderRelayProvider,
+  relayWriteProvider: DefenderRelayProvider,
 ): DrawAuctionConfigParams => {
   return {
-    chainId: Number(BUILD_CHAIN_ID),
+    rngChainId: Number(BUILD_CHAIN_ID),
+    relayChainId: Number(BUILD_RELAY_CHAIN_ID),
     relayerAddress,
-    readProvider: new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, Number(BUILD_CHAIN_ID)),
-    writeProvider,
+    rngReadProvider: new ethers.providers.JsonRpcProvider(
+      BUILD_JSON_RPC_URI,
+      Number(BUILD_CHAIN_ID),
+    ),
+    rngWriteProvider,
+    relayReadProvider: new ethers.providers.JsonRpcProvider(
+      BUILD_RELAY_JSON_RPC_URI,
+      Number(BUILD_RELAY_CHAIN_ID),
+    ),
+    relayWriteProvider,
     covalentApiKey: BUILD_COVALENT_API_KEY,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,
@@ -22,13 +32,19 @@ const handlerLoadParams = (
 };
 
 export async function handler(event: RelayerParams) {
-  const writeProvider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, writeProvider, {
+  const rngWriteProvider = new DefenderRelayProvider(event);
+  const signer = new DefenderRelaySigner(event, rngWriteProvider, {
     speed: 'fast',
   });
   const relayerAddress = await signer.getAddress();
 
-  const params = handlerLoadParams(relayerAddress, writeProvider);
+  const relayChainFakeEvent = {
+    apiKey: BUILD_RELAY_RELAYER_API_KEY,
+    apiSecret: BUILD_RELAY_RELAYER_API_SECRET,
+  };
+  const relayWriteProvider = new DefenderRelayProvider(event);
 
-  await executeTransactions(event, params);
+  const params = handlerLoadParams(relayerAddress, rngWriteProvider, relayWriteProvider);
+
+  await executeTransactions(event, relayChainFakeEvent, params, rngWriteProvider);
 }
