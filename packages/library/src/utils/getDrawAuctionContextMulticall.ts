@@ -22,7 +22,8 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 const PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY = 'prizePool-openDrawEndsAt';
 
 const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rngFeeToken-balanceOfBot';
-const RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY = 'rngAuction-allowanceBotRngFeeToken';
+const RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY =
+  'rngAuctionHelper-allowanceBotRngFeeToken';
 const RNG_FEE_TOKEN_DECIMALS_KEY = 'rngFeeToken-decimals';
 const RNG_FEE_TOKEN_NAME_KEY = 'rngFeeToken-name';
 const RNG_FEE_TOKEN_SYMBOL_KEY = 'rngFeeToken-symbol';
@@ -135,9 +136,9 @@ export const getRngMulticall = async (
 
     queries[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY] = rngFeeTokenContract.balanceOf(relayerAddress);
 
-    queries[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
+    queries[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
       relayerAddress,
-      auctionContracts.rngAuctionContract.address,
+      auctionContracts.chainlinkVRFV2DirectRngAuctionHelper.address,
     );
   }
 
@@ -184,7 +185,9 @@ export const getRngMulticall = async (
   if (rngFeeTokenIsSet) {
     relayer = {
       rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
-      rngFeeTokenAllowance: BigNumber.from(results[RNG_AUCTION_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY]),
+      rngFeeTokenAllowance: BigNumber.from(
+        results[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY],
+      ),
     };
   }
 

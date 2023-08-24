@@ -16,22 +16,38 @@ console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
 
 if (esMain(import.meta)) {
   const config = await askQuestions(new Configstore(pkg.name));
-  const readProvider = new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID);
+  const rngReadProvider = new ethers.providers.JsonRpcProvider(
+    config.JSON_RPC_URI, // is RNG chain but needs to be just JSON_RPC_URI for global config to work properly
+    config.CHAIN_ID, // is RNG chain but needs to be just CHAIN_ID for global config to work properly
+  );
+  const relayReadProvider = new ethers.providers.JsonRpcProvider(
+    config.RELAY_JSON_RPC_URI,
+    config.RELAY_CHAIN_ID,
+  );
 
-  const fakeEvent = {
-    apiKey: config.RELAYER_API_KEY,
-    apiSecret: config.RELAYER_API_SECRET,
+  const rngChainFakeEvent = {
+    apiKey: config.RELAYER_API_KEY, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
+    apiSecret: config.RELAYER_API_SECRET, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
   };
-  const writeProvider = new DefenderRelayProvider(fakeEvent);
-  const signer = new DefenderRelaySigner(fakeEvent, writeProvider, {
+  const rngWriteProvider = new DefenderRelayProvider(rngChainFakeEvent);
+  const signer = new DefenderRelaySigner(rngChainFakeEvent, rngWriteProvider, {
     speed: 'fast',
   });
 
+  const relayChainFakeEvent = {
+    apiKey: config.RELAY_RELAYER_API_KEY,
+    apiSecret: config.RELAY_RELAYER_API_SECRET,
+  };
+  const relayWriteProvider = new DefenderRelayProvider(relayChainFakeEvent);
+
   const relayerAddress = await signer.getAddress();
   const params: DrawAuctionConfigParams = {
-    chainId: config.CHAIN_ID,
-    readProvider,
-    writeProvider,
+    rngChainId: config.CHAIN_ID,
+    relayChainId: config.RELAY_CHAIN_ID,
+    rngReadProvider,
+    relayReadProvider,
+    rngWriteProvider,
+    relayWriteProvider,
     relayerAddress,
     rewardRecipient: config.REWARD_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
@@ -39,7 +55,7 @@ if (esMain(import.meta)) {
     covalentApiKey: config.COVALENT_API_KEY,
   };
 
-  await executeTransactions(fakeEvent, params);
+  await executeTransactions(rngChainFakeEvent, relayChainFakeEvent, params, signer);
 }
 
 export function main() {}
