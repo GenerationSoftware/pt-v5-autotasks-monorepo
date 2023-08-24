@@ -138,7 +138,7 @@ export const getRngMulticall = async (
 
     queries[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
       relayerAddress,
-      auctionContracts.chainlinkVRFV2DirectRngAuctionHelper.address,
+      auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract.address,
     );
   }
 
@@ -279,9 +279,6 @@ export const getRelayMulticall = async (
   // 6f. Results: Draw/Relayer Reward
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
   if (rngRelayIsAuctionOpen) {
-    printSpacer();
-
-    console.log('compute rng relay reward fraction...');
     printSpacer();
     const [randomNumber, completedAt] =
       await auctionContracts.rngAuctionContract.callStatic.getRngResults();

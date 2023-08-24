@@ -93,7 +93,7 @@ export interface DrawAuctionConfigParams {
 
 export interface RngDrawAuctionContext {
   rngFeeTokenIsSet: boolean;
-  rngFeeToken: Token;
+  rngFeeToken: TokenWithRate;
   rngFeeAmount: BigNumber;
   rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
@@ -119,11 +119,11 @@ export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuct
 
 export interface AuctionContracts {
   prizePoolContract: Contract;
-  chainlinkVRFV2DirectRngAuctionHelper: Contract;
+  chainlinkVRFV2DirectRngAuctionHelperContract: Contract;
   remoteOwnerContract: Contract;
   rngAuctionContract: Contract;
   rngRelayAuctionContract: Contract;
-  rngAuctionRelayerRemoteOwner: Contract;
+  rngAuctionRelayerRemoteOwnerContract: Contract;
   rngAuctionRelayerDirect?: Contract;
 }
 
