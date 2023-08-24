@@ -285,10 +285,7 @@ const getTransferFeeAndStartRngRequestEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    // TODO: ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest;
-    console.log('contract');
-    console.log(contract);
-    estimatedGasLimit = await contract.estimateGas.startRngRequest(
+    estimatedGasLimit = await contract.estimateGas.transferFeeAndStartRngRequestEstimatedGasLimit(
       ...Object.values(transferFeeAndStartRngRequestTxParams),
     );
   } catch (e) {
@@ -309,7 +306,6 @@ const getStartRngRequestEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    // TODO: ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest;
     estimatedGasLimit = await contract.estimateGas.startRngRequest(
       ...Object.values(startRngRequestTxParams),
     );

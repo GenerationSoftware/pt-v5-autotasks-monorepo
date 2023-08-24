@@ -28,6 +28,7 @@ interface SwapExactAmountOutParams {
   swapRecipient: string;
   amountOut: BigNumber;
   amountInMin: BigNumber;
+  deadline: number;
 }
 
 interface Stat {
@@ -230,6 +231,7 @@ export async function liquidatorArbitrageSwap(
       swapRecipient,
       amountOut,
       amountInMin,
+      deadline: Math.floor(Date.now() / 1000) + 100,
     };
 
     let maxFeeUsd;
@@ -296,7 +298,7 @@ export async function liquidatorArbitrageSwap(
         isPrivate,
         data: transactionPopulated.data,
         to: transactionPopulated.to,
-        gasLimit: 600000,
+        gasLimit: 1000000,
       });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', transactionSentToNetwork.hash));
