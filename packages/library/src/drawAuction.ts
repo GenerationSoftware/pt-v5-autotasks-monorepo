@@ -98,25 +98,25 @@ const getAuctionContracts = (
     version,
   );
 
-  let rngAuctionRelayerDirect: Contract;
-  try {
-    rngAuctionRelayerDirect = getContract(
-      'RngAuctionRelayerDirect',
-      rngChainId,
-      rngReadProvider,
-      rngContracts,
-      version,
-    );
-  } catch (e) {
-    // console.warn(e);
-    printSpacer();
-    console.log(
-      chalk.yellow(
-        'No RngAuctionRelayerDirect contract found on the L1 RNG chain, perhaps PrizePool does not exist on this chain?',
-      ),
-    );
-    printSpacer();
-  }
+  // let rngAuctionRelayerDirect: Contract;
+  // try {
+  //   rngAuctionRelayerDirect = getContract(
+  //     'RngAuctionRelayerDirect',
+  //     rngChainId,
+  //     rngReadProvider,
+  //     rngContracts,
+  //     version,
+  //   );
+  // } catch (e) {
+  //   // console.warn(e);
+  //   printSpacer();
+  //   console.log(
+  //     chalk.yellow(
+  //       'No RngAuctionRelayerDirect contract found on the L1 RNG chain, perhaps PrizePool does not exist on this chain?',
+  //     ),
+  //   );
+  //   printSpacer();
+  // }
 
   // Relayer / PrizePool Chain Contracts
   const prizePoolContract = getContract(
@@ -148,7 +148,7 @@ const getAuctionContracts = (
     rngAuctionContract,
     rngRelayAuctionContract,
     rngAuctionRelayerRemoteOwner,
-    rngAuctionRelayerDirect,
+    // rngAuctionRelayerDirect,
   };
 };
 
@@ -201,11 +201,11 @@ export async function prepareDrawAuctionTxs(
 
   printContext(rngChainId, relayChainId, context);
 
-  // if (!context.rngIsAuctionOpen && !context.rngRelayIsAuctionOpen) {
-  //   printAsterisks();
-  //   console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
-  //   return;
-  // }
+  if (!context.rngIsAuctionOpen && !context.rngRelayIsAuctionOpen) {
+    printAsterisks();
+    console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
+    return;
+  }
 
   printSpacer();
   printAsterisks();
@@ -243,12 +243,12 @@ export async function prepareDrawAuctionTxs(
       : context.rngRelayExpectedRewardUsd;
 
   // #6. Decide if profitable or not
-  const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context);
+  // const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context);
 
   // #7. Populate transaction
   // if (profitable) {
-  // const relayer = selectedContract === RNG_AUCTION_KEY ? rngRelayer : relayRelayer;
   const relayer = rngRelayer;
+  // const relayer = selectedContract === RNG_AUCTION_KEY ? rngRelayer : relayRelayer;
   // const chainId = selectedContract === RNG_AUCTION_KEY ? rngChainId : relayChainId;
 
   // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
@@ -263,7 +263,8 @@ export async function prepareDrawAuctionTxs(
   //       See querying here:
   //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
   console.log('Waiting on transaction to be confirmed ...');
-  const provider = selectedContract === RNG_AUCTION_KEY ? rngReadProvider : relayReadProvider;
+  const provider = rngReadProvider;
+  // const provider = selectedContract === RNG_AUCTION_KEY ? rngReadProvider : relayReadProvider;
   await provider.waitForTransaction(tx.hash);
   console.log('Tx confirmed !');
   // } else {
@@ -285,6 +286,8 @@ const getTransferFeeAndStartRngRequestEstimatedGasLimit = async (
   let estimatedGasLimit;
   try {
     // TODO: ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest;
+    console.log('contract');
+    console.log(contract);
     estimatedGasLimit = await contract.estimateGas.startRngRequest(
       ...Object.values(transferFeeAndStartRngRequestTxParams),
     );
@@ -567,8 +570,11 @@ const getGasCost = async (
       const transferFeeAndStartRngRequestTxParams = buildTransferFeeAndStartRngRequestParams(
         params.rewardRecipient,
       );
+      console.log('transferFeeAndStartRngRequestTxParams');
+      console.log(transferFeeAndStartRngRequestTxParams);
+      const chainlinkRngAuctionHelper = auctionContracts.chainlinkVRFV2DirectRngAuctionHelper;
       estimatedGasLimit = await getTransferFeeAndStartRngRequestEstimatedGasLimit(
-        auctionContracts.rngAuctionContract,
+        chainlinkRngAuctionHelper,
         transferFeeAndStartRngRequestTxParams,
       );
     } else {
@@ -642,8 +648,7 @@ const getGasCost = async (
 };
 
 const determineContractToUse = (context: DrawAuctionContext): string => {
-  return CONTRACTS[RNG_RELAY_AUCTION_KEY];
-  // return context.rngIsAuctionOpen ? CONTRACTS[RNG_AUCTION_KEY] : CONTRACTS[RNG_RELAY_AUCTION_KEY];
+  return context.rngIsAuctionOpen ? CONTRACTS[RNG_AUCTION_KEY] : CONTRACTS[RNG_RELAY_AUCTION_KEY];
 };
 
 const sendTransaction = async (
