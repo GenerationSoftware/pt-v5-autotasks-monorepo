@@ -41,6 +41,7 @@ interface ClaimPrizesParams {
   winners: string[];
   prizeIndices: number[][];
   feeRecipient: string;
+  minVrgdaFeePerClaim: string;
 }
 
 /**
@@ -163,6 +164,10 @@ export async function executeClaimerProfitablePrizeTxs(
       console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
       printSpacer();
 
+      console.log('claimPrizesParams');
+      console.log(claimPrizesParams);
+      console.log(...Object.values(claimPrizesParams));
+
       const populatedTx = await claimerContract.populateTransaction.claimPrizes(
         ...Object.values(claimPrizesParams),
       );
@@ -268,9 +273,10 @@ const calculateProfit = async (
     unclaimedClaims,
     feeRecipient,
     nativeTokenMarketRateUsd,
+    BigNumber.from('100'),
   );
 
-  const { claimCount, claimFeesUsd, totalCostUsd } = await getClaimInfo(
+  const { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
     context,
     claimerContract,
     tier,
@@ -280,7 +286,13 @@ const calculateProfit = async (
   );
 
   const claimsSlice = unclaimedClaims.slice(0, claimCount);
-  const claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
+  const claimPrizesParams = buildParams(
+    vault,
+    tier,
+    claimsSlice,
+    feeRecipient,
+    minVrgdaFeePerClaim,
+  );
 
   printAsterisks();
   console.log(chalk.magenta('5c. Profit/Loss (USD):'));
@@ -397,6 +409,7 @@ const buildParams = (
   tier: number,
   claims: Claim[],
   feeRecipient: string,
+  minVrgdaFeePerClaim: string,
 ): ClaimPrizesParams => {
   let winners: string[] = [];
   let prizeIndices: number[][] = [];
@@ -414,6 +427,7 @@ const buildParams = (
     winners,
     prizeIndices,
     feeRecipient,
+    minVrgdaFeePerClaim,
   };
 };
 
@@ -426,9 +440,10 @@ const getGasCost = async (
   claims: Claim[],
   feeRecipient: string,
   gasTokenMarketRateUsd: number,
+  estimateMinFee: BigNumber,
 ) => {
   let claimsSlice = claims.slice(0, 1);
-  let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
+  let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient, estimateMinFee);
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
@@ -446,7 +461,7 @@ const getGasCost = async (
   let estimatedGasLimitForTwo;
   if (claims.length > 1) {
     claimsSlice = claims.slice(0, 2);
-    claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient);
+    claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient, estimateMinFee);
 
     estimatedGasLimitForTwo = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
     if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
@@ -522,6 +537,7 @@ interface ClaimInfo {
   claimCount: number;
   claimFeesUsd: number;
   totalCostUsd: number;
+  minVrgdaFeePerClaim: string;
 }
 
 const getClaimInfo = async (
@@ -534,6 +550,7 @@ const getClaimInfo = async (
 ): Promise<ClaimInfo> => {
   let claimCount = 0;
   let claimFees = BigNumber.from(0);
+  let minVrgdaFeePerClaim = '';
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
   let prevTotalFeesMinusCostUsd = 0;
@@ -606,7 +623,8 @@ const getClaimInfo = async (
     // if (numClaims === 1) {
     //   claimCount = numClaims;
     //   claimFees = nextClaimFees;
-    //   return { claimCount, claimFeesUsd, totalCostUsd };
+    //   minVrgdaFeePerClaim = nextClaimFees.toString();
+    //   return { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim };
     // }
 
     const feeDiff = nextClaimFeesUsd - claimFeesUsd;
@@ -635,6 +653,9 @@ const getClaimInfo = async (
     console.log('totalFeesMinusCostUsd > minProfitThresholdUsd');
     console.log(totalFeesMinusCostUsd > minProfitThresholdUsd);
 
+    console.log('minVrgdaFeePerClaim');
+    console.log(minVrgdaFeePerClaim);
+
     if (
       totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd &&
       totalFeesMinusCostUsd > minProfitThresholdUsd
@@ -642,13 +663,14 @@ const getClaimInfo = async (
       prevTotalFeesMinusCostUsd = totalFeesMinusCostUsd;
       claimCount = numClaims;
       claimFees = nextClaimFees;
+      minVrgdaFeePerClaim = nextClaimFees.toString();
       claimFeesUsd = nextClaimFeesUsd;
     } else {
       break;
     }
   }
 
-  return { claimCount, claimFeesUsd, totalCostUsd };
+  return { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim };
 };
 
 const fetchClaims = async (
