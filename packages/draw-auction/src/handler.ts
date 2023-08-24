@@ -46,5 +46,5 @@ export async function handler(event: RelayerParams) {
 
   const params = handlerLoadParams(relayerAddress, rngWriteProvider, relayWriteProvider);
 
-  await executeTransactions(event, relayChainFakeEvent, params, rngWriteProvider);
+  await executeTransactions(event, relayChainFakeEvent, params, signer);
 }
