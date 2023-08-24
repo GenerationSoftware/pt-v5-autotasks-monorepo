@@ -56,6 +56,11 @@ interface RngAuctionRelayerRemoteOwnerRelayTxParams {
   rewardRecipient: string;
 }
 
+const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
+  5: '0x81f4056fffa1c1fa870de40bc45c752260e3ad13',
+  // erc5164MessageDispatcherAddress,
+};
+
 const getAuctionContracts = (
   rngChainId: number,
   relayChainId: number,
@@ -80,6 +85,13 @@ const getAuctionContracts = (
   );
   const chainlinkVRFV2DirectRngAuctionHelper = getContract(
     'ChainlinkVRFV2DirectRngAuctionHelper',
+    rngChainId,
+    rngReadProvider,
+    rngContracts,
+    version,
+  );
+  const rngAuctionRelayerRemoteOwner = getContract(
+    'RngAuctionRelayerRemoteOwner',
     rngChainId,
     rngReadProvider,
     rngContracts,
@@ -121,17 +133,18 @@ const getAuctionContracts = (
     relayContracts,
     version,
   );
-  const rngAuctionRelayerRemoteOwner = getContract(
-    'RngAuctionRelayerRemoteOwner',
-    rngChainId,
-    rngReadProvider,
-    rngContracts,
+  const remoteOwnerContract = getContract(
+    'RemoteOwner',
+    relayChainId,
+    relayReadProvider,
+    relayContracts,
     version,
   );
 
   return {
     prizePoolContract,
     chainlinkVRFV2DirectRngAuctionHelper,
+    remoteOwnerContract,
     rngAuctionContract,
     rngRelayAuctionContract,
     rngAuctionRelayerRemoteOwner,
@@ -188,11 +201,11 @@ export async function prepareDrawAuctionTxs(
 
   printContext(rngChainId, relayChainId, context);
 
-  if (!context.rngIsAuctionOpen && !context.rngRelayIsAuctionOpen) {
-    printAsterisks();
-    console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
-    return;
-  }
+  // if (!context.rngIsAuctionOpen && !context.rngRelayIsAuctionOpen) {
+  //   printAsterisks();
+  //   console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
+  //   return;
+  // }
 
   printSpacer();
   printAsterisks();
@@ -217,11 +230,11 @@ export async function prepareDrawAuctionTxs(
     params,
     context,
   );
-  if (gasCostUsd === 0) {
-    printAsterisks();
-    console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
-    return;
-  }
+  // if (gasCostUsd === 0) {
+  //   printAsterisks();
+  //   console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
+  //   return;
+  // }
 
   // #5. Find reward in USD
   const rewardUsd =
@@ -233,30 +246,31 @@ export async function prepareDrawAuctionTxs(
   const profitable = await calculateProfit(params, rewardUsd, gasCostUsd, context);
 
   // #7. Populate transaction
-  if (profitable) {
-    const relayer = selectedContract === RNG_AUCTION_KEY ? rngRelayer : relayRelayer;
-    // const chainId = selectedContract === RNG_AUCTION_KEY ? rngChainId : relayChainId;
+  // if (profitable) {
+  // const relayer = selectedContract === RNG_AUCTION_KEY ? rngRelayer : relayRelayer;
+  const relayer = rngRelayer;
+  // const chainId = selectedContract === RNG_AUCTION_KEY ? rngChainId : relayChainId;
 
-    // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
-    // console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-    printSpacer();
-    const tx = await sendTransaction(relayer, selectedContract, auctionContracts, params);
+  // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
+  // console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+  printSpacer();
+  const tx = await sendTransaction(relayer, selectedContract, auctionContracts, params);
 
-    // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
-    //       re-submit transactions, effectively giving them different tx hashes
-    //       It is likely good enough for these types of transactions but could cause
-    //       issues if there are a lot of failures or gas price issues
-    //       See querying here:
-    //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
-    console.log('Waiting on transaction to be confirmed ...');
-    const provider = selectedContract === RNG_AUCTION_KEY ? rngReadProvider : relayReadProvider;
-    await provider.waitForTransaction(tx.hash);
-    console.log('Tx confirmed !');
-  } else {
-    console.log(
-      chalk.yellow(`Completing current auction currently not profitable. Will try again soon ...`),
-    );
-  }
+  // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
+  //       re-submit transactions, effectively giving them different tx hashes
+  //       It is likely good enough for these types of transactions but could cause
+  //       issues if there are a lot of failures or gas price issues
+  //       See querying here:
+  //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
+  console.log('Waiting on transaction to be confirmed ...');
+  const provider = selectedContract === RNG_AUCTION_KEY ? rngReadProvider : relayReadProvider;
+  await provider.waitForTransaction(tx.hash);
+  console.log('Tx confirmed !');
+  // } else {
+  //   console.log(
+  //     chalk.yellow(`Completing current auction currently not profitable. Will try again soon ...`),
+  //   );
+  // }
 }
 
 /**
@@ -567,17 +581,16 @@ const getGasCost = async (
   } else {
     const rngAuctionRelayerRemoteOwnerRelayTxParams =
       buildRngAuctionRelayerRemoteOwnerRelayTxParams(
-        erc5162Messenger,
-        relayChainId,
-        // relayChainRemoteOwnerAddress,
-        auctionContracts.remoteOwnerContract.address
+        ERC_5164_MESSAGE_DISPATCHER_ADDRESS[params.rngChainId],
+        params.relayChainId,
+        auctionContracts.remoteOwnerContract.address,
         auctionContracts.rngRelayAuctionContract.address,
         params.rewardRecipient,
       );
     console.log('rngAuctionRelayerRemoteOwnerRelayTxParams');
     console.log(rngAuctionRelayerRemoteOwnerRelayTxParams);
     estimatedGasLimit = await getRngAuctionRelayerRemoteOwnerRelayEstimatedGasLimit(
-      auctionContracts.rngAuctionRelayerDirect,
+      auctionContracts.rngAuctionRelayerRemoteOwner,
       rngAuctionRelayerRemoteOwnerRelayTxParams,
     );
     // const relayTxParams = buildRelayParams(
@@ -629,7 +642,8 @@ const getGasCost = async (
 };
 
 const determineContractToUse = (context: DrawAuctionContext): string => {
-  return context.rngIsAuctionOpen ? CONTRACTS[RNG_AUCTION_KEY] : CONTRACTS[RNG_RELAY_AUCTION_KEY];
+  return CONTRACTS[RNG_RELAY_AUCTION_KEY];
+  // return context.rngIsAuctionOpen ? CONTRACTS[RNG_AUCTION_KEY] : CONTRACTS[RNG_RELAY_AUCTION_KEY];
 };
 
 const sendTransaction = async (
@@ -656,16 +670,29 @@ const sendTransaction = async (
     //   ...Object.values(startRngRequestTxParams),
     // );
   } else {
-    console.log(chalk.green(`Execute RngAuctionRelayerDirect#relay`));
+    console.log(chalk.green(`Execute RngAuctionRelayerRemoteOwner#relay`));
     printSpacer();
 
-    const relayTxParams = buildRelayParams(
+    const relayTxParams = buildRngAuctionRelayerRemoteOwnerRelayTxParams(
+      ERC_5164_MESSAGE_DISPATCHER_ADDRESS[params.rngChainId],
+      params.relayChainId,
+      auctionContracts.remoteOwnerContract.address,
       auctionContracts.rngRelayAuctionContract.address,
       params.rewardRecipient,
     );
-    populatedTx = await auctionContracts.rngAuctionRelayerDirect.populateTransaction.relay(
+    populatedTx = await auctionContracts.rngAuctionRelayerRemoteOwner.populateTransaction.relay(
       ...Object.values(relayTxParams),
     );
+    // console.log(chalk.green(`Execute RngAuctionRelayerDirect#relay`));
+    // printSpacer();
+
+    // const relayTxParams = buildRelayParams(
+    //   auctionContracts.rngRelayAuctionContract.address,
+    //   params.rewardRecipient,
+    // );
+    // populatedTx = await auctionContracts.rngAuctionRelayerDirect.populateTransaction.relay(
+    //   ...Object.values(relayTxParams),
+    // );
   }
 
   console.log(chalk.greenBright.bold(`Sending transaction ...`));

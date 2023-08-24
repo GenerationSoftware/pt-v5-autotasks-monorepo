@@ -120,6 +120,7 @@ export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuct
 export interface AuctionContracts {
   prizePoolContract: Contract;
   chainlinkVRFV2DirectRngAuctionHelper: Contract;
+  remoteOwnerContract: Contract;
   rngAuctionContract: Contract;
   rngRelayAuctionContract: Contract;
   rngAuctionRelayerRemoteOwner: Contract;
