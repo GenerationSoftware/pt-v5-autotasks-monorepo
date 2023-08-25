@@ -98,7 +98,7 @@ export interface RngDrawAuctionContext {
   rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
   rngIsRngComplete: boolean;
-  rngExpectedReward: BigNumber;
+  rngExpectedReward: number;
   relayer: DrawAuctionRelayerContext;
 }
 
