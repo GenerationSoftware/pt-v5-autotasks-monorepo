@@ -20,6 +20,7 @@ import { printSpacer } from './logging';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
 const PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY = 'prizePool-openDrawEndsAt';
+const PRIZE_POOL_RESERVE = 'prizePool-reserve';
 
 const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rngFeeToken-balanceOfBot';
 const RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY =
@@ -64,11 +65,14 @@ export const getDrawAuctionContextMulticall = async (
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
+  const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
+
   // 2. Rng Info
   const rngContext = await getRngMulticall(
     rngReadProvider,
     auctionContracts,
     relayerAddress,
+    prizePoolReserve,
     covalentApiKey,
   );
 
@@ -86,9 +90,7 @@ export const getDrawAuctionContextMulticall = async (
   const relayNativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(relayChainId);
 
   // 4. Fees & Rewards
-  const rngExpectedRewardUsd =
-    parseFloat(formatUnits(rngContext.rngExpectedReward, relayContext.rewardToken.decimals)) *
-    relayContext.rewardToken.assetRateUsd;
+  const rngExpectedRewardUsd = rngContext.rngExpectedReward * relayContext.rewardToken.assetRateUsd;
 
   return {
     ...rngContext,
@@ -112,6 +114,7 @@ export const getRngMulticall = async (
   readProvider: Provider,
   auctionContracts: AuctionContracts,
   relayerAddress: string,
+  prizePoolReserve: BigNumber,
   covalentApiKey?: string,
 ): Promise<RngDrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
@@ -177,8 +180,16 @@ export const getRngMulticall = async (
   // 6d. Results: Auction Info
   const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
   const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
-  const rngExpectedReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
+  const rngCurrentFractionalReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
   printSpacer();
+
+  const rngCurrentFractionalRewardString = ethers.utils.formatEther(rngCurrentFractionalReward);
+
+  // TODO: Assume 18 decimals. In the future may need to format using rewardToken's decimals instead
+  const prizePoolReserveString = ethers.utils.formatEther(prizePoolReserve);
+
+  const rngExpectedReward =
+    Number(prizePoolReserveString) * Number(rngCurrentFractionalRewardString);
 
   // 6g. Results: Rng Fee
   let relayer: DrawAuctionRelayerContext;
@@ -229,7 +240,6 @@ export const getRelayMulticall = async (
   let queries: Record<string, any> = {};
 
   // 1. Prize Pool Info
-  const pp = await auctionContracts.prizePoolContract.openDrawEndsAt();
   queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] = auctionContracts.prizePoolContract.openDrawEndsAt();
 
   // 3. Info about the reward token (prize token)
@@ -305,10 +315,6 @@ export const getRelayMulticall = async (
       parseFloat(formatUnits(rngRelayExpectedReward.toString(), rewardToken.decimals)) *
       rewardToken.assetRateUsd;
   }
-
-  // 6e. Results: Rng Reward
-  // const rngExpectedRewardUsd =
-  //   parseFloat(formatUnits(rngExpectedReward, rewardToken.decimals)) * rewardToken.assetRateUsd;
 
   return {
     prizePoolOpenDrawEndsAt,

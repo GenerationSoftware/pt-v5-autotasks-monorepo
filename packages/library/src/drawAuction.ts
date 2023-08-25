@@ -234,7 +234,7 @@ export async function prepareDrawAuctionTxs(
   if (gasCostUsd === 0) {
     printAsterisks();
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
-    return;
+    // return;
   }
 
   // #5. Find reward in USD
@@ -248,14 +248,14 @@ export async function prepareDrawAuctionTxs(
 
   // #7. Populate transaction
   if (profitable) {
-    // const relayer = rngRelayer;
+    const relayer = rngRelayer;
     // const relayer = selectedContract === RNG_AUCTION_KEY ? rngRelayer : relayRelayer;
     // const chainId = selectedContract === RNG_AUCTION_KEY ? rngChainId : relayChainId;
 
     // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
     // console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
     printSpacer();
-    // const tx = await sendTransaction(relayer, selectedContract, auctionContracts, params);
+    const tx = await sendTransaction(relayer, selectedContract, auctionContracts, params);
 
     // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
     //       re-submit transactions, effectively giving them different tx hashes
@@ -266,7 +266,7 @@ export async function prepareDrawAuctionTxs(
     console.log('Waiting on transaction to be confirmed ...');
     const provider = rngReadProvider;
     // const provider = selectedContract === RNG_AUCTION_KEY ? rngReadProvider : relayReadProvider;
-    // await provider.waitForTransaction(tx.hash);
+    await provider.waitForTransaction(tx.hash);
     console.log('Tx confirmed !');
     printSpacer();
   } else {
@@ -382,9 +382,10 @@ const calculateProfit = async (
 
   const grossProfitUsd = rewardUsd;
   console.log(chalk.magenta('(Gross Profit) = Reward'));
-  const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeUsd;
 
-  if (context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
+  let netProfitUsd;
+  if (context.rngIsAuctionOpen && context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
+    netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeUsd;
     console.log(chalk.magenta('(Net profit) = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
     console.log(
       chalk.greenBright(
@@ -397,6 +398,7 @@ const calculateProfit = async (
       chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${context.rngFeeUsd})`),
     );
   } else {
+    netProfitUsd = grossProfitUsd - gasCostUsd;
     console.log(chalk.magenta('(Net profit) = (Gross Profit) - (Gas Fees [Max])'));
     console.log(
       chalk.greenBright(
@@ -470,11 +472,9 @@ const printContext = (rngChainId: number, relayChainId: number, context: DrawAuc
 
   if (context.rngIsAuctionOpen) {
     printSpacer();
-    logBigNumber(
+    logStringValue(
       `2b. (RngAuction) Expected Reward:`,
-      context.rngExpectedReward.toString(),
-      context.rewardToken.decimals,
-      context.rewardToken.symbol,
+      `${context.rngExpectedReward.toString()} ${context.rewardToken.symbol}`,
     );
     console.log(
       chalk.grey(`2c. (RngAuction) Expected Reward (USD):`),
@@ -566,15 +566,20 @@ const getGasCost = async (
   let estimatedGasLimit;
   if (selectedContract === RNG_AUCTION_KEY) {
     if (context.rngFeeTokenIsSet) {
-      const transferFeeAndStartRngRequestTxParams = buildTransferFeeAndStartRngRequestParams(
-        params.rewardRecipient,
-      );
-      const chainlinkRngAuctionHelper =
-        auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
-      estimatedGasLimit = await getTransferFeeAndStartRngRequestEstimatedGasLimit(
-        chainlinkRngAuctionHelper,
-        transferFeeAndStartRngRequestTxParams,
-      );
+      // RPC failing to estimate gas on this specific transaction
+      //
+      // const transferFeeAndStartRngRequestTxParams = buildTransferFeeAndStartRngRequestParams(
+      //   params.rewardRecipient,
+      // );
+      // const chainlinkRngAuctionHelperContract =
+      //   auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
+      // estimatedGasLimit = await getTransferFeeAndStartRngRequestEstimatedGasLimit(
+      //   chainlinkRngAuctionHelperContract,
+      //   transferFeeAndStartRngRequestTxParams,
+      // );
+
+      // This was a previous tx gas usage on Goerli
+      estimatedGasLimit = BigNumber.from(307901);
     } else {
       const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
       estimatedGasLimit = await getStartRngRequestEstimatedGasLimit(
