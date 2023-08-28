@@ -18,6 +18,7 @@ import {
   roundTwoDecimalPlaces,
   getArbLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
+  getLiquidationPairComputeExactAmountInMulticall,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
@@ -130,6 +131,7 @@ export async function liquidatorArbitrageSwap(
     const getAmountInValues = async () => {
       try {
         return calculateAmountIn(
+          readProvider,
           liquidationPairContract,
           context,
           originalAmountOut,
@@ -145,8 +147,6 @@ export async function liquidatorArbitrageSwap(
     };
 
     const { amountIn, amountInMin, wantedAmountsIn } = await getAmountInValues();
-    console.log('amountIn');
-    console.log(amountIn);
 
     printSpacer();
     printSpacer();
@@ -641,7 +641,8 @@ const calculateAmountOut = async (
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
 const calculateAmountIn = async (
-  liquidationPair: Contract,
+  readProvider: Provider,
+  liquidationPairContract: Contract,
   context: ArbLiquidatorContext,
   originalAmountOut: BigNumber,
   wantedAmountsOut: BigNumber[],
@@ -655,7 +656,7 @@ const calculateAmountIn = async (
   let wantedAmountsIn = [];
 
   // Necessary for determining profit
-  const amountIn: BigNumber = await liquidationPair.callStatic.computeExactAmountIn(
+  const amountIn: BigNumber = await liquidationPairContract.callStatic.computeExactAmountIn(
     originalAmountOut,
   );
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
@@ -670,12 +671,11 @@ const calculateAmountIn = async (
     };
   }
 
-  for (let i = 0; i < wantedAmountsOut.length; i++) {
-    const amountOut = wantedAmountsOut[i];
-    const amountIn: BigNumber = await liquidationPair.callStatic.computeExactAmountIn(amountOut);
-
-    wantedAmountsIn.push(amountIn);
-  }
+  wantedAmountsIn = await getLiquidationPairComputeExactAmountInMulticall(
+    liquidationPairContract,
+    wantedAmountsOut,
+    readProvider,
+  );
 
   return {
     amountIn,
