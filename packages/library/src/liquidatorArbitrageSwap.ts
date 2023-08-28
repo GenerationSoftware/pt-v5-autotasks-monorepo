@@ -113,8 +113,11 @@ export async function liquidatorArbitrageSwap(
     // #2. Calculate amounts
     console.log(chalk.blue(`1. Amounts:`));
 
-    const { amountOut } = await calculateAmountOut(liquidationPairContract, context);
-    if (amountOut.eq(0)) {
+    const { originalAmountOut, wantedAmountsOut } = await calculateAmountOut(
+      liquidationPairContract,
+      context,
+    );
+    if (originalAmountOut.eq(0)) {
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -126,7 +129,12 @@ export async function liquidatorArbitrageSwap(
 
     const getAmountInValues = async () => {
       try {
-        return calculateAmountIn(liquidationPairContract, context, amountOut);
+        return calculateAmountIn(
+          liquidationPairContract,
+          context,
+          originalAmountOut,
+          wantedAmountsOut,
+        );
       } catch (e) {
         console.error(chalk.red(e));
 
@@ -136,9 +144,20 @@ export async function liquidatorArbitrageSwap(
       }
     };
 
-    const { amountIn, amountInMin } = await getAmountInValues();
+    const { amountIn, amountInMin, wantedAmountsIn } = await getAmountInValues();
     console.log('amountIn');
     console.log(amountIn);
+
+    printSpacer();
+    printSpacer();
+    console.log('wantedAmountsOut');
+    console.log(wantedAmountsOut);
+    console.log(wantedAmountsOut.length);
+    printSpacer();
+    printSpacer();
+    console.log('wantedAmountsIn');
+    console.log(wantedAmountsIn);
+    console.log(wantedAmountsIn.length);
     if (amountIn.eq(0)) {
       stats.push({
         pair,
@@ -185,7 +204,7 @@ export async function liquidatorArbitrageSwap(
     const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
-      amountOut,
+      amountOut: originalAmountOut,
       amountInMin,
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
@@ -215,11 +234,11 @@ export async function liquidatorArbitrageSwap(
     }
 
     // #6. Decide if profitable or not
-    const { estimatedProfitUsd, profitable } = await calculateProfit(
-      swapExactAmountOutParams,
+    const { estimatedProfitUsd, profitable, selectedIndex } = await calculateProfit(
       context,
       minProfitThresholdUsd,
-      amountIn,
+      wantedAmountsIn,
+      wantedAmountsOut,
       maxFeeUsd,
     );
     if (!profitable) {
@@ -242,6 +261,16 @@ export async function liquidatorArbitrageSwap(
       let transactionPopulated: PopulatedTransaction | undefined;
       console.log(chalk.blue('6. Populating swap transaction ...'));
       printSpacer();
+
+      // Re-create the params for the swap tx, this time using the dynamically chosen amountOut
+      // based on the maximum amount of profit
+      const swapExactAmountOutParams: SwapExactAmountOutParams = {
+        liquidationPairAddress: liquidationPair.address,
+        swapRecipient,
+        amountOut: wantedAmountsOut[selectedIndex],
+        amountInMin,
+        deadline: Math.floor(Date.now() / 1000) + 100,
+      };
 
       transactionPopulated = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
         ...Object.values(swapExactAmountOutParams),
@@ -430,43 +459,64 @@ const checkBalance = async (
  * @returns {Promise} Promise boolean of profitability
  */
 const calculateProfit = async (
-  swapExactAmountOutParams: SwapExactAmountOutParams,
   context: ArbLiquidatorContext,
   minProfitThresholdUsd: number,
-  amountIn: BigNumber,
+  wantedAmountsIn: BigNumber[],
+  wantedAmountsOut: BigNumber[],
   maxFeeUsd: number,
-): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
-  const { amountOut, amountInMin } = swapExactAmountOutParams;
-
+): Promise<{ estimatedProfitUsd: number; profitable: boolean; selectedIndex: number }> => {
   printAsterisks();
   console.log(chalk.blue('5. Profit/Loss (USD):'));
   printSpacer();
 
-  const underlyingAssetTokenUsd =
-    parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
-    context.underlyingAssetToken.assetRateUsd;
-  const tokenInUsd =
-    parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
-    context.tokenIn.assetRateUsd;
+  const grossProfitsUsd = [];
+  for (let i = 0; i < wantedAmountsIn.length; i++) {
+    const amountOut = wantedAmountsOut[i];
+    const amountIn = wantedAmountsIn[i];
 
-  const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
-  const netProfitUsd = grossProfitUsd - maxFeeUsd;
+    const underlyingAssetTokenUsd =
+      parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
+      context.underlyingAssetToken.assetRateUsd;
+    const tokenInUsd =
+      parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
+      context.tokenIn.assetRateUsd;
 
-  console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
-  console.log(
-    chalk.greenBright(
-      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
-        underlyingAssetTokenUsd,
-      )} - $${roundTwoDecimalPlaces(tokenInUsd)}`,
-    ),
-  );
+    const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
+
+    console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
+    console.log(
+      chalk.greenBright(
+        `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
+          underlyingAssetTokenUsd,
+        )} - $${roundTwoDecimalPlaces(tokenInUsd)}`,
+      ),
+    );
+
+    grossProfitsUsd.push(grossProfitUsd);
+  }
   printSpacer();
+
+  const getMaxGrossProfit = (grossProfitsUsd: number[]) => {
+    const max = grossProfitsUsd.reduce((a, b) => Math.max(a, b), -Infinity);
+    console.log('max');
+    console.log(max);
+
+    return { maxGrossProfit: max, selectedIndex: grossProfitsUsd.indexOf(max) };
+  };
+
+  const { selectedIndex, maxGrossProfit } = getMaxGrossProfit(grossProfitsUsd);
+  console.log('maxGrossProfit');
+  console.log(maxGrossProfit);
+  console.log('selectedIndex');
+  console.log(selectedIndex);
+
+  const netProfitUsd = maxGrossProfit - maxFeeUsd;
 
   console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Max)'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
-        grossProfitUsd,
+        maxGrossProfit,
       )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`,
     ),
   );
@@ -480,7 +530,9 @@ const calculateProfit = async (
   });
   printSpacer();
 
-  return { estimatedProfitUsd: roundTwoDecimalPlaces(netProfitUsd), profitable };
+  const estimatedProfitUsd = roundTwoDecimalPlaces(netProfitUsd);
+
+  return { estimatedProfitUsd, profitable, selectedIndex };
 };
 
 /**
@@ -536,8 +588,11 @@ const calculateAmountOut = async (
   liquidationPair: Contract,
   context: ArbLiquidatorContext,
 ): Promise<{
-  amountOut: BigNumber;
+  originalAmountOut: BigNumber;
+  wantedAmountsOut: BigNumber[];
 }> => {
+  const wantedAmountsOut = [];
+
   const amountOut = await liquidationPair.callStatic.maxAmountOut();
   logBigNumber(
     `Max amount out available:`,
@@ -553,23 +608,31 @@ const calculateAmountOut = async (
       ),
     );
     return {
-      amountOut: BigNumber.from(0),
+      originalAmountOut: BigNumber.from(0),
+      wantedAmountsOut,
     };
   }
 
-  // Needs to be based on how much the bot owner has of tokenIn
-  // and how much they will make depending on the state of the gradual auction
-  const divisor = 5;
-  const wantedAmountOut = amountOut.div(divisor);
-  logBigNumber(
-    'Wanted amount out:',
-    wantedAmountOut,
-    context.tokenOut.decimals,
-    context.tokenOut.symbol,
-  );
+  // Get multiple points across the auction function to determine the most amount of profitability
+  // most amount out for least amount of token in
+  // (depending on the state of the gradual auction)
+  for (let i = 1; i <= 10; i++) {
+    const amountToSendPercent = i * 10;
+    const wantedAmountOut = amountOut.mul(ethers.BigNumber.from(amountToSendPercent)).div(100);
+
+    logBigNumber(
+      'Wanted amount out:',
+      wantedAmountOut,
+      context.tokenOut.decimals,
+      context.tokenOut.symbol,
+    );
+
+    wantedAmountsOut.push(wantedAmountOut);
+  }
 
   return {
-    amountOut: wantedAmountOut,
+    originalAmountOut: amountOut,
+    wantedAmountsOut,
   };
 };
 
@@ -580,22 +643,44 @@ const calculateAmountOut = async (
 const calculateAmountIn = async (
   liquidationPair: Contract,
   context: ArbLiquidatorContext,
-  amountOut: BigNumber,
+  originalAmountOut: BigNumber,
+  wantedAmountsOut: BigNumber[],
 ): Promise<{
   amountIn: BigNumber;
   amountInMin: BigNumber;
+  wantedAmountsIn: BigNumber[];
 }> => {
   printSpacer();
 
+  let wantedAmountsIn = [];
+
   // Necessary for determining profit
-  const amountIn: BigNumber = await liquidationPair.callStatic.computeExactAmountIn(amountOut);
+  const amountIn: BigNumber = await liquidationPair.callStatic.computeExactAmountIn(
+    originalAmountOut,
+  );
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
   const amountInMin = ethers.constants.MaxInt256;
 
+  if (amountIn.eq(0)) {
+    return {
+      amountIn,
+      amountInMin,
+      wantedAmountsIn,
+    };
+  }
+
+  for (let i = 0; i < wantedAmountsOut.length; i++) {
+    const amountOut = wantedAmountsOut[i];
+    const amountIn: BigNumber = await liquidationPair.callStatic.computeExactAmountIn(amountOut);
+
+    wantedAmountsIn.push(amountIn);
+  }
+
   return {
     amountIn,
     amountInMin,
+    wantedAmountsIn,
   };
 };
 
