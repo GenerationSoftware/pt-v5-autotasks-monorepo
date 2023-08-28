@@ -19,8 +19,14 @@ import { printSpacer } from './logging';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
+export enum DrawAuctionState {
+  RngStart = 'RngStart',
+  RngStartVrfHelper = 'RngVrfHelper',
+  RngRelayDirect = 'RngRelayDirect',
+  RngRelayBridge = 'RngRelayBridge',
+}
+
 const PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY = 'prizePool-openDrawEndsAt';
-const PRIZE_POOL_RESERVE = 'prizePool-reserve';
 
 const RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY = 'rngFeeToken-balanceOfBot';
 const RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY =
@@ -56,6 +62,38 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
  * @returns DrawAuctionContext
  */
 export const getDrawAuctionContextMulticall = async (
+  rngChainId: number,
+  rngReadProvider: Provider,
+  relayChainId: number,
+  relayReadProvider: Provider,
+  auctionContracts: AuctionContracts,
+  relayerAddress: string,
+  rewardRecipient: string,
+  covalentApiKey?: string,
+): Promise<DrawAuctionContext> => {
+  const context: DrawAuctionContext = await getContext(
+    rngChainId,
+    rngReadProvider,
+    relayChainId,
+    relayReadProvider,
+    auctionContracts,
+    relayerAddress,
+    rewardRecipient,
+    covalentApiKey,
+  );
+
+  // 5. State enum
+  const state: DrawAuctionState = getState(context);
+  console.log('context.state');
+  console.log(context.state);
+
+  return {
+    ...context,
+    state,
+  };
+};
+
+const getContext = async (
   rngChainId: number,
   rngReadProvider: Provider,
   relayChainId: number,
@@ -102,7 +140,6 @@ export const getDrawAuctionContextMulticall = async (
 };
 
 // Gather information about the PrizePool, RNG Relay contracts and token (ie. reserve, reward)
-
 /**
  * Gather information about the RNG Start Contracts
  *
@@ -324,4 +361,23 @@ export const getRelayMulticall = async (
     rngRelayExpectedRewardUsd,
     rngRelayLastSequenceId,
   };
+};
+
+//    If in RNG Start state figure out if we need to run:
+//     RngAuction#startRngRequest (if blockhash),
+//     ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest (if VRF),
+//
+//    If in relay state,
+//     or RngRelayAuction#relay (if blockhash), or
+//     rngAuctionRelayerRemoteOwnerContract#relay (if VRF)
+const getState = (context: DrawAuctionContext): DrawAuctionState => {
+  if (context.rngIsAuctionOpen && context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
+    return DrawAuctionState.RngStartVrfHelper;
+  } else if (context.rngIsAuctionOpen) {
+    return DrawAuctionState.RngStart;
+  } else if (context.rngRelayIsAuctionOpen) {
+    return DrawAuctionState.RngRelayBridge;
+  } else if (context.rngRelayIsAuctionOpen) {
+    return DrawAuctionState.RngRelayDirect;
+  }
 };
