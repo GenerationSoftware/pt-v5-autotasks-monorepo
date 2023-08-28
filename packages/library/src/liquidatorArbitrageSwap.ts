@@ -86,7 +86,7 @@ export async function liquidatorArbitrageSwap(
     printAsterisks();
     const liquidationPair = liquidationPairContracts[i];
     console.log(`LiquidationPair #${i + 1}`);
-    console.log(liquidationPair.address);
+    console.log(chalk.dim(`LiquidationPair Address: ${liquidationPair.address}`));
 
     const liquidationPairData = contracts.contracts.find(
       (contract) => contract.type === 'LiquidationPair',
@@ -148,16 +148,6 @@ export async function liquidatorArbitrageSwap(
 
     const { amountIn, amountInMin, wantedAmountsIn } = await getAmountInValues();
 
-    printSpacer();
-    printSpacer();
-    console.log('wantedAmountsOut');
-    console.log(wantedAmountsOut);
-    console.log(wantedAmountsOut.length);
-    printSpacer();
-    printSpacer();
-    console.log('wantedAmountsIn');
-    console.log(wantedAmountsIn);
-    console.log(wantedAmountsIn.length);
     if (amountIn.eq(0)) {
       stats.push({
         pair,
@@ -469,6 +459,7 @@ const calculateProfit = async (
   console.log(chalk.blue('5. Profit/Loss (USD):'));
   printSpacer();
 
+  console.log(chalk.blueBright('Gross profit = tokenOut - tokenIn'));
   const grossProfitsUsd = [];
   for (let i = 0; i < wantedAmountsIn.length; i++) {
     const amountOut = wantedAmountsOut[i];
@@ -483,8 +474,8 @@ const calculateProfit = async (
 
     const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
 
-    console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
     console.log(
+      chalk.dim(`Index ${i}:`),
       chalk.greenBright(
         `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
           underlyingAssetTokenUsd,
@@ -498,17 +489,15 @@ const calculateProfit = async (
 
   const getMaxGrossProfit = (grossProfitsUsd: number[]) => {
     const max = grossProfitsUsd.reduce((a, b) => Math.max(a, b), -Infinity);
-    console.log('max');
-    console.log(max);
-
     return { maxGrossProfit: max, selectedIndex: grossProfitsUsd.indexOf(max) };
   };
 
   const { selectedIndex, maxGrossProfit } = getMaxGrossProfit(grossProfitsUsd);
-  console.log('maxGrossProfit');
-  console.log(maxGrossProfit);
-  console.log('selectedIndex');
-  console.log(selectedIndex);
+  console.log(
+    chalk.dim(`Selected Index ${selectedIndex} -`),
+    chalk.blueBright(`$${roundTwoDecimalPlaces(maxGrossProfit)}`),
+  );
+  printSpacer();
 
   const netProfitUsd = maxGrossProfit - maxFeeUsd;
 
@@ -616,6 +605,7 @@ const calculateAmountOut = async (
   // Get multiple points across the auction function to determine the most amount of profitability
   // most amount out for least amount of token in
   // (depending on the state of the gradual auction)
+  printSpacer();
   for (let i = 1; i <= 10; i++) {
     const amountToSendPercent = i * 10;
     const wantedAmountOut = amountOut.mul(ethers.BigNumber.from(amountToSendPercent)).div(100);

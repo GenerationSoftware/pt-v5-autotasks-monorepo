@@ -4,6 +4,7 @@ import {
   ContractData,
   getEthersMulticallProviderResults,
 } from '@generationsoftware/pt-v5-utils-js';
+import chalk from 'chalk';
 
 import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
 import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS, printSpacer } from '../utils';
@@ -69,8 +70,8 @@ export const getArbLiquidatorContextMulticall = async (
   let underlyingAssetAddress;
   try {
     underlyingAssetAddress = await liquidationPairTokenOutAsVault.asset();
-    console.log('underlyingAssetAddress');
-    console.log(underlyingAssetAddress);
+    console.log(chalk.dim('Underlying Asset Address:'));
+    console.log(chalk.dim(underlyingAssetAddress));
   } catch (e) {
     console.error(e);
     console.log('---');

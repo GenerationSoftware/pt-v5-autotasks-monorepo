@@ -2,6 +2,8 @@ import { Contract, BigNumber } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
+import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
+
 export interface ArbLiquidatorRelayerContext {
   tokenInAllowance: BigNumber;
   tokenInBalance: BigNumber;
@@ -114,6 +116,7 @@ export interface RelayDrawAuctionContext {
 export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuctionContext {
   rngNativeTokenMarketRateUsd: number;
   relayNativeTokenMarketRateUsd: number;
+  state?: DrawAuctionState;
   rngExpectedRewardUsd?: number;
 }
 
