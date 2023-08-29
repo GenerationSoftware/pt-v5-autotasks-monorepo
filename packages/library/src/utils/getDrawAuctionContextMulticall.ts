@@ -94,8 +94,6 @@ export const getDrawAuctionContextMulticall = async (
 
   // 5. State enum
   const state: DrawAuctionState = getState(context);
-  console.log('context.state');
-  console.log(context.state);
 
   return {
     ...context,
