@@ -192,7 +192,7 @@ export async function prepareDrawAuctionTxs(
     printAsterisks();
     console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
     printSpacer();
-    // return;
+    return;
   }
 
   printSpacer();
@@ -206,7 +206,7 @@ export async function prepareDrawAuctionTxs(
   if (gasCostUsd === 0) {
     printAsterisks();
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
-    // return;
+    return;
   }
 
   // #5. Find reward in USD
@@ -223,6 +223,7 @@ export async function prepareDrawAuctionTxs(
   if (profitable) {
     const relayer = getRelayer(rngRelayer, relayRelayer, context);
     const chainId = getChainId(rngChainId, relayChainId, context);
+    const provider = getProvider(rngReadProvider, relayReadProvider, context);
 
     const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
     console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
@@ -237,7 +238,6 @@ export async function prepareDrawAuctionTxs(
     //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
     console.log('Waiting on transaction to be confirmed ...');
 
-    const provider = getProvider(rngReadProvider, relayReadProvider, context);
     await provider.waitForTransaction(tx.hash);
     console.log('Tx confirmed !');
     printSpacer();
@@ -565,8 +565,8 @@ const getGasCost = async (
       //   transferFeeAndStartRngRequestTxParams,
       // );
 
-      // This was a previous tx gas usage on Goerli
-      estimatedGasLimit = BigNumber.from(307901);
+      // This was a previous tx gas usage on Goerli + buffer room
+      estimatedGasLimit = BigNumber.from(330000);
     } else {
       const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
       estimatedGasLimit = await getStartRngRequestEstimatedGasLimit(

@@ -31,7 +31,31 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 
 /**
- * Gather info on current fees from the chain
+ * Get the current feeData from chain
+ *
+ * @param {Provider} provider, any ethers provider
+ * @returns {Promise} Promise object with recent baseFeeUsd & maxFeeUsd from the chain
+ *                    while avgFeeUsd is in between the two
+ **/
+export const getFees = async (
+  provider: Provider,
+): Promise<{ lastBaseFeePerGas?: BigNumber; maxFeePerGas?: BigNumber }> => {
+  // const fees = { lastBaseFeePerGas: null, maxFeePerGas: null };
+
+  const feeData = await provider.getFeeData();
+
+  // if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
+  //   return fees;
+  // }
+
+  const lastBaseFeePerGas = feeData.lastBaseFeePerGas;
+  const maxFeePerGas = feeData.maxFeePerGas;
+
+  return { lastBaseFeePerGas, maxFeePerGas };
+};
+
+/**
+ * Get the estimated USD cost of a transaction based on native token market rate and estimated gas limit
  *
  * @param {BigNumber} estimatedGasLimit, how much gas the function is estimated to use (in wei)
  * @param {gasTokenMarketRateUsd} context, provided from MarketRate contract or from an API
@@ -47,7 +71,7 @@ export const getFeesUsd = async (
 ): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
   const fees = { baseFeeUsd: null, maxFeeUsd: null, avgFeeUsd: null };
 
-  const feeData = await provider.getFeeData();
+  const feeData = await getFees(provider);
 
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     return fees;

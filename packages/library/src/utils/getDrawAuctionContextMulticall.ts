@@ -12,12 +12,19 @@ import {
   RngDrawAuctionContext,
   RelayDrawAuctionContext,
 } from '../types';
-import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
+import { getFees, getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { VrfRngAbi } from '../abis/VrfRngAbi';
+import { VrfWrapperAbi } from '../abis/VrfWrapperAbi';
 import { printSpacer } from './logging';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
+
+const CHAINLINK_VRF_WRAPPER_ADDRESS = {
+  1: '0x5A861794B927983406fCE1D062e00b9368d97Df6',
+  5: '0x708701a1DfF4f478de54383E49a627eD4852C816',
+  11155111: '0xab18414CD93297B0d12ac29E63Ca20f515b3DB46',
+};
 
 export enum DrawAuctionState {
   RngStart = 'RngStart',
@@ -25,6 +32,8 @@ export enum DrawAuctionState {
   RngRelayDirect = 'RngRelayDirect',
   RngRelayBridge = 'RngRelayBridge',
 }
+
+const CALLBACK_GAS_LIMIT = 1000000;
 
 const PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY = 'prizePool-openDrawEndsAt';
 
@@ -34,6 +43,7 @@ const RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY =
 const RNG_FEE_TOKEN_DECIMALS_KEY = 'rngFeeToken-decimals';
 const RNG_FEE_TOKEN_NAME_KEY = 'rngFeeToken-name';
 const RNG_FEE_TOKEN_SYMBOL_KEY = 'rngFeeToken-symbol';
+const RNG_FEE_ESTIMATED_REQUEST_PRICE = 'rngFeeToken-estimatedRequestPrice';
 
 const REWARD_DECIMALS_KEY = 'rewardToken-decimals';
 const REWARD_NAME_KEY = 'rewardToken-name';
@@ -108,6 +118,7 @@ const getContext = async (
   // 2. Rng Info
   const rngContext = await getRngMulticall(
     rngReadProvider,
+    rngChainId,
     auctionContracts,
     relayerAddress,
     prizePoolReserve,
@@ -148,28 +159,42 @@ const getContext = async (
  * @returns DrawAuctionContext
  */
 export const getRngMulticall = async (
-  readProvider: Provider,
+  rngReadProvider: Provider,
+  rngChainId: number,
   auctionContracts: AuctionContracts,
   relayerAddress: string,
   prizePoolReserve: BigNumber,
   covalentApiKey?: string,
 ): Promise<RngDrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
-  const multicallProvider = MulticallWrapper.wrap(readProvider);
+  const multicallProvider = MulticallWrapper.wrap(rngReadProvider);
 
   let queries: Record<string, any> = {};
 
   // 2. RNG Auction Service Info
   const rngService = await auctionContracts.rngAuctionContract.getNextRngService();
-  const rngServiceContract = new ethers.Contract(rngService, VrfRngAbi, readProvider);
+  const rngServiceContract = new ethers.Contract(rngService, VrfRngAbi, rngReadProvider);
   const rngServiceRequestFee = await rngServiceContract.getRequestFee();
 
   const rngFeeTokenAddress = rngServiceRequestFee[0];
-  const rngFeeAmount = rngServiceRequestFee[1];
+  // const rngFeeAmount = rngServiceRequestFee[1];
+
+  // Need to ask wrapper directly for more accurate estimate of LINK tokens required
+  const chainlinkVrfWrapperContract = new ethers.Contract(
+    CHAINLINK_VRF_WRAPPER_ADDRESS[rngChainId],
+    VrfWrapperAbi,
+    rngReadProvider,
+  );
+  const feeData = await getFees(rngReadProvider);
+  const requestGasPriceWei = feeData.maxFeePerGas;
+  const rngFeeAmount = await chainlinkVrfWrapperContract.estimateRequestPrice(
+    CALLBACK_GAS_LIMIT,
+    requestGasPriceWei,
+  );
 
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
   if (rngFeeTokenIsSet) {
-    const rngFeeTokenContract = new ethers.Contract(rngFeeTokenAddress, ERC20Abi, readProvider);
+    const rngFeeTokenContract = new ethers.Contract(rngFeeTokenAddress, ERC20Abi, rngReadProvider);
     queries[RNG_FEE_TOKEN_DECIMALS_KEY] = rngFeeTokenContract.decimals();
     queries[RNG_FEE_TOKEN_NAME_KEY] = rngFeeTokenContract.name();
     queries[RNG_FEE_TOKEN_SYMBOL_KEY] = rngFeeTokenContract.symbol();
