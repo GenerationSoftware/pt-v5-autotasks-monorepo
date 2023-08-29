@@ -606,16 +606,17 @@ const calculateAmountOut = async (
   // most amount out for least amount of token in
   // (depending on the state of the gradual auction)
   printSpacer();
-  for (let i = 1; i <= 10; i++) {
-    const amountToSendPercent = i * 10;
+  for (let i = 1; i <= 100; i++) {
+    const amountToSendPercent = i;
+    // const amountToSendPercent = i * 10; when number of divisions is 10, instead of 100
     const wantedAmountOut = amountOut.mul(ethers.BigNumber.from(amountToSendPercent)).div(100);
 
-    logBigNumber(
-      'Wanted amount out:',
-      wantedAmountOut,
-      context.tokenOut.decimals,
-      context.tokenOut.symbol,
-    );
+    // logBigNumber(
+    //   'Wanted amount out:',
+    //   wantedAmountOut,
+    //   context.tokenOut.decimals,
+    //   context.tokenOut.symbol,
+    // );
 
     wantedAmountsOut.push(wantedAmountOut);
   }

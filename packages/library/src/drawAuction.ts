@@ -196,12 +196,22 @@ export async function prepareDrawAuctionTxs(
   }
 
   printSpacer();
-  printAsterisks();
+  printSpacer();
 
   // #3. If there is an RNG Fee, figure out if the bot can afford it
-  await increaseRngFeeAllowance(signer, relayerAddress, context, auctionContracts);
+  if (context.state === DrawAuctionState.RngStartVrfHelper) {
+    console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
+    printSpacer();
+    await checkBalance(context);
+    await increaseRngFeeAllowance(signer, relayerAddress, context, auctionContracts);
+  }
+
+  printSpacer();
+  printSpacer();
 
   // #4. Estimate gas costs
+  console.log(chalk.blue(`Estimating gas costs ...`));
+  printSpacer();
   const gasCostUsd = await getGasCost(rngReadProvider, auctionContracts, params, context);
   if (gasCostUsd === 0) {
     printAsterisks();
@@ -245,10 +255,26 @@ export async function prepareDrawAuctionTxs(
     printNote();
   } else {
     console.log(
-      chalk.yellow(`Completing current auction currently not profitable. Will try again soon ...`),
+      chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
 }
+
+const checkBalance = (context: DrawAuctionContext) => {
+  // Bot/Relayer can't afford RNG fee
+  if (context.relayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
+    const diff = context.rngFeeAmount.sub(context.relayer.rngFeeTokenBalance);
+    const diffStr = parseFloat(formatUnits(diff, context.rngFeeToken.decimals));
+
+    console.warn(
+      chalk.yellow(
+        `Need to increase relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
+      ),
+    );
+  } else {
+    console.log(chalk.green('Sufficient balance ✔'));
+  }
+};
 
 const printNote = () => {
   console.log(chalk.yellow('|*******************************************************|'));
@@ -359,26 +385,24 @@ const calculateProfit = async (
 ): Promise<boolean> => {
   printSpacer();
   printSpacer();
-  console.log(chalk.blue(`2. Calculating profit ...`));
+  console.log(chalk.blue(`Calculating profit ...`));
 
-  printAsterisks();
+  printSpacer();
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
   const grossProfitUsd = rewardUsd;
-  console.log(chalk.magenta('(Gross Profit) = Reward'));
+  console.log(chalk.magenta('Gross Profit = Reward'));
 
   let netProfitUsd;
   if (context.rngIsAuctionOpen && context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
     netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeUsd;
-    console.log(chalk.magenta('(Net profit) = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
+    console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
     console.log(
       chalk.greenBright(
         `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
           rewardUsd,
-        )} - $${roundTwoDecimalPlaces(gasCostUsd)}) - $${roundTwoDecimalPlaces(
-          context.rngFeeUsd,
-        )})`,
+        )} - $${roundTwoDecimalPlaces(gasCostUsd)} - $${roundTwoDecimalPlaces(context.rngFeeUsd)})`,
       ),
       chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${context.rngFeeUsd})`),
     );
@@ -415,7 +439,7 @@ const calculateProfit = async (
 const printContext = (rngChainId: number, relayChainId: number, context: DrawAuctionContext) => {
   printAsterisks();
   printSpacer();
-  console.log(chalk.blue.bold(`1. Tokens:`));
+  console.log(chalk.blue.bold(`Tokens:`));
 
   printSpacer();
   logStringValue(
@@ -450,7 +474,7 @@ const printContext = (rngChainId: number, relayChainId: number, context: DrawAuc
 
   printSpacer();
   printSpacer();
-  console.log(chalk.blue.bold(`2. Rng Auction State:`));
+  console.log(chalk.blue.bold(`Rng Auction State:`));
 
   printSpacer();
   logStringValue(`2a. (RngAuction) Auction open? `, `${checkOrX(context.rngIsAuctionOpen)}`);
@@ -476,7 +500,7 @@ const printContext = (rngChainId: number, relayChainId: number, context: DrawAuc
 
   printSpacer();
   printSpacer();
-  console.log(chalk.blue.bold(`3. RngRelay Auction State:`));
+  console.log(chalk.blue.bold(`RngRelay Auction State:`));
 
   printSpacer();
   logStringValue(
@@ -709,22 +733,12 @@ const increaseRngFeeAllowance = async (
   context: DrawAuctionContext,
   auctionContracts: AuctionContracts,
 ) => {
-  if (context.state === DrawAuctionState.RngStartVrfHelper) {
-    // Bot/Relayer can't afford RNG fee
-    if (context.relayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
-      const diff = context.rngFeeAmount.sub(context.relayer.rngFeeTokenBalance);
-      const diffStr = parseFloat(formatUnits(diff, context.rngFeeToken.decimals));
-
-      console.warn(
-        chalk.yellow(
-          `Need to increase relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
-        ),
-      );
-    }
-
-    // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
-    approve(signer, relayerAddress, auctionContracts, context);
-  }
+  printSpacer();
+  printSpacer();
+  console.log(chalk.blue(`Checking allowance ...`));
+  printSpacer();
+  // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
+  approve(signer, relayerAddress, auctionContracts, context);
 };
 
 /**
