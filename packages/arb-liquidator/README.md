@@ -1,4 +1,10 @@
-# @generationsoftware/pt-v5-autotasks-arb-liquidator
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GenerationSoftware/pt-v5-utils-js/main/img/pooltogether-logo--purple@2x.png?raw=true" alt="PoolTogether Brand" style="max-width:100%;" width="300">
+</p>
+
+<br />
+
+# 🤖 @generationsoftware/pt-v5-autotasks-arb-liquidator - PoolTogether V5
 
 ![title image for PoolTogether Arbitrage Liquidator Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/arb-liquidator/arb-liquidator-img.png "title image for PoolTogether Arbitrage Liquidator Bot")
 
@@ -9,10 +15,6 @@ PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to find arbitrag
 This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
 
 The bulk of determining if an arbitrage is profitable is in **[/packages/library/src/liquidatorArbitrageSwap.ts#L44](../library)**.
-
-## Note:
-
-If you would rather use something other than OZ Defender/Infura, you can import the `v5-autotasks-library` into your own code. More info here: **[v5-autotasks-library](../library#usage)**
 
 ### 1. Run autotask
 
@@ -25,20 +27,20 @@ yarn start
 You will be prompted to fill in the following necessary variables:
 
 ```
-CHAIN_ID: Which network to run on
-DEFENDER_TEAM_API_KEY: OZ Defender-specific
-DEFENDER_TEAM_SECRET_KEY: OZ Defender-specific
-AUTOTASK_ID: OZ Defender-specific
-RELAYER_API_KEY: OZ Defender-specific
-RELAYER_API_SECRET: OZ Defender-specific
-JSON_RPC_URI: Network-specific
+CHAIN_ID: The chain ID of which network to run the autotask on
+DEFENDER_TEAM_API_KEY: OZ Defender Team API Key
+DEFENDER_TEAM_API_KEY: OZ Defender Team Secret Key
+AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
+RELAYER_API_KEY: OZ Defender chain Relayer API Key
+RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
+JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
 COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
 ```
 
 The following is unique to the Arb Liquidator bot:
 
 ```
-SWAP_RECIPIENT: Who will receive the profit for claiming on other's behalf
+SWAP_RECIPIENT: Address of the contract/EOA account that will receive the `tokenOut` tokens, can set to relayer address or any other contract/EOA
 ```
 
 Once the config has been saved with all of those variables, the script will run.

@@ -1,4 +1,10 @@
-# @generationsoftware/pt-v5-autotasks-library
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GenerationSoftware/pt-v5-utils-js/main/img/pooltogether-logo--purple@2x.png?raw=true" alt="PoolTogether Brand" style="max-width:100%;" width="300">
+</p>
+
+<br />
+
+# 🤖 @generationsoftware/pt-v5-autotasks-library - PoolTogether V5
 
 PoolTogether hyperstructure (v5) supporting functions for the bots.
 
@@ -16,25 +22,4 @@ npm install @generationsoftware/pt-v5-autotasks-library
 
 ## Usage
 
-You can use this library in your own code, for instance if you would rather not use OpenZeppelin Defender for your automated/cron-based bots. Here's an example:
-
-```ts
-import { downloadContractsBlob } from "@generationsoftware/pt-v5-utils-js";
-import { executeClaimerProfitablePrizeTxs } from "@generationsoftware/pt-v5-autotasks-library";
-
-interface Params {
-  contracts: ContractsBlob;
-  readProvider: Provider;
-  config: ExecuteClaimerProfitablePrizeTxsParams;
-}
-
-async function main() {
-  const contracts = await downloadContractsBlob(chainId);
-  const params: Params = { contracts, readProvider, config };
-  executeClaimerProfitablePrizeTxs(params);
-}
-
-main();
-```
-
-Where `readProvider` is any ethers `Provider`, and `params` is of the `ExecuteClaimerProfitablePrizeTxsParams` type. You can then pass the list of populated transactions `populatedTxs` to whichever relayer/write provider you would like to send transactions with.
+These bots rely on OpenZeppelin Defender for submitting transactions on a schedule. You can fork this repo to modify the existing bots, for example if you would rather use Gelato or Keeper or some other cronjob/tx submitting platform.
