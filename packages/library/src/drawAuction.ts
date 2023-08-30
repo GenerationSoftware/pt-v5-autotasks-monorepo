@@ -130,6 +130,17 @@ const getAuctionContracts = (
     version,
   );
 
+  logTable({
+    prizePoolContract: prizePoolContract.address,
+    chainlinkVRFV2DirectRngAuctionHelperContract:
+      chainlinkVRFV2DirectRngAuctionHelperContract.address,
+    remoteOwnerContract: remoteOwnerContract.address,
+    rngAuctionContract: rngAuctionContract.address,
+    rngRelayAuctionContract: rngRelayAuctionContract.address,
+    rngAuctionRelayerRemoteOwnerContract: rngAuctionRelayerRemoteOwnerContract.address,
+    rngAuctionRelayerDirect: rngAuctionRelayerDirect?.address,
+  });
+
   return {
     prizePoolContract,
     chainlinkVRFV2DirectRngAuctionHelperContract,
