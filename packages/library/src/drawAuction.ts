@@ -261,6 +261,13 @@ export async function prepareDrawAuctionTxs(
 }
 
 const checkBalance = (context: DrawAuctionContext) => {
+  logBigNumber(
+    `1f. Relayer RNG Token Balance (USD):`,
+    context.relayer.rngFeeTokenBalance,
+    context.rngFeeToken.decimals,
+    context.rngFeeToken.symbol,
+  );
+
   // Bot/Relayer can't afford RNG fee
   if (context.relayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
     const diff = context.rngFeeAmount.sub(context.relayer.rngFeeTokenBalance);
@@ -273,6 +280,13 @@ const checkBalance = (context: DrawAuctionContext) => {
     );
   } else {
     console.log(chalk.green('Sufficient balance ✔'));
+
+    printSpacer();
+    const estimateCount = context.relayer.rngFeeTokenBalance.div(context.rngFeeAmount);
+    logStringValue(
+      `Estimate DrawAuction RNG requests left at current balance:`,
+      estimateCount.toString(),
+    );
   }
 };
 
@@ -470,6 +484,7 @@ const printContext = (rngChainId: number, relayChainId: number, context: DrawAuc
       context.rngFeeToken.symbol,
     );
     logStringValue(`1e. RNG Fee Amount (USD):`, `$${context.rngFeeUsd}`);
+    printSpacer();
   }
 
   printSpacer();
