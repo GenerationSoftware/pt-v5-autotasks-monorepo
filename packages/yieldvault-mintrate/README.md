@@ -4,7 +4,9 @@
 
 <br />
 
-# 🤖 @generationsoftware/pt-v5-autotasks-yieldvault-mintrate - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### @generationsoftware/pt-v5-autotasks-yieldvault-mintrate
 
 ## TESTNET-ONLY
 
