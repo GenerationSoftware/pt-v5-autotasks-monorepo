@@ -4,7 +4,11 @@
 
 <br />
 
-# 🤖 @generationsoftware/pt-v5-autotasks-draw-auction - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### 🤖 @generationsoftware/pt-v5-autotasks-draw-auction
+
+![title image for PoolTogether Draw Auction Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/draw-auction/draw-auction-img.png "title image for PoolTogether Draw Auction Bot")
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to start the RNG (random number generator) process and complete draws using the resulting winning random number.
 

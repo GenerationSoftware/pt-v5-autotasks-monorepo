@@ -6,7 +6,7 @@
 
 # 🤖 @generationsoftware/pt-v5-autotasks-withdraw-claim-rewards - PoolTogether V5
 
-<!-- ![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/withdraw-claim-rewards/prize-claim-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot") -->
+![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/withdraw-claim-rewards/withdraw-rewards-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot")
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to sweep any rewards a prize claimer has accumulated on the prize pool.
 
