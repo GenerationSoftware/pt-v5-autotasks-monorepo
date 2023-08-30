@@ -235,7 +235,8 @@ export async function prepareDrawAuctionTxs(
     const chainId = getChainId(rngChainId, relayChainId, context);
     const provider = getProvider(rngReadProvider, relayReadProvider, context);
 
-    const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
+    // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
+    const isPrivate = false;
     console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
     printSpacer();
     const tx = await sendTransaction(relayer, isPrivate, auctionContracts, params, context);
