@@ -6,7 +6,7 @@
 
 # 🤖 PoolTogether V5
 
-### 🤖 @generationsoftware/pt-v5-autotasks-draw-auction
+### @generationsoftware/pt-v5-autotasks-draw-auction
 
 ![title image for PoolTogether Draw Auction Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/draw-auction/draw-auction-img.png "title image for PoolTogether Draw Auction Bot")
 

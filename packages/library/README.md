@@ -4,7 +4,9 @@
 
 <br />
 
-# 🤖 @generationsoftware/pt-v5-autotasks-library - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### @generationsoftware/pt-v5-autotasks-library
 
 PoolTogether hyperstructure (v5) supporting functions for the bots.
 

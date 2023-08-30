@@ -4,7 +4,9 @@
 
 <br />
 
-# 🤖 Bots - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### Bots!
 
 Monorepo grouping PoolTogether v5 hyperstructure OpenZeppelin Defender autotasks (bots).
 

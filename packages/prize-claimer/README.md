@@ -4,7 +4,9 @@
 
 <br />
 
-# 🤖 @generationsoftware/pt-v5-autotasks-prize-claimer - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### @generationsoftware/pt-v5-autotasks-prize-claimer
 
 ![title image for PoolTogether Prize Claimer Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/prize-claimer/prize-claim-img.png "title image for PoolTogether Prize Claimer Bot")
 
