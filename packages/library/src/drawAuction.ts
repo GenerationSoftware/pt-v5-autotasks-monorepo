@@ -794,6 +794,8 @@ const approve = async (
         relayerAddress,
         auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract.address,
       );
+      console.log('newAllowanceResult');
+      console.log(newAllowanceResult);
       logStringValue('New allowance:', newAllowanceResult[0].toString());
     } else {
       console.log(chalk.green('Sufficient allowance ✔'));
