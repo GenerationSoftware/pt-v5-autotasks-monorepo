@@ -20,7 +20,7 @@ export const NETWORK_NATIVE_TOKEN_INFO = {
 
 export const canUseIsPrivate = (chainId, useFlashbots) => {
   const chainSupportsFlashbots = FLASHBOTS_SUPPORTED_CHAINS.includes(chainId);
-  const isPrivate = chainSupportsFlashbots && useFlashbots;
+  const isPrivate = Boolean(chainSupportsFlashbots && useFlashbots);
 
   return isPrivate;
 };
