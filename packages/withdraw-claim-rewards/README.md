@@ -4,7 +4,9 @@
 
 <br />
 
-# 🤖 @generationsoftware/pt-v5-autotasks-withdraw-claim-rewards - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### @generationsoftware/pt-v5-autotasks-withdraw-claim-rewards
 
 ![title image for PoolTogether Withdraw Claim Rewards Sweeper Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/withdraw-claim-rewards/withdraw-rewards-img.png "title image for PoolTogether Withdraw Claim Rewards Sweeper Bot")
 

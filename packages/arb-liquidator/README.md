@@ -4,7 +4,9 @@
 
 <br />
 
-# 🤖 @generationsoftware/pt-v5-autotasks-arb-liquidator - PoolTogether V5
+# 🤖 PoolTogether V5
+
+### @generationsoftware/pt-v5-autotasks-arb-liquidator
 
 ![title image for PoolTogether Arbitrage Liquidator Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/arb-liquidator/arb-liquidator-img.png "title image for PoolTogether Arbitrage Liquidator Bot")
 
