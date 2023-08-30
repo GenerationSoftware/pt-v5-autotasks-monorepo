@@ -20,6 +20,8 @@ import { printSpacer } from './logging';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
+const LINK_COST_BUFFER = ethers.utils.parseEther('0.1');
+
 const CHAINLINK_VRF_WRAPPER_ADDRESS = {
   1: '0x5A861794B927983406fCE1D062e00b9368d97Df6',
   5: '0x708701a1DfF4f478de54383E49a627eD4852C816',
@@ -175,7 +177,7 @@ export const getRngMulticall = async (
   const rngServiceRequestFee = await rngServiceContract.getRequestFee();
 
   const rngFeeTokenAddress = rngServiceRequestFee[0];
-  // const rngFeeAmount = rngServiceRequestFee[1];
+  const rngBaseFeeAmount = rngServiceRequestFee[1];
 
   // Need to ask wrapper directly for more accurate estimate of LINK tokens required
   const chainlinkVrfWrapperContract = new ethers.Contract(
@@ -185,10 +187,11 @@ export const getRngMulticall = async (
   );
   const feeData = await getFees(rngReadProvider);
   const requestGasPriceWei = feeData.maxFeePerGas;
-  const rngFeeAmount = await chainlinkVrfWrapperContract.estimateRequestPrice(
+  const rngEstimateRequestPrice = await chainlinkVrfWrapperContract.estimateRequestPrice(
     CALLBACK_GAS_LIMIT,
     requestGasPriceWei,
   );
+  const rngFeeAmount = rngBaseFeeAmount.add(rngEstimateRequestPrice).add(LINK_COST_BUFFER);
 
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
   if (rngFeeTokenIsSet) {
