@@ -199,7 +199,7 @@ export async function liquidatorArbitrageSwap(
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
 
-    let maxFeeUsd;
+    let maxFeeUsd = 0;
     try {
       maxFeeUsd = await getGasCost(
         chainId,

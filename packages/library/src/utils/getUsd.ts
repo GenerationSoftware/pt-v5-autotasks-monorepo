@@ -8,7 +8,7 @@ export const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
 const SYMBOL_TO_COINGECKO_LOOKUP = {
   POOL: 'pooltogether',
-  LINK: 'link',
+  LINK: 'chainlink',
   ETH: 'ethereum',
 };
 
