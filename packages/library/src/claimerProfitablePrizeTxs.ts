@@ -164,10 +164,6 @@ export async function executeClaimerProfitablePrizeTxs(
       console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
       printSpacer();
 
-      console.log('claimPrizesParams');
-      console.log(claimPrizesParams);
-      console.log(...Object.values(claimPrizesParams));
-
       const populatedTx = await claimerContract.populateTransaction.claimPrizes(
         ...Object.values(claimPrizesParams),
       );
@@ -661,12 +657,12 @@ const getClaimInfo = async (
       prevTotalFeesMinusCostUsd = totalFeesMinusCostUsd;
       claimCount = numClaims;
       claimFees = nextClaimFees;
-      minVrgdaFeePerClaim = nextClaimFees.toString();
-      console.log('minVrgdaFeePerClaim');
-      console.log(minVrgdaFeePerClaim);
       claimFeesUsd = nextClaimFeesUsd;
-      console.log('claimFeesUsd');
-      console.log(claimFeesUsd);
+
+      // set it for 1 claim fee amount on the first loop
+      if (!minVrgdaFeePerClaim) {
+        minVrgdaFeePerClaim = nextClaimFees.toString();
+      }
     } else {
       break;
     }
