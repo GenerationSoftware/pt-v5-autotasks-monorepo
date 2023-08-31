@@ -10,6 +10,8 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
   POOL: 'pooltogether',
   LINK: 'chainlink',
   ETH: 'ethereum',
+  WETH: 'ethereum',
+  USDC: 'usd-coin',
 };
 
 const ADDRESS_TO_COVALENT_LOOKUP = {
@@ -17,6 +19,8 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> ETH
   '0x94DC94FE29Ff0E591a284619622B493fbf3A64E8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism Goerli -> ETH
   '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> ETH
+  '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Optimism -> ETH
+  '0x7F5c764cBc14f9669B88837ca1490cCa17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> ETH
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
@@ -40,13 +44,7 @@ const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 export const getFees = async (
   provider: Provider,
 ): Promise<{ lastBaseFeePerGas?: BigNumber; maxFeePerGas?: BigNumber }> => {
-  // const fees = { lastBaseFeePerGas: null, maxFeePerGas: null };
-
   const feeData = await provider.getFeeData();
-
-  // if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
-  //   return fees;
-  // }
 
   const lastBaseFeePerGas = feeData.lastBaseFeePerGas;
   const maxFeePerGas = feeData.maxFeePerGas;

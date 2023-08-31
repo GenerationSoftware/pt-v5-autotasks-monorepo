@@ -7,8 +7,9 @@ import {
 import chalk from 'chalk';
 
 import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
-import { parseBigNumberAsFloat, MARKET_RATE_CONTRACT_DECIMALS, printSpacer } from '../utils';
+import { printSpacer, getEthMainnetTokenMarketRateUsd } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
+import { ERC4626Abi } from '../abis/ERC4626Abi';
 
 import { ethers } from 'ethers';
 
@@ -21,21 +22,19 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * `tokenOut` is either the Vault (vault shares, ERC4626 with .asset() as the underlying ERC20)
  * or a straight up ERC20 token (ie. DAI, USDC)
  *
- * @param marketRateContract ethers contract instance for the marketRate contract
  * @param liquidationRouterContract ethers contract instance for the liquidationRouter contract
  * @param liquidationPairContract ethers contract instance for the liquidationPair contract
- * @param vaultContractData Vault contract blob containing Vault abi
  * @param readProvider a read-capable provider for the chain that should be queried
  * @param contracts blob of contracts to pull PrizePool abi/etc from
+ * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns
  */
 export const getArbLiquidatorContextMulticall = async (
-  marketRateContract: Contract,
   liquidationRouterContract: Contract,
   liquidationPairContract: Contract,
-  vaultContractData: ContractData,
   readProvider: Provider,
   relayerAddress: string,
+  covalentApiKey?: string,
 ): Promise<ArbLiquidatorContext> => {
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(readProvider);
@@ -64,7 +63,7 @@ export const getArbLiquidatorContextMulticall = async (
   // Find out if this LiquidationPair's tokenOut is an ERC4626 Vault or a straight-up ERC20 token
   const liquidationPairTokenOutAsVault = new ethers.Contract(
     tokenOutAddress,
-    vaultContractData.abi,
+    ERC4626Abi,
     multicallProvider,
   );
   let underlyingAssetAddress;
@@ -102,25 +101,14 @@ export const getArbLiquidatorContextMulticall = async (
     liquidationRouterContract.address,
   );
 
-  // 5. RELAYER tokenIn ALLOWANCE for spender LiquidationRouter
-
-  // 6. MarketRate Calls
-  queries[`priceFeed-${tokenInAddress}`] = marketRateContract.priceFeed(tokenInAddress, 'USD');
-  queries[`priceFeed-${underlyingAssetAddress}`] = marketRateContract.priceFeed(
-    underlyingAssetAddress,
-    'USD',
-  );
-
-  // 7. Get and process results!
+  // 5. Get and process results!
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
-  // const marketRateMulticallResults = results[marketRateAddress];
-  const tokenInPriceFeedResults = results[`priceFeed-${tokenInAddress}`];
-
   // 1. tokenIn results
-  const tokenInAssetRateUsd = parseBigNumberAsFloat(
-    BigNumber.from(tokenInPriceFeedResults),
-    MARKET_RATE_CONTRACT_DECIMALS,
+  const tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+    results['tokenIn-symbol'],
+    tokenInAddress,
+    covalentApiKey,
   );
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
@@ -139,11 +127,12 @@ export const getArbLiquidatorContextMulticall = async (
   };
 
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
-  const underlyingAssetPriceFeedResults = results[`priceFeed-${underlyingAssetAddress}`];
-  const underlyingAssetAssetRateUsd = parseBigNumberAsFloat(
-    BigNumber.from(underlyingAssetPriceFeedResults),
-    MARKET_RATE_CONTRACT_DECIMALS,
+  const underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+    results['underlyingAsset-symbol'],
+    underlyingAssetAddress,
+    covalentApiKey,
   );
+
   const underlyingAssetToken: TokenWithRate = {
     address: underlyingAssetAddress,
     decimals: results['underlyingAsset-decimals'],
