@@ -67,8 +67,10 @@ export async function liquidatorArbitrageSwap(
   printSpacer();
   console.log('Starting ...');
 
-  const { liquidationRouterContract, liquidationPairContracts, marketRateContract } =
-    await getLiquidationContracts(contracts, params);
+  const { liquidationRouterContract, liquidationPairContracts } = await getLiquidationContracts(
+    contracts,
+    params,
+  );
 
   printSpacer();
   console.log('Collecting information about vaults ...');
@@ -91,18 +93,16 @@ export async function liquidatorArbitrageSwap(
     const liquidationPairData = contracts.contracts.find(
       (contract) => contract.type === 'LiquidationPair',
     );
+
     const liquidationPairContract = new ethers.Contract(
       liquidationPair.address,
       liquidationPairData.abi,
       readProvider,
     );
 
-    const vaultContractData = contracts.contracts.find((contract) => contract.type === 'Vault');
     const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
-      marketRateContract,
       liquidationRouterContract,
       liquidationPairContract,
-      vaultContractData,
       readProvider,
       relayerAddress,
     );
@@ -362,7 +362,6 @@ const getLiquidationContracts = async (
 ): Promise<{
   liquidationRouterContract: Contract;
   liquidationPairContracts: Contract[];
-  marketRateContract: Contract;
 }> => {
   const { chainId, readProvider, writeProvider } = params;
 
@@ -391,15 +390,8 @@ const getLiquidationContracts = async (
     contracts,
     contractsVersion,
   );
-  const marketRateContract = getContract(
-    'MarketRate',
-    chainId,
-    readProvider,
-    contracts,
-    contractsVersion,
-  );
 
-  return { liquidationRouterContract, liquidationPairContracts, marketRateContract };
+  return { liquidationRouterContract, liquidationPairContracts };
 };
 
 const printContext = (context) => {
