@@ -179,7 +179,6 @@ export async function executeClaimerProfitablePrizeTxs(
         to: populatedTx.to,
         gasLimit: 8000000,
       });
-
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 

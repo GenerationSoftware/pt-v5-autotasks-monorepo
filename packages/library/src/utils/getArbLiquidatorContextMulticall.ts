@@ -73,9 +73,9 @@ export const getArbLiquidatorContextMulticall = async (
     console.log(chalk.dim('Underlying Asset Address:'));
     console.log(chalk.dim(underlyingAssetAddress));
   } catch (e) {
-    console.error(e);
-    console.log('---');
-    console.error(e);
+    // console.error(e);
+    // console.log('---');
+    // console.error(e);
   }
 
   if (!underlyingAssetAddress) {
