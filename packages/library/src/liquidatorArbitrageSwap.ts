@@ -526,8 +526,6 @@ const getGasCost = async (
   swapExactAmountOutParams: SwapExactAmountOutParams,
   readProvider: Provider,
 ): Promise<number> => {
-  const { amountOut } = swapExactAmountOutParams;
-
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
   printAsterisks();
