@@ -43,13 +43,19 @@ const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
  **/
 export const getFees = async (
   provider: Provider,
-): Promise<{ lastBaseFeePerGas?: BigNumber; maxFeePerGas?: BigNumber }> => {
+): Promise<{
+  lastBaseFeePerGas?: BigNumber;
+  maxFeePerGas?: BigNumber;
+  avgFeePerGas?: BigNumber;
+}> => {
   const feeData = await provider.getFeeData();
 
   const lastBaseFeePerGas = feeData.lastBaseFeePerGas;
   const maxFeePerGas = feeData.maxFeePerGas;
 
-  return { lastBaseFeePerGas, maxFeePerGas };
+  const avgFeePerGas = lastBaseFeePerGas.add(maxFeePerGas).div(2);
+
+  return { lastBaseFeePerGas, maxFeePerGas, avgFeePerGas };
 };
 
 /**
