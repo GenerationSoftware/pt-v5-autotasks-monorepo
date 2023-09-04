@@ -102,14 +102,15 @@ const getContext = async (
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
+  const prizePoolReserveForOpenDraw = await auctionContracts.prizePoolContract.reserveForOpenDraw();
+  const reserve = prizePoolReserve.add(prizePoolReserveForOpenDraw);
 
   // 2. Rng Info
   const rngContext = await getRngMulticall(
     rngReadProvider,
-    rngChainId,
     auctionContracts,
     relayerAddress,
-    prizePoolReserve,
+    reserve,
     covalentApiKey,
   );
 
@@ -148,10 +149,9 @@ const getContext = async (
  */
 export const getRngMulticall = async (
   rngReadProvider: Provider,
-  rngChainId: number,
   auctionContracts: AuctionContracts,
   relayerAddress: string,
-  prizePoolReserve: BigNumber,
+  reserve: BigNumber,
   covalentApiKey?: string,
 ): Promise<RngDrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
@@ -234,10 +234,8 @@ export const getRngMulticall = async (
   const rngCurrentFractionalRewardString = ethers.utils.formatEther(rngCurrentFractionalReward);
 
   // TODO: Assume 18 decimals. In the future may need to format using rewardToken's decimals instead
-  const prizePoolReserveString = ethers.utils.formatEther(prizePoolReserve);
-
-  const rngExpectedReward =
-    Number(prizePoolReserveString) * Number(rngCurrentFractionalRewardString);
+  const reserveStr = ethers.utils.formatEther(reserve);
+  const rngExpectedReward = Number(reserveStr) * Number(rngCurrentFractionalRewardString);
 
   // 6g. Results: Rng Fee
   let relayer: DrawAuctionRelayerContext;

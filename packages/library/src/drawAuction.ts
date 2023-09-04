@@ -274,7 +274,7 @@ export async function prepareDrawAuctionTxs(
 
 const checkBalance = (context: DrawAuctionContext) => {
   logBigNumber(
-    `1f. Relayer RNG Token Balance (USD):`,
+    `Relayer RNG Fee Token Balance:`,
     context.relayer.rngFeeTokenBalance,
     context.rngFeeToken.decimals,
     context.rngFeeToken.symbol,
@@ -488,14 +488,21 @@ const printContext = (rngChainId: number, relayChainId: number, context: DrawAuc
     context.rngFeeTokenIsSet ? context.rngFeeToken.symbol : 'n/a',
   );
   if (context.rngFeeTokenIsSet) {
-    logStringValue(`1e. RNG Fee Token Market Rate (USD):`, `$${context.rngFeeToken.assetRateUsd}`);
     logBigNumber(
-      `1e. RNG Fee Amount:`,
+      `1e. Relayer RNG Fee Token Balance:`,
+      context.relayer.rngFeeTokenBalance,
+      context.rngFeeToken.decimals,
+      context.rngFeeToken.symbol,
+    );
+
+    logStringValue(`1f. RNG Fee Token Market Rate (USD):`, `$${context.rngFeeToken.assetRateUsd}`);
+    logBigNumber(
+      `1g. RNG Fee Amount:`,
       context.rngFeeAmount,
       context.rngFeeToken.decimals,
       context.rngFeeToken.symbol,
     );
-    logStringValue(`1e. RNG Fee Amount (USD):`, `$${context.rngFeeUsd}`);
+    logStringValue(`1h. RNG Fee Amount (USD):`, `$${context.rngFeeUsd}`);
     printSpacer();
   }
 
