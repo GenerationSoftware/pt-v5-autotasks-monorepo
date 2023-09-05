@@ -34,6 +34,8 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
 
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 
+const marketRates = {};
+
 /**
  * Get the current eth_gasPrice from chain provider
  *
@@ -121,6 +123,11 @@ export const getEthMainnetTokenMarketRateUsd = async (
   tokenAddress?: string,
   covalentApiKey?: string,
 ): Promise<number> => {
+  // memoization
+  if (marketRates[symbol]) {
+    return marketRates[symbol];
+  }
+
   let marketRateUsd;
 
   try {
@@ -131,11 +138,14 @@ export const getEthMainnetTokenMarketRateUsd = async (
 
   try {
     if (!marketRateUsd && Boolean(tokenAddress) && Boolean(covalentApiKey)) {
+      console.log('COINGECKO FAIL, trying Covalent!');
       marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
     }
   } catch (err) {
     console.log(err);
   }
+
+  marketRates[symbol] = marketRateUsd;
 
   return marketRateUsd;
 };

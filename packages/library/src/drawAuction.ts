@@ -52,6 +52,8 @@ const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
   // 5: '0xBc244773f71a2f897fAB5D5953AA052B8ff68670', // goerli -> arbitrum goerli
 };
 
+const ONE_GWEI = '1000000000';
+
 const getAuctionContracts = (
   rngChainId: number,
   relayChainId: number,
@@ -251,7 +253,14 @@ export async function prepareDrawAuctionTxs(
     const isPrivate = false;
     console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
     printSpacer();
-    const tx = await sendTransaction(relayer, isPrivate, auctionContracts, params, context);
+    const tx = await sendTransaction(
+      provider,
+      relayer,
+      isPrivate,
+      auctionContracts,
+      params,
+      context,
+    );
 
     // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
     //       re-submit transactions, effectively giving them different tx hashes
@@ -698,6 +707,7 @@ const getGasCost = async (
 };
 
 const sendTransaction = async (
+  provider: Provider,
   relayer: Relayer,
   isPrivate: boolean,
   auctionContracts: AuctionContracts,
@@ -748,12 +758,14 @@ const sendTransaction = async (
     // );
   }
 
+  const { gasPrice } = await getGasPrice(provider);
   console.log(chalk.greenBright.bold(`Sending transaction ...`));
   const tx = await relayer.sendTransaction({
     isPrivate,
     data: populatedTx.data,
     to: populatedTx.to,
     gasLimit: 8000000,
+    gasPrice: gasPrice.add(ONE_GWEI).toString(),
   });
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
