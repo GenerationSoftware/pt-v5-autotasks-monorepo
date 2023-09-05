@@ -35,7 +35,19 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 
 /**
- * Get the current feeData from chain
+ * Get the current eth_gasPrice from chain provider
+ *
+ * @param {Provider} provider, any ethers provider
+ * @returns {Promise} Promise object with gasPrice in wei
+ **/
+export const getGasPrice = async (provider: Provider): Promise<{ gasPrice?: BigNumber }> => {
+  const gasPrice = await provider.getGasPrice();
+
+  return { gasPrice };
+};
+
+/**
+ * Get the current feeData from chain (currently unused as it was less accurate than getGasPrice)
  *
  * @param {Provider} provider, any ethers provider
  * @returns {Promise} Promise object with recent baseFeeUsd & maxFeeUsd from the chain
@@ -64,35 +76,31 @@ export const getFees = async (
  * @param {BigNumber} estimatedGasLimit, how much gas the function is estimated to use (in wei)
  * @param {gasTokenMarketRateUsd} context, provided from MarketRate contract or from an API
  * @param {Provider} provider, any ethers provider
- * @returns {Promise} Promise object with recent baseFeeUsd & maxFeeUsd from the chain
- *                    while avgFeeUsd is in between the two
+ * @returns {Promise} Promise object with recent avgFeeUsd
+ *
  **/
 export const getFeesUsd = async (
   chainId: number,
   estimatedGasLimit: BigNumber,
   gasTokenMarketRateUsd: number,
   provider: Provider,
-): Promise<{ baseFeeUsd: number; maxFeeUsd: number; avgFeeUsd: number }> => {
-  const fees = { baseFeeUsd: null, maxFeeUsd: null, avgFeeUsd: null };
+): Promise<{ avgFeeUsd: number }> => {
+  const fees = { avgFeeUsd: null };
 
-  const feeData = await getFees(provider);
+  const { gasPrice } = await getGasPrice(provider);
 
-  if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
+  if (!gasPrice || !estimatedGasLimit || estimatedGasLimit.eq(0)) {
     return fees;
   }
 
-  const baseFeeWei = feeData.lastBaseFeePerGas?.mul(estimatedGasLimit);
-  const maxFeeWei = feeData.maxFeePerGas?.mul(estimatedGasLimit);
+  const baseFeeWei = gasPrice?.mul(estimatedGasLimit);
 
   const chainMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
 
-  fees.baseFeeUsd =
+  const avgFeeUsd =
     parseFloat(ethers.utils.formatEther(baseFeeWei)) * gasTokenMarketRateUsd * chainMultiplier;
-  fees.maxFeeUsd =
-    parseFloat(ethers.utils.formatEther(maxFeeWei)) * gasTokenMarketRateUsd * chainMultiplier;
-  fees.avgFeeUsd = ((fees.baseFeeUsd + fees.maxFeeUsd) / 2) * chainMultiplier;
 
-  return fees;
+  return { avgFeeUsd };
 };
 
 /**

@@ -12,7 +12,11 @@ import {
   RngDrawAuctionContext,
   RelayDrawAuctionContext,
 } from '../types';
-import { getFees, getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
+import {
+  getGasPrice,
+  getEthMainnetTokenMarketRateUsd,
+  getNativeTokenMarketRateUsd,
+} from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { VrfRngAbi } from '../abis/VrfRngAbi';
 import { printSpacer } from './logging';
@@ -168,8 +172,10 @@ export const getRngMulticall = async (
   // const rngBaseFeeAmount = rngServiceRequestFee[1];
 
   // 3. RNG Estimated Fee from VrfHelper
-  const feeData = await getFees(rngReadProvider);
-  const requestGasPriceWei = feeData.avgFeePerGas;
+  const { gasPrice } = await getGasPrice(rngReadProvider);
+  const requestGasPriceWei = gasPrice;
+  // const feeData = await getFees(rngReadProvider);
+  // const requestGasPriceWei = feeData.avgFeePerGas;
 
   const chainlinkVRFV2DirectRngAuctionHelperContract =
     await auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;

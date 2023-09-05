@@ -192,7 +192,7 @@ const calculateProfit = async (
   } catch (e) {
     console.error(chalk.red(e));
   }
-  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+  const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
@@ -211,14 +211,14 @@ const calculateProfit = async (
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
   );
 
-  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+  logTable({ avgFeeUsd });
 
   printAsterisks();
   console.log(chalk.blue('4. Profit/Loss (USD):'));
   printSpacer();
 
   const grossProfitUsd = rewardsTokenUsd;
-  const netProfitUsd = grossProfitUsd - maxFeeUsd;
+  const netProfitUsd = grossProfitUsd - avgFeeUsd;
 
   console.log(chalk.magenta('Gross profit = tokenOut - tokenIn'));
   console.log(
@@ -233,7 +233,7 @@ const calculateProfit = async (
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
         grossProfitUsd,
-      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`,
+      )} - $${roundTwoDecimalPlaces(avgFeeUsd)}`,
     ),
   );
   printSpacer();
