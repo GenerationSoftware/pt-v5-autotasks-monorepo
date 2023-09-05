@@ -14,8 +14,10 @@ import {
   parseBigNumberAsFloat,
   MARKET_RATE_CONTRACT_DECIMALS,
   getFeesUsd,
+  getGasPrice,
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
+  getEthMainnetTokenMarketRateUsd,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
@@ -35,7 +37,8 @@ export async function getWithdrawClaimRewardsTx(
   readProvider: Provider,
   params: WithdrawClaimRewardsConfigParams,
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, rewardsRecipient, relayerAddress, minProfitThresholdUsd } = params;
+  const { chainId, rewardsRecipient, relayerAddress, minProfitThresholdUsd, covalentApiKey } =
+    params;
 
   const contractsVersion = {
     major: 1,
@@ -43,7 +46,6 @@ export async function getWithdrawClaimRewardsTx(
     patch: 0,
   };
   const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
-  const marketRate = getContract('MarketRate', chainId, readProvider, contracts, contractsVersion);
 
   if (!prizePool) {
     throw new Error('WithdrawRewards: PrizePool Contract Unavailable');
@@ -52,8 +54,8 @@ export async function getWithdrawClaimRewardsTx(
   // #1. Get context about the prize pool prize token, etc
   const context: WithdrawClaimRewardsContext = await getContext(
     prizePool,
-    marketRate,
     readProvider,
+    covalentApiKey,
   );
   printContext(context);
 
@@ -115,8 +117,8 @@ export async function getWithdrawClaimRewardsTx(
  */
 const getContext = async (
   prizePool: Contract,
-  marketRate: Contract,
   readProvider: Provider,
+  covalentApiKey?: string,
 ): Promise<WithdrawClaimRewardsContext> => {
   const rewardsTokenAddress = await prizePool.prizeToken();
 
@@ -131,7 +133,11 @@ const getContext = async (
 
   const rewardsTokenWithRate = {
     ...rewardsToken,
-    assetRateUsd: await getRewardsTokenRateUsd(marketRate, rewardsToken),
+    assetRateUsd: await getEthMainnetTokenMarketRateUsd(
+      rewardsToken.symbol,
+      rewardsToken.address,
+      covalentApiKey,
+    ),
   };
 
   return { rewardsToken: rewardsTokenWithRate };
@@ -184,6 +190,7 @@ const calculateProfit = async (
   printAsterisks();
   console.log(chalk.blue('3. Current gas costs for transaction:'));
 
+  printSpacer();
   let estimatedGasLimit;
   try {
     estimatedGasLimit = await prizePool.estimateGas.withdrawClaimRewards(
@@ -200,17 +207,27 @@ const calculateProfit = async (
   );
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
-    nativeTokenMarketRateUsd,
+    `$${nativeTokenMarketRateUsd}`,
   );
 
-  printSpacer();
   logBigNumber(
-    'Estimated gas limit:',
+    'Estimated gas limit (wei):',
     estimatedGasLimit,
     18,
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
   );
 
+  printSpacer();
+  const { gasPrice } = await getGasPrice(readProvider);
+  logBigNumber(
+    'Recent Gas Price (wei):',
+    gasPrice,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
+
+  printSpacer();
   logTable({ avgFeeUsd });
 
   printAsterisks();
