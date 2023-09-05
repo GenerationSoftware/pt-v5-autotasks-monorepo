@@ -496,7 +496,7 @@ const getGasCost = async (
 
   // 4. Convert gas costs to USD
   printSpacer();
-  const { maxFeeUsd: gasCostOneClaimUsd } = await getFeesUsd(
+  const { avgFeeUsd: gasCostOneClaimUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimitForOne,
     gasTokenMarketRateUsd,
@@ -508,7 +508,7 @@ const getGasCost = async (
     chalk.dim(`$${gasCostOneClaimUsd}`),
   );
 
-  const { maxFeeUsd: gasCostEachFollowingClaimUsd } = await getFeesUsd(
+  const { avgFeeUsd: gasCostEachFollowingClaimUsd } = await getFeesUsd(
     chainId,
     gasCostEachFollowingClaim,
     gasTokenMarketRateUsd,

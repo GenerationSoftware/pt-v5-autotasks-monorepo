@@ -16,6 +16,7 @@ import {
   getFeesUsd,
   canUseIsPrivate,
   roundTwoDecimalPlaces,
+  getGasPrice,
 } from './utils';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import {
@@ -670,18 +671,18 @@ const getGasCost = async (
     );
   }
 
-  printSpacer();
-
+  const { gasPrice } = await getGasPrice(readProvider);
   logBigNumber(
-    'Gas Cost (wei):',
-    estimatedGasLimit,
+    'Recent Gas Price (wei):',
+    gasPrice,
     NETWORK_NATIVE_TOKEN_INFO[params.rngChainId].decimals,
     NETWORK_NATIVE_TOKEN_INFO[params.rngChainId].symbol,
   );
+  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
 
   // 3. Convert gas costs to USD
   printSpacer();
-  const { maxFeeUsd: gasCostUsd } = await getFeesUsd(
+  const { avgFeeUsd: gasCostUsd } = await getFeesUsd(
     params.rngChainId,
     estimatedGasLimit,
     context.rngNativeTokenMarketRateUsd,

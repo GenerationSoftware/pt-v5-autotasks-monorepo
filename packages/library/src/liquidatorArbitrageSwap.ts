@@ -199,9 +199,9 @@ export async function liquidatorArbitrageSwap(
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
 
-    let maxFeeUsd = 0;
+    let avgFeeUsd = 0;
     try {
-      maxFeeUsd = await getGasCost(
+      avgFeeUsd = await getGasCost(
         chainId,
         liquidationRouterContract,
         swapExactAmountOutParams,
@@ -229,7 +229,7 @@ export async function liquidatorArbitrageSwap(
       minProfitThresholdUsd,
       wantedAmountsIn,
       wantedAmountsOut,
-      maxFeeUsd,
+      avgFeeUsd,
     );
     if (!profitable) {
       console.log(
@@ -445,7 +445,7 @@ const calculateProfit = async (
   minProfitThresholdUsd: number,
   wantedAmountsIn: BigNumber[],
   wantedAmountsOut: BigNumber[],
-  maxFeeUsd: number,
+  avgFeeUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean; selectedIndex: number }> => {
   printAsterisks();
   console.log(chalk.blue('5. Profit/Loss (USD):'));
@@ -491,14 +491,14 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  const netProfitUsd = maxGrossProfit - maxFeeUsd;
+  const netProfitUsd = maxGrossProfit - avgFeeUsd;
 
   console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Max)'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
         maxGrossProfit,
-      )} - $${roundTwoDecimalPlaces(maxFeeUsd)}`,
+      )} - $${roundTwoDecimalPlaces(avgFeeUsd)}`,
     ),
   );
   printSpacer();
@@ -535,7 +535,7 @@ const getGasCost = async (
     ...Object.values(swapExactAmountOutParams),
   );
 
-  const { baseFeeUsd, maxFeeUsd, avgFeeUsd } = await getFeesUsd(
+  const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
@@ -554,9 +554,9 @@ const getGasCost = async (
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
   );
 
-  logTable({ baseFeeUsd, maxFeeUsd, avgFeeUsd });
+  logTable({ avgFeeUsd });
 
-  return maxFeeUsd;
+  return avgFeeUsd;
 };
 
 /**
