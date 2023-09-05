@@ -548,7 +548,7 @@ const getGasCost = async (
 
   printSpacer();
   logBigNumber(
-    'Estimated gas limit:',
+    'Estimated gas limit (wei):',
     estimatedGasLimit,
     18,
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,

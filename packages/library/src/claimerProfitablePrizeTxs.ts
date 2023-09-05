@@ -445,7 +445,7 @@ const getGasCost = async (
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
   } else {
     logBigNumber(
-      'Estimated gas limit (1 prize claim):',
+      'Estimated gas limit (wei) (1 prize claim):',
       estimatedGasLimitForOne,
       NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
       NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
@@ -463,7 +463,7 @@ const getGasCost = async (
       console.error(chalk.yellow('Estimated gas limit is 0 ...'));
     } else {
       logBigNumber(
-        'Estimated gas limit (2 prize claims):',
+        'Estimated gas limit (wei) (2 prize claims):',
         estimatedGasLimitForTwo,
         NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
         NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
