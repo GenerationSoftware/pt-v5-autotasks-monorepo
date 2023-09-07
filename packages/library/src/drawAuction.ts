@@ -315,8 +315,8 @@ const checkBalance = (context: DrawAuctionContext) => {
 const printNote = () => {
   console.log(chalk.yellow('|*******************************************************|'));
   console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|      Rewards will be transferred post-relay() on      |'));
-  console.log(chalk.yellow('|               the PrizePool / L2 Chain                |'));
+  console.log(chalk.yellow('|      Rewards will be transferred post-relay() by      |'));
+  console.log(chalk.yellow('|       the PrizePool on the relayed-to L2 Chain        |'));
   console.log(chalk.yellow('|                                                       |'));
   console.log(chalk.yellow('|*******************************************************|'));
 };
@@ -444,7 +444,7 @@ const calculateProfit = async (
     );
   } else {
     netProfitUsd = grossProfitUsd - gasCostUsd;
-    console.log(chalk.magenta('(Net profit) = (Gross Profit) - (Gas Fees [Max])'));
+    console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Max])'));
     console.log(
       chalk.greenBright(
         `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(

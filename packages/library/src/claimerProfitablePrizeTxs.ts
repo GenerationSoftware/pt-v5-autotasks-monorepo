@@ -548,7 +548,7 @@ const getClaimInfo = async (
   let minVrgdaFeePerClaim = '';
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
-  let prevTotalFeesMinusCostUsd = 0;
+  let previousNetFees = 0;
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     printSpacer();
@@ -632,29 +632,26 @@ const getClaimInfo = async (
     console.log(minProfitThresholdUsd);
     printSpacer();
 
-    const totalFeesMinusCostUsd = nextClaimFeesUsd - totalCostUsd;
-    console.log('totalFeesMinusCostUsd');
-    console.log(totalFeesMinusCostUsd);
+    const netFees = nextClaimFeesUsd - totalCostUsd;
+    console.log('netFees');
+    console.log(netFees);
     printSpacer();
 
-    console.log('prevTotalFeesMinusCostUsd');
-    console.log(prevTotalFeesMinusCostUsd);
+    console.log('previousNetFees');
+    console.log(previousNetFees);
 
     printSpacer();
-    console.log('totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd');
-    console.log(totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd);
+    console.log('netFees > previousNetFees');
+    console.log(netFees > previousNetFees);
 
     printSpacer();
-    console.log('totalFeesMinusCostUsd > minProfitThresholdUsd');
-    console.log(totalFeesMinusCostUsd > minProfitThresholdUsd);
+    console.log('netFees > minProfitThresholdUsd');
+    console.log(netFees > minProfitThresholdUsd);
 
     printSpacer();
 
-    if (
-      totalFeesMinusCostUsd > prevTotalFeesMinusCostUsd &&
-      totalFeesMinusCostUsd > minProfitThresholdUsd
-    ) {
-      prevTotalFeesMinusCostUsd = totalFeesMinusCostUsd;
+    if (netFees > previousNetFees && netFees > minProfitThresholdUsd) {
+      previousNetFees = netFees;
       claimCount = numClaims;
       claimFees = nextClaimFees;
       claimFeesUsd = nextClaimFeesUsd;
