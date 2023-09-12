@@ -1,13 +1,12 @@
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
-import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
+import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   executeClaimerProfitablePrizeTxs,
   ExecuteClaimerProfitablePrizeTxsParams,
   canUseIsPrivate,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { Relayer } from 'defender-relay-client';
-import chalk from 'chalk';
 import { Provider } from '@ethersproject/abstract-provider';
 
 export const executeTransactions = async (
@@ -20,7 +19,7 @@ export const executeTransactions = async (
   const relayer = new Relayer(event);
 
   try {
-    const contracts = await downloadContractsBlob(params.chainId);
+    const contracts: ContractsBlob = await downloadContractsBlob(params.chainId);
     await executeClaimerProfitablePrizeTxs(contracts, relayer, readProvider, params);
   } catch (e) {
     console.error(e);
