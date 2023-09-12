@@ -59,9 +59,11 @@ export async function getWithdrawClaimRewardsTx(
   );
   printContext(context);
 
+  printAsterisks();
+
   // #2. Get data about how much rewards a prize claimer can withdraw
   printSpacer();
-  console.log(chalk.blue(`2. Getting claim rewards balance for '${relayerAddress}' ...`));
+  console.log(chalk.blue(`2. Getting claim rewards balance for relayer '${relayerAddress}' ...`));
   const amount = await prizePool.balanceOfClaimRewards(relayerAddress);
 
   logBigNumber(
@@ -78,6 +80,33 @@ export async function getWithdrawClaimRewardsTx(
     chalk.greenBright(`$${roundTwoDecimalPlaces(rewardsTokenUsd)}`),
   );
 
+  // #2b. Get data about how rewards balance for rewards recipient, and print note that they would need to withdraw it themselves
+  printSpacer();
+  console.log(
+    chalk.blue(`2. Getting claim rewards balance for rewards recipient '${rewardsRecipient}' ...`),
+  );
+  const rewardsRecipientAmount = await prizePool.balanceOfClaimRewards(rewardsRecipient);
+
+  if (rewardsRecipientAmount.gt(0)) {
+    logBigNumber(
+      `${context.rewardsToken.symbol} balance:`,
+      rewardsRecipientAmount,
+      context.rewardsToken.decimals,
+      context.rewardsToken.symbol,
+    );
+    const rewardsRecipientRewardsTokenUsd =
+      parseFloat(ethers.utils.formatUnits(rewardsRecipientAmount, context.rewardsToken.decimals)) *
+      context.rewardsToken.assetRateUsd;
+    console.log(
+      chalk.dim(`${context.rewardsToken.symbol} balance (USD):`),
+      chalk.greenBright(`$${roundTwoDecimalPlaces(rewardsRecipientRewardsTokenUsd)}`),
+    );
+
+    printSpacer();
+    printNote();
+  }
+
+  // #3. Decide if profitable or not
   let populatedTx: PopulatedTransaction;
 
   const withdrawClaimRewardsParams: WithdrawClaimRewardsParams = {
@@ -85,7 +114,6 @@ export async function getWithdrawClaimRewardsTx(
     amount,
   };
 
-  // #3. Decide if profitable or not
   const profitable = await calculateProfit(
     chainId,
     prizePool,
@@ -264,4 +292,13 @@ const calculateProfit = async (
   printSpacer();
 
   return profitable;
+};
+
+const printNote = () => {
+  console.log(chalk.yellow('|*******************************************************|'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|      Prize claim rewards can only be claimed by       |'));
+  console.log(chalk.yellow('|      the address with the balanceOfClaimRewards       |'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|*******************************************************|'));
 };
