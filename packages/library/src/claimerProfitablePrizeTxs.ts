@@ -548,10 +548,10 @@ const getClaimInfo = async (
 ): Promise<ClaimInfo> => {
   let claimCount = 0;
   let claimFees = BigNumber.from(0);
-  let minVrgdaFeePerClaim = '';
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
   let previousNetFees = 0;
+  let minVrgdaFees: BigNumber[] = [];
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     printSpacer();
@@ -659,14 +659,20 @@ const getClaimInfo = async (
       claimFees = nextClaimFees;
       claimFeesUsd = nextClaimFeesUsd;
 
-      // set it for 1 claim fee amount on the first loop
-      if (!minVrgdaFeePerClaim) {
-        minVrgdaFeePerClaim = nextClaimFees.toString();
-      }
+      minVrgdaFees.push(nextClaimFees);
     } else {
       break;
     }
   }
+
+  // Sort array of BigNumbers by comparing them using basic JS built-in sort()
+  minVrgdaFees.sort((a: BigNumber, b: BigNumber) => (a.gt(b) ? 1 : -1));
+
+  console.log('minVrgdaFees:');
+  minVrgdaFees.map((minVrgdaFee) => console.log(minVrgdaFee.toString()));
+
+  // Take the lowest BigNumber as the lowest fee we will accept
+  const minVrgdaFeePerClaim = Boolean(minVrgdaFees[0]) ? minVrgdaFees[0].toString() : '0';
 
   return { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim };
 };
