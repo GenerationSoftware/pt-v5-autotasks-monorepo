@@ -3,6 +3,7 @@ import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
+import chalk from 'chalk';
 
 import {
   AuctionContracts,

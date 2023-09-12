@@ -1,6 +1,6 @@
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
-import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
+import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { yieldVaultHandleMintRate } from '@generationsoftware/pt-v5-autotasks-library';
 import fetch from 'node-fetch';
 
@@ -10,7 +10,7 @@ export async function processTransactions(event, params) {
   const relayer = new Relayer(event);
   const writeProvider = new DefenderRelayProvider(event);
 
-  const contracts = await downloadContractsBlob(chainId, fetch);
+  const contracts: ContractsBlob = await downloadContractsBlob(chainId, fetch);
   const transactionsPopulated = await yieldVaultHandleMintRate(contracts, {
     chainId,
     writeProvider,

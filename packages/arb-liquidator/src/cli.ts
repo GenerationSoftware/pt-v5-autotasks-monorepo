@@ -7,7 +7,7 @@ import {
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
@@ -45,7 +45,7 @@ if (esMain(import.meta)) {
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
-    const contracts = await downloadContractsBlob(config.CHAIN_ID);
+    const contracts: ContractsBlob = await downloadContractsBlob(config.CHAIN_ID);
     await liquidatorArbitrageSwap(contracts, relayer, params);
   } catch (error) {
     throw new Error(error);

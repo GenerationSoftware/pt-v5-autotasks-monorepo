@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { RelayerParams } from 'defender-relay-client';
-import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
+import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   getWithdrawClaimRewardsTx,
   printAsterisks,
@@ -14,7 +14,7 @@ export const populateTransaction = async (params, readProvider): Promise<Populat
   let populatedTx: PopulatedTransaction;
 
   try {
-    const contracts = await downloadContractsBlob(params.chainId, fetch);
+    const contracts: ContractsBlob = await downloadContractsBlob(params.chainId, fetch);
     populatedTx = await getWithdrawClaimRewardsTx(contracts, readProvider, params);
   } catch (e) {
     console.error(e);

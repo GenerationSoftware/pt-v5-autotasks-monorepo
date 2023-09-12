@@ -114,11 +114,11 @@ export async function liquidatorArbitrageSwap(
     // #2. Calculate amounts
     console.log(chalk.blue(`1. Amounts:`));
 
-    const { originalAmountOut, wantedAmountsOut } = await calculateAmountOut(
+    const { originalMaxAmountOut, wantedAmountsOut } = await calculateAmountOut(
       liquidationPairContract,
       context,
     );
-    if (originalAmountOut.eq(0)) {
+    if (originalMaxAmountOut.eq(0)) {
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -134,14 +134,14 @@ export async function liquidatorArbitrageSwap(
           readProvider,
           liquidationPairContract,
           context,
-          originalAmountOut,
+          originalMaxAmountOut,
           wantedAmountsOut,
         );
       } catch (e) {
         console.error(chalk.red(e));
 
         console.log(chalk.yellow('---'));
-        console.log(chalk.yellow('Could not estimate gas costs!'));
+        console.log(chalk.yellow('Failed getting amount in!'));
         console.log(chalk.yellow('---'));
       }
     };
@@ -159,6 +159,7 @@ export async function liquidatorArbitrageSwap(
     }
 
     // #3. Print balance of tokenIn for relayer
+    // TODO: Fix this to only use the selectedIndex amountIn
     const sufficientBalance = await checkBalance(context, amountIn);
 
     if (sufficientBalance) {
@@ -194,7 +195,7 @@ export async function liquidatorArbitrageSwap(
     const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
-      amountOut: originalAmountOut,
+      amountOut: originalMaxAmountOut,
       amountInMin,
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
@@ -567,7 +568,7 @@ const calculateAmountOut = async (
   liquidationPair: Contract,
   context: ArbLiquidatorContext,
 ): Promise<{
-  originalAmountOut: BigNumber;
+  originalMaxAmountOut: BigNumber;
   wantedAmountsOut: BigNumber[];
 }> => {
   const wantedAmountsOut = [];
@@ -587,7 +588,7 @@ const calculateAmountOut = async (
       ),
     );
     return {
-      originalAmountOut: BigNumber.from(0),
+      originalMaxAmountOut: BigNumber.from(0),
       wantedAmountsOut,
     };
   }
@@ -612,7 +613,7 @@ const calculateAmountOut = async (
   }
 
   return {
-    originalAmountOut: amountOut,
+    originalMaxAmountOut: amountOut,
     wantedAmountsOut,
   };
 };
@@ -625,7 +626,7 @@ const calculateAmountIn = async (
   readProvider: Provider,
   liquidationPairContract: Contract,
   context: ArbLiquidatorContext,
-  originalAmountOut: BigNumber,
+  originalMaxAmountOut: BigNumber,
   wantedAmountsOut: BigNumber[],
 ): Promise<{
   amountIn: BigNumber;
@@ -636,9 +637,8 @@ const calculateAmountIn = async (
 
   let wantedAmountsIn = [];
 
-  // Necessary for determining profit
   const amountIn: BigNumber = await liquidationPairContract.callStatic.computeExactAmountIn(
-    originalAmountOut,
+    originalMaxAmountOut,
   );
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
