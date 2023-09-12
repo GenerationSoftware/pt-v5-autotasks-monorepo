@@ -33,7 +33,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
       if (value.length) {
         return true;
       } else {
-        return 'Please enter the minimum profit threshold in USD:';
+        return 'Please enter the minimum profit in USD (ie. 20 for $20.00):';
       }
     },
   },

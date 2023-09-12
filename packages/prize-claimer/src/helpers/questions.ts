@@ -35,7 +35,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
       if (value.length) {
         return true;
       } else {
-        return 'Please enter the minimum profit threshold in USD:';
+        return 'Please enter the minimum profit per claim in USD (ie. 0.1 for $0.10):';
       }
     },
   },
