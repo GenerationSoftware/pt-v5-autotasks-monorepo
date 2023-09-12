@@ -248,7 +248,7 @@ const calculateProfit = async (
   vault: string,
   tier: number,
   claimerContract: Contract,
-  unclaimedClaims: any,
+  groupedClaims: any,
   context: ClaimPrizeContext,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<ClaimPrizesParams> => {
@@ -268,7 +268,7 @@ const calculateProfit = async (
     vault,
     tier,
     claimerContract,
-    unclaimedClaims,
+    groupedClaims,
     feeRecipient,
     nativeTokenMarketRateUsd,
     '100',
@@ -278,12 +278,12 @@ const calculateProfit = async (
     context,
     claimerContract,
     tier,
-    unclaimedClaims,
+    groupedClaims,
     gasCost,
     minProfitThresholdUsd,
   );
 
-  const claimsSlice = unclaimedClaims.slice(0, claimCount);
+  const claimsSlice = groupedClaims.slice(0, claimCount);
   const claimPrizesParams = buildParams(
     vault,
     tier,
