@@ -91,7 +91,7 @@ export async function executeClaimerProfitablePrizeTxs(
   // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
   claims = await flagClaimedRpc(readProvider, contracts, claims);
 
-  const unclaimedClaims = claims.filter((claim) => !claim.claimed);
+  let unclaimedClaims = claims.filter((claim) => !claim.claimed);
   const claimedClaims = claims.filter((claim) => claim.claimed);
   if (claimedClaims.length === 0) {
     console.log(chalk.dim(`No claimed prizes for draw #${context.drawId}.`));
@@ -108,7 +108,10 @@ export async function executeClaimerProfitablePrizeTxs(
     return;
   }
 
-  // #4. Group claims by vault & tier
+  // #4. Sort unclaimed claims by tier so largest prizes (with the largest rewards) are first
+  unclaimedClaims = unclaimedClaims.sort((a, b) => a.tier - b.tier);
+
+  // #5. Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
 
   let canaryTierNotProfitable = false;
@@ -136,7 +139,7 @@ export async function executeClaimerProfitablePrizeTxs(
       continue;
     }
 
-    // #5. Decide if profitable or not
+    // #6. Decide if profitable or not
     printSpacer();
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
@@ -151,7 +154,7 @@ export async function executeClaimerProfitablePrizeTxs(
     );
 
     // It's profitable if there is at least 1 claim to claim
-    // #6. Populate transaction
+    // #7. Populate transaction
     if (claimPrizesParams.winners.length > 0) {
       printSpacer();
       console.log(
