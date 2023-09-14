@@ -494,7 +494,7 @@ const calculateProfit = async (
 
   const netProfitUsd = maxGrossProfit - avgFeeUsd;
 
-  console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Max)'));
+  console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Average)'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
