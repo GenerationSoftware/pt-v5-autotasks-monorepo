@@ -26,7 +26,7 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
   1: 1,
   5: 0.2, // goerli, our estimates will say $6 for 2,300,000 gas limit but etherscan reports fractions of a penny
-  10: 0.2, // optimism
+  10: 1, // optimism
   420: 0.2, // opt goerli
   11155111: 0.01, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
   80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
