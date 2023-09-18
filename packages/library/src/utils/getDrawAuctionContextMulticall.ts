@@ -3,7 +3,6 @@ import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
-import chalk from 'chalk';
 
 import {
   AuctionContracts,
@@ -88,11 +87,11 @@ export const getDrawAuctionContextMulticall = async (
   );
 
   // 5. State enum
-  const state: DrawAuctionState = getState(context);
+  const drawAuctionState: DrawAuctionState = getDrawAuctionState(context);
 
   return {
     ...context,
-    state,
+    drawAuctionState,
   };
 };
 
@@ -386,7 +385,7 @@ export const getRelayMulticall = async (
 //    If in relay state,
 //     or RngRelayAuction#relay (if blockhash), or
 //     rngAuctionRelayerRemoteOwnerContract#relay (if VRF)
-const getState = (context: DrawAuctionContext): DrawAuctionState => {
+const getDrawAuctionState = (context: DrawAuctionContext): DrawAuctionState => {
   if (context.rngIsAuctionOpen && context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
     return DrawAuctionState.RngStartVrfHelper;
   } else if (context.rngIsAuctionOpen) {
