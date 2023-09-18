@@ -63,7 +63,13 @@ export async function executeClaimerProfitablePrizeTxs(
     minor: 0,
     patch: 0,
   };
-  const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
+  const prizePoolContract = getContract(
+    'PrizePool',
+    chainId,
+    readProvider,
+    contracts,
+    contractsVersion,
+  );
   const claimerContract = getContract(
     'Claimer',
     chainId,
@@ -79,14 +85,14 @@ export async function executeClaimerProfitablePrizeTxs(
   // #1. Get context about the prize pool prize token, etc
   const context: ClaimPrizeContext = await getContext(
     contracts,
-    prizePool,
+    prizePoolContract,
     readProvider,
     covalentApiKey,
   );
   printContext(context);
 
   // #2. Get data from v5-draw-results
-  let claims = await fetchClaims(chainId, prizePool.address, context.drawId);
+  let claims = await fetchClaims(chainId, prizePoolContract.address, context.drawId);
 
   // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
   claims = await flagClaimedRpc(readProvider, contracts, claims);
@@ -114,6 +120,8 @@ export async function executeClaimerProfitablePrizeTxs(
   // #5. Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
 
+  // Keep track of how many prizes we can claim per tier
+  let remainingPrizeCount: { [tierNum: string]: number } = {};
   let canaryTierNotProfitable = false;
   for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
     const [key, value] = vaultTier;
@@ -130,6 +138,16 @@ export async function executeClaimerProfitablePrizeTxs(
     console.log(chalk.blueBright(`Tier:      #${tierWords(context, Number(tier))}`));
     console.log(chalk.blueBright(`# prizes:  ${groupedClaims.length}`));
 
+    const enoughLiquidity = liquidityIsSufficient(context, tier);
+    if (!enoughLiquidity) {
+      printSpacer();
+      console.log(
+        chalk.redBright(`Tier #${tierWords(context, Number(tier))} insuff liquidity, skipping ...`),
+      );
+      printSpacer();
+      continue;
+    }
+
     if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
       printSpacer();
       console.log(
@@ -143,12 +161,16 @@ export async function executeClaimerProfitablePrizeTxs(
     printSpacer();
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
+    if (!remainingPrizeCount[tier]) {
+      remainingPrizeCount[tier] = context.tierPrizeData[tier].maxPrizesForRemainingLiquidity;
+    }
     const claimPrizesParams = await calculateProfit(
       readProvider,
       vault,
       Number(tier),
       claimerContract,
       groupedClaims,
+      remainingPrizeCount,
       context,
       params,
     );
@@ -249,6 +271,7 @@ const calculateProfit = async (
   tier: number,
   claimerContract: Contract,
   groupedClaims: any,
+  remainingPrizeCount: { [tierNum: string]: number },
   context: ClaimPrizeContext,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<ClaimPrizesParams> => {
@@ -279,6 +302,7 @@ const calculateProfit = async (
     claimerContract,
     tier,
     groupedClaims,
+    remainingPrizeCount,
     gasCost,
     minProfitThresholdUsd,
   );
@@ -360,7 +384,7 @@ const getContext = async (
   const feeTokenAddress = await prizePool.prizeToken();
 
   const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
-  const { drawId, numTiers, tiersRangeArray } = prizePoolInfo;
+  const { drawId, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
 
   const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
@@ -381,7 +405,7 @@ const getContext = async (
     ),
   };
 
-  return { feeToken, drawId, tiers };
+  return { feeToken, drawId, tiers, tierPrizeData };
 };
 
 /**
@@ -543,6 +567,7 @@ const getClaimInfo = async (
   claimerContract: Contract,
   tier: number,
   claims: Claim[],
+  remainingPrizeCount: { [tierNum: string]: number },
   gasCost: any,
   minProfitThresholdUsd: number,
 ): Promise<ClaimInfo> => {
@@ -556,6 +581,19 @@ const getClaimInfo = async (
     printSpacer();
     printSpacer();
     console.log(chalk.bgBlack.cyan(`5b. Profit for ${numClaims} Claim(s):`));
+
+    // If there's only liquidity for say 4 prizes and our target
+    // claim count is 10 we'll stop the loop at 4
+    if (remainingPrizeCount[tier.toString()] === 0) {
+      printSpacer();
+      console.log(
+        chalk.redBright(
+          `Tier #${tierWords(context, Number(tier))} insuff liquidity, exiting tier ...`,
+        ),
+      );
+      printSpacer();
+      break;
+    }
 
     const nextClaimFees = await claimerContract.functions['computeTotalFees(uint8,uint256)'](
       tier,
@@ -654,6 +692,8 @@ const getClaimInfo = async (
     printSpacer();
 
     if (netFees > previousNetFees && netFees > minProfitThresholdUsd) {
+      remainingPrizeCount[tier.toString()]--;
+
       previousNetFees = netFees;
       claimCount = numClaims;
       claimFees = nextClaimFees;
@@ -667,9 +707,6 @@ const getClaimInfo = async (
 
   // Sort array of BigNumbers by comparing them using basic JS built-in sort()
   minVrgdaFees.sort((a: BigNumber, b: BigNumber) => (a.gt(b) ? 1 : -1));
-
-  console.log('minVrgdaFees:');
-  minVrgdaFees.map((minVrgdaFee) => console.log(minVrgdaFee.toString()));
 
   // Take the lowest BigNumber as the lowest fee we will accept
   const minVrgdaFeePerClaim = Boolean(minVrgdaFees[0]) ? minVrgdaFees[0].toString() : '0';
@@ -697,4 +734,9 @@ const fetchClaims = async (
   }
 
   return claims;
+};
+
+const liquidityIsSufficient = (context: ClaimPrizeContext, tier: string) => {
+  const tierPrizeInfo = context.tierPrizeData[tier];
+  return tierPrizeInfo.maxPrizesForRemainingLiquidity > 0;
 };
