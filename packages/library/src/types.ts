@@ -1,6 +1,7 @@
 import { Contract, BigNumber } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
+import { TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
@@ -39,6 +40,9 @@ export interface ClaimPrizeContext {
   feeToken: TokenWithRate;
   drawId: number;
   tiers: TiersContext;
+  tierPrizeData: {
+    [tierNum: string]: TierPrizeData;
+  };
 }
 
 export interface ExecuteClaimerProfitablePrizeTxsParams {
