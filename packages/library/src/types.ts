@@ -116,7 +116,7 @@ export interface RelayDrawAuctionContext {
 export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuctionContext {
   rngNativeTokenMarketRateUsd: number;
   relayNativeTokenMarketRateUsd: number;
-  state?: DrawAuctionState;
+  drawAuctionState?: DrawAuctionState;
   rngExpectedRewardUsd?: number;
 }
 

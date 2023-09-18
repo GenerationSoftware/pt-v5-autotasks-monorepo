@@ -202,7 +202,7 @@ export async function prepareDrawAuctionTxs(
 
   printContext(rngChainId, relayChainId, context);
 
-  if (!context.state) {
+  if (!context.drawAuctionState) {
     printAsterisks();
     console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
     printSpacer();
@@ -213,7 +213,7 @@ export async function prepareDrawAuctionTxs(
   printSpacer();
 
   // #3. If there is an RNG Fee, figure out if the bot can afford it
-  if (context.state === DrawAuctionState.RngStartVrfHelper) {
+  if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
     console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
     printSpacer();
     await checkBalance(context);
@@ -235,8 +235,8 @@ export async function prepareDrawAuctionTxs(
 
   // #5. Find reward in USD
   const rewardUsd =
-    context.state === DrawAuctionState.RngStartVrfHelper ||
-    context.state === DrawAuctionState.RngStart
+    context.drawAuctionState === DrawAuctionState.RngStartVrfHelper ||
+    context.drawAuctionState === DrawAuctionState.RngStart
       ? context.rngExpectedRewardUsd
       : context.rngRelayExpectedRewardUsd;
 
@@ -617,10 +617,10 @@ const getGasCost = async (
 ): Promise<number> => {
   let estimatedGasLimit;
   if (
-    context.state === DrawAuctionState.RngStart ||
-    context.state === DrawAuctionState.RngStartVrfHelper
+    context.drawAuctionState === DrawAuctionState.RngStart ||
+    context.drawAuctionState === DrawAuctionState.RngStartVrfHelper
   ) {
-    if (context.state === DrawAuctionState.RngStartVrfHelper) {
+    if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
       // RPC failing to estimate gas on this specific transaction
       //
       // const transferFeeAndStartRngRequestTxParams = buildTransferFeeAndStartRngRequestParams(
@@ -643,7 +643,7 @@ const getGasCost = async (
       );
     }
   } else {
-    if (context.state === DrawAuctionState.RngRelayBridge) {
+    if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
       const rngAuctionRelayerRemoteOwnerRelayTxParams =
         buildRngAuctionRelayerRemoteOwnerRelayTxParams(
           ERC_5164_MESSAGE_DISPATCHER_ADDRESS[params.rngChainId],
@@ -717,7 +717,7 @@ const sendTransaction = async (
   console.log(chalk.yellow(`Submitting transaction:`));
 
   let populatedTx: PopulatedTransaction;
-  if (context.state === DrawAuctionState.RngStartVrfHelper) {
+  if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
     console.log(
       chalk.green(`Execute ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest`),
     );
@@ -841,25 +841,25 @@ const checkOrX = (bool: boolean): string => {
 };
 
 const getRelayer = (rngRelayer: Relayer, relayRelayer: Relayer, context: DrawAuctionContext) => {
-  if (context.state === DrawAuctionState.RngStart) {
+  if (context.drawAuctionState === DrawAuctionState.RngStart) {
     return relayRelayer;
-  } else if (context.state === DrawAuctionState.RngStartVrfHelper) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
     return rngRelayer;
-  } else if (context.state === DrawAuctionState.RngRelayDirect) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngRelayDirect) {
     return rngRelayer;
-  } else if (context.state === DrawAuctionState.RngRelayBridge) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     return rngRelayer;
   }
 };
 
 const getChainId = (rngChainId: number, relayChainId: number, context: DrawAuctionContext) => {
-  if (context.state === DrawAuctionState.RngStart) {
+  if (context.drawAuctionState === DrawAuctionState.RngStart) {
     return relayChainId;
-  } else if (context.state === DrawAuctionState.RngStartVrfHelper) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
     return rngChainId;
-  } else if (context.state === DrawAuctionState.RngRelayDirect) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngRelayDirect) {
     return rngChainId;
-  } else if (context.state === DrawAuctionState.RngRelayBridge) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     return rngChainId;
   }
 };
@@ -869,13 +869,13 @@ const getProvider = (
   relayReadProvider: Provider,
   context: DrawAuctionContext,
 ) => {
-  if (context.state === DrawAuctionState.RngStart) {
+  if (context.drawAuctionState === DrawAuctionState.RngStart) {
     return relayReadProvider;
-  } else if (context.state === DrawAuctionState.RngStartVrfHelper) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
     return rngReadProvider;
-  } else if (context.state === DrawAuctionState.RngRelayDirect) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngRelayDirect) {
     return rngReadProvider;
-  } else if (context.state === DrawAuctionState.RngRelayBridge) {
+  } else if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     return rngReadProvider;
   }
 };
