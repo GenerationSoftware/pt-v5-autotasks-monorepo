@@ -12,7 +12,11 @@
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to claim prizes on behalf of depositors.
 
-## Usage
+## 📖 Tutorial
+
+### [Creating a PoolTogether Prize Claiming bot](https://mirror.xyz/chuckbergeron-g9.eth/xPSEh1pfjV2IT1yswcsjN2gBBrVf548V8q9W23xxA8U)
+
+## 🖥️ Usage
 
 This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
 

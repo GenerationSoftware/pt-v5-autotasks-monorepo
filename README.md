@@ -4,15 +4,21 @@
 
 <br />
 
-# 🤖 PoolTogether V5
+# PoolTogether V5
 
-### Bots!
+### 🤖 Bots!
 
 Monorepo grouping PoolTogether v5 hyperstructure OpenZeppelin Defender autotasks (bots).
 
-## Packages
+## 📖 Tutorials
 
-- **[library](./packages/library)**: Shared functions which can be installed from any repo, published as `v5-autotasks-library` on NPM.
+1. [Creating a PoolTogether Arbitrage Swapping bot](https://mirror.xyz/chuckbergeron-g9.eth/ES-IJduktYPb0X_sBikfqL-PVFRweNpoPrlr01zcVX8)
+2. [Creating a PoolTogether Prize Claiming bot](https://mirror.xyz/chuckbergeron-g9.eth/xPSEh1pfjV2IT1yswcsjN2gBBrVf548V8q9W23xxA8U)
+3. [Creating a PoolTogether Draw Auction bot](https://mirror.xyz/chuckbergeron-g9.eth/1o-d_ScnJ8F0cer5SRmILMSPxTCn4vlWgN7fkU4FD4o)
+
+## 📦 Packages
+
+- ## **[library](./packages/library)**: Shared functions which can be installed from any repo, published as `v5-autotasks-library` on NPM.
 - **[Arbitrage Liquidator Bot](./packages/arb-liquidator)**: OpenZeppelin Defender autotask to find arbitrage opportunities and liquidate the prize tokens (likely POOL) for yield.
 - **[Draw Auction Bot](./packages/draw-auction)**: OpenZeppelin Defender autotask to start and complete draws using the DrawAuction system.
 - **[Prize Claiming Bot](./packages/prize-claimer)**: OpenZeppelin Defender autotask to claim prizes on behalf of depositors.
@@ -22,7 +28,7 @@ Monorepo grouping PoolTogether v5 hyperstructure OpenZeppelin Defender autotasks
 
 - **[YieldVault MintRate Bot (testnet only)](./packages/yieldvault-mintrate)**: OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
 
-## Development
+## 🖥️ Development
 
 1. This library uses `yalc` to manage local dependencies. You will need to clone the `pt-v5-utils-js` repo and publish it with `yalc` (you can publish it using `yarn start` after `yarn install` in the `pt-v5-utils-js` directory).
 
