@@ -44,6 +44,10 @@ interface ClaimPrizesParams {
   minVrgdaFeePerClaim: string;
 }
 
+interface TierRemainingPrizeCounts {
+  [tierNum: string]: number;
+}
+
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
  * to claim for them. The fees the claimer bot can earn increase exponentially over time.
@@ -121,7 +125,8 @@ export async function executeClaimerProfitablePrizeTxs(
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
 
   // Keep track of how many prizes we can claim per tier
-  let remainingPrizeCount: { [tierNum: string]: number } = {};
+
+  let tierRemainingPrizeCounts: TierRemainingPrizeCounts = {};
   let canaryTierNotProfitable = false;
   for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
     const [key, value] = vaultTier;
@@ -138,7 +143,8 @@ export async function executeClaimerProfitablePrizeTxs(
     console.log(chalk.blueBright(`Tier:      #${tierWords(context, Number(tier))}`));
     console.log(chalk.blueBright(`# prizes:  ${groupedClaims.length}`));
 
-    const enoughLiquidity = liquidityIsSufficient(context, tier);
+    const reserve = await prizePoolContract.reserve();
+    const { enoughLiquidity } = getLiquidityInfo(context, tier, tierRemainingPrizeCounts, reserve);
     if (!enoughLiquidity) {
       printSpacer();
       console.log(
@@ -161,16 +167,13 @@ export async function executeClaimerProfitablePrizeTxs(
     printSpacer();
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
-    if (!remainingPrizeCount[tier]) {
-      remainingPrizeCount[tier] = context.tierPrizeData[tier].maxPrizesForRemainingLiquidity;
-    }
     const claimPrizesParams = await calculateProfit(
       readProvider,
       vault,
       Number(tier),
       claimerContract,
       groupedClaims,
-      remainingPrizeCount,
+      tierRemainingPrizeCounts,
       context,
       params,
     );
@@ -271,7 +274,7 @@ const calculateProfit = async (
   tier: number,
   claimerContract: Contract,
   groupedClaims: any,
-  remainingPrizeCount: { [tierNum: string]: number },
+  tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   context: ClaimPrizeContext,
   params: ExecuteClaimerProfitablePrizeTxsParams,
 ): Promise<ClaimPrizesParams> => {
@@ -302,7 +305,7 @@ const calculateProfit = async (
     claimerContract,
     tier,
     groupedClaims,
-    remainingPrizeCount,
+    tierRemainingPrizeCounts,
     gasCost,
     minProfitThresholdUsd,
   );
@@ -567,7 +570,7 @@ const getClaimInfo = async (
   claimerContract: Contract,
   tier: number,
   claims: Claim[],
-  remainingPrizeCount: { [tierNum: string]: number },
+  tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   gasCost: any,
   minProfitThresholdUsd: number,
 ): Promise<ClaimInfo> => {
@@ -584,7 +587,7 @@ const getClaimInfo = async (
 
     // If there's only liquidity for say 4 prizes and our target
     // claim count is 10 we'll stop the loop at 4
-    if (remainingPrizeCount[tier.toString()] === 0) {
+    if (tierRemainingPrizeCounts[tier.toString()] === 0) {
       printSpacer();
       console.log(
         chalk.redBright(
@@ -692,7 +695,9 @@ const getClaimInfo = async (
     printSpacer();
 
     if (netFees > previousNetFees && netFees > minProfitThresholdUsd) {
-      remainingPrizeCount[tier.toString()]--;
+      tierRemainingPrizeCounts[tier.toString()]--;
+      console.log('tierRemainingPrizeCounts[tier.toString()]');
+      console.log(tierRemainingPrizeCounts[tier.toString()]);
 
       previousNetFees = netFees;
       claimCount = numClaims;
@@ -736,7 +741,26 @@ const fetchClaims = async (
   return claims;
 };
 
-const liquidityIsSufficient = (context: ClaimPrizeContext, tier: string) => {
+// Find out max # of prizes claimable based on remaining liquidity and PrizePool reserve
+const getLiquidityInfo = (
+  context: ClaimPrizeContext,
+  tier: string,
+  tierRemainingPrizeCounts: TierRemainingPrizeCounts,
+  reserve: BigNumber,
+) => {
   const tierPrizeInfo = context.tierPrizeData[tier];
-  return tierPrizeInfo.maxPrizesForRemainingLiquidity > 0;
+
+  const liquidity = BigNumber.from(tierPrizeInfo.liquidity);
+  const liquiditySummed = reserve.add(liquidity);
+
+  const maxPrizesForRemainingLiquidity = Number(liquiditySummed.div(tierPrizeInfo.amount));
+  console.log('maxPrizesForRemainingLiquidity');
+  console.log(maxPrizesForRemainingLiquidity);
+
+  if (!tierRemainingPrizeCounts[tier]) {
+    tierRemainingPrizeCounts[tier] = maxPrizesForRemainingLiquidity;
+  }
+  const enoughLiquidity = maxPrizesForRemainingLiquidity > 0;
+
+  return { enoughLiquidity };
 };
