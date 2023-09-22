@@ -482,6 +482,17 @@ const getGasCost = async (
     );
   }
 
+  let populatedTx = await claimerContract.populateTransaction.claimPrizes(
+    ...Object.values(claimPrizesParams),
+  );
+  const { avgFeeUsd: gasCostOneClaimUsd } = await getFeesUsd(
+    chainId,
+    estimatedGasLimitForOne,
+    gasTokenMarketRateUsd,
+    readProvider,
+    populatedTx.data,
+  );
+
   // 2. Gas cost for 2 claims:
   let estimatedGasLimitForTwo;
   if (claims.length > 1) {
@@ -526,23 +537,20 @@ const getGasCost = async (
 
   // 4. Convert gas costs to USD
   printSpacer();
-  const { avgFeeUsd: gasCostOneClaimUsd } = await getFeesUsd(
-    chainId,
-    estimatedGasLimitForOne,
-    gasTokenMarketRateUsd,
-    readProvider,
+  populatedTx = await claimerContract.populateTransaction.claimPrizes(
+    ...Object.values(claimPrizesParams),
   );
-  console.log(
-    chalk.grey(`Gas Cost: First Claim (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostOneClaimUsd)}`),
-    chalk.dim(`$${gasCostOneClaimUsd}`),
-  );
-
   const { avgFeeUsd: gasCostEachFollowingClaimUsd } = await getFeesUsd(
     chainId,
     gasCostEachFollowingClaim,
     gasTokenMarketRateUsd,
     readProvider,
+    populatedTx.data,
+  );
+  console.log(
+    chalk.grey(`Gas Cost: First Claim (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostOneClaimUsd)}`),
+    chalk.dim(`$${gasCostOneClaimUsd}`),
   );
   if (claims.length > 1) {
     console.log(
