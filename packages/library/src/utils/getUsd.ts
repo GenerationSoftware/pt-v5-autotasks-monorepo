@@ -3,8 +3,11 @@ import { Provider } from '@ethersproject/providers';
 import chalk from 'chalk';
 
 import { NETWORK_NATIVE_TOKEN_INFO } from './network';
+import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
+
+const GAS_PRICE_ORACLE_ADDRESS = '0x420000000000000000000000000000000000000F';
 
 const SYMBOL_TO_COINGECKO_LOOKUP = {
   POOL: 'pooltogether',
@@ -88,6 +91,7 @@ export const getFeesUsd = async (
   estimatedGasLimit: BigNumber,
   gasTokenMarketRateUsd: number,
   provider: Provider,
+  txData?: any,
 ): Promise<{ avgFeeUsd: number }> => {
   const fees = { avgFeeUsd: null };
 
@@ -99,10 +103,22 @@ export const getFeesUsd = async (
 
   const baseFeeWei = gasPrice?.mul(estimatedGasLimit);
 
+  const l1GasFeeWei = await getL1GasFee(chainId, provider, txData);
+  console.log({ l1GasFeeWei });
+  console.log(l1GasFeeWei.toString());
+
   const chainMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
 
+  console.log({ l1GasFeeWei });
+  console.log(l1GasFeeWei.toString());
+
+  console.log('fee wei');
+  console.log(baseFeeWei.add(l1GasFeeWei).toString());
+
   const avgFeeUsd =
-    parseFloat(ethers.utils.formatEther(baseFeeWei)) * gasTokenMarketRateUsd * chainMultiplier;
+    parseFloat(ethers.utils.formatEther(baseFeeWei.add(l1GasFeeWei))) *
+    gasTokenMarketRateUsd *
+    chainMultiplier;
 
   return { avgFeeUsd };
 };
@@ -223,4 +239,25 @@ const getDateXDaysAgo = (days: number) => {
   const date = new Date();
   date.setDate(date.getDate() - days);
   return date.toISOString().split('T')[0];
+};
+
+// If we are dealing with an L2 also get the L1 data fee that needs to be paid
+const getL1GasFee = async (
+  chainId: number,
+  provider: Provider,
+  txData: any,
+): Promise<BigNumber> => {
+  if (chainId === 10) {
+    if (!txData) {
+      console.error(chalk.red('txData not provided to `getL1GasFee`, required on Optimism'));
+    }
+    const gasPriceOracleContract = new ethers.Contract(
+      GAS_PRICE_ORACLE_ADDRESS,
+      GasPriceOracleAbi,
+      provider,
+    );
+    return await gasPriceOracleContract.getL1Fee(txData);
+  } else {
+    return BigNumber.from(0);
+  }
 };
