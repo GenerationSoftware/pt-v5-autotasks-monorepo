@@ -45,15 +45,21 @@ export async function getWithdrawClaimRewardsTx(
     minor: 0,
     patch: 0,
   };
-  const prizePool = getContract('PrizePool', chainId, readProvider, contracts, contractsVersion);
+  const prizePoolContract = getContract(
+    'PrizePool',
+    chainId,
+    readProvider,
+    contracts,
+    contractsVersion,
+  );
 
-  if (!prizePool) {
+  if (!prizePoolContract) {
     throw new Error('WithdrawRewards: PrizePool Contract Unavailable');
   }
 
   // #1. Get context about the prize pool prize token, etc
   const context: WithdrawClaimRewardsContext = await getContext(
-    prizePool,
+    prizePoolContract,
     readProvider,
     covalentApiKey,
   );
@@ -64,7 +70,7 @@ export async function getWithdrawClaimRewardsTx(
   // #2. Get data about how much rewards a prize claimer can withdraw
   printSpacer();
   console.log(chalk.blue(`2. Getting claim rewards balance for relayer '${relayerAddress}' ...`));
-  const amount = await prizePool.balanceOfClaimRewards(relayerAddress);
+  const amount = await prizePoolContract.balanceOfClaimRewards(relayerAddress);
 
   logBigNumber(
     `${context.rewardsToken.symbol} balance:`,
@@ -85,7 +91,7 @@ export async function getWithdrawClaimRewardsTx(
   console.log(
     chalk.blue(`2. Getting claim rewards balance for rewards recipient '${rewardsRecipient}' ...`),
   );
-  const rewardsRecipientAmount = await prizePool.balanceOfClaimRewards(rewardsRecipient);
+  const rewardsRecipientAmount = await prizePoolContract.balanceOfClaimRewards(rewardsRecipient);
 
   if (rewardsRecipientAmount.gt(0)) {
     logBigNumber(
@@ -116,7 +122,7 @@ export async function getWithdrawClaimRewardsTx(
 
   const profitable = await calculateProfit(
     chainId,
-    prizePool,
+    prizePoolContract,
     rewardsTokenUsd,
     withdrawClaimRewardsParams,
     readProvider,
@@ -130,7 +136,7 @@ export async function getWithdrawClaimRewardsTx(
     console.log(chalk.blue(`5. Creating transaction ...`));
 
     console.log(chalk.green('WithdrawClaimRewards: Add Populated Claim Tx'));
-    populatedTx = await prizePool.populateTransaction.withdrawClaimRewards(
+    populatedTx = await prizePoolContract.populateTransaction.withdrawClaimRewards(
       ...Object.values(withdrawClaimRewardsParams),
     );
   }
@@ -144,11 +150,11 @@ export async function getWithdrawClaimRewardsTx(
  * @returns {Promise} Promise of a WithdrawClaimRewardsContext object
  */
 const getContext = async (
-  prizePool: Contract,
+  prizePoolContract: Contract,
   readProvider: Provider,
   covalentApiKey?: string,
 ): Promise<WithdrawClaimRewardsContext> => {
-  const rewardsTokenAddress = await prizePool.prizeToken();
+  const rewardsTokenAddress = await prizePoolContract.prizeToken();
 
   const tokenInContract = new ethers.Contract(rewardsTokenAddress, ERC20Abi, readProvider);
 
@@ -207,7 +213,7 @@ const getRewardsTokenRateUsd = async (
  */
 const calculateProfit = async (
   chainId: number,
-  prizePool: Contract,
+  prizePoolContract: Contract,
   rewardsTokenUsd: number,
   withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
   readProvider: Provider,
@@ -221,17 +227,22 @@ const calculateProfit = async (
   printSpacer();
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await prizePool.estimateGas.withdrawClaimRewards(
+    estimatedGasLimit = await prizePoolContract.estimateGas.withdrawClaimRewards(
       ...Object.values(withdrawClaimRewardsParams),
     );
   } catch (e) {
     console.error(chalk.red(e));
   }
+
+  const populatedTx = await prizePoolContract.populateTransaction.swapExactAmountOut(
+    ...Object.values(withdrawClaimRewardsParams),
+  );
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
     readProvider,
+    populatedTx.data,
   );
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,

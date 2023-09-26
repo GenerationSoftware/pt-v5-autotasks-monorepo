@@ -2,6 +2,7 @@ import { BigNumber, ethers } from 'ethers';
 import { formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import chalk from 'chalk';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 
 import {
@@ -75,6 +76,8 @@ export const getDrawAuctionContextMulticall = async (
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
+  printSpacer();
+  console.log(chalk.dim(`Gathering info on state of auctions ...`));
   const context: DrawAuctionContext = await getContext(
     rngChainId,
     rngReadProvider,
@@ -109,6 +112,9 @@ const getContext = async (
   const prizePoolReserveForOpenDraw = await auctionContracts.prizePoolContract.reserveForOpenDraw();
   const reserve = prizePoolReserve.add(prizePoolReserveForOpenDraw);
 
+  printSpacer();
+  console.log(chalk.dim(`Running get RNG multicall ...`));
+
   // 2. Rng Info
   const rngContext = await getRngMulticall(
     rngReadProvider,
@@ -117,6 +123,8 @@ const getContext = async (
     reserve,
     covalentApiKey,
   );
+
+  console.log(chalk.dim(`Running get Relay multicall ...`));
 
   // 2. Relay info
   const relayContext = await getRelayMulticall(
@@ -235,7 +243,6 @@ export const getRngMulticall = async (
   const rngIsAuctionOpen = results[RNG_IS_AUCTION_OPEN_KEY];
   const rngIsRngComplete = results[RNG_IS_RNG_COMPLETE_KEY];
   const rngCurrentFractionalReward = results[RNG_CURRENT_FRACTIONAL_REWARD_KEY];
-  printSpacer();
 
   const rngCurrentFractionalRewardString = ethers.utils.formatEther(rngCurrentFractionalReward);
 
@@ -341,7 +348,6 @@ export const getRelayMulticall = async (
   // 6f. Results: Draw/Relayer Reward
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
   if (rngRelayIsAuctionOpen) {
-    printSpacer();
     const [randomNumber, completedAt] =
       await auctionContracts.rngAuctionContract.callStatic.getRngResults();
     const rngLastAuctionResult = await auctionContracts.rngAuctionContract.getLastAuctionResult();
