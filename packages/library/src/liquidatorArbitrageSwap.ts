@@ -536,11 +536,15 @@ const getGasCost = async (
     ...Object.values(swapExactAmountOutParams),
   );
 
+  const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
+    ...Object.values(swapExactAmountOutParams),
+  );
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
     readProvider,
+    populatedTx.data,
   );
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,

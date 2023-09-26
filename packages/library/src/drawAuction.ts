@@ -615,23 +615,28 @@ const getGasCost = async (
   params: DrawAuctionConfigParams,
   context: DrawAuctionContext,
 ): Promise<number> => {
-  let estimatedGasLimit;
+  let estimatedGasLimit, populatedTx;
   if (
     context.drawAuctionState === DrawAuctionState.RngStart ||
     context.drawAuctionState === DrawAuctionState.RngStartVrfHelper
   ) {
     if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
+      const transferFeeAndStartRngRequestTxParams = buildTransferFeeAndStartRngRequestParams(
+        params.rewardRecipient,
+      );
+      const chainlinkRngAuctionHelperContract =
+        auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
+
       // RPC failing to estimate gas on this specific transaction
-      //
-      // const transferFeeAndStartRngRequestTxParams = buildTransferFeeAndStartRngRequestParams(
-      //   params.rewardRecipient,
-      // );
-      // const chainlinkRngAuctionHelperContract =
-      //   auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
       // estimatedGasLimit = await getTransferFeeAndStartRngRequestEstimatedGasLimit(
       //   chainlinkRngAuctionHelperContract,
       //   transferFeeAndStartRngRequestTxParams,
       // );
+
+      populatedTx =
+        await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
+          ...Object.values(transferFeeAndStartRngRequestTxParams),
+        );
 
       // This was a previous tx gas usage on Goerli + buffer room
       estimatedGasLimit = BigNumber.from(330000);
@@ -640,6 +645,10 @@ const getGasCost = async (
       estimatedGasLimit = await getStartRngRequestEstimatedGasLimit(
         auctionContracts.rngAuctionContract,
         startRngRequestTxParams,
+      );
+
+      populatedTx = await auctionContracts.rngAuctionContract.populateTransaction.startRngRequest(
+        ...Object.values(startRngRequestTxParams),
       );
     }
   } else {
@@ -656,6 +665,11 @@ const getGasCost = async (
         auctionContracts.rngAuctionRelayerRemoteOwnerContract,
         rngAuctionRelayerRemoteOwnerRelayTxParams,
       );
+
+      populatedTx =
+        await auctionContracts.rngAuctionRelayerRemoteOwnerContract.populateTransaction.relay(
+          ...Object.values(rngAuctionRelayerRemoteOwnerRelayTxParams),
+        );
     } else {
       // const relayTxParams = buildRelayParams(
       //   auctionContracts.rngRelayAuctionContract.address,
@@ -696,6 +710,7 @@ const getGasCost = async (
     estimatedGasLimit,
     context.rngNativeTokenMarketRateUsd,
     readProvider,
+    populatedTx.data,
   );
   console.log(
     chalk.grey(`Gas Cost (USD):`),

@@ -762,8 +762,6 @@ const getLiquidityInfo = (
   const liquiditySummed = reserve.add(liquidity);
 
   const maxPrizesForRemainingLiquidity = Number(liquiditySummed.div(tierPrizeInfo.amount));
-  console.log('maxPrizesForRemainingLiquidity');
-  console.log(maxPrizesForRemainingLiquidity);
 
   if (!tierRemainingPrizeCounts[tier]) {
     tierRemainingPrizeCounts[tier] = maxPrizesForRemainingLiquidity;

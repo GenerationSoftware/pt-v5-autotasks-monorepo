@@ -104,16 +104,16 @@ export const getFeesUsd = async (
   const baseFeeWei = gasPrice?.mul(estimatedGasLimit);
 
   const l1GasFeeWei = await getL1GasFee(chainId, provider, txData);
-  console.log({ l1GasFeeWei });
-  console.log(l1GasFeeWei.toString());
+  // console.log({ l1GasFeeWei });
+  // console.log(l1GasFeeWei.toString());
 
   const chainMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
 
-  console.log({ l1GasFeeWei });
-  console.log(l1GasFeeWei.toString());
+  // console.log({ l1GasFeeWei });
+  // console.log(l1GasFeeWei.toString());
 
-  console.log('fee wei');
-  console.log(baseFeeWei.add(l1GasFeeWei).toString());
+  // console.log('fee wei');
+  // console.log(baseFeeWei.add(l1GasFeeWei).toString());
 
   const avgFeeUsd =
     parseFloat(ethers.utils.formatEther(baseFeeWei.add(l1GasFeeWei))) *
