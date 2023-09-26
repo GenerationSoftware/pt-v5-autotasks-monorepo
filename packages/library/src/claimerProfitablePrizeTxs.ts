@@ -675,37 +675,37 @@ const getClaimInfo = async (
     // }
 
     const feeDiff = nextClaimFeesUsd - claimFeesUsd;
-    console.log('feeDiff');
-    console.log(feeDiff);
+    // console.log('feeDiff');
+    // console.log(feeDiff);
 
-    printSpacer();
+    // printSpacer();
 
-    console.log('minProfitThresholdUsd');
-    console.log(minProfitThresholdUsd);
-    printSpacer();
+    // console.log('minProfitThresholdUsd');
+    // console.log(minProfitThresholdUsd);
+    // printSpacer();
 
     const netFees = nextClaimFeesUsd - totalCostUsd;
-    console.log('netFees');
-    console.log(netFees);
-    printSpacer();
+    // console.log('netFees');
+    // console.log(netFees);
+    // printSpacer();
 
-    console.log('previousNetFees');
-    console.log(previousNetFees);
+    // console.log('previousNetFees');
+    // console.log(previousNetFees);
 
-    printSpacer();
-    console.log('netFees > previousNetFees');
-    console.log(netFees > previousNetFees);
+    // printSpacer();
+    // console.log('netFees > previousNetFees');
+    // console.log(netFees > previousNetFees);
 
-    printSpacer();
-    console.log('netFees > minProfitThresholdUsd');
-    console.log(netFees > minProfitThresholdUsd);
+    // printSpacer();
+    // console.log('netFees > minProfitThresholdUsd');
+    // console.log(netFees > minProfitThresholdUsd);
 
     printSpacer();
 
     if (netFees > previousNetFees && netFees > minProfitThresholdUsd) {
       tierRemainingPrizeCounts[tier.toString()]--;
-      console.log('tierRemainingPrizeCounts[tier.toString()]');
-      console.log(tierRemainingPrizeCounts[tier.toString()]);
+      // console.log('tierRemainingPrizeCounts[tier.toString()]');
+      // console.log(tierRemainingPrizeCounts[tier.toString()]);
 
       previousNetFees = netFees;
       claimCount = numClaims;
