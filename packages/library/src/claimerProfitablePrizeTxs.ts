@@ -87,6 +87,8 @@ export async function executeClaimerProfitablePrizeTxs(
   }
 
   // #1. Get context about the prize pool prize token, etc
+  printSpacer();
+  console.log(chalk.dim('Starting ...'));
   const context: ClaimPrizeContext = await getContext(
     contracts,
     prizePoolContract,
@@ -386,11 +388,15 @@ const getContext = async (
 ): Promise<ClaimPrizeContext> => {
   const feeTokenAddress = await prizePool.prizeToken();
 
+  console.log(chalk.dim('Getting prize pool info ...'));
+
   const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
   const { drawId, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
 
   const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
+
+  console.log(chalk.dim('Getting prize context ...'));
 
   const feeTokenBasic: Token = {
     address: feeTokenAddress,
@@ -586,12 +592,11 @@ const getClaimInfo = async (
   let claimFees = BigNumber.from(0);
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
-  let previousNetFees = 0;
+  let previousNetProfitUsd = 0;
   let minVrgdaFees: BigNumber[] = [];
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
-    printSpacer();
-    console.log(chalk.bgBlack.cyan(`5b. Profit for ${numClaims} Claim(s):`));
+    console.log(chalk.cyanBright(`5b. ${numClaims} Claim(s):`));
 
     // If there's only liquidity for say 4 prizes and our target
     // claim count is 10 we'll stop the loop at 4
@@ -610,7 +615,6 @@ const getClaimInfo = async (
       tier,
       numClaims,
     );
-    printSpacer();
 
     // COSTS USD
     const totalCostUsd =
@@ -651,20 +655,20 @@ const getClaimInfo = async (
       parseFloat(ethers.utils.formatUnits(nextClaimFees.toString(), context.feeToken.decimals)) *
       context.feeToken.assetRateUsd;
 
-    logBigNumber(
-      `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
-      nextClaimFees,
-      context.feeToken.decimals,
-      context.feeToken.symbol,
-    );
-    console.log(
-      chalk.green(
-        `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
-        `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`,
-      ),
-      chalk.dim(`($${nextClaimFeesUsd})`),
-    );
-    printSpacer();
+    // logBigNumber(
+    //   `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
+    //   nextClaimFees,
+    //   context.feeToken.decimals,
+    //   context.feeToken.symbol,
+    // );
+    // console.log(
+    //   chalk.green(
+    //     `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
+    //     `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`,
+    //   ),
+    //   chalk.dim(`($${nextClaimFeesUsd})`),
+    // );
+    // printSpacer();
 
     // To push through 1 non-profitable tx for debugging:
     // if (numClaims === 1) {
@@ -684,42 +688,54 @@ const getClaimInfo = async (
     // console.log(minProfitThresholdUsd);
     // printSpacer();
 
-    const netFees = nextClaimFeesUsd - totalCostUsd;
-    // console.log('netFees');
-    // console.log(netFees);
+    const netProfitUsd = nextClaimFeesUsd - totalCostUsd;
+    // console.log('netProfitUsd');
+    // console.log(netProfitUsd);
     // printSpacer();
 
-    // console.log('previousNetFees');
-    // console.log(previousNetFees);
+    // console.log('previousNetProfitUsd');
+    // console.log(previousNetProfitUsd);
 
     // printSpacer();
-    // console.log('netFees > previousNetFees');
-    // console.log(netFees > previousNetFees);
+    // console.log('netProfitUsd > previousNetProfitUsd');
+    // console.log(netProfitUsd > previousNetProfitUsd);
 
     // printSpacer();
-    // console.log('netFees > minProfitThresholdUsd');
-    // console.log(netFees > minProfitThresholdUsd);
+    // console.log('netProfitUsd > minProfitThresholdUsd');
+    // console.log(netProfitUsd > minProfitThresholdUsd);
 
-    printSpacer();
+    // printSpacer();
 
-    if (netFees > previousNetFees && netFees > minProfitThresholdUsd) {
+    console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Avg])'));
+    console.log(
+      chalk.greenBright(
+        `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
+          nextClaimFeesUsd,
+        )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
+      ),
+      chalk.dim(`$${netProfitUsd} = ($${nextClaimFeesUsd} - $${totalCostUsd})`),
+    );
+
+    if (netProfitUsd > previousNetProfitUsd && netProfitUsd > minProfitThresholdUsd) {
       tierRemainingPrizeCounts[tier.toString()]--;
       // console.log('tierRemainingPrizeCounts[tier.toString()]');
       // console.log(tierRemainingPrizeCounts[tier.toString()]);
 
-      previousNetFees = netFees;
+      previousNetProfitUsd = netProfitUsd;
       claimCount = numClaims;
       claimFees = nextClaimFees;
       claimFeesUsd = nextClaimFeesUsd;
 
       minVrgdaFees.push(nextClaimFees);
+
+      printSpacer();
     } else {
       break;
     }
   }
 
   // Sort array of BigNumbers by comparing them using basic JS built-in sort()
-  minVrgdaFees.sort((a: BigNumber, b: BigNumber) => (a.gt(b) ? 1 : -1));
+  minVrgdaFees.sort((a: BigNumber, b: BigNumber) => (a[0].gt(b[0]) ? 1 : -1));
 
   // Take the lowest BigNumber as the lowest fee we will accept
   const minVrgdaFeePerClaim = Boolean(minVrgdaFees[0]) ? minVrgdaFees[0].toString() : '0';

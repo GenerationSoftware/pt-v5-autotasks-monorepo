@@ -25,7 +25,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
   },
   RELAY_RELAYER_API_KEY: {
     name: 'RELAY_RELAYER_API_KEY',
-    type: 'input',
+    type: 'password',
     message: chalk.green(`Enter the relay chain's OZ Defender Relayer API key:`),
     validate: function (value) {
       if (value.length) {
@@ -37,7 +37,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
   },
   RELAY_RELAYER_API_SECRET: {
     name: 'RELAY_RELAYER_API_SECRET',
-    type: 'input',
+    type: 'password',
     message: chalk.green(`Enter the relay chain's OZ Defender Relayer API secret:`),
     validate: function (value) {
       if (value.length) {
@@ -49,7 +49,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
   },
   RELAY_JSON_RPC_URI: {
     name: 'RELAY_JSON_RPC_URI',
-    type: 'input',
+    type: 'password',
     message: chalk.green(`Enter the relay chain's JSON RPC read provider URI:`),
     validate: function (value) {
       if (value.length) {
