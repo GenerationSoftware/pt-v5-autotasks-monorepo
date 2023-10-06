@@ -674,17 +674,3 @@ const logNextPair = (liquidationPair, liquidationPairContracts) => {
     console.warn(chalk.yellow(`Moving to next pair ...`));
   }
 };
-
-const getVaultsContext = async (
-  chainId: number,
-  readProvider: Provider,
-  contracts: ContractsBlob,
-): Promise<VaultWithContext[]> => {
-  const vaults = await getSubgraphVaults(chainId);
-
-  if (vaults.length === 0) {
-    throw new Error('No vaults found in subgraph');
-  }
-
-  return await getVaultsWithContextMulticall(vaults, readProvider, contracts);
-};
