@@ -109,7 +109,8 @@ const getContext = async (
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   const prizePoolReserve = await auctionContracts.prizePoolContract.reserve();
-  const prizePoolReserveForOpenDraw = await auctionContracts.prizePoolContract.reserveForOpenDraw();
+  const prizePoolReserveForOpenDraw =
+    await auctionContracts.prizePoolContract.pendingReserveContributions();
   const reserve = prizePoolReserve.add(prizePoolReserveForOpenDraw);
 
   printSpacer();
@@ -187,9 +188,10 @@ export const getRngMulticall = async (
 
   const chainlinkVRFV2DirectRngAuctionHelperContract =
     await auctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
-  const vrfHelperRequestFee = await chainlinkVRFV2DirectRngAuctionHelperContract.estimateRequestFee(
-    requestGasPriceWei,
-  );
+  const vrfHelperRequestFee =
+    await chainlinkVRFV2DirectRngAuctionHelperContract.callStatic.estimateRequestFee(
+      requestGasPriceWei,
+    );
   const rngFeeAmount = vrfHelperRequestFee._requestFee;
 
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
@@ -299,7 +301,9 @@ export const getRelayMulticall = async (
   let queries: Record<string, any> = {};
 
   // 1. Prize Pool Info
-  queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] = auctionContracts.prizePoolContract.openDrawEndsAt();
+  const drawId = await auctionContracts.prizePoolContract.getOpenDrawId();
+  queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] =
+    auctionContracts.prizePoolContract.drawClosesAt(drawId);
 
   // 3. Info about the reward token (prize token)
   const rewardTokenAddress = await auctionContracts.prizePoolContract.prizeToken();
