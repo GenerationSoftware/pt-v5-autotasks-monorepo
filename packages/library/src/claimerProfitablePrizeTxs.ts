@@ -203,7 +203,7 @@ export async function executeClaimerProfitablePrizeTxs(
         isPrivate,
         data: populatedTx.data,
         to: populatedTx.to,
-        gasLimit: 8000000,
+        gasLimit: 20000000,
       });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
@@ -320,6 +320,8 @@ const calculateProfit = async (
     feeRecipient,
     minVrgdaFeePerClaim,
   );
+  console.log('claimPrizesParams');
+  console.log(claimPrizesParams);
 
   printAsterisks();
   console.log(chalk.magenta('5c. Profit/Loss (USD):'));
@@ -593,7 +595,7 @@ const getClaimInfo = async (
   let claimFeesUsd = 0;
   let totalCostUsd = 0;
   let previousNetProfitUsd = 0;
-  let minVrgdaFees: BigNumber[] = [];
+  let minVrgdaFeePerClaim = BigNumber.from(0);
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     console.log(chalk.cyanBright(`5b. ${numClaims} Claim(s):`));
@@ -615,26 +617,30 @@ const getClaimInfo = async (
       tier,
       numClaims,
     );
+    console.log('nextClaimFees');
+    console.log(nextClaimFees.toString());
 
     // COSTS USD
     const totalCostUsd =
       numClaims === 1
         ? gasCost.gasCostOneClaimUsd
-        : gasCost.gasCostOneClaimUsd + gasCost.gasCostEachFollowingClaimUsd * numClaims;
+        : gasCost.gasCostOneClaimUsd + gasCost.gasCostEachFollowingClaimUsd * (numClaims - 1);
 
     printSpacer();
 
     console.log(
-      chalk.green('Total Cost (USD):', `$${roundTwoDecimalPlaces(totalCostUsd)}`),
+      chalk.green(
+        `Total Gas Fees: ${numClaims} Claim(s) (USD):`,
+        `$${roundTwoDecimalPlaces(totalCostUsd)}`,
+      ),
       chalk.dim(`($${totalCostUsd})`),
     );
     printSpacer();
 
-    // FEES USD
-    claimFeesUsd =
-      parseFloat(ethers.utils.formatUnits(claimFees.toString(), context.feeToken.decimals)) *
-      context.feeToken.assetRateUsd;
-    if (claimCount > 0) {
+    if (claimCount !== 0) {
+      claimFeesUsd =
+        parseFloat(ethers.utils.formatUnits(claimFees.toString(), context.feeToken.decimals)) *
+        context.feeToken.assetRateUsd;
       logBigNumber(
         `Claim Fees: ${claimCount} Claim(s) (WEI):`,
         claimFees,
@@ -654,21 +660,20 @@ const getClaimInfo = async (
     const nextClaimFeesUsd =
       parseFloat(ethers.utils.formatUnits(nextClaimFees.toString(), context.feeToken.decimals)) *
       context.feeToken.assetRateUsd;
-
-    // logBigNumber(
-    //   `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
-    //   nextClaimFees,
-    //   context.feeToken.decimals,
-    //   context.feeToken.symbol,
-    // );
-    // console.log(
-    //   chalk.green(
-    //     `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
-    //     `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`,
-    //   ),
-    //   chalk.dim(`($${nextClaimFeesUsd})`),
-    // );
-    // printSpacer();
+    logBigNumber(
+      `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
+      nextClaimFees,
+      context.feeToken.decimals,
+      context.feeToken.symbol,
+    );
+    console.log(
+      chalk.green(
+        `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
+        `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`,
+      ),
+      chalk.dim(`($${nextClaimFeesUsd})`),
+    );
+    printSpacer();
 
     // To push through 1 non-profitable tx for debugging:
     // if (numClaims === 1) {
@@ -678,33 +683,34 @@ const getClaimInfo = async (
     //   return { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim };
     // }
 
-    const feeDiff = nextClaimFeesUsd - claimFeesUsd;
+    const netProfitUsd = nextClaimFeesUsd - totalCostUsd;
+
+    // DEBUG INFO
+    // const feeDiff = nextClaimFeesUsd - claimFeesUsd;
     // console.log('feeDiff');
     // console.log(feeDiff);
+    // printSpacer();
 
+    // console.log('netProfitUsd');
+    // console.log(netProfitUsd);
     // printSpacer();
 
     // console.log('minProfitThresholdUsd');
     // console.log(minProfitThresholdUsd);
     // printSpacer();
 
-    const netProfitUsd = nextClaimFeesUsd - totalCostUsd;
-    // console.log('netProfitUsd');
-    // console.log(netProfitUsd);
-    // printSpacer();
-
     // console.log('previousNetProfitUsd');
     // console.log(previousNetProfitUsd);
-
     // printSpacer();
+
     // console.log('netProfitUsd > previousNetProfitUsd');
     // console.log(netProfitUsd > previousNetProfitUsd);
-
     // printSpacer();
+
     // console.log('netProfitUsd > minProfitThresholdUsd');
     // console.log(netProfitUsd > minProfitThresholdUsd);
-
     // printSpacer();
+    // END DEBUG INFO
 
     console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Avg])'));
     console.log(
@@ -718,15 +724,23 @@ const getClaimInfo = async (
 
     if (netProfitUsd > previousNetProfitUsd && netProfitUsd > minProfitThresholdUsd) {
       tierRemainingPrizeCounts[tier.toString()]--;
-      // console.log('tierRemainingPrizeCounts[tier.toString()]');
-      // console.log(tierRemainingPrizeCounts[tier.toString()]);
+
+      console.log('nextClaimFees');
+      console.log(nextClaimFees);
+      console.log(nextClaimFees.toString());
+      console.log('claimFees');
+      console.log(claimFees);
+      console.log(claimFees.toString());
+      const claimFeesUnpacked = claimFees[0] ? claimFees[0] : claimFees;
+      minVrgdaFeePerClaim = nextClaimFees[0].sub(claimFeesUnpacked);
+
+      console.log('minVrgdaFeePerClaim');
+      console.log(minVrgdaFeePerClaim.toString());
 
       previousNetProfitUsd = netProfitUsd;
       claimCount = numClaims;
       claimFees = nextClaimFees;
       claimFeesUsd = nextClaimFeesUsd;
-
-      minVrgdaFees.push(nextClaimFees);
 
       printSpacer();
     } else {
@@ -734,13 +748,12 @@ const getClaimInfo = async (
     }
   }
 
-  // Sort array of BigNumbers by comparing them using basic JS built-in sort()
-  minVrgdaFees.sort((a: BigNumber, b: BigNumber) => (a[0].gt(b[0]) ? 1 : -1));
-
-  // Take the lowest BigNumber as the lowest fee we will accept
-  const minVrgdaFeePerClaim = Boolean(minVrgdaFees[0]) ? minVrgdaFees[0].toString() : '0';
-
-  return { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim };
+  return {
+    claimCount,
+    claimFeesUsd,
+    totalCostUsd,
+    minVrgdaFeePerClaim: minVrgdaFeePerClaim.toString(),
+  };
 };
 
 const fetchClaims = async (
