@@ -44,6 +44,7 @@ interface RngAuctionRelayerRemoteOwnerRelayTxParams {
   remoteOwnerAddress: string;
   remoteRngAuctionRelayListenerAddress: string;
   rewardRecipient: string;
+  gasLimit: string;
 }
 
 const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
@@ -53,6 +54,7 @@ const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
 };
 
 const ONE_GWEI = '1000000000';
+const RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT = '250000';
 
 const getAuctionContracts = (
   rngChainId: number,
@@ -315,8 +317,8 @@ const checkBalance = (context: DrawAuctionContext) => {
 const printNote = () => {
   console.log(chalk.yellow('|*******************************************************|'));
   console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|      Rewards will be transferred post-relay() by      |'));
-  console.log(chalk.yellow('|       the PrizePool on the relayed-to L2 Chain        |'));
+  console.log(chalk.yellow('|   Rewards accumulate post-relay() on the PrizePool!   |'));
+  console.log(chalk.yellow('|       Withdraw your rewards from the PrizePool        |'));
   console.log(chalk.yellow('|                                                       |'));
   console.log(chalk.yellow('|*******************************************************|'));
 };
@@ -596,6 +598,7 @@ const buildRngAuctionRelayerRemoteOwnerRelayTxParams = (
     remoteOwnerAddress,
     remoteRngAuctionRelayListenerAddress,
     rewardRecipient,
+    gasLimit: RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT,
   };
 };
 
