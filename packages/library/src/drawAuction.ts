@@ -48,7 +48,7 @@ interface RngAuctionRelayerRemoteOwnerRelayTxParams {
 
 const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
   1: '0xa8f85bab964d7e6be938b54bf4b29a247a88cd9d', // mainnet -> optimism
-  5: '0x81f4056fffa1c1fa870de40bc45c752260e3ad13', // goerli -> optimism goerli
+  5: '0x177B14c6b571262057C3c30E3AE6bB044F62e55c', // goerli -> optimism goerli
   // 5: '0xBc244773f71a2f897fAB5D5953AA052B8ff68670', // goerli -> arbitrum goerli
 };
 
