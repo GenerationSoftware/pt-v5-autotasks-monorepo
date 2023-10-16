@@ -3,7 +3,7 @@ import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { Relayer } from 'defender-relay-client';
-import { ContractsBlob, getContract, getSubgraphVaults } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import { ArbLiquidatorConfigParams, ArbLiquidatorContext, VaultWithContext } from './types';
@@ -22,7 +22,6 @@ import {
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
-import { getVaultsWithContextMulticall } from './utils/getVaultsWithContextMulticall';
 
 interface SwapExactAmountOutParams {
   liquidationPairAddress: string;

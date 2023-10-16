@@ -97,6 +97,16 @@ export async function executeClaimerProfitablePrizeTxs(
   );
   printContext(context);
 
+  if (context.isDrawFinalized) {
+    printAsterisks();
+    console.log(
+      chalk.yellow(
+        `Draw is finalized. Cannot claim prizes anymore for finalized draw. Exiting ...`,
+      ),
+    );
+    return;
+  }
+
   // #2. Get data from v5-draw-results
   let claims = await fetchClaims(chainId, prizePoolContract.address, context.drawId);
 
@@ -393,7 +403,7 @@ const getContext = async (
   console.log(chalk.dim('Getting prize pool info ...'));
 
   const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
-  const { drawId, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
+  const { drawId, isDrawFinalized, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
 
   const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
@@ -416,7 +426,7 @@ const getContext = async (
     ),
   };
 
-  return { feeToken, drawId, tiers, tierPrizeData };
+  return { feeToken, drawId, isDrawFinalized, tiers, tierPrizeData };
 };
 
 /**
