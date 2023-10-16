@@ -39,6 +39,7 @@ export interface TiersContext {
 export interface ClaimPrizeContext {
   feeToken: TokenWithRate;
   drawId: number;
+  isDrawFinalized: boolean;
   tiers: TiersContext;
   tierPrizeData: {
     [tierNum: string]: TierPrizeData;
