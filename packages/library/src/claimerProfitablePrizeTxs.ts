@@ -627,8 +627,6 @@ const getClaimInfo = async (
       tier,
       numClaims,
     );
-    console.log('nextClaimFees');
-    console.log(nextClaimFees.toString());
 
     // COSTS USD
     const totalCostUsd =
@@ -735,17 +733,8 @@ const getClaimInfo = async (
     if (netProfitUsd > previousNetProfitUsd && netProfitUsd > minProfitThresholdUsd) {
       tierRemainingPrizeCounts[tier.toString()]--;
 
-      console.log('nextClaimFees');
-      console.log(nextClaimFees);
-      console.log(nextClaimFees.toString());
-      console.log('claimFees');
-      console.log(claimFees);
-      console.log(claimFees.toString());
       const claimFeesUnpacked = claimFees[0] ? claimFees[0] : claimFees;
       minVrgdaFeePerClaim = nextClaimFees[0].sub(claimFeesUnpacked);
-
-      console.log('minVrgdaFeePerClaim');
-      console.log(minVrgdaFeePerClaim.toString());
 
       previousNetProfitUsd = netProfitUsd;
       claimCount = numClaims;
