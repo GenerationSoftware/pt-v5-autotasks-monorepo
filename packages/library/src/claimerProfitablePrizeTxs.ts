@@ -332,8 +332,6 @@ const calculateProfit = async (
     feeRecipient,
     minVrgdaFeePerClaim,
   );
-  console.log('claimPrizesParams');
-  console.log(claimPrizesParams);
 
   printAsterisks();
   console.log(chalk.magenta('5c. Profit/Loss (USD):'));
