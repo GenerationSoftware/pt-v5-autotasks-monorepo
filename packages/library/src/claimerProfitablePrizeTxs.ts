@@ -34,6 +34,7 @@ import {
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { getDrawResultsUri } from './getDrawResultsUri';
 
 interface ClaimPrizesParams {
   vault: string;
@@ -765,10 +766,11 @@ const fetchClaims = async (
   drawId: number,
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
-  const uri = `https://raw.githubusercontent.com/GenerationSoftware/pt-v5-draw-results/main/prizes/${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/prizes.json`;
+
+  const drawResultsUri = getDrawResultsUri(chainId, prizePoolAddress, drawId);
 
   try {
-    const response = await fetch(uri);
+    const response = await fetch(drawResultsUri);
     if (!response.ok) {
       console.log(chalk.yellow(`Draw results not yet populated for new draw.`));
       throw new Error(response.statusText);
