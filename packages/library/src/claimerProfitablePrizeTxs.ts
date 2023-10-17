@@ -48,6 +48,8 @@ interface TierRemainingPrizeCounts {
   [tierNum: string]: number;
 }
 
+const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 60;
+
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
  * to claim for them. The fees the claimer bot can earn increase exponentially over time.
@@ -730,7 +732,11 @@ const getClaimInfo = async (
       chalk.dim(`$${netProfitUsd} = ($${nextClaimFeesUsd} - $${totalCostUsd})`),
     );
 
-    if (netProfitUsd > previousNetProfitUsd && netProfitUsd > minProfitThresholdUsd) {
+    if (
+      netProfitUsd > previousNetProfitUsd &&
+      netProfitUsd > minProfitThresholdUsd &&
+      numClaims < TOTAL_CLAIM_COUNT_PER_TRANSACTION
+    ) {
       tierRemainingPrizeCounts[tier.toString()]--;
 
       const claimFeesUnpacked = claimFees[0] ? claimFees[0] : claimFees;
