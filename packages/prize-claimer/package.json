@@ -1,10 +1,13 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-prize-claimer",
   "version": "0.0.1",
-  "description": "Autotask to automatically claim PoolTogether Hyperstructure (v5) prizes for depositors.",
-  "author": "PoolTogether Inc.",
+  "description": "Autotask to automatically claim PoolTogether Hyperstructure v5 prizes for depositors.",
+  "author": {
+    "name": "G9 Software Inc.",
+    "url": "https://github.com/generationsoftware"
+  },
+  "license": "MIT",
   "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/prize-claimer/README.md",
-  "license": "ISC",
   "type": "module",
   "main": "dist/handler.js",
   "directories": {
