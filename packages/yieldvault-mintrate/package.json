@@ -1,10 +1,13 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-yieldvault-mintrate",
   "version": "0.0.1",
-  "description": "Autotask to poke each YieldVault's MintRate.",
-  "author": "PoolTogether Inc.",
+  "description": "Autotask to poke each testnet YieldVault's MintRate, PoolTogether v5.",
+  "author": {
+    "name": "G9 Software Inc.",
+    "url": "https://github.com/generationsoftware"
+  },
+  "license": "MIT",
   "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/yieldvault-mintrate/README.md",
-  "license": "ISC",
   "type": "module",
   "main": "dist/handler.js",
   "directories": {

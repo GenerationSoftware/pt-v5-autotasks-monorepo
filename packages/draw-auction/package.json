@@ -1,10 +1,13 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-draw-auction",
   "version": "0.0.1",
-  "description": "Autotask to automatically start and complete PoolTogether Hyperstructure (v5) prize pool draws.",
-  "author": "PoolTogether Inc.",
+  "description": "Autotask to automatically start and complete PoolTogether Hyperstructure v5 prize pool draws.",
+  "author": {
+    "name": "G9 Software Inc.",
+    "url": "https://github.com/generationsoftware"
+  },
+  "license": "MIT",
   "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/draw-auction/README.md",
-  "license": "ISC",
   "type": "module",
   "main": "dist/handler.js",
   "directories": {

@@ -2,9 +2,12 @@
   "name": "@generationsoftware/pt-v5-autotasks-library",
   "version": "0.0.1-beta.7",
   "description": "Library of shared utils to run PoolTogether v5 hyperstructure autotasks.",
-  "author": "PoolTogether Inc.",
+  "author": {
+    "name": "G9 Software Inc.",
+    "url": "https://github.com/generationsoftware"
+  },
+  "license": "MIT",
   "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/library/README.md",
-  "license": "ISC",
   "type": "module",
   "main": "dist/index.js",
   "directories": {
