@@ -54,7 +54,7 @@ const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
 };
 
 const ONE_GWEI = '1000000000';
-const RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT = '250000';
+const RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT = '50000';
 
 const getAuctionContracts = (
   rngChainId: number,
