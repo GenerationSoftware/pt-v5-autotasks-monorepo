@@ -190,8 +190,12 @@ export const populateConfig = async <
     ...Object.values(NETWORK_CONFIG_QUESTIONS),
     ...(extraConfig?.network ?? []),
   ];
+  console.log('networkQuestions');
+  console.log(networkQuestions);
   const globalKeys = globalQuestions.map((x) => x.name);
   const networkKeys = networkQuestions.map((x) => x.name);
+  console.log('networkKeys');
+  console.log(networkKeys);
   let globalAnswers = {};
   let networkAnswers = {};
 
@@ -250,14 +254,21 @@ export const populateConfig = async <
 
   // Set config:
   let flattenedConfig = { CHAIN_ID };
+  // - Global:
   for (const [key, value] of Object.entries(globalAnswers)) {
     config.set(key, value);
     flattenedConfig[key] = value;
   }
+  // - Network:
   for (const [key, value] of Object.entries(networkAnswers)) {
+    console.log('networkAnswers');
+    console.log(networkAnswers);
     config.set(`${CHAIN_ID}.${key}`, value);
     flattenedConfig[key] = value;
   }
+
+  console.log('flattenedConfig');
+  console.log(flattenedConfig);
 
   // Return flattened config:
   return flattenedConfig as any;

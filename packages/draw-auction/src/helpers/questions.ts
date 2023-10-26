@@ -4,16 +4,63 @@ import { DistinctQuestion } from 'inquirer';
 import { camelize, CHAIN_IDS, populateConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import Configstore from 'configstore';
 
-interface PACKAGE_CONFIG {
+interface RELAY_CONFIG {
   RELAY_CHAIN_ID: number;
   RELAY_RELAYER_API_KEY: string;
   RELAY_RELAYER_API_SECRET: string;
   RELAY_JSON_RPC_URI: string;
+}
+
+interface PACKAGE_CONFIG {
+  RELAYS: RELAY_CONFIG[];
   REWARD_RECIPIENT: string;
   MIN_PROFIT_THRESHOLD_USD: string;
 }
 
 const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { name: key } } = {
+  REWARD_RECIPIENT: {
+    name: 'REWARD_RECIPIENT',
+    type: 'input',
+    message: chalk.green(
+      'Enter the reward recipient address (the account which will receive the rewards profit):',
+    ),
+    validate: function (value) {
+      if (value.length) {
+        return true;
+      } else {
+        return "Please enter the reward recipient's address:";
+      }
+    },
+  },
+  MIN_PROFIT_THRESHOLD_USD: {
+    name: 'MIN_PROFIT_THRESHOLD_USD',
+    type: 'input',
+    filter: (input) => input.replace('$', ''),
+    message: chalk.green(
+      'How much profit would you like to make per transaction (in USD, default is 2.50):',
+    ),
+    validate: function (value) {
+      if (value.length) {
+        return true;
+      } else {
+        return 'Please enter the minimum profit per transaction in USD (ie. 0.2 for $0.20):';
+      }
+    },
+  },
+  RELAYS: {
+    name: 'RELAYS',
+    type: 'list',
+    message: chalk.green(
+      'Do you want to add or manage L2 relay configs (L2s where the RngRelayAuction and PrizePool contracts live)?',
+    ),
+    choices: ['Yes', 'No'],
+    filter(val: string) {
+      return val.toLowerCase().startsWith('y');
+    },
+  },
+};
+
+const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & { name: key } } = {
   RELAY_CHAIN_ID: {
     name: 'RELAY_CHAIN_ID',
     type: 'list',
@@ -59,47 +106,19 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
       }
     },
   },
-  REWARD_RECIPIENT: {
-    name: 'REWARD_RECIPIENT',
-    type: 'input',
-    message: chalk.green(
-      'Enter the reward recipient address (the account which will receive the rewards profit):',
-    ),
-    validate: function (value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the reward recipient's address:";
-      }
-    },
-  },
-  MIN_PROFIT_THRESHOLD_USD: {
-    name: 'MIN_PROFIT_THRESHOLD_USD',
-    type: 'input',
-    filter: (input) => input.replace('$', ''),
-    message: chalk.green(
-      'How much profit would you like to make per transaction (in USD, default is 2.50):',
-    ),
-    validate: function (value) {
-      if (value.length) {
-        return true;
-      } else {
-        return 'Please enter the minimum profit per transaction in USD (ie. 0.2 for $0.20):';
-      }
-    },
-  },
 };
 
 export const askQuestions = (config: Configstore) => {
   return populateConfig<{}, PACKAGE_CONFIG>(config, {
     extraConfig: {
       network: [
-        PACKAGE_QUESTIONS.RELAY_CHAIN_ID,
-        PACKAGE_QUESTIONS.RELAY_RELAYER_API_KEY,
-        PACKAGE_QUESTIONS.RELAY_RELAYER_API_SECRET,
-        PACKAGE_QUESTIONS.RELAY_JSON_RPC_URI,
+        // PACKAGE_QUESTIONS.RELAY_CHAIN_ID,
+        // PACKAGE_QUESTIONS.RELAY_RELAYER_API_KEY,
+        // PACKAGE_QUESTIONS.RELAY_RELAYER_API_SECRET,
+        // PACKAGE_QUESTIONS.RELAY_JSON_RPC_URI,
         PACKAGE_QUESTIONS.REWARD_RECIPIENT,
         PACKAGE_QUESTIONS.MIN_PROFIT_THRESHOLD_USD,
+        PACKAGE_QUESTIONS.RELAYS,
       ],
     },
   });

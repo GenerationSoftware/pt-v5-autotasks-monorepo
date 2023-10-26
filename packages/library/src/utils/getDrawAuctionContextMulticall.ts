@@ -355,6 +355,9 @@ export const getRelayMulticall = async (
     const [randomNumber, completedAt] =
       await auctionContracts.rngAuctionContract.callStatic.getRngResults();
     const rngLastAuctionResult = await auctionContracts.rngAuctionContract.getLastAuctionResult();
+
+    // TODO: make sure the elapsed time is less than the auction duration
+    // odd that rngContext.rngIsRngComplete was true ...
     const elapsedTime = Math.floor(Date.now() / 1000) - Number(completedAt.toString());
 
     const rngRelayRewardFraction =
@@ -368,6 +371,8 @@ export const getRelayMulticall = async (
     const auctionResults = [];
     auctionResults[0] = rngLastAuctionResult;
     auctionResults[1] = auctionResult;
+
+    console.log(auctionResults);
 
     const rngRelayExpectedRewardResult =
       await auctionContracts.rngRelayAuctionContract.callStatic.computeRewards(auctionResults);
