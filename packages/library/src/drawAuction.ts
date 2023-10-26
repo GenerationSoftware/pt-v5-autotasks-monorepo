@@ -50,11 +50,15 @@ interface RngAuctionRelayerRemoteOwnerRelayTxParams {
 const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
   1: '0x2A34E6cae749876FB8952aD7d2fA486b00F0683F', // mainnet -> optimism
   5: '0x177B14c6b571262057C3c30E3AE6bB044F62e55c', // goerli -> optimism goerli
-  // 5: '0xBc244773f71a2f897fAB5D5953AA052B8ff68670', // goerli -> arbitrum goerli
+  // 42161: '', // mainnet -> arbitrum
+  421613: '0xBc244773f71a2f897fAB5D5953AA052B8ff68670', // goerli -> arbitrum goerli
 };
 
 const ONE_GWEI = '1000000000';
 const RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT = '50000';
+
+const ARBITRUM_CHAIN_ID = 42161;
+const ARBITRUM_GOERLI_CHAIN_ID = 421613;
 
 const getAuctionContracts = (
   rngChainId: number,
@@ -760,6 +764,11 @@ const sendTransaction = async (
       auctionContracts.rngRelayAuctionContract.address,
       params.rewardRecipient,
     );
+    console.log('############');
+    console.log('relayTxParams');
+    console.log(relayTxParams);
+    console.log(relayTxParams.gasLimit);
+    console.log('############');
     populatedTx =
       await auctionContracts.rngAuctionRelayerRemoteOwnerContract.populateTransaction.relay(
         ...Object.values(relayTxParams),
@@ -782,7 +791,7 @@ const sendTransaction = async (
     isPrivate,
     data: populatedTx.data,
     to: populatedTx.to,
-    gasLimit: 8000000,
+    gasLimit: 400000,
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
   });
 

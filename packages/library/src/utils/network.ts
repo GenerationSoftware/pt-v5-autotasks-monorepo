@@ -4,6 +4,8 @@ export const CHAIN_IDS = {
   goerli: 5,
   optimism: 10,
   optimismGoerli: 420,
+  arbitrum: 42161,
+  arbitrum_goerli: 421613,
   sepolia: 11155111,
 };
 
@@ -14,6 +16,8 @@ export const NETWORK_NATIVE_TOKEN_INFO = {
   5: { decimals: 18, symbol: 'ETH' },
   10: { decimals: 18, symbol: 'ETH' },
   420: { decimals: 18, symbol: 'ETH' },
+  42161: { decimals: 18, symbol: 'ETH' },
+  421613: { decimals: 18, symbol: 'ETH' },
   11155111: { decimals: 18, symbol: 'ETH' },
   80001: { decimals: 18, symbol: 'MATIC' },
 };
