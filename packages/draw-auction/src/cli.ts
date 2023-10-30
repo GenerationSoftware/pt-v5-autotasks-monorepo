@@ -16,6 +16,7 @@ console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
 
 if (esMain(import.meta)) {
   const config = await askQuestions(new Configstore(pkg.name));
+
   const rngReadProvider = new ethers.providers.JsonRpcProvider(
     config.JSON_RPC_URI, // is RNG chain but needs to be just JSON_RPC_URI for global config to work properly
     config.CHAIN_ID, // is RNG chain but needs to be just CHAIN_ID for global config to work properly
