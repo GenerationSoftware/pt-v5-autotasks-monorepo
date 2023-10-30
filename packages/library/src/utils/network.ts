@@ -9,6 +9,16 @@ export const CHAIN_IDS = {
   sepolia: 11155111,
 };
 
+export const CHAINS_BY_ID = {
+  1: '1 - Mainnet',
+  10: '10 - Optimism',
+  42161: '42161 - Arbitrum',
+  421613: '421613 - Arbitrum Goerli',
+  5: '5 - Goerli',
+  11155111: '11155111 - Sepolia',
+  420: '420 - Optimism Goerli',
+};
+
 export const FLASHBOTS_SUPPORTED_CHAINS = [1, 5];
 
 export const NETWORK_NATIVE_TOKEN_INFO = {

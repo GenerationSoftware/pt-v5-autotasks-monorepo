@@ -3,6 +3,7 @@ import Configstore from 'configstore';
 import inquirer, { DistinctQuestion } from 'inquirer';
 
 import { CHAIN_IDS } from './network';
+import { migrateOldRelayEntry, startManageRelays } from './relayConfig';
 
 export type CHAIN_CONFIG = {
   CHAIN_ID: number; // stores last-selected chain ID
@@ -22,7 +23,6 @@ export type NETWORK_CONFIG = {
   COVALENT_API_KEY?: string;
 };
 
-let newRelays = [];
 let relayQuestionsClone: DistinctQuestion[] = [];
 
 export async function askChainId(config: Configstore) {
@@ -265,6 +265,7 @@ export const populateConfig = async <
   // DRAW AUCTION BOT-specific
   let manageRelayConfig = false;
   if (relayKeys.length > 0) {
+    // for backwards-compat:
     migrateOldRelayEntry(CHAIN_ID, config);
 
     const { MANAGE_RELAY_CONFIG } = await inquirer.prompt({
@@ -283,7 +284,7 @@ export const populateConfig = async <
 
   // Ask draw auction bot specific L2-relay questions:
   if (manageRelayConfig) {
-    relayAnswers = await relayManagementLoop();
+    await startManageRelays(CHAIN_ID, config, relayQuestions);
   }
 
   //
@@ -304,9 +305,6 @@ export const populateConfig = async <
   }
 
   // - Relays:
-  for (const relay of newRelays) {
-    config.set(`${CHAIN_ID}.RELAYS.${relay.RELAY_CHAIN_ID}`, relay);
-  }
   flattenedConfig['RELAYS'] = config.get(`${CHAIN_ID}.RELAYS`);
 
   // Return flattened config:
@@ -320,107 +318,3 @@ export function camelize(str) {
     })
     .replace(/\s+/g, '');
 }
-
-/**
- * Show the relay management menu
- */
-const addChoice = 'Add new L2 relay config';
-const removeChoice = 'Remove L2 relay';
-const continueChoice = 'Continue';
-export async function relayManagementLoop(): Promise<object> {
-  const relayMenuQuestions = [
-    {
-      type: 'list',
-      name: 'MENU_OPTION',
-      message: chalk.blue.italic('Relay management'),
-      choices: [
-        addChoice,
-        removeChoice,
-        // 'Show all L2 relay configs',
-        continueChoice,
-      ],
-    },
-  ];
-  const answer = await inquirer.prompt(relayMenuQuestions);
-
-  let remove = {};
-  switch (answer.MENU_OPTION) {
-    case addChoice:
-      await mainAddRelay();
-      break;
-    case removeChoice:
-      remove = await mainRemoveRelay();
-      break;
-    case continueChoice:
-      // await mainExit();
-      break;
-  }
-
-  return { remove };
-}
-
-// function mainExit() {
-//   console.log(chalk.green.bold('Relay L2s saved!'));
-// }
-
-async function mainAddRelay() {
-  const addRelayAnswers = await inquirer.prompt(relayQuestionsClone);
-  console.log(
-    chalk.yellow(
-      'Ok, will add L2 Relay config for network with chain ID:',
-      addRelayAnswers['RELAY_CHAIN_ID'],
-    ),
-  );
-
-  newRelays.push(addRelayAnswers);
-
-  await relayManagementLoop();
-}
-
-async function mainRemoveRelay() {
-  console.log('remove relay loop here');
-  console.log('choose which L2 relay config you would like to remove:');
-
-  const removeRelayAnswer = await inquirer.prompt(['Relay 1', 'Relay 2', 'Relay 3']);
-
-  // asyncReadFile(dataPath).then(
-  //   /**
-  //    * @param {string} fileCountryList
-  //    */
-  //   (fileCountryList) => {
-  //     const countryList = JSON.parse(fileCountryList);
-  //     Country.deleteCountry(countryList).then((newCountryList) => {
-  //       asyncWriteFile(dataPath, JSON.stringify(newCountryList))
-  //         .then(() => {
-  //           main();
-  //         })
-  //         .catch((error) => {
-  //           console.log(error);
-  //         });
-  //     });
-  //   },
-  // );
-
-  // await relayManagementLoop();
-  return removeRelayAnswer;
-}
-
-const migrateOldRelayEntry = (chainId, config) => {
-  const chainConfig = config.get(`${chainId}.RELAY_CHAIN_ID`);
-
-  const oldRelay = {
-    RELAY_CHAIN_ID: config.get(`${chainId}.RELAY_CHAIN_ID`),
-    RELAY_RELAYER_API_KEY: config.get(`${chainId}.RELAY_RELAYER_API_KEY`),
-    RELAY_RELAYER_API_SECRET: config.get(`${chainId}.RELAY_RELAYER_API_SECRET`),
-    RELAY_JSON_RPC_URI: config.get(`${chainId}.RELAY_JSON_RPC_URI`),
-  };
-
-  if (oldRelay['RELAY_RELAYER_API_KEY']?.length > 0) {
-    config.set(`${chainId}.RELAYS.${oldRelay.RELAY_CHAIN_ID}`, oldRelay);
-
-    config.delete(`${chainId}.RELAY_CHAIN_ID`);
-    config.delete(`${chainId}.RELAY_RELAYER_API_KEY`);
-    config.delete(`${chainId}.RELAY_RELAYER_API_SECRET`);
-    config.delete(`${chainId}.RELAY_JSON_RPC_URI`);
-  }
-};
