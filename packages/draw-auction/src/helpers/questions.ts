@@ -12,7 +12,6 @@ interface RELAY_CONFIG {
 }
 
 interface PACKAGE_CONFIG {
-  RELAYS: RELAY_CONFIG[];
   REWARD_RECIPIENT: string;
   MIN_PROFIT_THRESHOLD_USD: string;
 }
@@ -24,7 +23,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
     message: chalk.green(
       'Enter the reward recipient address (the account which will receive the rewards profit):',
     ),
-    validate: function (value) {
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
@@ -39,7 +38,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
     message: chalk.green(
       'How much profit would you like to make per transaction (in USD, default is 2.50):',
     ),
-    validate: function (value) {
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
@@ -47,78 +46,73 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
       }
     },
   },
-  RELAYS: {
-    name: 'RELAYS',
-    type: 'list',
-    message: chalk.green(
-      'Do you want to add or manage L2 relay configs (L2s where the RngRelayAuction and PrizePool contracts live)?',
-    ),
-    choices: ['Yes', 'No'],
-    filter(val: string) {
-      return val.toLowerCase().startsWith('y');
-    },
-  },
 };
 
-const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & { name: key } } = {
+export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & { name: key } } = {
   RELAY_CHAIN_ID: {
     name: 'RELAY_CHAIN_ID',
     type: 'list',
-    message: chalk.green('Which network are the RngRelayAuction and PrizePool contracts on?'),
-    choices: ['Mainnet', 'Optimism', 'Goerli', 'Sepolia', 'Optimism Goerli'],
+    message: chalk.green('Which network to add L2 relayer config for?'),
+    choices: [
+      '(1)        Mainnet',
+      '(10)       Optimism',
+      '(42161)    Arbitrum',
+      '(421613)   Arbitrum Goerli',
+      '(5)        Goerli',
+      '(11155111) Sepolia',
+      '(420)      Optimism Goerli',
+    ],
     filter(val: string) {
-      return CHAIN_IDS[camelize(val)];
+      return CHAIN_IDS[camelize(val.match(/([^\)]+$)/)[0].trim())];
     },
   },
   RELAY_RELAYER_API_KEY: {
     name: 'RELAY_RELAYER_API_KEY',
     type: 'password',
-    message: chalk.green(`Enter the relay chain's OZ Defender Relayer API key:`),
-    validate: function (value) {
+    message: chalk.green(`Enter this relay chain's OZ Defender Relayer API key:`),
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter the relay chain's OZ Defender Relayer API key:";
+        return "Please enter the new relay chain's OZ Defender Relayer API key:";
       }
     },
   },
   RELAY_RELAYER_API_SECRET: {
     name: 'RELAY_RELAYER_API_SECRET',
     type: 'password',
-    message: chalk.green(`Enter the relay chain's OZ Defender Relayer API secret:`),
-    validate: function (value) {
+    message: chalk.green(`Enter this relay chain's OZ Defender Relayer API secret:`),
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter the relay chain's OZ Defender Relayer API secret:";
+        return "Please enter the new relay chain's OZ Defender Relayer API secret:";
       }
     },
   },
   RELAY_JSON_RPC_URI: {
     name: 'RELAY_JSON_RPC_URI',
     type: 'password',
-    message: chalk.green(`Enter the relay chain's JSON RPC read provider URI:`),
-    validate: function (value) {
+    message: chalk.green(`Enter this relay chain's JSON RPC read provider URI:`),
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
-        return "Please enter the relay chain's JSON RPC read provider URI:";
+        return "Please enter the new relay chain's JSON RPC read provider URI:";
       }
     },
   },
 };
 
 export const askQuestions = (config: Configstore) => {
-  return populateConfig<{}, PACKAGE_CONFIG>(config, {
+  return populateConfig<{}, PACKAGE_CONFIG | RELAY_CONFIG>(config, {
     extraConfig: {
-      network: [
-        // PACKAGE_QUESTIONS.RELAY_CHAIN_ID,
-        // PACKAGE_QUESTIONS.RELAY_RELAYER_API_KEY,
-        // PACKAGE_QUESTIONS.RELAY_RELAYER_API_SECRET,
-        // PACKAGE_QUESTIONS.RELAY_JSON_RPC_URI,
-        PACKAGE_QUESTIONS.REWARD_RECIPIENT,
-        PACKAGE_QUESTIONS.MIN_PROFIT_THRESHOLD_USD,
-        PACKAGE_QUESTIONS.RELAYS,
+      network: [PACKAGE_QUESTIONS.REWARD_RECIPIENT, PACKAGE_QUESTIONS.MIN_PROFIT_THRESHOLD_USD],
+      relay: [
+        RELAY_QUESTIONS.RELAY_CHAIN_ID,
+        RELAY_QUESTIONS.RELAY_RELAYER_API_KEY,
+        RELAY_QUESTIONS.RELAY_RELAYER_API_SECRET,
+        RELAY_QUESTIONS.RELAY_JSON_RPC_URI,
       ],
     },
   });
