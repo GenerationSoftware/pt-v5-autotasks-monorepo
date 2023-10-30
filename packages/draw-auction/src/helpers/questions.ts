@@ -1,7 +1,12 @@
 import chalk from 'chalk';
 import { DistinctQuestion } from 'inquirer';
 
-import { camelize, CHAIN_IDS, populateConfig } from '@generationsoftware/pt-v5-autotasks-library';
+import {
+  camelize,
+  CHAINS_BY_ID,
+  CHAIN_IDS,
+  populateConfig,
+} from '@generationsoftware/pt-v5-autotasks-library';
 import Configstore from 'configstore';
 
 interface RELAY_CONFIG {
@@ -53,17 +58,9 @@ export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & 
     name: 'RELAY_CHAIN_ID',
     type: 'list',
     message: chalk.green('Which network to add L2 relayer config for?'),
-    choices: [
-      '(1)        Mainnet',
-      '(10)       Optimism',
-      '(42161)    Arbitrum',
-      '(421613)   Arbitrum Goerli',
-      '(5)        Goerli',
-      '(11155111) Sepolia',
-      '(420)      Optimism Goerli',
-    ],
+    choices: Object.values(CHAINS_BY_ID),
     filter(val: string) {
-      return CHAIN_IDS[camelize(val.match(/([^\)]+$)/)[0].trim())];
+      return camelize(val.match(/.*(?= - )/)[0].trim());
     },
   },
   RELAY_RELAYER_API_KEY: {
