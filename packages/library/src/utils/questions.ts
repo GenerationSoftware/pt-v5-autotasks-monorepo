@@ -298,36 +298,16 @@ export const populateConfig = async <
   }
 
   // - Network:
-  console.log('networkAnswers');
-  console.log(networkAnswers);
   for (const [key, value] of Object.entries(networkAnswers)) {
     config.set(`${CHAIN_ID}.${key}`, value);
     flattenedConfig[key] = value;
   }
 
   // - Relays:
-  // console.log('relayAnswers');
-  // console.log(relayAnswers);
-
-  // "RELAY_CHAIN_ID": 420,
-  // 	"RELAY_RELAYER_API_KEY": "AbiJnBmruHoz9ip3BSTy5feyy5qNN8UR",
-  // 	"RELAY_RELAYER_API_SECRET": "4rmTLgkS7zJ35nxcTAj22eAxpgpdbPCx5FRkYLFovtfWU7oW1WN8s2EyV26t3brn",
-  // 	"RELAY_JSON_RPC_URI": "https://optimism-goerli.infura.io/v3/61401d36252f4182864d4b21d98982e5",
-  console.log('');
-  console.log('this should be undefined:');
-  console.log(config.get(`${CHAIN_ID}.RELAY_CHAIN_ID`));
-  console.log('');
-
-  const existingRelays = config.get(`${CHAIN_ID}.RELAYS`) || [];
-  console.log(existingRelays);
-  const updatedRelays = [...existingRelays, ...newRelays];
-  console.log(updatedRelays);
-  config.set(`${CHAIN_ID}.RELAYS`, updatedRelays);
-  // config.set(`${CHAIN_ID}.${key}`, value);
-  flattenedConfig['RELAYS'] = updatedRelays;
-
-  console.log('flattenedConfig');
-  console.log(flattenedConfig);
+  for (const relay of newRelays) {
+    config.set(`${CHAIN_ID}.RELAYS.${relay.RELAY_CHAIN_ID}`, relay);
+  }
+  flattenedConfig['RELAYS'] = config.get(`${CHAIN_ID}.RELAYS`);
 
   // Return flattened config:
   return flattenedConfig as any;
@@ -362,8 +342,6 @@ export async function relayManagementLoop(): Promise<object> {
     },
   ];
   const answer = await inquirer.prompt(relayMenuQuestions);
-  console.log('answer1');
-  console.log(answer);
 
   let remove = {};
   switch (answer.MENU_OPTION) {
@@ -378,9 +356,6 @@ export async function relayManagementLoop(): Promise<object> {
       break;
   }
 
-  console.log('answer2');
-  console.log(answer);
-
   return { remove };
 }
 
@@ -392,7 +367,7 @@ async function mainAddRelay() {
   const addRelayAnswers = await inquirer.prompt(relayQuestionsClone);
   console.log(
     chalk.yellow(
-      'Will add L2 Relay config for network with chain ID:',
+      'Ok, will add L2 Relay config for network with chain ID:',
       addRelayAnswers['RELAY_CHAIN_ID'],
     ),
   );
@@ -441,7 +416,7 @@ const migrateOldRelayEntry = (chainId, config) => {
   };
 
   if (oldRelay['RELAY_RELAYER_API_KEY']?.length > 0) {
-    config.set(`${chainId}.RELAYS`, [oldRelay]);
+    config.set(`${chainId}.RELAYS.${oldRelay.RELAY_CHAIN_ID}`, oldRelay);
 
     config.delete(`${chainId}.RELAY_CHAIN_ID`);
     config.delete(`${chainId}.RELAY_RELAYER_API_KEY`);
