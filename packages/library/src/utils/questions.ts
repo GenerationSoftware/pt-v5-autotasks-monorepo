@@ -23,8 +23,6 @@ export type NETWORK_CONFIG = {
   COVALENT_API_KEY?: string;
 };
 
-let relayQuestionsClone: DistinctQuestion[] = [];
-
 export async function askChainId(config: Configstore) {
   // Ask for chain info:
   const previousNetwork = config.has('CHAIN_ID') ? config.get('CHAIN_ID') : null;
@@ -207,8 +205,6 @@ export const populateConfig = async <
   let networkAnswers = {};
   let relayAnswers = {};
 
-  relayQuestionsClone = [...relayQuestions];
-
   // Ask for chain info:
   const CHAIN_ID = await askChainId(config);
 
@@ -274,7 +270,7 @@ export const populateConfig = async <
       message: chalk.green(
         'Do you want to manage L2 relay configs (L2s where the RngRelayAuction and PrizePool contracts live)?',
       ),
-      choices: ['Yes', 'No'],
+      choices: ['No', 'Yes'],
       filter(val: string) {
         return val.toLowerCase().startsWith('y');
       },
