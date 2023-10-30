@@ -127,7 +127,7 @@ const showRelays = (CHAIN_ID: number, config: Configstore) => {
   }
 
   for (const key of Object.keys(relays)) {
-    console.log(CHAINS_BY_ID[Number(key)]);
+    console.log(chalk.dim(CHAINS_BY_ID[Number(key)]));
   }
 };
 

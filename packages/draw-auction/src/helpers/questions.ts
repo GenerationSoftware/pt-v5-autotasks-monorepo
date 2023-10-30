@@ -60,7 +60,7 @@ export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & 
     message: chalk.green('Which network to add L2 relayer config for?'),
     choices: Object.values(CHAINS_BY_ID),
     filter(val: string) {
-      return camelize(val.match(/.*(?= - )/)[0].trim());
+      return camelize(val.match(/.*(?= - )/)[0].trim()); // chars before first hypen
     },
   },
   RELAY_RELAYER_API_KEY: {
