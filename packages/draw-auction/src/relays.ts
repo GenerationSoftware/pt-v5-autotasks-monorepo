@@ -24,11 +24,11 @@ export const getRelays = async (relayConfigs: RelayConfig[]) => {
     const writeProvider = new DefenderRelayProvider(relayChainFakeEvent);
     const relayer = new Relayer(relayChainFakeEvent);
 
-    const contracts: ContractsBlob = await downloadContractsBlob(chainId);
+    const contractsBlob: ContractsBlob = await downloadContractsBlob(chainId);
 
     relays.push({
       chainId,
-      contracts,
+      contractsBlob,
       relayer,
       readProvider,
       writeProvider,
