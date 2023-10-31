@@ -85,21 +85,6 @@ export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
 }
 
-export interface RelayConfig {
-  RELAY_CHAIN_ID: string;
-  RELAY_RELAYER_API_KEY: string;
-  RELAY_RELAYER_API_SECRET: string;
-  RELAY_JSON_RPC_URI: string;
-}
-
-export interface Relay {
-  chainId: number;
-  contracts: ContractsBlob;
-  relayer: Relayer;
-  readProvider: BaseProvider;
-  writeProvider: Provider | DefenderRelaySigner;
-}
-
 export interface DrawAuctionConfigParams {
   rngChainId: number;
   rngReadProvider: BaseProvider;
@@ -118,34 +103,56 @@ export interface RngDrawAuctionContext {
   rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
   rngIsRngComplete: boolean;
-  rngExpectedReward: number;
+  rngCurrentFractionalRewardString: string;
   relayer: DrawAuctionRelayerContext;
+}
+
+export interface DrawAuctionContext extends RngDrawAuctionContext {
+  rngNativeTokenMarketRateUsd: number;
+  relays: Relay[];
+  drawAuctionState?: DrawAuctionState;
+  rngExpectedRewardUsd?: number;
 }
 
 export interface RelayDrawAuctionContext {
   prizePoolOpenDrawEndsAt: number;
+  rngExpectedReward: number;
   rewardToken: TokenWithRate;
   rngRelayIsAuctionOpen: boolean;
   rngRelayExpectedReward: BigNumber;
   rngRelayExpectedRewardUsd: number;
   rngRelayLastSequenceId: number;
+  nativeTokenMarketRateUsd?: number; // optional?
 }
 
-export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuctionContext {
-  rngNativeTokenMarketRateUsd: number;
-  relayNativeTokenMarketRateUsd: number;
-  drawAuctionState?: DrawAuctionState;
-  rngExpectedRewardUsd?: number;
+export interface RelayConfig {
+  RELAY_CHAIN_ID: string;
+  RELAY_RELAYER_API_KEY: string;
+  RELAY_RELAYER_API_SECRET: string;
+  RELAY_JSON_RPC_URI: string;
 }
 
-export interface AuctionContracts {
-  prizePoolContract: Contract;
+export interface Relay {
+  chainId: number;
+  contractsBlob: ContractsBlob;
+  relayer: Relayer;
+  readProvider: BaseProvider;
+  writeProvider: Provider | DefenderRelaySigner;
+  contracts: RelayAuctionContracts; // optional?
+  context: RelayDrawAuctionContext; // optional?
+}
+
+export interface RngAuctionContracts {
   chainlinkVRFV2DirectRngAuctionHelperContract: Contract;
-  remoteOwnerContract: Contract;
   rngAuctionContract: Contract;
-  rngRelayAuctionContract: Contract;
   rngAuctionRelayerRemoteOwnerContract: Contract;
   rngAuctionRelayerDirect?: Contract;
+}
+
+export interface RelayAuctionContracts {
+  prizePoolContract: Contract;
+  remoteOwnerContract: Contract;
+  rngRelayAuctionContract: Contract;
 }
 
 export interface VaultWithContext {

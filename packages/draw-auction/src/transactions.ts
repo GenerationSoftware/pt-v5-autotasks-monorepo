@@ -1,7 +1,7 @@
 import { RelayerParams } from 'defender-relay-client';
 import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
-  prepareDrawAuctionTxs,
+  executeDrawAuctionTxs,
   Relay,
   DrawAuctionConfigParams,
 } from '@generationsoftware/pt-v5-autotasks-library';
@@ -21,7 +21,7 @@ export const executeTransactions = async (
 
     const relays: Relay[] = await getRelays(relayConfig);
 
-    await prepareDrawAuctionTxs(rngContracts, rngRelayer, params, relays, signer);
+    await executeDrawAuctionTxs(rngContracts, rngRelayer, params, relays, signer);
   } catch (e) {
     console.error(e);
   }
