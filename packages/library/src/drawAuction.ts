@@ -1,12 +1,12 @@
 import { ethers, BigNumber, Contract, PopulatedTransaction } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
-import { Relayer } from 'defender-relay-client';
 import { formatUnits } from '@ethersproject/units';
+import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import chalk from 'chalk';
 
-import { AuctionContracts, DrawAuctionContext, DrawAuctionConfigParams } from './types';
+import { AuctionContracts, DrawAuctionContext, DrawAuctionConfigParams, Relay } from './types';
 import {
   logTable,
   logStringValue,
@@ -14,7 +14,6 @@ import {
   printAsterisks,
   printSpacer,
   getFeesUsd,
-  canUseIsPrivate,
   roundTwoDecimalPlaces,
   getGasPrice,
 } from './utils';
@@ -56,9 +55,6 @@ const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
 
 const ONE_GWEI = '1000000000';
 const RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT = '50000';
-
-const ARBITRUM_CHAIN_ID = 42161;
-const ARBITRUM_GOERLI_CHAIN_ID = 421613;
 
 const getAuctionContracts = (
   rngChainId: number,
@@ -169,10 +165,9 @@ const getAuctionContracts = (
  */
 export async function prepareDrawAuctionTxs(
   rngContracts: ContractsBlob,
-  relayContracts: ContractsBlob,
   rngRelayer: Relayer,
-  relayRelayer: Relayer,
   params: DrawAuctionConfigParams,
+  relays: Relay[],
   signer: DefenderRelaySigner,
 ): Promise<void> {
   const {
@@ -640,10 +635,9 @@ const getGasCost = async (
       //   transferFeeAndStartRngRequestTxParams,
       // );
 
-      populatedTx =
-        await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
-          ...Object.values(transferFeeAndStartRngRequestTxParams),
-        );
+      populatedTx = await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
+        ...Object.values(transferFeeAndStartRngRequestTxParams),
+      );
 
       // This was a previous tx gas usage on Goerli + buffer room
       estimatedGasLimit = BigNumber.from(330000);
@@ -660,23 +654,21 @@ const getGasCost = async (
     }
   } else {
     if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
-      const rngAuctionRelayerRemoteOwnerRelayTxParams =
-        buildRngAuctionRelayerRemoteOwnerRelayTxParams(
-          ERC_5164_MESSAGE_DISPATCHER_ADDRESS[params.rngChainId],
-          params.relayChainId,
-          auctionContracts.remoteOwnerContract.address,
-          auctionContracts.rngRelayAuctionContract.address,
-          params.rewardRecipient,
-        );
+      const rngAuctionRelayerRemoteOwnerRelayTxParams = buildRngAuctionRelayerRemoteOwnerRelayTxParams(
+        ERC_5164_MESSAGE_DISPATCHER_ADDRESS[params.rngChainId],
+        params.relayChainId,
+        auctionContracts.remoteOwnerContract.address,
+        auctionContracts.rngRelayAuctionContract.address,
+        params.rewardRecipient,
+      );
       estimatedGasLimit = await getRngAuctionRelayerRemoteOwnerRelayEstimatedGasLimit(
         auctionContracts.rngAuctionRelayerRemoteOwnerContract,
         rngAuctionRelayerRemoteOwnerRelayTxParams,
       );
 
-      populatedTx =
-        await auctionContracts.rngAuctionRelayerRemoteOwnerContract.populateTransaction.relay(
-          ...Object.values(rngAuctionRelayerRemoteOwnerRelayTxParams),
-        );
+      populatedTx = await auctionContracts.rngAuctionRelayerRemoteOwnerContract.populateTransaction.relay(
+        ...Object.values(rngAuctionRelayerRemoteOwnerRelayTxParams),
+      );
     } else {
       // const relayTxParams = buildRelayParams(
       //   auctionContracts.rngRelayAuctionContract.address,
@@ -769,10 +761,9 @@ const sendTransaction = async (
     console.log(relayTxParams);
     console.log(relayTxParams.gasLimit);
     console.log('############');
-    populatedTx =
-      await auctionContracts.rngAuctionRelayerRemoteOwnerContract.populateTransaction.relay(
-        ...Object.values(relayTxParams),
-      );
+    populatedTx = await auctionContracts.rngAuctionRelayerRemoteOwnerContract.populateTransaction.relay(
+      ...Object.values(relayTxParams),
+    );
     // console.log(chalk.green(`Execute RngAuctionRelayerDirect#relay`));
     // printSpacer();
 

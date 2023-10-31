@@ -16,15 +16,12 @@ export default defineConfig((opt) => {
       options.define = {
         ...(options.define ?? {}),
         BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
-        BUILD_RELAY_CHAIN_ID: `'${config.get(`${CHAIN_ID}.RELAY_CHAIN_ID`)}'`,
         BUILD_COVALENT_API_KEY: `'${config.get(`${CHAIN_ID}.COVALENT_API_KEY`)}'`,
-        BUILD_RELAY_RELAYER_API_KEY: `'${config.get(`${CHAIN_ID}.RELAY_RELAYER_API_KEY`)}'`,
-        BUILD_RELAY_RELAYER_API_SECRET: `'${config.get(`${CHAIN_ID}.RELAY_RELAYER_API_SECRET`)}'`,
         BUILD_JSON_RPC_URI: `'${config.get(`${CHAIN_ID}.JSON_RPC_URI`)}'`,
-        BUILD_RELAY_JSON_RPC_URI: `'${config.get(`${CHAIN_ID}.RELAY_JSON_RPC_URI`)}'`,
         BUILD_REWARD_RECIPIENT: `'${config.get(`${CHAIN_ID}.REWARD_RECIPIENT`)}'`,
         BUILD_USE_FLASHBOTS: `'${config.get(`${CHAIN_ID}.USE_FLASHBOTS`)}'`,
         BUILD_MIN_PROFIT_THRESHOLD_USD: `'${config.get(`${CHAIN_ID}.MIN_PROFIT_THRESHOLD_USD`)}'`,
+        BUILD_RELAYS: `'${config.get(`${CHAIN_ID}.RELAYS`)}'`,
       };
     },
     noExternal: [

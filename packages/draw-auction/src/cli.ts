@@ -21,10 +21,6 @@ if (esMain(import.meta)) {
     config.JSON_RPC_URI, // is RNG chain but needs to be just JSON_RPC_URI for global config to work properly
     config.CHAIN_ID, // is RNG chain but needs to be just CHAIN_ID for global config to work properly
   );
-  const relayReadProvider = new ethers.providers.JsonRpcProvider(
-    config.RELAY_JSON_RPC_URI,
-    config.RELAY_CHAIN_ID,
-  );
 
   const rngChainFakeEvent = {
     apiKey: config.RELAYER_API_KEY, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
@@ -35,20 +31,11 @@ if (esMain(import.meta)) {
     speed: 'fast',
   });
 
-  const relayChainFakeEvent = {
-    apiKey: config.RELAY_RELAYER_API_KEY,
-    apiSecret: config.RELAY_RELAYER_API_SECRET,
-  };
-  const relayWriteProvider = new DefenderRelayProvider(relayChainFakeEvent);
-
   const relayerAddress = await signer.getAddress();
   const params: DrawAuctionConfigParams = {
     rngChainId: config.CHAIN_ID,
-    relayChainId: config.RELAY_CHAIN_ID,
     rngReadProvider,
-    relayReadProvider,
     rngWriteProvider,
-    relayWriteProvider,
     relayerAddress,
     rewardRecipient: config.REWARD_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
@@ -56,7 +43,7 @@ if (esMain(import.meta)) {
     covalentApiKey: config.COVALENT_API_KEY,
   };
 
-  await executeTransactions(rngChainFakeEvent, relayChainFakeEvent, params, signer);
+  await executeTransactions(rngChainFakeEvent, params, signer, config.RELAYS);
 }
 
 export function main() {}
