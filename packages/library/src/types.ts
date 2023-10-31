@@ -1,7 +1,8 @@
 import { Contract, BigNumber } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
+import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
@@ -84,13 +85,25 @@ export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
 }
 
+export interface RelayConfig {
+  RELAY_CHAIN_ID: string;
+  RELAY_RELAYER_API_KEY: string;
+  RELAY_RELAYER_API_SECRET: string;
+  RELAY_JSON_RPC_URI: string;
+}
+
+export interface Relay {
+  chainId: number;
+  contracts: ContractsBlob;
+  relayer: Relayer;
+  readProvider: BaseProvider;
+  writeProvider: Provider | DefenderRelaySigner;
+}
+
 export interface DrawAuctionConfigParams {
   rngChainId: number;
-  relayChainId: number;
   rngReadProvider: BaseProvider;
-  relayReadProvider: BaseProvider;
   rngWriteProvider: Provider | DefenderRelaySigner;
-  relayWriteProvider: Provider | DefenderRelaySigner;
   relayerAddress: string;
   rewardRecipient: string;
   useFlashbots: boolean;
