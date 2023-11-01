@@ -140,8 +140,8 @@ export interface Relay {
   relayer: Relayer;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
-  contracts: RelayAuctionContracts; // optional?
-  context: RelayDrawAuctionContext; // optional?
+  contracts?: RelayAuctionContracts;
+  context?: RelayDrawAuctionContext;
 }
 
 export interface RngAuctionContracts {
