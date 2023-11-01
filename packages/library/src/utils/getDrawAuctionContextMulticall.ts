@@ -14,6 +14,7 @@ import {
   RelayDrawAuctionContext,
   Relay,
 } from '../types';
+import { chainName } from './network';
 import {
   getGasPrice,
   getEthMainnetTokenMarketRateUsd,
@@ -139,11 +140,7 @@ const getContext = async (
   for (const relay of relays) {
     const relayChainExpectedRewardUsd =
       relay.context.rngExpectedReward * relay.context.rewardToken.assetRateUsd;
-    console.log('relayChainExpectedRewardUsd');
-    console.log(relayChainExpectedRewardUsd);
     rngExpectedRewardTotalUsd += relayChainExpectedRewardUsd;
-    console.log('rngExpectedRewardTotalUsd');
-    console.log(rngExpectedRewardTotalUsd);
   }
 
   return {
@@ -300,7 +297,7 @@ export const getRelayMulticall = async (
   printSpacer();
 
   for (const relay of relays) {
-    console.log(chalk.dim('Getting state context for chain:', relay.chainId));
+    console.log(chalk.dim(`Getting state context for chain: ${chainName(relay.chainId)}`));
 
     // @ts-ignore Provider == BaseProvider
     const multicallProvider = MulticallWrapper.wrap(relay.readProvider);

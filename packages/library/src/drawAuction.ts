@@ -17,7 +17,7 @@ import {
   roundTwoDecimalPlaces,
   getGasPrice,
 } from './utils';
-import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { chainName, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,
@@ -155,7 +155,7 @@ const instantiateRelayAuctionContracts = (relays: Relay[]): Relay[] => {
 
   for (const relay of relays) {
     printSpacer();
-    console.log(chalk.cyan(`Chain: #${relay.chainId}`));
+    console.log(chalk.cyan(`${chainName(relay.chainId)}:`));
 
     // Relayer / PrizePool Chain Contracts
     const prizePoolContract = getContract(
@@ -596,8 +596,33 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
     `$${context.rngNativeTokenMarketRateUsd}`,
   );
 
+  printSpacer();
+  logStringValue(
+    `1b. RNG Fee Token:`,
+    context.rngFeeTokenIsSet ? context.rngFeeToken.symbol : 'n/a',
+  );
+  if (context.rngFeeTokenIsSet) {
+    logBigNumber(
+      `1c. Relayer RNG Fee Token Balance:`,
+      context.relayer.rngFeeTokenBalance,
+      context.rngFeeToken.decimals,
+      context.rngFeeToken.symbol,
+    );
+
+    logStringValue(`1d. RNG Fee Token Market Rate (USD):`, `$${context.rngFeeToken.assetRateUsd}`);
+    logBigNumber(
+      `1e. RNG Fee Amount:`,
+      context.rngFeeAmount,
+      context.rngFeeToken.decimals,
+      context.rngFeeToken.symbol,
+    );
+    logStringValue(`1f. RNG Fee Amount (USD):`, `$${context.rngFeeUsd}`);
+    printSpacer();
+  }
+
   for (const relay of relays) {
-    console.log(chalk.yellow(`Chain:`, `${relay.chainId}`));
+    printSpacer();
+    console.log(chalk.yellow(chainName(relay.chainId)));
 
     logStringValue(
       `1b. Reward Token ${relay.context.rewardToken.symbol} Market Rate (USD):`,
@@ -613,30 +638,6 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
   }
 
   printSpacer();
-  logStringValue(
-    `1d. RNG Fee Token:`,
-    context.rngFeeTokenIsSet ? context.rngFeeToken.symbol : 'n/a',
-  );
-  if (context.rngFeeTokenIsSet) {
-    logBigNumber(
-      `1e. Relayer RNG Fee Token Balance:`,
-      context.relayer.rngFeeTokenBalance,
-      context.rngFeeToken.decimals,
-      context.rngFeeToken.symbol,
-    );
-
-    logStringValue(`1f. RNG Fee Token Market Rate (USD):`, `$${context.rngFeeToken.assetRateUsd}`);
-    logBigNumber(
-      `1g. RNG Fee Amount:`,
-      context.rngFeeAmount,
-      context.rngFeeToken.decimals,
-      context.rngFeeToken.symbol,
-    );
-    logStringValue(`1h. RNG Fee Amount (USD):`, `$${context.rngFeeUsd}`);
-    printSpacer();
-  }
-
-  printSpacer();
   printSpacer();
   console.log(chalk.blue.bold(`Rng Auction State:`));
 
@@ -647,11 +648,11 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
     for (const relay of relays) {
       printSpacer();
       logStringValue(
-        `2b. (RngAuction) '${relay.chainId}' CHAIN_NAME Expected Reward:`,
+        `2b. (RngAuction) ${chainName(relay.chainId)} Expected Reward:`,
         `${relay.context.rngExpectedReward.toString()} ${relay.context.rewardToken.symbol}`,
       );
       console.log(
-        chalk.grey(`2c. (RngAuction) '${relay.chainId}' CHAIN_NAME Expected Reward (USD):`),
+        chalk.grey(`2c. (RngAuction) ${chainName(relay.chainId)} Expected Reward (USD):`),
         chalk.yellow(`$${roundTwoDecimalPlaces(relay.context.rngExpectedRewardUsd)}`),
         chalk.dim(`$${relay.context.rngExpectedRewardUsd}`),
       );
@@ -663,12 +664,13 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
       chalk.dim(`$${context.rngExpectedRewardTotalUsd}`),
     );
   } else {
+    printSpacer();
     for (const relay of relays) {
-      printSpacer();
       logStringValue(
-        `'${relay.chainId}' CHAIN_NAME - Can start RNG in:`,
+        `${chainName(relay.chainId)} PrizePool can start RNG in:`,
         `${(relay.context.prizePoolOpenDrawEndsAt - Math.ceil(Date.now() / 1000)) / 60} minutes`,
       );
+      printSpacer();
     }
   }
 
@@ -678,29 +680,25 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
 
   printSpacer();
   for (const relay of relays) {
-    logStringValue(
-      `3a. (RngRelayAuction) '${relay.chainId}' CHAIN_NAME Auction open? `,
-      `${checkOrX(relay.context.rngRelayIsAuctionOpen)}`,
-    );
+    console.log(chalk.grey(`3. ${chainName(relay.chainId)}:`));
+
+    logStringValue(`3a. Relay Auction open? `, `${checkOrX(relay.context.rngRelayIsAuctionOpen)}`);
     if (relay.context.rngRelayIsAuctionOpen) {
       logBigNumber(
-        `3b. (RngRelayAuction) '${relay.chainId}' CHAIN_NAME Expected Reward:`,
+        `3b. Relay Expected Reward:`,
         relay.context.rngRelayExpectedReward.toString(),
         relay.context.rewardToken.decimals,
         relay.context.rewardToken.symbol,
       );
       console.log(
-        chalk.grey(`3c. (RngRelayAuction) '${relay.chainId}' CHAIN_NAME Expected Reward (USD):`),
+        chalk.grey(`3c. Relay Expected Reward (USD):`),
         chalk.yellow(`$${roundTwoDecimalPlaces(relay.context.rngRelayExpectedRewardUsd)}`),
         chalk.dim(`$${relay.context.rngRelayExpectedRewardUsd}`),
       );
     }
 
+    logStringValue(`3d. Relay Last Seq. ID:`, `${relay.context.rngRelayLastSequenceId}`);
     printSpacer();
-    logStringValue(
-      `'${relay.chainId}' CHAIN_NAME Relay Last Seq. ID:`,
-      `${relay.context.rngRelayLastSequenceId}`,
-    );
   }
 };
 

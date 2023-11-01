@@ -38,3 +38,7 @@ export const canUseIsPrivate = (chainId, useFlashbots) => {
 
   return isPrivate;
 };
+
+export const chainName = (chainId: number) => {
+  return `${CHAINS_BY_ID[chainId]}`;
+};
