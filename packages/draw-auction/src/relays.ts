@@ -8,8 +8,6 @@ export const getRelays = async (relayConfigs: RelayConfig[]) => {
   let relays: Relay[] = [];
 
   for (const relayConfig of Object.values(relayConfigs)) {
-    console.log(relayConfig);
-
     const chainId = Number(relayConfig.RELAY_CHAIN_ID);
 
     const readProvider = new ethers.providers.JsonRpcProvider(
@@ -34,8 +32,6 @@ export const getRelays = async (relayConfigs: RelayConfig[]) => {
       writeProvider,
     });
   }
-  console.log('relays');
-  console.log(relays);
 
   return relays;
 };

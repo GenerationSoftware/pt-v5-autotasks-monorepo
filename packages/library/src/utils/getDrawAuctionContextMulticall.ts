@@ -297,8 +297,10 @@ export const getRelayMulticall = async (
   rngContext: RngDrawAuctionContext,
   covalentApiKey?: string,
 ): Promise<Relay[]> => {
+  printSpacer();
+
   for (const relay of relays) {
-    console.log(chalk.dim('Collecting context state for chain: ', relay.chainId));
+    console.log(chalk.dim('Getting state context for chain:', relay.chainId));
 
     // @ts-ignore Provider == BaseProvider
     const multicallProvider = MulticallWrapper.wrap(relay.readProvider);
@@ -371,7 +373,7 @@ export const getRelayMulticall = async (
     const reserveStr = ethers.utils.formatEther(reserve);
     const rngExpectedReward =
       Number(reserveStr) * Number(rngContext.rngCurrentFractionalRewardString);
-    const rngExpectedRewardUsd = rngExpectedReward * relay.context.rewardToken.assetRateUsd;
+    const rngExpectedRewardUsd = rngExpectedReward * rewardToken.assetRateUsd;
 
     // 6d. Results: Auction Info
     const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
