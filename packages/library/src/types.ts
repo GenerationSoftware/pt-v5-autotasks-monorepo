@@ -147,7 +147,7 @@ export interface Relay {
 export interface RngAuctionContracts {
   chainlinkVRFV2DirectRngAuctionHelperContract: Contract;
   rngAuctionContract: Contract;
-  rngAuctionRelayerRemoteOwnerContract: Contract;
+  rngAuctionRelayerRemoteOwnerContracts: Contract[];
   rngAuctionRelayerDirect?: Contract;
 }
 
