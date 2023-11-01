@@ -111,18 +111,20 @@ export interface DrawAuctionContext extends RngDrawAuctionContext {
   rngNativeTokenMarketRateUsd: number;
   relays: Relay[];
   drawAuctionState?: DrawAuctionState;
-  rngExpectedRewardUsd?: number;
+  rngExpectedRewardTotal?: BigNumber; // sum of all rewards from all prize pools
+  rngExpectedRewardTotalUsd?: number; // sum of all rewards from all prize pools in USD
 }
 
 export interface RelayDrawAuctionContext {
   prizePoolOpenDrawEndsAt: number;
-  rngExpectedReward: number;
+  rngExpectedReward: number; // why is this a number and not a BigNumber?
+  rngExpectedRewardUsd: number;
   rewardToken: TokenWithRate;
   rngRelayIsAuctionOpen: boolean;
   rngRelayExpectedReward: BigNumber;
   rngRelayExpectedRewardUsd: number;
   rngRelayLastSequenceId: number;
-  nativeTokenMarketRateUsd?: number; // optional?
+  nativeTokenMarketRateUsd?: number;
 }
 
 export interface RelayConfig {

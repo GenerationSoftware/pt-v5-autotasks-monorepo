@@ -135,22 +135,22 @@ const getContext = async (
   }
 
   // 4. Fees & Rewards
-  let rngExpectedRewardUsd = 0;
+  let rngExpectedRewardTotalUsd = 0;
   for (const relay of relays) {
     const relayChainExpectedRewardUsd =
       relay.context.rngExpectedReward * relay.context.rewardToken.assetRateUsd;
     console.log('relayChainExpectedRewardUsd');
     console.log(relayChainExpectedRewardUsd);
-    rngExpectedRewardUsd += relayChainExpectedRewardUsd;
-    console.log('rngExpectedRewardUsd');
-    console.log(rngExpectedRewardUsd);
+    rngExpectedRewardTotalUsd += relayChainExpectedRewardUsd;
+    console.log('rngExpectedRewardTotalUsd');
+    console.log(rngExpectedRewardTotalUsd);
   }
 
   return {
     ...rngContext,
     relays,
     rngNativeTokenMarketRateUsd,
-    rngExpectedRewardUsd,
+    rngExpectedRewardTotalUsd,
   };
 };
 
@@ -371,6 +371,7 @@ export const getRelayMulticall = async (
     const reserveStr = ethers.utils.formatEther(reserve);
     const rngExpectedReward =
       Number(reserveStr) * Number(rngContext.rngCurrentFractionalRewardString);
+    const rngExpectedRewardUsd = rngExpectedReward * relay.context.rewardToken.assetRateUsd;
 
     // 6d. Results: Auction Info
     const rngRelayLastSequenceId = results[RNG_RELAY_LAST_SEQUENCE_ID_KEY];
@@ -422,6 +423,7 @@ export const getRelayMulticall = async (
     const context: RelayDrawAuctionContext = {
       prizePoolOpenDrawEndsAt,
       rngExpectedReward,
+      rngExpectedRewardUsd,
       rewardToken,
       rngRelayIsAuctionOpen,
       rngRelayExpectedReward,
