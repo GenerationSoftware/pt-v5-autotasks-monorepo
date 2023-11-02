@@ -446,16 +446,6 @@ const getDrawAuctionState = (context: DrawAuctionContext, relays: Relay[]): Draw
   const anyRelaysOpen = relays
     .map((relay) => relay.context.rngRelayIsAuctionOpen)
     .some((auctionOpen) => !!auctionOpen);
-  console.log('relays.map((relay) => relay.context.rngRelayIsAuctionOpen)');
-  console.log(relays.map((relay) => relay.context.rngRelayIsAuctionOpen));
-  console.log(
-    'relays.map((relay) => relay.context.rngRelayIsAuctionOpen).some((auctionOpen) => !!auctionOpen)',
-  );
-  console.log(
-    relays.map((relay) => relay.context.rngRelayIsAuctionOpen).some((auctionOpen) => !!auctionOpen),
-  );
-  console.log('anyRelaysOpen');
-  console.log(anyRelaysOpen);
 
   if (context.rngIsAuctionOpen && context.rngFeeTokenIsSet && context.rngFeeUsd > 0) {
     return DrawAuctionState.RngStartVrfHelper;
