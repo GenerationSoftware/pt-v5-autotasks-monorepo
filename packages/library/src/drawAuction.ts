@@ -337,6 +337,8 @@ const processRelayTransaction = async (
 
   const { chainId } = relay;
   const contract = findRngAuctionRelayerRemoteOwnerContract(chainId, rngAuctionContracts);
+  console.log('contract');
+  console.log(contract);
 
   const gasCostUsd = await getRelayGasCost(relay, contract, params, context);
   if (gasCostUsd === 0) {
@@ -1043,7 +1045,7 @@ const findRngAuctionRelayerRemoteOwnerContract = (
 ) => {
   return rngAuctionContracts.rngAuctionRelayerRemoteOwnerContracts.find(
     (contract) =>
-      RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId].toLowerCase ===
+      RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId].toLowerCase() ===
       contract.address.toLowerCase(),
   );
 };
