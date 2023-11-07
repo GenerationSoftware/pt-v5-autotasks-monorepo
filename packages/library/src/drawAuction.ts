@@ -77,7 +77,7 @@ const RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS = {
 };
 
 const ONE_GWEI = '1000000000';
-const RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT = '50000';
+const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
 
 // Instantiates all RngAuctionRelayerRemoteOwner* contracts that are found in the ContractsBlob
 const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
@@ -801,7 +801,31 @@ const buildRngAuctionRelayerRemoteOwnerOptimismRelayTxParams = (
     remoteOwnerAddress,
     remoteRngAuctionRelayListenerAddress,
     rewardRecipient,
-    gasLimit: RNG_AUCTION_RELAYER_CUSTOM_GAS_LIMIT,
+    gasLimit: RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT,
+  };
+};
+
+const buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams = (
+  messageDispatcherAddress: string,
+  remoteOwnerChainId: number,
+  remoteOwnerAddress: string,
+  remoteRngAuctionRelayListenerAddress: string,
+  rewardRecipient: string,
+  refundAddress: string,
+  gasLimit: string,
+  maxSubmissionCost: string,
+  gasPriceBid: string,
+): RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams => {
+  return {
+    messageDispatcherAddress,
+    remoteOwnerChainId,
+    remoteOwnerAddress,
+    remoteRngAuctionRelayListenerAddress,
+    rewardRecipient,
+    refundAddress,
+    gasLimit,
+    maxSubmissionCost,
+    gasPriceBid,
   };
 };
 
@@ -869,26 +893,48 @@ const getRelayGasCost = async (
   const { chainId, readProvider } = relay;
   const { nativeTokenMarketRateUsd } = relay.context;
 
-  let estimatedGasLimit, populatedTx;
+  let estimatedGasLimit: BigNumber;
+  let populatedTx: PopulatedTransaction;
   if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
-    if (chainId === 10) {
+    if (chainIsOptimism(chainId)) {
+      const rngAuctionRelayerRemoteOwnerOptimismRelayTxParams = buildRngAuctionRelayerRemoteOwnerOptimismRelayTxParams(
+        ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
+        relay.chainId,
+        relay.contracts.remoteOwnerContract.address,
+        relay.contracts.rngRelayAuctionContract.address,
+        params.rewardRecipient,
+      );
+
+      estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(
+        rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+        contract,
+      );
+      populatedTx = await populateOptimismRelayTx(
+        rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+        contract,
+      );
+    } else if (chainIsArbitrum(chainId)) {
+      const rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
+        ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
+        relay.chainId,
+        relay.contracts.remoteOwnerContract.address,
+        relay.contracts.rngRelayAuctionContract.address,
+        params.rewardRecipient,
+        refundAddress,
+        gasLimit,
+        maxSubmissionCost,
+        gasPriceBid,
+      );
+
+      estimatedGasLimit = await getEstimatedGasLimitArbitrumRelayTx(
+        rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
+        contract,
+      );
+      populatedTx = await populateArbitrumRelayTx(
+        rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
+        contract,
+      );
     }
-
-    const rngAuctionRelayerRemoteOwnerOptimismRelayTxParams = buildRngAuctionRelayerRemoteOwnerOptimismRelayTxParams(
-      ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
-      relay.chainId,
-      relay.contracts.remoteOwnerContract.address,
-      relay.contracts.rngRelayAuctionContract.address,
-      params.rewardRecipient,
-    );
-    estimatedGasLimit = await getRngAuctionRelayerRemoteOwnerOptimismRelayEstimatedGasLimit(
-      contract,
-      rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
-    );
-
-    populatedTx = await contract.populateTransaction.relay(
-      ...Object.values(rngAuctionRelayerRemoteOwnerOptimismRelayTxParams),
-    );
   } else {
     // TODO: Fill this in if/when we have a need for RelayerDirect (where the PrizePool
     // exists on same chain as RNG service)
@@ -1120,5 +1166,49 @@ const findRngAuctionRelayerRemoteOwnerContract = (
     (contract) =>
       RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId].toLowerCase() ===
       contract.address.toLowerCase(),
+  );
+};
+
+const chainIsOptimism = (chainId: number) =>
+  [CHAIN_IDS.optimism, CHAIN_IDS.optimismSepolia, CHAIN_IDS.optimismGoerli].includes(chainId);
+
+const chainIsArbitrum = (chainId: number) =>
+  [CHAIN_IDS.arbitrum, CHAIN_IDS.arbitrumSepolia, CHAIN_IDS.arbitrumGoerli].includes(chainId);
+
+const getEstimatedGasLimitOptimismRelayTx = async (
+  rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+  contract,
+) => {
+  return await getRngAuctionRelayerRemoteOwnerOptimismRelayEstimatedGasLimit(
+    contract,
+    rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+  );
+};
+
+const getEstimatedGasLimitArbitrumRelayTx = async (
+  rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
+  contract,
+) => {
+  return await getRngAuctionRelayerRemoteOwnerArbitrumRelayEstimatedGasLimit(
+    contract,
+    rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
+  );
+};
+
+const populateOptimismRelayTx = async (
+  rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+  contract,
+) => {
+  return await contract.populateTransaction.relay(
+    ...Object.values(rngAuctionRelayerRemoteOwnerOptimismRelayTxParams),
+  );
+};
+
+const populateArbitrumRelayTx = async (
+  rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
+  contract,
+) => {
+  return await contract.populateTransaction.relay(
+    ...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams),
   );
 };

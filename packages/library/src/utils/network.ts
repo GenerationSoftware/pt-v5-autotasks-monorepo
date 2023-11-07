@@ -12,26 +12,30 @@ export const CHAIN_IDS = {
 };
 
 export const CHAINS_BY_ID = {
-  1: '1 - Mainnet',
-  10: '10 - Optimism',
-  42161: '42161 - Arbitrum',
-  421613: '421613 - Arbitrum Goerli',
-  5: '5 - Goerli',
-  11155111: '11155111 - Sepolia',
-  420: '420 - Optimism Goerli',
+  [CHAIN_IDS.mainnet]: '1 - Mainnet',
+  [CHAIN_IDS.optimism]: '10 - Optimism',
+  [CHAIN_IDS.arbitrum]: '42161 - Arbitrum',
+  [CHAIN_IDS.goerli]: '5 - Goerli',
+  [CHAIN_IDS.optimismGoerli]: '420 - Optimism Goerli',
+  [CHAIN_IDS.optimismSepolia]: '420 - Optimism Sepolia',
+  [CHAIN_IDS.arbitrumGoerli]: '421613 - Arbitrum Goerli',
+  [CHAIN_IDS.arbitrumSepolia]: '421613 - Arbitrum Sepolia',
+  [CHAIN_IDS.sepolia]: '11155111 - Sepolia',
 };
 
 export const FLASHBOTS_SUPPORTED_CHAINS = [1, 5];
 
 export const NETWORK_NATIVE_TOKEN_INFO = {
-  1: { decimals: 18, symbol: 'ETH' },
-  5: { decimals: 18, symbol: 'ETH' },
-  10: { decimals: 18, symbol: 'ETH' },
-  420: { decimals: 18, symbol: 'ETH' },
-  42161: { decimals: 18, symbol: 'ETH' },
-  421613: { decimals: 18, symbol: 'ETH' },
-  11155111: { decimals: 18, symbol: 'ETH' },
-  80001: { decimals: 18, symbol: 'MATIC' },
+  [CHAIN_IDS.mainnet]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.optimism]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.arbitrum]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.goerli]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.optimismGoerli]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.optimismSepolia]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.arbitrumGoerli]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.arbitrumSepolia]: { decimals: 18, symbol: 'ETH' },
+  [CHAIN_IDS.sepolia]: { decimals: 18, symbol: 'ETH' },
+  // 80001: { decimals: 18, symbol: 'MATIC' },
 };
 
 export const canUseIsPrivate = (chainId, useFlashbots) => {
