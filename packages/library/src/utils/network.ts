@@ -6,7 +6,9 @@ export const CHAIN_IDS = {
   optimismGoerli: 420,
   arbitrum: 42161,
   arbitrumGoerli: 421613,
+  arbitrumSepolia: 421614,
   sepolia: 11155111,
+  optimismSepolia: 11155420,
 };
 
 export const CHAINS_BY_ID = {
