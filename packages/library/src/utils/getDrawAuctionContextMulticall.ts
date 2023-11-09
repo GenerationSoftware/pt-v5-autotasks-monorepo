@@ -13,6 +13,8 @@ import {
   RngDrawAuctionContext,
   RelayDrawAuctionContext,
   Relay,
+  RngResults,
+  AuctionResult,
 } from '../types';
 import { chainName } from './network';
 import {
@@ -384,20 +386,26 @@ export const getRelayMulticall = async (
 
     // 6e. Results: Draw/Relayer Reward
     let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
+    let rngResults: RngResults;
+    let rngLastAuctionResult: AuctionResult;
     if (rngRelayIsAuctionOpen) {
       const [
         randomNumber,
-        completedAt,
+        rngCompletedAt,
       ] = await rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
-      const rngLastAuctionResult = await rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
+      rngResults = { randomNumber, rngCompletedAt };
+      rngLastAuctionResult = await rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
 
       // TODO: make sure the elapsed time is less than the auction duration
-      const elapsedTime = Math.floor(Date.now() / 1000) - Number(completedAt.toString());
+      const elapsedTime =
+        Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
 
       const rngRelayRewardFraction = await relay.contracts.rngRelayAuctionContract.computeRewardFraction(
         elapsedTime,
       );
 
+      // Make a new AuctionResult based off the data we currently know (we assume
+      // we will be the recipient, and we have the estimated RelayRewardFraction)
       const auctionResult = {
         rewardFraction: rngRelayRewardFraction,
         recipient: rewardRecipient,
@@ -421,6 +429,8 @@ export const getRelayMulticall = async (
 
     const context: RelayDrawAuctionContext = {
       prizePoolOpenDrawEndsAt,
+      rngResults,
+      rngLastAuctionResult,
       rngExpectedReward,
       rngExpectedRewardUsd,
       rewardToken,
