@@ -115,9 +115,21 @@ export interface DrawAuctionContext extends RngDrawAuctionContext {
   rngExpectedRewardTotalUsd?: number; // sum of all rewards from all prize pools in USD
 }
 
+export interface RngResults {
+  randomNumber: BigNumber;
+  rngCompletedAt: number;
+}
+
+export interface AuctionResult {
+  recipient: string;
+  rewardFraction: number;
+}
+
 export interface RelayDrawAuctionContext {
   prizePoolOpenDrawEndsAt: number;
-  rngExpectedReward: number; // why is this a number and not a BigNumber?
+  rngResults: RngResults;
+  rngLastAuctionResult: AuctionResult;
+  rngExpectedReward: number; // why is this a number and not a BigNumber like `rngRelayExpectedReward` or `rngExpectedReward`?
   rngExpectedRewardUsd: number;
   rewardToken: TokenWithRate;
   rngRelayIsAuctionOpen: boolean;
