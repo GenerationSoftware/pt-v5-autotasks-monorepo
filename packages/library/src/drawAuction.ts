@@ -5,10 +5,8 @@ import { formatUnits } from '@ethersproject/units';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import chalk from 'chalk';
-import { getBaseFee } from '@arbitrum/sdk/dist/lib/utils/lib';
-import { Interface } from '@ethersproject/abi';
-import { L1ToL2MessageGasEstimator } from '@arbitrum/sdk';
 
+import { getArbitrumRelayTxParamsVars } from './getRelayTxParams';
 import { RngAuctionContracts, DrawAuctionContext, DrawAuctionConfigParams, Relay } from './types';
 import {
   logTable,
@@ -20,6 +18,10 @@ import {
   roundTwoDecimalPlaces,
   getGasPrice,
 } from './utils';
+import {
+  ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
+  RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS,
+} from './constants';
 import { chainName, CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import {
   getDrawAuctionContextMulticall,
@@ -55,38 +57,6 @@ interface RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams {
   maxSubmissionCost: BigNumber;
   gasPriceBid: BigNumber;
 }
-
-const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
-  [CHAIN_IDS.optimism]: '0x2A34E6cae749876FB8952aD7d2fA486b00F0683F', // mainnet -> optimism
-  [CHAIN_IDS.optimismGoerli]: '0x177B14c6b571262057C3c30E3AE6bB044F62e55c', // goerli -> optimism goerli
-  [CHAIN_IDS.optimismSepolia]: '0x2aeB429f7d8c00983E033087Dd5a363AbA2AC55f', // sepolia -> optimism sepolia
-  // [CHAIN_IDS.arbitrum]: '', // mainnet -> arbitrum
-  [CHAIN_IDS.arbitrumGoerli]: '0xBc244773f71a2f897fAB5D5953AA052B8ff68670', // goerli -> arbitrum goerli
-  [CHAIN_IDS.arbitrumSepolia]: '0x8bCDe547B30C6DE6b532073F2d091F8B292D60a6', // sepolia -> arbitrum sepolia
-};
-
-const ERC_5164_MESSAGE_EXECUTOR_ADDRESS = {
-  [CHAIN_IDS.optimism]: '0x139f6dD114a9C45Ba43eE22C5e03c53de0c13225', // mainnet -> optimism
-  [CHAIN_IDS.optimismSepolia]: '0x6A501383A61ebFBc143Fc4BD41A2356bA71A6964', // sepolia -> optimism sepolia
-  [CHAIN_IDS.arbitrumSepolia]: '0x02aCC9594161812E3004C174CF1735EdB10e20A4', // sepolia -> arbitrum sepolia
-};
-
-const ERC_5164_GREETER_ADDRESS = {
-  [CHAIN_IDS.optimismSepolia]: '0x8537C5a9AAd3ec1D31a84e94d19FcFC681E83ED0',
-  [CHAIN_IDS.arbitrumSepolia]: '0x49b86ba45C01957Df33Fe7bbB97002A0e4E5F964',
-};
-
-const RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS = {
-  [CHAIN_IDS.optimism]: '0xEC9460c59cCA1299b0242D6AF426c21223ccCD24', // mainnet -> optimism
-  [CHAIN_IDS.optimismGoerli]: '', // goerli -> optimism goerli
-  [CHAIN_IDS.optimismSepolia]: '', // sepolia -> optimism sepolia
-  [CHAIN_IDS.arbitrum]: '', // mainnet -> arbitrum
-  [CHAIN_IDS.arbitrumGoerli]: '', // goerli -> arbitrum goerli
-  [CHAIN_IDS.arbitrumSepolia]: '', // sepolia -> arbitrum sepolia
-};
-
-// This is a fake message ID, used for estimating gas costs on Arbitrum
-const RANDOM_BYTES_32_STRING = '0x90344b8b6d0f5572c26c9897fd0170c6d4b3a435268062468c51261fbf8274e9';
 
 const ONE_GWEI = '1000000000';
 const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
@@ -918,66 +888,10 @@ const getRelayTxParams = async (
         params.rewardRecipient,
       );
     } else if (chainIsArbitrum(chainId)) {
-      // TODO: Refactor!
-      const messageId = RANDOM_BYTES_32_STRING;
-
-      // 1. Compute `listenerCalldata`:
-      const listenerCalldata = new Interface([
-        'function rngComplete(uint256,uint256,address,uint32,[address,uint64])', // last param is a tuple, not sure this is the right encoding
-      ]).encodeFunctionData('rngComplete', [
-        relay.context.rngResults.randomNumber,
-        relay.context.rngResults.rngCompletedAt,
-        params.rewardRecipient,
-        relay.context.rngRelayLastSequenceId,
-        [
-          relay.context.rngLastAuctionResult.recipient,
-          relay.context.rngLastAuctionResult.rewardFraction,
-        ],
-      ]);
-
-      // 2. Then compute `remoteOwnerCalldata`:
-      const remoteRngAuctionRelayListenerAddress = relay.contracts.rngRelayAuctionContract.address;
-      const remoteOwnerCalldata = new Interface([
-        'function execute(address,uint256,bytes)',
-      ]).encodeFunctionData('execute', [remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]);
-
-      // 3. Finally compute `executeMessageData`:
-      const executeMessageData = new Interface([
-        'function executeMessage(address,bytes,bytes32,uint256,address)',
-      ]).encodeFunctionData('executeMessage', [
-        ERC_5164_GREETER_ADDRESS[chainId], // remoteOwnerAddress ?
-        remoteOwnerCalldata,
-        messageId,
-        params.rngChainId,
-        params.relayerAddress,
-      ]);
-
-      const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(readProvider);
-      const baseFee = await getBaseFee(readProvider);
-
-      /**
-       * The estimateAll method gives us the following values for sending an L1->L2 message
-       * (1) maxSubmissionCost: The maximum cost to be paid for submitting the transaction
-       * (2) gasLimit: The L2 gas limit
-       * (3) deposit: The total amount to deposit on L1 to cover L2 gas and L2 message value
-       */
-      const { deposit, gasLimit, maxSubmissionCost } = await l1ToL2MessageGasEstimate.estimateAll(
-        {
-          from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
-          to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[chainId],
-          l2CallValue: BigNumber.from(0),
-          excessFeeRefundAddress: params.relayerAddress,
-          callValueRefundAddress: params.relayerAddress,
-          data: executeMessageData,
-        },
-        baseFee,
-        params.rngReadProvider,
+      const { gasLimit, maxSubmissionCost, gasPriceBid } = await getArbitrumRelayTxParamsVars(
+        relay,
+        params,
       );
-
-      const gasPriceBid = await readProvider.getGasPrice();
-      printSpacer();
-      console.log(chalk.yellow(`L2 gas price: ${gasPriceBid.toString()}`));
-      printSpacer();
 
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
