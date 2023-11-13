@@ -89,7 +89,7 @@ export interface DrawAuctionConfigParams {
   rngChainId: number;
   rngReadProvider: BaseProvider;
   rngWriteProvider: Provider | DefenderRelaySigner;
-  relayerAddress: string;
+  rngRelayerAddress: string;
   rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;

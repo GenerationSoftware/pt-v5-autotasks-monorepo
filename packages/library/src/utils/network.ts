@@ -17,9 +17,9 @@ export const CHAINS_BY_ID = {
   [CHAIN_IDS.arbitrum]: '42161 - Arbitrum',
   [CHAIN_IDS.goerli]: '5 - Goerli',
   [CHAIN_IDS.optimismGoerli]: '420 - Optimism Goerli',
-  [CHAIN_IDS.optimismSepolia]: '420 - Optimism Sepolia',
+  [CHAIN_IDS.optimismSepolia]: '11155420 - Optimism Sepolia',
   [CHAIN_IDS.arbitrumGoerli]: '421613 - Arbitrum Goerli',
-  [CHAIN_IDS.arbitrumSepolia]: '421613 - Arbitrum Sepolia',
+  [CHAIN_IDS.arbitrumSepolia]: '421614 - Arbitrum Sepolia',
   [CHAIN_IDS.sepolia]: '11155111 - Sepolia',
 };
 

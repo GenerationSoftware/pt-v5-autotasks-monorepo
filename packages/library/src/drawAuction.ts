@@ -1,4 +1,4 @@
-import { ethers, BigNumber, Contract, PopulatedTransaction } from 'ethers';
+import { ethers, BigNumber, Contract, PopulatedTransaction, Wallet } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
 import { formatUnits } from '@ethersproject/units';
@@ -72,27 +72,52 @@ const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
     patch: 0,
   },
 ): Contract[] => {
-  const rngAuctionRelayerRemoteOwnerContracts = getContracts(
-    'RngAuctionRelayerRemoteOwner',
-    rngChainId,
-    rngProvider,
-    rngContracts,
-    version,
-  );
-  const rngAuctionRelayerRemoteOwnerOptimismContracts = getContracts(
-    'RngAuctionRelayerRemoteOwnerOptimism',
-    rngChainId,
-    rngProvider,
-    rngContracts,
-    version,
-  );
-  const rngAuctionRelayerRemoteOwnerArbitrumContracts = getContracts(
-    'RngAuctionRelayerRemoteOwnerArbitrum',
-    rngChainId,
-    rngProvider,
-    rngContracts,
-    version,
-  );
+  let rngAuctionRelayerRemoteOwnerContracts = [];
+  try {
+    rngAuctionRelayerRemoteOwnerContracts = getContracts(
+      'RngAuctionRelayerRemoteOwner',
+      rngChainId,
+      rngProvider,
+      rngContracts,
+      version,
+    );
+  } catch (e) {
+    console.log(
+      chalk.dim(
+        'No RngAuctionRelayerRemoteOwner contracts found on the RNG L1 chain (this is likely to be expected).',
+      ),
+    );
+  }
+
+  let rngAuctionRelayerRemoteOwnerOptimismContracts = [];
+  try {
+    rngAuctionRelayerRemoteOwnerOptimismContracts = getContracts(
+      'RngAuctionRelayerRemoteOwnerOptimism',
+      rngChainId,
+      rngProvider,
+      rngContracts,
+      version,
+    );
+  } catch (e) {
+    console.log(
+      chalk.yellow('No RngAuctionRelayerRemoteOwnerOptimism contracts found on the RNG L1 chain?'),
+    );
+  }
+
+  let rngAuctionRelayerRemoteOwnerArbitrumContracts = [];
+  try {
+    rngAuctionRelayerRemoteOwnerArbitrumContracts = getContracts(
+      'RngAuctionRelayerRemoteOwnerArbitrum',
+      rngChainId,
+      rngProvider,
+      rngContracts,
+      version,
+    );
+  } catch (e) {
+    console.log(
+      chalk.yellow('No RngAuctionRelayerRemoteOwnerOptimism contracts found on the RNG L1 chain?'),
+    );
+  }
 
   return [
     ...rngAuctionRelayerRemoteOwnerContracts,
@@ -151,12 +176,13 @@ const instantiateRngAuctionContracts = (
     );
   } catch (e) {
     console.log(
-      chalk.yellow(
-        'No RngAuctionRelayerDirect contract found on the RNG L1 chain, perhaps PrizePool does not exist on this chain?',
+      chalk.dim(
+        'No RngAuctionRelayerDirect contract found on the RNG L1 chain - possible a PrizePool does not exist on this chain.',
       ),
     );
   }
 
+  printSpacer();
   logTable({
     chainlinkVRFV2DirectRngAuctionHelperContract:
       chainlinkVRFV2DirectRngAuctionHelperContract.address,
@@ -240,12 +266,18 @@ const instantiateRelayAuctionContracts = (relays: Relay[]): Relay[] => {
  */
 export async function executeDrawAuctionTxs(
   rngContracts: ContractsBlob,
-  rngRelayer: Relayer,
+  rngRelayer: Relayer | Wallet,
   params: DrawAuctionConfigParams,
   relays: Relay[],
   signer: DefenderRelaySigner,
 ): Promise<void> {
-  const { rngChainId, relayerAddress, rewardRecipient, rngReadProvider, covalentApiKey } = params;
+  const {
+    rngChainId,
+    rngRelayerAddress,
+    rewardRecipient,
+    rngReadProvider,
+    covalentApiKey,
+  } = params;
 
   const rngAuctionContracts = instantiateRngAuctionContracts(
     rngChainId,
@@ -261,7 +293,7 @@ export async function executeDrawAuctionTxs(
     rngReadProvider,
     relays,
     rngAuctionContracts,
-    relayerAddress,
+    rngRelayerAddress,
     rewardRecipient,
     covalentApiKey,
   );
@@ -284,7 +316,7 @@ export async function executeDrawAuctionTxs(
     printSpacer();
 
     checkBalance(context);
-    await increaseRngFeeAllowance(signer, relayerAddress, context, rngAuctionContracts);
+    await increaseRngFeeAllowance(signer, rngRelayerAddress, context, rngAuctionContracts);
   }
 
   printSpacer();
@@ -681,12 +713,12 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
     console.log(chalk.yellow(chainName(relay.chainId)));
 
     logStringValue(
-      `1b. Reward Token ${relay.context.rewardToken.symbol} Market Rate (USD):`,
+      `1b. Reward Token '${relay.context.rewardToken.symbol}' Market Rate (USD):`,
       `$${relay.context.rewardToken.assetRateUsd}`,
     );
 
     logStringValue(
-      `1c. Relay/PrizePool Chain Native/Gas Token ${
+      `1c. Relay Chain Gas Token ${
         NETWORK_NATIVE_TOKEN_INFO[relay.chainId].symbol
       } Market Rate (USD):`,
       `$${relay.context.nativeTokenMarketRateUsd}`,
@@ -899,7 +931,7 @@ const getRelayTxParams = async (
         relay.contracts.remoteOwnerContract.address,
         relay.contracts.rngRelayAuctionContract.address,
         params.rewardRecipient,
-        params.relayerAddress, // refundAddress
+        params.rngRelayerAddress, // refundAddress
         gasLimit,
         maxSubmissionCost,
         gasPriceBid,
@@ -1088,7 +1120,7 @@ const sendRelayTransaction = async (
 
 const increaseRngFeeAllowance = async (
   signer,
-  relayerAddress: string,
+  rngRelayerAddress: string,
   context: DrawAuctionContext,
   rngAuctionContracts: RngAuctionContracts,
 ) => {
@@ -1098,7 +1130,7 @@ const increaseRngFeeAllowance = async (
   printSpacer();
 
   // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
-  approve(signer, relayerAddress, rngAuctionContracts, context);
+  approve(signer, rngRelayerAddress, rngAuctionContracts, context);
 };
 
 /**
@@ -1109,7 +1141,7 @@ const increaseRngFeeAllowance = async (
  */
 const approve = async (
   signer,
-  relayerAddress: string,
+  rngRelayerAddress: string,
   rngAuctionContracts: RngAuctionContracts,
   context: DrawAuctionContext,
 ) => {
@@ -1122,7 +1154,7 @@ const approve = async (
       // Use the RngAuctionHelper if this is Chainlink VRFV2
       console.log(
         chalk.yellowBright(
-          `Increasing relayer '${relayerAddress}' ${context.rngFeeToken.symbol} allowance for the ChainlinkVRFV2DirectRngAuctionHelper to maximum ...`,
+          `Increasing relayer '${rngRelayerAddress}' ${context.rngFeeToken.symbol} allowance for the ChainlinkVRFV2DirectRngAuctionHelper to maximum ...`,
         ),
       );
 
@@ -1135,7 +1167,7 @@ const approve = async (
       await tx.wait();
 
       const newAllowanceResult = await rngFeeTokenContract.allowance(
-        relayerAddress,
+        rngRelayerAddress,
         rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract.address,
       );
       console.log('newAllowanceResult');

@@ -1,17 +1,18 @@
-import { ethers } from 'ethers';
+import { ethers, Wallet } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { DrawAuctionConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
+import { Relayer } from 'defender-relay-client';
 
 import { executeTransactions } from './transactions';
 
 const handlerLoadParams = (
-  relayerAddress: string,
+  rngRelayerAddress: string,
   rngWriteProvider: DefenderRelayProvider,
 ): DrawAuctionConfigParams => {
   return {
     rngChainId: Number(BUILD_CHAIN_ID),
-    relayerAddress,
+    rngRelayerAddress,
     rngReadProvider: new ethers.providers.JsonRpcProvider(
       BUILD_JSON_RPC_URI,
       Number(BUILD_CHAIN_ID),
@@ -29,9 +30,17 @@ export async function handler(event: RelayerParams) {
   const signer = new DefenderRelaySigner(event, rngWriteProvider, {
     speed: 'fast',
   });
-  const relayerAddress = await signer.getAddress();
+  const rngRelayerAddress = await signer.getAddress();
 
-  const params = handlerLoadParams(relayerAddress, rngWriteProvider);
+  const params = handlerLoadParams(rngRelayerAddress, rngWriteProvider);
 
-  await executeTransactions(event, params, signer, BUILD_RELAYS);
+  let rngRelayer: Relayer | Wallet;
+  if (BUILD_CUSTOM_RELAYER_PRIVATE_KEY) {
+    const wallet = new Wallet(BUILD_CUSTOM_RELAYER_PRIVATE_KEY);
+    rngRelayer = wallet;
+  } else {
+    rngRelayer = new Relayer(event);
+  }
+
+  await executeTransactions(rngRelayer, params, signer, BUILD_RELAYS);
 }

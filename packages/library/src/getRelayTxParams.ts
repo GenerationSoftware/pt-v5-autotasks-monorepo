@@ -53,7 +53,7 @@ export const getArbitrumRelayTxParamsVars = async (
     remoteOwnerCalldata,
     messageId,
     params.rngChainId,
-    params.relayerAddress,
+    params.rngRelayerAddress,
   ]);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(readProvider);
@@ -70,8 +70,8 @@ export const getArbitrumRelayTxParamsVars = async (
       from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
       to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[chainId],
       l2CallValue: BigNumber.from(0),
-      excessFeeRefundAddress: params.relayerAddress,
-      callValueRefundAddress: params.relayerAddress,
+      excessFeeRefundAddress: params.rngRelayerAddress,
+      callValueRefundAddress: params.rngRelayerAddress,
       data: executeMessageData,
     },
     baseFee,

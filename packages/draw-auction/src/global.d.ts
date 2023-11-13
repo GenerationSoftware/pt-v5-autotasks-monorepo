@@ -5,6 +5,7 @@ declare global {
   const BUILD_REWARD_RECIPIENT: string;
   const BUILD_USE_FLASHBOTS: boolean;
   const BUILD_MIN_PROFIT_THRESHOLD_USD: number;
+  const BUILD_CUSTOM_RELAYER_PRIVATE_KEY: string;
   const BUILD_COVALENT_API_KEY: string;
 }
 
