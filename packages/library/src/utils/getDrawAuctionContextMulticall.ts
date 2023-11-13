@@ -64,7 +64,7 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
  * @param rngReadProvider a read-capable provider for the RNG chain that should be queried
  * @param relays Relay[] array of relays for different chains with readProviders, writeProviders, etc.
  * @param rngAuctionContracts RngAuctionContracts, a collection of ethers contracts to use for querying
- * @param relayerAddress the bot's address
+ * @param rngRelayerAddress the bot's address
  * @param rewardRecipient the account which will receive rewards for submitting RNG requests and finishing auctions
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns DrawAuctionContext
@@ -74,7 +74,7 @@ export const getDrawAuctionContextMulticall = async (
   rngReadProvider: Provider,
   relays: Relay[],
   rngAuctionContracts: RngAuctionContracts,
-  relayerAddress: string,
+  rngRelayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
@@ -85,7 +85,7 @@ export const getDrawAuctionContextMulticall = async (
     rngReadProvider,
     relays,
     rngAuctionContracts,
-    relayerAddress,
+    rngRelayerAddress,
     rewardRecipient,
     covalentApiKey,
   );
@@ -104,7 +104,7 @@ const getContext = async (
   rngReadProvider: Provider,
   relays: Relay[],
   rngAuctionContracts: RngAuctionContracts,
-  relayerAddress: string,
+  rngRelayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
@@ -115,7 +115,7 @@ const getContext = async (
   const rngContext = await getRngMulticall(
     rngReadProvider,
     rngAuctionContracts,
-    relayerAddress,
+    rngRelayerAddress,
     covalentApiKey,
   );
 
@@ -164,7 +164,7 @@ const getContext = async (
 export const getRngMulticall = async (
   rngReadProvider: Provider,
   rngAuctionContracts: RngAuctionContracts,
-  relayerAddress: string,
+  rngRelayerAddress: string,
   // reserve: BigNumber,
   covalentApiKey?: string,
 ): Promise<RngDrawAuctionContext> => {
@@ -200,10 +200,10 @@ export const getRngMulticall = async (
     queries[RNG_FEE_TOKEN_NAME_KEY] = rngFeeTokenContract.name();
     queries[RNG_FEE_TOKEN_SYMBOL_KEY] = rngFeeTokenContract.symbol();
 
-    queries[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY] = rngFeeTokenContract.balanceOf(relayerAddress);
+    queries[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY] = rngFeeTokenContract.balanceOf(rngRelayerAddress);
 
     queries[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
-      relayerAddress,
+      rngRelayerAddress,
       rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract.address,
     );
   }

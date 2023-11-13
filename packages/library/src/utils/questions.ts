@@ -20,6 +20,7 @@ export type NETWORK_CONFIG = {
   RELAYER_API_SECRET: string;
   JSON_RPC_URI: string;
   USE_FLASHBOTS: boolean;
+  CUSTOM_RELAYER_PRIVATE_KEY?: string;
   COVALENT_API_KEY?: string;
 };
 
@@ -135,6 +136,11 @@ export const NETWORK_CONFIG_QUESTIONS: {
         return 'Please enter your JSON RPC URI.';
       }
     },
+  },
+  CUSTOM_RELAYER_PRIVATE_KEY: {
+    name: 'CUSTOM_RELAYER_PRIVATE_KEY',
+    type: 'password',
+    message: chalk.green('(Optional) Enter your own EOA private key for relaying transactions:'),
   },
   COVALENT_API_KEY: {
     name: 'COVALENT_API_KEY',

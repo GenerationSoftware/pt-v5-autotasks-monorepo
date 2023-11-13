@@ -1,4 +1,4 @@
-import { RelayerParams } from 'defender-relay-client';
+import { Wallet } from 'ethers';
 import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   executeDrawAuctionTxs,
@@ -9,13 +9,12 @@ import { Relayer } from 'defender-relay-client';
 import { getRelays } from './relays';
 
 export const executeTransactions = async (
-  rngEvent: RelayerParams,
+  rngRelayer: Relayer | Wallet,
+  // rngEvent: RelayerParams,
   params: DrawAuctionConfigParams,
   signer,
   relayConfig,
 ): Promise<void> => {
-  const rngRelayer = new Relayer(rngEvent);
-
   try {
     const rngContracts = await downloadContractsBlob(params.rngChainId);
 
