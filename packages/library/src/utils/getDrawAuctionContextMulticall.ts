@@ -251,9 +251,9 @@ export const getRngMulticall = async (
   const rngCurrentFractionalRewardString = ethers.utils.formatEther(rngCurrentFractionalReward);
 
   // 6g. Results: Rng Fee
-  let relayer: DrawAuctionRelayerContext;
+  let rngRelayer: DrawAuctionRelayerContext;
   if (rngFeeTokenIsSet) {
-    relayer = {
+    rngRelayer = {
       rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
       rngFeeTokenAllowance: BigNumber.from(
         results[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY],
@@ -275,7 +275,7 @@ export const getRngMulticall = async (
     rngIsAuctionOpen,
     rngIsRngComplete,
     rngCurrentFractionalRewardString,
-    relayer,
+    rngRelayer,
   };
 };
 

@@ -6,10 +6,7 @@ import { Relayer } from 'defender-relay-client';
 
 import { executeTransactions } from './transactions';
 
-const handlerLoadParams = (
-  rngRelayerAddress: string,
-  rngWriteProvider: DefenderRelayProvider,
-): DrawAuctionConfigParams => {
+const handlerLoadParams = (rngRelayerAddress: string): DrawAuctionConfigParams => {
   return {
     rngChainId: Number(BUILD_CHAIN_ID),
     rngRelayerAddress,
@@ -17,7 +14,6 @@ const handlerLoadParams = (
       BUILD_JSON_RPC_URI,
       Number(BUILD_CHAIN_ID),
     ),
-    rngWriteProvider,
     covalentApiKey: BUILD_COVALENT_API_KEY,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,
@@ -32,7 +28,7 @@ export async function handler(event: RelayerParams) {
   });
   const rngRelayerAddress = await signer.getAddress();
 
-  const params = handlerLoadParams(rngRelayerAddress, rngWriteProvider);
+  const params = handlerLoadParams(rngRelayerAddress);
 
   let rngRelayer: Relayer | Wallet;
   if (BUILD_CUSTOM_RELAYER_PRIVATE_KEY) {

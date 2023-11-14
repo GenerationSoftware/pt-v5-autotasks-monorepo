@@ -58,6 +58,14 @@ interface RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams {
   gasPriceBid: BigNumber;
 }
 
+interface SendTransactionArgs {
+  data: string;
+  to: string;
+  gasLimit: number;
+  gasPrice: string;
+  isPrivate?: boolean;
+}
+
 const ONE_GWEI = '1000000000';
 const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
 
@@ -336,16 +344,15 @@ export async function executeDrawAuctionTxs(
       return;
     }
 
+    console.log('rewardUsd');
+    console.log(rewardUsd);
+    console.log('gasCostUsd');
+    console.log(gasCostUsd);
+
     const profitable = await calculateRngProfit(params, rewardUsd, gasCostUsd, context);
 
     if (profitable) {
-      await sendStartRngTransaction(
-        rngRelayer,
-        rngReadProvider,
-        rngAuctionContracts,
-        params,
-        context,
-      );
+      await sendStartRngTransaction(rngRelayer, rngReadProvider, rngAuctionContracts, params);
     } else {
       console.log(
         chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -353,30 +360,56 @@ export async function executeDrawAuctionTxs(
     }
   } else if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     for (const relay of relays) {
-      await processRelayTransaction(relay, rngAuctionContracts, params, context);
+      await processRelayTransaction(rngRelayer, relay, rngAuctionContracts, params, context);
     }
   }
 }
 
 const sendStartRngTransaction = async (
-  relayer: Relayer,
+  rngRelayer: Relayer | Wallet,
   provider: Provider,
   rngAuctionContracts: RngAuctionContracts,
   params: DrawAuctionConfigParams,
-  context: DrawAuctionContext,
 ) => {
   // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
   const isPrivate = false;
   console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
   printSpacer();
-  const tx = await sendRngTransaction(
-    provider,
-    relayer,
-    isPrivate,
-    rngAuctionContracts,
-    params,
-    context,
+
+  console.log(chalk.yellow(`Submitting transaction:`));
+
+  let populatedTx: PopulatedTransaction;
+  console.log(
+    chalk.green(`Execute ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest`),
   );
+  printSpacer();
+
+  const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
+  const chainlinkRngAuctionHelper =
+    rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
+  populatedTx = await chainlinkRngAuctionHelper.populateTransaction.transferFeeAndStartRngRequest(
+    ...Object.values(startRngRequestTxParams),
+  );
+
+  const { gasPrice } = await getGasPrice(provider);
+  console.log(chalk.greenBright.bold(`Sending transaction ...`));
+
+  let sendTransactionArgs: SendTransactionArgs = {
+    data: populatedTx.data,
+    to: populatedTx.to,
+    gasLimit: 400000,
+    gasPrice: gasPrice.add(ONE_GWEI).toString(),
+  };
+
+  console.log(rngRelayer.constructor.name);
+
+  if (rngRelayer.constructor.name === 'Relayer') {
+    sendTransactionArgs.isPrivate = isPrivate;
+  }
+  const tx = await rngRelayer.sendTransaction(sendTransactionArgs);
+
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
   // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
   //       re-submit transactions, effectively giving them different tx hashes
@@ -394,6 +427,7 @@ const sendStartRngTransaction = async (
 };
 
 const processRelayTransaction = async (
+  rngRelayer: Relayer | Wallet,
   relay: Relay,
   rngAuctionContracts: RngAuctionContracts,
   params: DrawAuctionConfigParams,
@@ -421,7 +455,7 @@ const processRelayTransaction = async (
 
   // #7. Send transaction
   if (profitable) {
-    await sendRelayTransaction(txParams, relay, contract, context);
+    await sendRelayTransaction(rngRelayer, txParams, relay, contract, context);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -432,26 +466,26 @@ const processRelayTransaction = async (
 const checkBalance = (context: DrawAuctionContext) => {
   logBigNumber(
     `Relayer RNG Fee Token Balance:`,
-    context.relayer.rngFeeTokenBalance,
+    context.rngRelayer.rngFeeTokenBalance,
     context.rngFeeToken.decimals,
     context.rngFeeToken.symbol,
   );
 
   // Bot/Relayer can't afford RNG fee
-  if (context.relayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
-    const diff = context.rngFeeAmount.sub(context.relayer.rngFeeTokenBalance);
+  if (context.rngRelayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
+    const diff = context.rngFeeAmount.sub(context.rngRelayer.rngFeeTokenBalance);
     const diffStr = parseFloat(formatUnits(diff, context.rngFeeToken.decimals));
 
     console.warn(
       chalk.yellow(
-        `Need to increase relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
+        `Need to increase RNG L1 relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
       ),
     );
   } else {
     console.log(chalk.green('Sufficient balance ✔'));
 
     printSpacer();
-    const estimateCount = context.relayer.rngFeeTokenBalance.div(context.rngFeeAmount);
+    const estimateCount = context.rngRelayer.rngFeeTokenBalance.div(context.rngFeeAmount);
     logStringValue(
       `Estimate DrawAuction RNG requests left at current balance:`,
       estimateCount.toString(),
@@ -598,6 +632,8 @@ const calculateRngProfit = async (
   const grossProfitUsd = rewardUsd;
   console.log(chalk.magenta('Gross Profit = Reward'));
 
+  console.log('gasCostUsd');
+  console.log(gasCostUsd);
   const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeUsd;
   console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
   console.log(
@@ -692,7 +728,7 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
   if (context.rngFeeTokenIsSet) {
     logBigNumber(
       `1c. Relayer RNG Fee Token Balance:`,
-      context.relayer.rngFeeTokenBalance,
+      context.rngRelayer.rngFeeTokenBalance,
       context.rngFeeToken.decimals,
       context.rngFeeToken.symbol,
     );
@@ -991,7 +1027,7 @@ const getGasCostUsd = async (
   readProvider,
   nativeTokenMarketRateUsd,
   populatedTx,
-) => {
+): Promise<number> => {
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
     return 0;
@@ -1027,48 +1063,12 @@ const getGasCostUsd = async (
     chalk.yellow(`$${roundTwoDecimalPlaces(gasCostUsd)}`),
     chalk.dim(`$${gasCostUsd}`),
   );
-};
 
-const sendRngTransaction = async (
-  provider: Provider,
-  relayer: Relayer,
-  isPrivate: boolean,
-  rngAuctionContracts: RngAuctionContracts,
-  params: DrawAuctionConfigParams,
-  context: DrawAuctionContext,
-) => {
-  console.log(chalk.yellow(`Submitting transaction:`));
-
-  let populatedTx: PopulatedTransaction;
-  console.log(
-    chalk.green(`Execute ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest`),
-  );
-  printSpacer();
-
-  const startRngRequestTxParams = buildStartRngRequestParams(params.rewardRecipient);
-  const chainlinkRngAuctionHelper =
-    rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
-  populatedTx = await chainlinkRngAuctionHelper.populateTransaction.transferFeeAndStartRngRequest(
-    ...Object.values(startRngRequestTxParams),
-  );
-
-  const { gasPrice } = await getGasPrice(provider);
-  console.log(chalk.greenBright.bold(`Sending transaction ...`));
-  const tx = await relayer.sendTransaction({
-    isPrivate,
-    data: populatedTx.data,
-    to: populatedTx.to,
-    gasLimit: 400000,
-    gasPrice: gasPrice.add(ONE_GWEI).toString(),
-  });
-
-  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-  return tx;
+  return gasCostUsd;
 };
 
 const sendRelayTransaction = async (
+  rngRelayer: Relayer | Wallet,
   txParams:
     | RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams
     | RngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
@@ -1076,7 +1076,7 @@ const sendRelayTransaction = async (
   contract: Contract,
   context: DrawAuctionContext,
 ) => {
-  const { readProvider, relayer } = relay;
+  const { readProvider } = relay;
 
   console.log(chalk.yellow(`Submitting transaction:`));
 
@@ -1098,13 +1098,19 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
 
-  const tx = await relayer.sendTransaction({
-    isPrivate,
+  let sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
     to: populatedTx.to,
     gasLimit: 400000,
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
-  });
+  };
+
+  console.log(rngRelayer.constructor.name);
+
+  if (rngRelayer.constructor.name === 'Relayer') {
+    sendTransactionArgs.isPrivate = isPrivate;
+  }
+  const tx = await rngRelayer.sendTransaction(sendTransactionArgs);
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
@@ -1130,7 +1136,7 @@ const increaseRngFeeAllowance = async (
   printSpacer();
 
   // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
-  approve(signer, rngRelayerAddress, rngAuctionContracts, context);
+  await approve(signer, rngRelayerAddress, rngAuctionContracts, context);
 };
 
 /**
@@ -1148,13 +1154,13 @@ const approve = async (
   try {
     const rngFeeTokenContract = new ethers.Contract(context.rngFeeToken.address, ERC20Abi, signer);
 
-    const allowance = context.relayer.rngFeeTokenAllowance;
+    const allowance = context.rngRelayer.rngFeeTokenAllowance;
 
     if (allowance.lt(context.rngFeeAmount)) {
       // Use the RngAuctionHelper if this is Chainlink VRFV2
       console.log(
         chalk.yellowBright(
-          `Increasing relayer '${rngRelayerAddress}' ${context.rngFeeToken.symbol} allowance for the ChainlinkVRFV2DirectRngAuctionHelper to maximum ...`,
+          `Increasing RNG L1 relayer '${rngRelayerAddress}' ${context.rngFeeToken.symbol} allowance for the ChainlinkVRFV2DirectRngAuctionHelper to maximum ...`,
         ),
       );
 
@@ -1170,9 +1176,7 @@ const approve = async (
         rngRelayerAddress,
         rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract.address,
       );
-      console.log('newAllowanceResult');
-      console.log(newAllowanceResult);
-      logStringValue('New allowance:', newAllowanceResult[0].toString());
+      logStringValue('New allowance:', newAllowanceResult.toString());
     } else {
       console.log(chalk.green('Sufficient allowance ✔'));
     }
