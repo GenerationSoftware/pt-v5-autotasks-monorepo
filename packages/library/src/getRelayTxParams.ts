@@ -9,7 +9,6 @@ import { printSpacer } from './utils';
 import { DrawAuctionConfigParams, Relay } from './types';
 import {
   ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
-  ERC_5164_GREETER_ADDRESS,
   ERC_5164_MESSAGE_EXECUTOR_ADDRESS,
 } from './constants';
 
@@ -23,8 +22,7 @@ export const getArbitrumRelayTxParamsVars = async (
   const { readProvider, chainId } = relay;
 
   const messageId = RANDOM_BYTES_32_STRING;
-
-  // need to do this?
+  // CHECK: do we need to do this instead?
   // const encodedMessageId = keccak256(
   //   defaultAbiCoder.encode(
   //     ['uint256', 'address', 'address', 'bytes'],
@@ -46,51 +44,12 @@ export const getArbitrumRelayTxParamsVars = async (
     ],
   ]);
 
-  printSpacer();
-  printSpacer();
-
-  console.log('new Interface([');
-  console.log(
-    new Interface(['function rngComplete(uint256,uint256,address,uint32,tuple(address,uint64))']),
-  );
-
-  console.log(
-    relay.context.rngResults.randomNumber,
-    relay.context.rngResults.rngCompletedAt,
-    params.rewardRecipient,
-    relay.context.rngRelayLastSequenceId,
-    [
-      relay.context.rngLastAuctionResult.recipient,
-      relay.context.rngLastAuctionResult.rewardFraction,
-    ],
-  );
-  printSpacer();
-  printSpacer();
-
-  console.log('listenerCalldata');
-  console.log(listenerCalldata);
-
   // 2. Then compute `remoteOwnerCalldata`:
   const remoteRngAuctionRelayListenerAddress = relay.contracts.rngRelayAuctionContract.address;
-  printSpacer();
-  printSpacer();
 
-  console.log('remoteRngAuctionRelayListenerAddress');
-  console.log(remoteRngAuctionRelayListenerAddress);
   const remoteOwnerCalldata = new Interface([
     'function execute(address,uint256,bytes)',
   ]).encodeFunctionData('execute', [remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]);
-
-  printSpacer();
-  printSpacer();
-
-  console.log('remoteOwnerCalldata');
-  console.log(remoteOwnerCalldata);
-
-  printSpacer();
-
-  console.log('[remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]');
-  console.log([remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]);
 
   // 3. Finally compute `executeMessageData`:
   const executeMessageData = new Interface([
@@ -103,48 +62,9 @@ export const getArbitrumRelayTxParamsVars = async (
     params.rngRelayerAddress,
   ]);
 
-  printSpacer();
-  printSpacer();
-
-  console.log('executeMessageData');
-  console.log(executeMessageData);
-  console.log([
-    relay.contracts.remoteOwnerContract.address, // ERC_5164_GREETER_ADDRESS[chainId]?
-    remoteOwnerCalldata,
-    messageId,
-    params.rngChainId,
-    params.rngRelayerAddress,
-  ]);
-
-  printSpacer();
-  printSpacer();
-
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(readProvider);
-  console.log('l1ToL2MessageGasEstimate');
-  console.log(l1ToL2MessageGasEstimate);
-
-  printSpacer();
-  printSpacer();
 
   const baseFee = await getBaseFee(readProvider);
-  console.log('baseFee');
-  console.log(baseFee);
-  console.log(baseFee.toString());
-
-  printSpacer();
-  printSpacer();
-  console.log(
-    {
-      to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[chainId],
-      from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
-      l2CallValue: BigNumber.from(0),
-      excessFeeRefundAddress: params.rngRelayerAddress,
-      callValueRefundAddress: params.rngRelayerAddress,
-      data: executeMessageData,
-    },
-    baseFee,
-    params.rngReadProvider,
-  );
 
   /**
    * The estimateAll method gives us the following values for sending an L1->L2 message
