@@ -19,7 +19,9 @@ export const getArbitrumRelayTxParamsVars = async (
   relay: Relay,
   params: DrawAuctionConfigParams,
 ) => {
-  const { readProvider, chainId } = relay;
+  const { readProvider: l2Provider, chainId } = relay;
+
+  const l1Provider = params.rngReadProvider;
 
   const messageId = RANDOM_BYTES_32_STRING;
   // CHECK: do we need to do this instead?
@@ -62,9 +64,9 @@ export const getArbitrumRelayTxParamsVars = async (
     params.rngRelayerAddress,
   ]);
 
-  const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(readProvider);
+  const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
-  const baseFee = await getBaseFee(params.rngReadProvider);
+  const baseFee = await getBaseFee(l1Provider);
 
   /**
    * The estimateAll method gives us the following values for sending an L1->L2 message
@@ -82,10 +84,10 @@ export const getArbitrumRelayTxParamsVars = async (
       data: executeMessageData,
     },
     baseFee,
-    params.rngReadProvider,
+    l1Provider,
   );
 
-  const gasPriceBid = await readProvider.getGasPrice();
+  const gasPriceBid = await l2Provider.getGasPrice();
   printSpacer();
   console.log(chalk.yellow(`L2 gas price: ${gasPriceBid.toString()}`));
   printSpacer();
