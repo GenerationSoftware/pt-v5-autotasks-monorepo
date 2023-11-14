@@ -307,7 +307,6 @@ export async function executeDrawAuctionTxs(
   );
 
   printContext(rngChainId, relays, context);
-  console.log('hi we here');
 
   if (!context.drawAuctionState) {
     printAsterisks();
@@ -401,8 +400,6 @@ const sendStartRngTransaction = async (
     gasLimit: 400000,
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
   };
-
-  console.log(rngRelayer.constructor.name);
 
   if (rngRelayer.constructor.name === 'Relayer') {
     sendTransactionArgs.isPrivate = isPrivate;
@@ -974,14 +971,10 @@ const getRelayTxParams = async (
         params.rewardRecipient,
       );
     } else if (chainIsArbitrum(chainId)) {
-      console.log('hello!');
-      console.log('hello!');
       const { gasLimit, maxSubmissionCost, gasPriceBid } = await getArbitrumRelayTxParamsVars(
         relay,
         params,
       );
-      console.log('gasLimit, maxSubmissionCost, gasPriceBid');
-      console.log(gasLimit, maxSubmissionCost, gasPriceBid);
 
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
@@ -1126,8 +1119,6 @@ const sendRelayTransaction = async (
     gasLimit: 400000,
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
   };
-
-  console.log(rngRelayer.constructor.name);
 
   if (rngRelayer.constructor.name === 'Relayer') {
     sendTransactionArgs.isPrivate = isPrivate;
