@@ -6,3 +6,4 @@ export * from './getLiquidationPairComputeExactAmountInMulticall';
 export * from './questions';
 export * from './logging';
 export * from './network';
+export * from './instantiateRelayAccount';

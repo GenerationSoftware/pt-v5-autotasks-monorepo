@@ -1,4 +1,4 @@
-import { Contract, BigNumber } from 'ethers';
+import { Contract, BigNumber, Wallet } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
@@ -88,7 +88,9 @@ export interface WithdrawClaimRewardsContext {
 export interface DrawAuctionConfigParams {
   rngChainId: number;
   rngReadProvider: BaseProvider;
+  rngRelayer: Relayer | Wallet;
   rngRelayerAddress: string;
+  signer: DefenderRelaySigner | Wallet;
   rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -143,16 +145,23 @@ export interface RelayConfig {
   RELAY_RELAYER_API_KEY: string;
   RELAY_RELAYER_API_SECRET: string;
   RELAY_JSON_RPC_URI: string;
+  RELAY_CUSTOM_RELAYER_PRIVATE_KEY?: string;
 }
 
 export interface Relay {
   chainId: number;
   contractsBlob: ContractsBlob;
-  relayer: Relayer;
+  relayerAccount: RelayerAccount;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
   contracts?: RelayAuctionContracts;
   context?: RelayDrawAuctionContext;
+}
+
+export interface RelayerAccount {
+  signer: DefenderRelaySigner | Wallet;
+  relayer: Relayer | Wallet;
+  relayerAddress: string;
 }
 
 export interface RngAuctionContracts {

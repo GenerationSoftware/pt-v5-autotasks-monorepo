@@ -2,9 +2,12 @@ import esMain from 'es-main';
 import Configstore from 'configstore';
 import figlet from 'figlet';
 import chalk from 'chalk';
-import { ethers, Wallet } from 'ethers';
-import { DrawAuctionConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
-import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
+import { ethers } from 'ethers';
+import {
+  instantiateRelayAccount,
+  DrawAuctionConfigParams,
+} from '@generationsoftware/pt-v5-autotasks-library';
+import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
 import { executeTransactions } from './transactions';
 import { askQuestions } from './helpers/questions';
@@ -22,37 +25,32 @@ if (esMain(import.meta)) {
     config.CHAIN_ID, // is RNG chain but needs to be just CHAIN_ID for global config to work properly
   );
 
-  let signer, rngRelayerAddress, rngRelayer;
-  if (config.CUSTOM_RELAYER_PRIVATE_KEY) {
-    const wallet = new Wallet(config.CUSTOM_RELAYER_PRIVATE_KEY, rngReadProvider);
-    rngRelayerAddress = wallet.address;
-    rngRelayer = wallet;
-    signer = wallet;
-  } else {
-    const rngChainFakeEvent = {
-      apiKey: config.RELAYER_API_KEY, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
-      apiSecret: config.RELAYER_API_SECRET, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
-    };
+  const mockEvent = {
+    apiKey: config.RELAYER_API_KEY, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
+    apiSecret: config.RELAYER_API_SECRET, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
+  };
+  const rngWriteProvider = new DefenderRelayProvider(mockEvent);
 
-    const rngWriteProvider = new DefenderRelayProvider(rngChainFakeEvent);
-    const signer = new DefenderRelaySigner(rngChainFakeEvent, rngWriteProvider, {
-      speed: 'fast',
-    });
-    rngRelayerAddress = await signer.getAddress();
-    rngRelayer = signer;
-  }
+  const { signer, relayer, relayerAddress } = await instantiateRelayAccount(
+    rngWriteProvider,
+    rngReadProvider,
+    mockEvent,
+    config.CUSTOM_RELAYER_PRIVATE_KEY,
+  );
 
-  const params: DrawAuctionConfigParams = {
+  const drawAuctionConfigParams: DrawAuctionConfigParams = {
     rngChainId: config.CHAIN_ID,
     rngReadProvider,
-    rngRelayerAddress,
+    signer,
+    rngRelayer: relayer,
+    rngRelayerAddress: relayerAddress,
     rewardRecipient: config.REWARD_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
     minProfitThresholdUsd: Number(config.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: config.COVALENT_API_KEY,
   };
 
-  await executeTransactions(rngRelayer, params, signer, config.RELAYS);
+  await executeTransactions(drawAuctionConfigParams, config.RELAYS);
 }
 
 export function main() {}
