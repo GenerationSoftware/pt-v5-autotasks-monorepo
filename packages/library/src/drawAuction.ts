@@ -274,16 +274,16 @@ const instantiateRelayAuctionContracts = (relays: Relay[]): Relay[] => {
  */
 export async function executeDrawAuctionTxs(
   rngContracts: ContractsBlob,
-  rngRelayer: Relayer | Wallet,
   params: DrawAuctionConfigParams,
   relays: Relay[],
-  signer: DefenderRelaySigner,
 ): Promise<void> {
   const {
     rngChainId,
-    rngRelayerAddress,
-    rewardRecipient,
     rngReadProvider,
+    rngRelayer,
+    rngRelayerAddress,
+    signer,
+    rewardRecipient,
     covalentApiKey,
   } = params;
 

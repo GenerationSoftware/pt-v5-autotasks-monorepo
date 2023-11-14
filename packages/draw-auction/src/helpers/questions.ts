@@ -14,6 +14,7 @@ interface RELAY_CONFIG {
   RELAY_RELAYER_API_KEY: string;
   RELAY_RELAYER_API_SECRET: string;
   RELAY_JSON_RPC_URI: string;
+  RELAY_CUSTOM_RELAYER_PRIVATE_KEY?: string;
 }
 
 interface PACKAGE_CONFIG {
@@ -99,6 +100,13 @@ export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & 
       }
     },
   },
+  RELAY_CUSTOM_RELAYER_PRIVATE_KEY: {
+    name: 'RELAY_CUSTOM_RELAYER_PRIVATE_KEY',
+    type: 'password',
+    message: chalk.green(
+      '(Optional) Enter your own EOA private key for relaying transactions on this L2 relayer:',
+    ),
+  },
 };
 
 export const askQuestions = (config: Configstore) => {
@@ -110,6 +118,7 @@ export const askQuestions = (config: Configstore) => {
         RELAY_QUESTIONS.RELAY_RELAYER_API_KEY,
         RELAY_QUESTIONS.RELAY_RELAYER_API_SECRET,
         RELAY_QUESTIONS.RELAY_JSON_RPC_URI,
+        RELAY_QUESTIONS.RELAY_CUSTOM_RELAYER_PRIVATE_KEY,
       ],
     },
   });
