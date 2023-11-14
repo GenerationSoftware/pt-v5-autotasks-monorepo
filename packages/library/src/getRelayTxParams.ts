@@ -22,10 +22,15 @@ export const getArbitrumRelayTxParamsVars = async (
 ) => {
   const { readProvider, chainId } = relay;
 
-  console.log(readProvider, chainId);
-
   const messageId = RANDOM_BYTES_32_STRING;
-  console.log(messageId);
+
+  // need to do this?
+  // const encodedMessageId = keccak256(
+  //   defaultAbiCoder.encode(
+  //     ['uint256', 'address', 'address', 'bytes'],
+  //     [nextNonce, deployer, greeterAddress, messageData],
+  //   ),
+  // );
 
   // 1. Compute `listenerCalldata`:
   const listenerCalldata = new Interface([
@@ -91,7 +96,7 @@ export const getArbitrumRelayTxParamsVars = async (
   const executeMessageData = new Interface([
     'function executeMessage(address,bytes,bytes32,uint256,address)',
   ]).encodeFunctionData('executeMessage', [
-    ERC_5164_GREETER_ADDRESS[chainId], // remoteOwnerAddress ?
+    relay.contracts.remoteOwnerContract.address, // ERC_5164_GREETER_ADDRESS[chainId]?
     remoteOwnerCalldata,
     messageId,
     params.rngChainId,
@@ -104,7 +109,7 @@ export const getArbitrumRelayTxParamsVars = async (
   console.log('executeMessageData');
   console.log(executeMessageData);
   console.log([
-    ERC_5164_GREETER_ADDRESS[chainId], // remoteOwnerAddress ?
+    relay.contracts.remoteOwnerContract.address, // ERC_5164_GREETER_ADDRESS[chainId]?
     remoteOwnerCalldata,
     messageId,
     params.rngChainId,
@@ -130,8 +135,8 @@ export const getArbitrumRelayTxParamsVars = async (
   printSpacer();
   console.log(
     {
-      from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
       to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[chainId],
+      from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
       l2CallValue: BigNumber.from(0),
       excessFeeRefundAddress: params.rngRelayerAddress,
       callValueRefundAddress: params.rngRelayerAddress,
