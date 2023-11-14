@@ -64,7 +64,7 @@ export const getArbitrumRelayTxParamsVars = async (
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(readProvider);
 
-  const baseFee = await getBaseFee(readProvider);
+  const baseFee = await getBaseFee(params.rngReadProvider);
 
   /**
    * The estimateAll method gives us the following values for sending an L1->L2 message
