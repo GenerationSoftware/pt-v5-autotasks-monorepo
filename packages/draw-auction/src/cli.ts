@@ -22,11 +22,12 @@ if (esMain(import.meta)) {
     config.CHAIN_ID, // is RNG chain but needs to be just CHAIN_ID for global config to work properly
   );
 
-  let rngWriteProvider, signer, rngRelayerAddress, rngRelayer;
+  let signer, rngRelayerAddress, rngRelayer;
   if (config.CUSTOM_RELAYER_PRIVATE_KEY) {
-    const wallet = new Wallet(config.CUSTOM_RELAYER_PRIVATE_KEY);
+    const wallet = new Wallet(config.CUSTOM_RELAYER_PRIVATE_KEY, rngReadProvider);
     rngRelayerAddress = wallet.address;
     rngRelayer = wallet;
+    signer = wallet;
   } else {
     const rngChainFakeEvent = {
       apiKey: config.RELAYER_API_KEY, // is RNG chain but needs to just be RELAYER_API_KEY for global config to work
@@ -44,7 +45,6 @@ if (esMain(import.meta)) {
   const params: DrawAuctionConfigParams = {
     rngChainId: config.CHAIN_ID,
     rngReadProvider,
-    rngWriteProvider,
     rngRelayerAddress,
     rewardRecipient: config.REWARD_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,

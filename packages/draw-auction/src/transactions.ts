@@ -10,7 +10,6 @@ import { getRelays } from './relays';
 
 export const executeTransactions = async (
   rngRelayer: Relayer | Wallet,
-  // rngEvent: RelayerParams,
   params: DrawAuctionConfigParams,
   signer,
   relayConfig,

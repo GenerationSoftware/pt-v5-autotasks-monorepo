@@ -88,7 +88,6 @@ export interface WithdrawClaimRewardsContext {
 export interface DrawAuctionConfigParams {
   rngChainId: number;
   rngReadProvider: BaseProvider;
-  rngWriteProvider: Provider | DefenderRelaySigner;
   rngRelayerAddress: string;
   rewardRecipient: string;
   useFlashbots: boolean;
@@ -104,7 +103,7 @@ export interface RngDrawAuctionContext {
   rngIsAuctionOpen: boolean;
   rngIsRngComplete: boolean;
   rngCurrentFractionalRewardString: string;
-  relayer: DrawAuctionRelayerContext;
+  rngRelayer: DrawAuctionRelayerContext;
 }
 
 export interface DrawAuctionContext extends RngDrawAuctionContext {
