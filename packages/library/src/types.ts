@@ -189,3 +189,10 @@ export interface VaultWithContext {
   liquidationPair?: string;
   asset?: string;
 }
+
+export interface YieldVaultMintRateConfigParams {
+  chainId: number;
+  relayer: Relayer | Wallet;
+  relayerAddress: string;
+  signer: DefenderRelaySigner | Wallet;
+}
