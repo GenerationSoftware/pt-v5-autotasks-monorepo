@@ -1,6 +1,6 @@
 export { runPrizeClaimer } from './runPrizeClaimer';
 export { liquidatorArbitrageSwap } from './liquidatorArbitrageSwap';
-export { yieldVaultHandleMintRate } from './yieldVaultHandleMintRate';
+export { runYieldVaultHandleMintRate } from './runYieldVaultHandleMintRate';
 export { getWithdrawClaimRewardsTx } from './withdrawClaimRewards';
 export { executeDrawAuctionTxs } from './drawAuction';
 
