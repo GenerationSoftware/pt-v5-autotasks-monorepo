@@ -3,13 +3,13 @@ import {
   Relay,
   RelayConfig,
   RelayerAccount,
-  instantiateRelayAccount,
+  instantiateRelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { ethers } from 'ethers';
 
 // This sets up each relay config with a Relay object containing it's contracts,
-// RelayerAccount, read and write providers and chainId
+// relayerAccount, read and write providers and chainId
 export const getRelays = async (relayConfigs: RelayConfig[]): Promise<Relay[]> => {
   let relays: Relay[] = [];
 
@@ -27,7 +27,7 @@ export const getRelays = async (relayConfigs: RelayConfig[]): Promise<Relay[]> =
       chainId,
     );
 
-    const relayerAccount: RelayerAccount = await instantiateRelayAccount(
+    const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
       writeProvider,
       readProvider,
       mockEvent,

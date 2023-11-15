@@ -415,8 +415,6 @@ export const getRelayMulticall = async (
       auctionResults[0] = rngLastAuctionResult;
       auctionResults[1] = auctionResult;
 
-      console.log(auctionResults);
-
       const rngRelayExpectedRewardResult = await relay.contracts.rngRelayAuctionContract.callStatic.computeRewards(
         auctionResults,
       );

@@ -2,8 +2,9 @@ import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 import {
-  instantiateRelayAccount,
+  instantiateRelayerAccount,
   DrawAuctionConfigParams,
+  RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { executeTransactions } from './transactions';
@@ -15,7 +16,7 @@ export async function handler(event: RelayerParams) {
     Number(BUILD_CHAIN_ID),
   );
 
-  const { signer, relayerAddress, relayer } = await instantiateRelayAccount(
+  const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     rngWriteProvider,
     rngReadProvider,
     event,
@@ -24,10 +25,10 @@ export async function handler(event: RelayerParams) {
 
   const drawAuctionConfigParams: DrawAuctionConfigParams = {
     rngChainId: Number(BUILD_CHAIN_ID),
-    rngRelayer: relayer,
-    rngRelayerAddress: relayerAddress,
+    rngRelayer: relayerAccount.relayer,
+    rngRelayerAddress: relayerAccount.relayerAddress,
     rngReadProvider,
-    signer,
+    signer: relayerAccount.signer,
     covalentApiKey: BUILD_COVALENT_API_KEY,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,
