@@ -24,6 +24,21 @@ export const getArbitrumRelayTxParamsVars = async (
 
   const l1Provider = params.rngReadProvider;
 
+  printSpacer();
+  printSpacer();
+  console.log('l1Provider:');
+  console.log(l1Provider);
+
+  printSpacer();
+  printSpacer();
+  console.log('l2Provider:');
+  console.log(l2Provider);
+
+  printSpacer();
+  printSpacer();
+  console.log('relay chainId:');
+  console.log(chainId);
+
   const messageId = RANDOM_BYTES_32_STRING;
   // CHECK: do we need to do this instead?
   // const encodedMessageId = keccak256(
@@ -46,33 +61,61 @@ export const getArbitrumRelayTxParamsVars = async (
       relay.context.rngLastAuctionResult.rewardFraction,
     ],
   ]);
-  console.log('listenerCalldata args:');
-  console.log(
-    relay.context.rngResults.randomNumber,
-    relay.context.rngResults.rngCompletedAt,
-    params.rewardRecipient,
-    relay.context.rngRelayLastSequenceId,
-    [
-      relay.context.rngLastAuctionResult.recipient,
-      relay.context.rngLastAuctionResult.rewardFraction,
-    ],
-  );
-  console.log('');
+
+  printSpacer();
+  printSpacer();
+  console.log('relay.context.rngResults.randomNumber:');
+  console.log(relay.context.rngResults.randomNumber);
+
+  printSpacer();
+  printSpacer();
+  console.log('relay.context.rngResults.rngCompletedAt:');
+  console.log(relay.context.rngResults.rngCompletedAt);
+
+  printSpacer();
+  printSpacer();
+  console.log('params.rewardRecipient:');
+  console.log(params.rewardRecipient);
+
+  printSpacer();
+  printSpacer();
+  console.log('relay.context.rngRelayLastSequenceId:');
+  console.log(relay.context.rngRelayLastSequenceId);
+
+  printSpacer();
+  printSpacer();
+  console.log('relay.context.rngLastAuctionResult.recipient:');
+  console.log(relay.context.rngLastAuctionResult.recipient);
+
+  printSpacer();
+  printSpacer();
+  console.log('relay.context.rngLastAuctionResult.rewardFraction:');
+  console.log(relay.context.rngLastAuctionResult.rewardFraction);
 
   // 2. Then compute `remoteOwnerCalldata`:
   const remoteRngAuctionRelayListenerAddress = relay.contracts.rngRelayAuctionContract.address;
-  console.log('');
 
-  console.log('remoteRngAuctionRelayListenerAddress');
+  printSpacer();
+  printSpacer();
+  console.log('remoteRngAuctionRelayListenerAddress:');
   console.log(remoteRngAuctionRelayListenerAddress);
-  console.log('');
+
+  printSpacer();
+  printSpacer();
+  console.log('listenerCalldata:');
+  console.log(listenerCalldata);
 
   const remoteOwnerCalldata = new Interface([
     'function execute(address,uint256,bytes)',
   ]).encodeFunctionData('execute', [remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]);
 
-  console.log('function execute(address,uint256,bytes)');
-  console.log(remoteRngAuctionRelayListenerAddress, 0, listenerCalldata);
+  printSpacer();
+  printSpacer();
+  console.log('relay.contracts.remoteOwnerContract.address:');
+  console.log(relay.contracts.remoteOwnerContract.address);
+
+  printSpacer();
+  printSpacer();
 
   // 3. Finally compute `executeMessageData`:
   const executeMessageData = new Interface([
@@ -85,19 +128,46 @@ export const getArbitrumRelayTxParamsVars = async (
     params.rngRelayerAddress,
   ]);
 
-  console.log('relay.contracts.remoteOwnerContract.address');
+  printSpacer();
+  printSpacer();
+  console.log('relay.contracts.remoteOwnerContract.address:');
   console.log(relay.contracts.remoteOwnerContract.address);
-  console.log(`
-    remoteOwnerCalldata,
-    messageId,
-    params.rngChainId,
-    params.rngRelayerAddress,`);
+
+  printSpacer();
+  printSpacer();
+
+  console.log('remoteOwnerCalldata:');
   console.log(remoteOwnerCalldata);
-  console.log(messageId, params.rngChainId, params.rngRelayerAddress);
+
+  printSpacer();
+  printSpacer();
+  console.log('messageId:');
+  console.log(messageId);
+
+  printSpacer();
+  printSpacer();
+  console.log('params.rngChainId:');
+  console.log(params.rngChainId);
+
+  printSpacer();
+  printSpacer();
+  console.log('params.rngRelayerAddress:');
+  console.log(params.rngRelayerAddress);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
   const baseFee = await getBaseFee(l1Provider);
+
+  printSpacer();
+  printSpacer();
+  console.log('baseFee:');
+  console.log(baseFee);
+  printSpacer();
+  console.log('baseFee.toString()');
+  console.log(baseFee.toString());
+
+  printSpacer();
+  printSpacer();
 
   /**
    * The estimateAll method gives us the following values for sending an L1->L2 message
