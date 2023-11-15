@@ -39,9 +39,11 @@ export async function askChainId(config: Configstore) {
       'Mainnet',
       'Optimism',
       'Arbitrum',
+      'Arbitrum Sepolia',
       'Arbitrum Goerli',
       'Goerli',
       'Sepolia',
+      'Optimism Sepolia',
       'Optimism Goerli',
     ],
     filter(val: string) {

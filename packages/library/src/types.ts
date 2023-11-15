@@ -47,8 +47,12 @@ export interface ClaimPrizeContext {
   };
 }
 
-export interface ExecuteClaimerProfitablePrizeTxsParams {
+export interface PrizeClaimerConfigParams {
   chainId: number;
+  readProvider: BaseProvider;
+  relayer: Relayer | Wallet;
+  relayerAddress: string;
+  signer: DefenderRelaySigner | Wallet;
   feeRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -59,8 +63,10 @@ export interface ArbLiquidatorConfigParams {
   chainId: number;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
-  swapRecipient: string;
+  relayer: Relayer | Wallet;
   relayerAddress: string;
+  signer: DefenderRelaySigner | Wallet;
+  swapRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
   covalentApiKey?: string;
