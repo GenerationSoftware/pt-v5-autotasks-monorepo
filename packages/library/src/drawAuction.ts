@@ -432,26 +432,10 @@ const processRelayTransaction = async (
   context: DrawAuctionContext,
 ) => {
   const { chainId } = relay;
-  // console.log('rngAuctionContracts');
-  // console.log(rngAuctionContracts);
-  // console.log('chainId');
-  // console.log(chainId);
 
   const contract = findRngAuctionRelayerRemoteOwnerContract(chainId, rngAuctionContracts);
-  // console.log('contract');
-  // console.log(contract);
-
-  console.log('fail?');
-  console.log('relay');
-  console.log(relay);
-  console.log('params');
-  console.log(params);
-  console.log('context');
-  console.log(context);
 
   const txParams = await getRelayTxParams(relay, params, context);
-  console.log('txParams');
-  console.log(txParams);
 
   // #5. Get gas cost
   const gasCostUsd = await getRelayGasCost(txParams, relay, contract, context);
@@ -1208,17 +1192,11 @@ const findRngAuctionRelayerRemoteOwnerContract = (
   chainId: number,
   rngAuctionContracts: RngAuctionContracts,
 ) => {
-  console.log('RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId].toLowerCase()');
-  console.log(RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId].toLowerCase());
-  return rngAuctionContracts.rngAuctionRelayerRemoteOwnerContracts.find((contract) => {
-    console.log('contract.address.toLowerCase()');
-    console.log(contract.address.toLowerCase());
-
-    return (
+  return rngAuctionContracts.rngAuctionRelayerRemoteOwnerContracts.find(
+    (contract) =>
       RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId].toLowerCase() ===
-      contract.address.toLowerCase()
-    );
-  });
+      contract.address.toLowerCase(),
+  );
 };
 
 const chainIsOptimism = (chainId: number) =>

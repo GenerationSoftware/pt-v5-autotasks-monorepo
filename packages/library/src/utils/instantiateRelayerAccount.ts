@@ -6,7 +6,7 @@ import { RelayerAccount } from '../types';
 
 // Takes a generic set of providers, the lambda event params (in the case of an OZ Defender setup),
 // and an optional EOA private key and creates a RelayerAccount
-export const instantiateRelayAccount = async (
+export const instantiateRelayerAccount = async (
   writeProvider: DefenderRelayProvider | Provider,
   readProvider: DefenderRelayProvider | Provider,
   event: RelayerParams | Relayer,

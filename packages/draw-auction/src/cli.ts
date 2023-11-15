@@ -4,8 +4,9 @@ import figlet from 'figlet';
 import chalk from 'chalk';
 import { ethers } from 'ethers';
 import {
-  instantiateRelayAccount,
+  instantiateRelayerAccount,
   DrawAuctionConfigParams,
+  RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
@@ -31,7 +32,7 @@ if (esMain(import.meta)) {
   };
   const rngWriteProvider = new DefenderRelayProvider(mockEvent);
 
-  const { signer, relayer, relayerAddress } = await instantiateRelayAccount(
+  const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     rngWriteProvider,
     rngReadProvider,
     mockEvent,
@@ -41,9 +42,9 @@ if (esMain(import.meta)) {
   const drawAuctionConfigParams: DrawAuctionConfigParams = {
     rngChainId: config.CHAIN_ID,
     rngReadProvider,
-    signer,
-    rngRelayer: relayer,
-    rngRelayerAddress: relayerAddress,
+    signer: relayerAccount.signer,
+    rngRelayer: relayerAccount.relayer,
+    rngRelayerAddress: relayerAccount.relayerAddress,
     rewardRecipient: config.REWARD_RECIPIENT,
     useFlashbots: config.USE_FLASHBOTS,
     minProfitThresholdUsd: Number(config.MIN_PROFIT_THRESHOLD_USD),

@@ -13,7 +13,8 @@ import {
 } from './constants';
 
 // This is a fake message ID, used for estimating gas costs on Arbitrum
-const RANDOM_BYTES_32_STRING = '0x90344b8b6d0f5572c26c9897fd0170c6d4b3a435268062468c51261fbf8274e9';
+// const RANDOM_BYTES_32_STRING = '0x90344b8b6d0f5572c26c9897fd0170c6d4b3a435268062468c51261fbf8274e9';
+const RANDOM_BYTES_32_STRING = '0x00000000000000000000000000000000000000000000000000000000000004e9';
 
 export const getArbitrumRelayTxParamsVars = async (
   relay: Relay,
@@ -45,24 +46,54 @@ export const getArbitrumRelayTxParamsVars = async (
       relay.context.rngLastAuctionResult.rewardFraction,
     ],
   ]);
+  console.log('listenerCalldata args:');
+  console.log(
+    relay.context.rngResults.randomNumber,
+    relay.context.rngResults.rngCompletedAt,
+    params.rewardRecipient,
+    relay.context.rngRelayLastSequenceId,
+    [
+      relay.context.rngLastAuctionResult.recipient,
+      relay.context.rngLastAuctionResult.rewardFraction,
+    ],
+  );
+  console.log('');
 
   // 2. Then compute `remoteOwnerCalldata`:
   const remoteRngAuctionRelayListenerAddress = relay.contracts.rngRelayAuctionContract.address;
+  console.log('');
+
+  console.log('remoteRngAuctionRelayListenerAddress');
+  console.log(remoteRngAuctionRelayListenerAddress);
+  console.log('');
 
   const remoteOwnerCalldata = new Interface([
     'function execute(address,uint256,bytes)',
   ]).encodeFunctionData('execute', [remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]);
 
+  console.log('function execute(address,uint256,bytes)');
+  console.log(remoteRngAuctionRelayListenerAddress, 0, listenerCalldata);
+
   // 3. Finally compute `executeMessageData`:
   const executeMessageData = new Interface([
     'function executeMessage(address,bytes,bytes32,uint256,address)',
   ]).encodeFunctionData('executeMessage', [
-    relay.contracts.remoteOwnerContract.address, // ERC_5164_GREETER_ADDRESS[chainId]?
+    relay.contracts.remoteOwnerContract.address,
     remoteOwnerCalldata,
     messageId,
     params.rngChainId,
     params.rngRelayerAddress,
   ]);
+
+  console.log('relay.contracts.remoteOwnerContract.address');
+  console.log(relay.contracts.remoteOwnerContract.address);
+  console.log(`
+    remoteOwnerCalldata,
+    messageId,
+    params.rngChainId,
+    params.rngRelayerAddress,`);
+  console.log(remoteOwnerCalldata);
+  console.log(messageId, params.rngChainId, params.rngRelayerAddress);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
