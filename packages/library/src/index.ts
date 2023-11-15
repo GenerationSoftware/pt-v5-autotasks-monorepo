@@ -1,4 +1,4 @@
-export { executeClaimerProfitablePrizeTxs } from './claimerProfitablePrizeTxs';
+export { runPrizeClaimer } from './runPrizeClaimer';
 export { liquidatorArbitrageSwap } from './liquidatorArbitrageSwap';
 export { yieldVaultHandleMintRate } from './yieldVaultHandleMintRate';
 export { getWithdrawClaimRewardsTx } from './withdrawClaimRewards';

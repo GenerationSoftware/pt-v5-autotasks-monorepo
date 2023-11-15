@@ -41,25 +41,24 @@ interface Stat {
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
  *
- * Curently this does not return PopulatedTransactions like the other bots as
- * we want to send each swap transaction the instant we know if it is profitable
- * or not as we iterate through all LiquidityPairs.
+ * Curently this sends each swap transaction the instant we know if it is profitable
+ * or not as we iterate through all LiquidityPairs
  * @returns {undefined} - void function
  */
 export async function liquidatorArbitrageSwap(
   contracts: ContractsBlob,
-  relayer: Relayer,
-  params: ArbLiquidatorConfigParams,
-) {
+  arbLiquidatorConfigParams: ArbLiquidatorConfigParams,
+): Promise<void> {
   const {
     chainId,
+    relayer,
     relayerAddress,
     readProvider,
     writeProvider,
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
-  } = params;
+  } = arbLiquidatorConfigParams;
 
   // #1. Get contracts
   //
@@ -68,7 +67,7 @@ export async function liquidatorArbitrageSwap(
 
   const { liquidationRouterContract, liquidationPairContracts } = await getLiquidationContracts(
     contracts,
-    params,
+    arbLiquidatorConfigParams,
   );
 
   printSpacer();
