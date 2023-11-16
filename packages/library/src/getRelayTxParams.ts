@@ -10,6 +10,7 @@ import { DrawAuctionConfigParams, Relay } from './types';
 import {
   ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
   ERC_5164_MESSAGE_EXECUTOR_ADDRESS,
+  RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS,
 } from './constants';
 
 // This is a fake message ID, used for estimating gas costs on Arbitrum
@@ -40,27 +41,6 @@ export const getArbitrumRelayTxParamsVars = async (
   console.log(chainId);
 
   const messageId = RANDOM_BYTES_32_STRING;
-  // CHECK: do we need to do this instead?
-  // const encodedMessageId = keccak256(
-  //   defaultAbiCoder.encode(
-  //     ['uint256', 'address', 'address', 'bytes'],
-  //     [nextNonce, deployer, greeterAddress, messageData],
-  //   ),
-  // );
-
-  // 1. Compute `listenerCalldata`:
-  const listenerCalldata = new Interface([
-    'function rngComplete(uint256,uint256,address,uint32,tuple(address,uint64))',
-  ]).encodeFunctionData('rngComplete', [
-    relay.context.rngResults.randomNumber,
-    relay.context.rngResults.rngCompletedAt,
-    params.rewardRecipient,
-    relay.context.rngRelayLastSequenceId,
-    [
-      relay.context.rngLastAuctionResult.recipient,
-      relay.context.rngLastAuctionResult.rewardFraction,
-    ],
-  ]);
 
   printSpacer();
   printSpacer();
@@ -70,7 +50,7 @@ export const getArbitrumRelayTxParamsVars = async (
   printSpacer();
   printSpacer();
   console.log('relay.context.rngResults.rngCompletedAt:');
-  console.log(relay.context.rngResults.rngCompletedAt);
+  console.log(relay.context.rngResults.rngCompletedAt.toString());
 
   printSpacer();
   printSpacer();
@@ -90,7 +70,21 @@ export const getArbitrumRelayTxParamsVars = async (
   printSpacer();
   printSpacer();
   console.log('relay.context.rngLastAuctionResult.rewardFraction:');
-  console.log(relay.context.rngLastAuctionResult.rewardFraction);
+  console.log(relay.context.rngLastAuctionResult.rewardFraction.toString());
+
+  // 1. Compute `listenerCalldata`:
+  const listenerCalldata = new Interface([
+    'function rngComplete(uint256,uint256,address,uint32,(address,uint64))',
+  ]).encodeFunctionData('rngComplete', [
+    relay.context.rngResults.randomNumber,
+    relay.context.rngResults.rngCompletedAt,
+    params.rewardRecipient,
+    relay.context.rngRelayLastSequenceId,
+    [
+      relay.context.rngLastAuctionResult.recipient,
+      relay.context.rngLastAuctionResult.rewardFraction,
+    ],
+  ]);
 
   // 2. Then compute `remoteOwnerCalldata`:
   const remoteRngAuctionRelayListenerAddress = relay.contracts.rngRelayAuctionContract.address;
@@ -107,7 +101,11 @@ export const getArbitrumRelayTxParamsVars = async (
 
   const remoteOwnerCalldata = new Interface([
     'function execute(address,uint256,bytes)',
-  ]).encodeFunctionData('execute', [remoteRngAuctionRelayListenerAddress, 0, listenerCalldata]);
+  ]).encodeFunctionData('execute(address,uint256,bytes)', [
+    remoteRngAuctionRelayListenerAddress,
+    0,
+    listenerCalldata,
+  ]);
 
   printSpacer();
   printSpacer();
@@ -125,17 +123,11 @@ export const getArbitrumRelayTxParamsVars = async (
     remoteOwnerCalldata,
     messageId,
     params.rngChainId,
-    params.rngRelayerAddress,
+    RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId],
   ]);
 
   printSpacer();
   printSpacer();
-  console.log('relay.contracts.remoteOwnerContract.address:');
-  console.log(relay.contracts.remoteOwnerContract.address);
-
-  printSpacer();
-  printSpacer();
-
   console.log('remoteOwnerCalldata:');
   console.log(remoteOwnerCalldata);
 
@@ -161,11 +153,7 @@ export const getArbitrumRelayTxParamsVars = async (
   printSpacer();
   printSpacer();
   console.log('baseFee:');
-  console.log(baseFee);
-  printSpacer();
-  console.log('baseFee.toString()');
   console.log(baseFee.toString());
-
   printSpacer();
   printSpacer();
 
