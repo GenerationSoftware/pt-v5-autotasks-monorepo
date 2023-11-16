@@ -13,7 +13,7 @@ import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 import { executeTransactions } from './transactions';
 import { askQuestions } from './helpers/questions';
 
-import pkg from '../package.json';
+import pkg from '../package.json' assert { type: 'json' };
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
