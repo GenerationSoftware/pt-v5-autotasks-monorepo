@@ -176,10 +176,23 @@ export const getArbitrumRelayTxParamsVars = async (
     l1Provider,
   );
 
+  console.log('deposit:');
+  console.log(deposit.toString());
+  printSpacer();
+  printSpacer();
+  console.log('gasLimit:');
+  console.log(gasLimit.toString());
+  printSpacer();
+  printSpacer();
+  console.log('maxSubmissionCost:');
+  console.log(maxSubmissionCost.toString());
+  printSpacer();
+  printSpacer();
+
   const gasPriceBid = await l2Provider.getGasPrice();
   printSpacer();
   console.log(chalk.yellow(`L2 gas price: ${gasPriceBid.toString()}`));
   printSpacer();
 
-  return { gasLimit, maxSubmissionCost, gasPriceBid };
+  return { deposit, gasLimit, maxSubmissionCost, gasPriceBid };
 };
