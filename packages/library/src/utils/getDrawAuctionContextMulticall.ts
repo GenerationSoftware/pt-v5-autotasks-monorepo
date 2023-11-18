@@ -187,10 +187,12 @@ export const getRngMulticall = async (
   // const feeData = await getFees(rngReadProvider);
   // const requestGasPriceWei = feeData.avgFeePerGas;
 
-  const chainlinkVRFV2DirectRngAuctionHelperContract = await rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
-  const vrfHelperRequestFee = await chainlinkVRFV2DirectRngAuctionHelperContract.callStatic.estimateRequestFee(
-    requestGasPriceWei,
-  );
+  const chainlinkVRFV2DirectRngAuctionHelperContract =
+    await rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
+  const vrfHelperRequestFee =
+    await chainlinkVRFV2DirectRngAuctionHelperContract.callStatic.estimateRequestFee(
+      requestGasPriceWei,
+    );
   const rngFeeAmount = vrfHelperRequestFee._requestFee;
 
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
@@ -210,14 +212,12 @@ export const getRngMulticall = async (
 
   // // 5. Auction info
   // 5a. RNG Auction
-  queries[
-    RNG_LAST_AUCTION_RESULT_KEY
-  ] = rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
+  queries[RNG_LAST_AUCTION_RESULT_KEY] =
+    rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
   queries[RNG_IS_AUCTION_OPEN_KEY] = rngAuctionContracts.rngAuctionContract.isAuctionOpen();
   queries[RNG_IS_RNG_COMPLETE_KEY] = rngAuctionContracts.rngAuctionContract.isRngComplete();
-  queries[
-    RNG_CURRENT_FRACTIONAL_REWARD_KEY
-  ] = rngAuctionContracts.rngAuctionContract.currentFractionalReward();
+  queries[RNG_CURRENT_FRACTIONAL_REWARD_KEY] =
+    rngAuctionContracts.rngAuctionContract.currentFractionalReward();
 
   // -------------------------------
 
@@ -308,9 +308,8 @@ export const getRelayMulticall = async (
 
     // 1. Prize Pool Info
     const drawId = await relay.contracts.prizePoolContract.getOpenDrawId();
-    queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] = relay.contracts.prizePoolContract.drawClosesAt(
-      drawId,
-    );
+    queries[PRIZE_POOL_OPEN_DRAW_ENDS_AT_KEY] =
+      relay.contracts.prizePoolContract.drawClosesAt(drawId);
 
     // 3. Info about the reward token (prize token)
     const rewardTokenAddress = await relay.contracts.prizePoolContract.prizeToken();
@@ -326,9 +325,8 @@ export const getRelayMulticall = async (
 
     // // 5. Auction info
     // 5a. RngRelay Auction
-    queries[
-      RNG_RELAY_LAST_SEQUENCE_ID_KEY
-    ] = rngAuctionContracts.rngAuctionContract.lastSequenceId();
+    queries[RNG_RELAY_LAST_SEQUENCE_ID_KEY] =
+      rngAuctionContracts.rngAuctionContract.lastSequenceId();
 
     //
     // 6. Get and process results
@@ -354,7 +352,8 @@ export const getRelayMulticall = async (
 
     // 6c. Results: Rng Reward
     const prizePoolReserve = await relay.contracts.prizePoolContract.reserve();
-    const prizePoolReserveForOpenDraw = await relay.contracts.prizePoolContract.pendingReserveContributions();
+    const prizePoolReserveForOpenDraw =
+      await relay.contracts.prizePoolContract.pendingReserveContributions();
     const reserve = prizePoolReserve.add(prizePoolReserveForOpenDraw);
     // let reserve = BigNumber.from(0);
     // for (const relay of relays) {
@@ -389,10 +388,8 @@ export const getRelayMulticall = async (
     let rngResults: RngResults;
     let rngLastAuctionResult: AuctionResult;
     if (rngRelayIsAuctionOpen) {
-      const [
-        randomNumber,
-        rngCompletedAt,
-      ] = await rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
+      const [randomNumber, rngCompletedAt] =
+        await rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
       rngResults = { randomNumber, rngCompletedAt };
       rngLastAuctionResult = await rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
 
@@ -400,9 +397,8 @@ export const getRelayMulticall = async (
       const elapsedTime =
         Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
 
-      const rngRelayRewardFraction = await relay.contracts.rngRelayAuctionContract.computeRewardFraction(
-        elapsedTime,
-      );
+      const rngRelayRewardFraction =
+        await relay.contracts.rngRelayAuctionContract.computeRewardFraction(elapsedTime);
 
       // Make a new AuctionResult based off the data we currently know (we assume
       // we will be the recipient, and we have the estimated RelayRewardFraction)
@@ -415,9 +411,8 @@ export const getRelayMulticall = async (
       auctionResults[0] = rngLastAuctionResult;
       auctionResults[1] = auctionResult;
 
-      const rngRelayExpectedRewardResult = await relay.contracts.rngRelayAuctionContract.callStatic.computeRewards(
-        auctionResults,
-      );
+      const rngRelayExpectedRewardResult =
+        await relay.contracts.rngRelayAuctionContract.callStatic.computeRewards(auctionResults);
       rngRelayExpectedReward = rngRelayExpectedRewardResult[1];
 
       rngRelayExpectedRewardUsd =

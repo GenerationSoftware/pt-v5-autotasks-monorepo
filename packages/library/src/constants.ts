@@ -6,13 +6,13 @@ export const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
   [CHAIN_IDS.optimismSepolia]: '0x2aeB429f7d8c00983E033087Dd5a363AbA2AC55f', // sepolia -> optimism sepolia
   // [CHAIN_IDS.arbitrum]: '', // mainnet -> arbitrum
   [CHAIN_IDS.arbitrumGoerli]: '0xBc244773f71a2f897fAB5D5953AA052B8ff68670', // goerli -> arbitrum goerli
-  [CHAIN_IDS.arbitrumSepolia]: '0x8bCDe547B30C6DE6b532073F2d091F8B292D60a6', // sepolia -> arbitrum sepolia
+  [CHAIN_IDS.arbitrumSepolia]: '0x9887b04Fdf205Fef072d6F325c247264eD34ACF0', // sepolia -> arbitrum sepolia
 };
 
 export const ERC_5164_MESSAGE_EXECUTOR_ADDRESS = {
   [CHAIN_IDS.optimism]: '0x139f6dD114a9C45Ba43eE22C5e03c53de0c13225', // mainnet -> optimism
   [CHAIN_IDS.optimismSepolia]: '0x6A501383A61ebFBc143Fc4BD41A2356bA71A6964', // sepolia -> optimism sepolia
-  [CHAIN_IDS.arbitrumSepolia]: '0x02aCC9594161812E3004C174CF1735EdB10e20A4', // sepolia -> arbitrum sepolia
+  [CHAIN_IDS.arbitrumSepolia]: '0x2B3E6b5c9a6Bdb0e595896C9093fce013490abbD', // sepolia -> arbitrum sepolia
 };
 
 export const ERC_5164_GREETER_ADDRESS = {
