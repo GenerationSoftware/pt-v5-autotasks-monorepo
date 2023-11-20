@@ -21,6 +21,9 @@ export default defineConfig((opt) => {
         BUILD_FEE_RECIPIENT: `'${config.get(`${CHAIN_ID}.FEE_RECIPIENT`)}'`,
         BUILD_USE_FLASHBOTS: `'${config.get(`${CHAIN_ID}.USE_FLASHBOTS`)}'`,
         BUILD_MIN_PROFIT_THRESHOLD_USD: `'${config.get(`${CHAIN_ID}.MIN_PROFIT_THRESHOLD_USD`)}'`,
+        BUILD_CUSTOM_RELAYER_PRIVATE_KEY: `'${config.get(
+          `${CHAIN_ID}.CUSTOM_RELAYER_PRIVATE_KEY`,
+        )}'`,
       };
     },
     noExternal: [

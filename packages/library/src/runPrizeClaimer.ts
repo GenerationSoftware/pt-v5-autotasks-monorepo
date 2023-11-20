@@ -15,7 +15,7 @@ import fetch from 'node-fetch';
 
 import {
   ClaimPrizeContext,
-  ExecuteClaimerProfitablePrizeTxsParams,
+  PrizeClaimerConfigParams,
   TiersContext,
   Token,
   TokenWithRate,
@@ -57,13 +57,11 @@ const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 60;
  *
  * @returns {undefined} void function
  */
-export async function executeClaimerProfitablePrizeTxs(
+export async function runPrizeClaimer(
   contracts: ContractsBlob,
-  relayer: Relayer,
-  readProvider: Provider,
-  params: ExecuteClaimerProfitablePrizeTxsParams,
+  prizeClaimerConfigParams: PrizeClaimerConfigParams,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, useFlashbots } = params;
+  const { chainId, covalentApiKey, useFlashbots, relayer, readProvider } = prizeClaimerConfigParams;
 
   const contractsVersion = {
     major: 1,
@@ -190,7 +188,7 @@ export async function executeClaimerProfitablePrizeTxs(
       groupedClaims,
       tierRemainingPrizeCounts,
       context,
-      params,
+      prizeClaimerConfigParams,
     );
 
     // It's profitable if there is at least 1 claim to claim
@@ -291,9 +289,9 @@ const calculateProfit = async (
   groupedClaims: any,
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   context: ClaimPrizeContext,
-  params: ExecuteClaimerProfitablePrizeTxsParams,
+  prizeClaimerConfigParams: PrizeClaimerConfigParams,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, feeRecipient } = params;
+  const { chainId, minProfitThresholdUsd, feeRecipient } = prizeClaimerConfigParams;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
