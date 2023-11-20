@@ -15,11 +15,6 @@ export const ERC_5164_MESSAGE_EXECUTOR_ADDRESS = {
   [CHAIN_IDS.arbitrumSepolia]: '0x2B3E6b5c9a6Bdb0e595896C9093fce013490abbD', // sepolia -> arbitrum sepolia
 };
 
-export const ERC_5164_GREETER_ADDRESS = {
-  [CHAIN_IDS.optimismSepolia]: '0x8537C5a9AAd3ec1D31a84e94d19FcFC681E83ED0',
-  [CHAIN_IDS.arbitrumSepolia]: '0x49b86ba45C01957Df33Fe7bbB97002A0e4E5F964',
-};
-
 export const RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS = {
   [CHAIN_IDS.optimism]: '0xEC9460c59cCA1299b0242D6AF426c21223ccCD24', // mainnet -> optimism
   [CHAIN_IDS.optimismGoerli]: '', // goerli -> optimism goerli
