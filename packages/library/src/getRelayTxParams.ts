@@ -25,52 +25,7 @@ export const getArbitrumRelayTxParamsVars = async (
 
   const l1Provider = params.rngReadProvider;
 
-  printSpacer();
-  printSpacer();
-  console.log('l1Provider:');
-  console.log(l1Provider);
-
-  printSpacer();
-  printSpacer();
-  console.log('l2Provider:');
-  console.log(l2Provider);
-
-  printSpacer();
-  printSpacer();
-  console.log('relay chainId:');
-  console.log(chainId);
-
   const messageId = RANDOM_BYTES_32_STRING;
-
-  printSpacer();
-  printSpacer();
-  console.log('relay.context.rngResults.randomNumber:');
-  console.log(relay.context.rngResults.randomNumber);
-
-  printSpacer();
-  printSpacer();
-  console.log('relay.context.rngResults.rngCompletedAt:');
-  console.log(relay.context.rngResults.rngCompletedAt.toString());
-
-  printSpacer();
-  printSpacer();
-  console.log('params.rewardRecipient:');
-  console.log(params.rewardRecipient);
-
-  printSpacer();
-  printSpacer();
-  console.log('relay.context.rngRelayLastSequenceId:');
-  console.log(relay.context.rngRelayLastSequenceId);
-
-  printSpacer();
-  printSpacer();
-  console.log('relay.context.rngLastAuctionResult.recipient:');
-  console.log(relay.context.rngLastAuctionResult.recipient);
-
-  printSpacer();
-  printSpacer();
-  console.log('relay.context.rngLastAuctionResult.rewardFraction:');
-  console.log(relay.context.rngLastAuctionResult.rewardFraction.toString());
 
   // 1. Compute `listenerCalldata`:
   const listenerCalldata = new Interface([
@@ -89,16 +44,6 @@ export const getArbitrumRelayTxParamsVars = async (
   // 2. Then compute `remoteOwnerCalldata`:
   const remoteRngAuctionRelayListenerAddress = relay.contracts.rngRelayAuctionContract.address;
 
-  printSpacer();
-  printSpacer();
-  console.log('remoteRngAuctionRelayListenerAddress:');
-  console.log(remoteRngAuctionRelayListenerAddress);
-
-  printSpacer();
-  printSpacer();
-  console.log('listenerCalldata:');
-  console.log(listenerCalldata);
-
   const remoteOwnerCalldata = new Interface([
     'function execute(address,uint256,bytes)',
   ]).encodeFunctionData('execute(address,uint256,bytes)', [
@@ -106,14 +51,6 @@ export const getArbitrumRelayTxParamsVars = async (
     0,
     listenerCalldata,
   ]);
-
-  printSpacer();
-  printSpacer();
-  console.log('relay.contracts.remoteOwnerContract.address:');
-  console.log(relay.contracts.remoteOwnerContract.address);
-
-  printSpacer();
-  printSpacer();
 
   // 3. Finally compute `executeMessageData`:
   const executeMessageData = new Interface([
@@ -125,26 +62,6 @@ export const getArbitrumRelayTxParamsVars = async (
     params.rngChainId,
     RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId],
   ]);
-
-  printSpacer();
-  printSpacer();
-  console.log('remoteOwnerCalldata:');
-  console.log(remoteOwnerCalldata);
-
-  printSpacer();
-  printSpacer();
-  console.log('messageId:');
-  console.log(messageId);
-
-  printSpacer();
-  printSpacer();
-  console.log('params.rngChainId:');
-  console.log(params.rngChainId);
-
-  printSpacer();
-  printSpacer();
-  console.log('params.rngRelayerAddress:');
-  console.log(params.rngRelayerAddress);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
 
@@ -191,7 +108,7 @@ export const getArbitrumRelayTxParamsVars = async (
 
   const gasPriceBid = await l2Provider.getGasPrice();
   printSpacer();
-  console.log(chalk.yellow(`L2 gas price: ${gasPriceBid.toString()}`));
+  console.log(chalk.yellow(`L2 gas price bid: ${gasPriceBid.toString()}`));
   printSpacer();
 
   return { deposit, gasLimit, maxSubmissionCost, gasPriceBid };

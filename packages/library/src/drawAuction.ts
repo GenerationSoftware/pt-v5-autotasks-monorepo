@@ -43,7 +43,6 @@ interface RngAuctionRelayerRemoteOwnerOptimismRelayTxParams {
   remoteOwnerAddress: string;
   remoteRngAuctionRelayListenerAddress: string;
   rewardRecipient: string;
-  value?: BigNumber;
   gasLimit: string;
 }
 
@@ -54,25 +53,25 @@ interface RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams {
   remoteRngAuctionRelayListenerAddress: string;
   rewardRecipient: string;
   refundAddress: string;
-  value: BigNumber;
   gasLimit: BigNumber;
   maxSubmissionCost: BigNumber;
   gasPriceBid: BigNumber;
+  value: BigNumber;
 }
 
 interface SendTransactionArgs {
   data: string;
   to: string;
-  value?: number;
   gasLimit: number;
   gasPrice: string;
+  value?: number;
   isPrivate?: boolean;
 }
 
 const ONE_GWEI = '1000000000';
 const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
 
-// Instantiates all RngAuctionRelayerRemoteOwner* contracts that are found in the ContractsBlob
+// Instantiates all RngAuctionRelayerRemoteOwner contracts that are found in the ContractsBlob
 const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
   rngChainId: number,
   rngProvider: any,
@@ -599,8 +598,12 @@ const getRngAuctionRelayerRemoteOwnerArbitrumRelayEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
+    const value = rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value;
+    delete rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value;
+    console.log(...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams), { value });
     estimatedGasLimit = await contract.estimateGas.relay(
       ...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams),
+      { value }
     );
   } catch (e) {
     console.log(chalk.red(e));
@@ -866,10 +869,10 @@ const buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams = (
   remoteRngAuctionRelayListenerAddress: string,
   rewardRecipient: string,
   refundAddress: string,
-  deposit: BigNumber,
   gasLimit: BigNumber,
   maxSubmissionCost: BigNumber,
   gasPriceBid: BigNumber,
+  deposit: BigNumber,
 ): RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams => {
   return {
     messageDispatcherAddress,
@@ -878,10 +881,10 @@ const buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams = (
     remoteRngAuctionRelayListenerAddress,
     rewardRecipient,
     refundAddress,
-    value: deposit,
     gasLimit,
     maxSubmissionCost,
     gasPriceBid,
+    value: deposit,
   };
 };
 
@@ -964,6 +967,7 @@ const getRelayTxParams = async (
       const { deposit, gasLimit, maxSubmissionCost, gasPriceBid } =
         await getArbitrumRelayTxParamsVars(relay, params);
 
+        console.log({ deposit, gasLimit, maxSubmissionCost, gasPriceBid });
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
         relay.chainId,
@@ -971,11 +975,12 @@ const getRelayTxParams = async (
         relay.contracts.rngRelayAuctionContract.address,
         params.rewardRecipient,
         params.rngRelayerAddress, // refundAddress
-        deposit,
         gasLimit,
         maxSubmissionCost,
         gasPriceBid,
+        deposit,
       );
+
     }
   } else {
     // TODO: Fill this in if/when we have a need for RelayerDirect (where the PrizePool
@@ -1006,7 +1011,9 @@ const getRelayGasCost = async (
       estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(txParams, contract);
       populatedTx = await populateOptimismRelayTx(txParams, contract);
     } else if (chainIsArbitrum(chainId)) {
+      console.log('getEstimatedGasLimitArbitrumRelayTx');
       estimatedGasLimit = await getEstimatedGasLimitArbitrumRelayTx(txParams, contract);
+      console.log('populateArbitrumRelayTx');
       populatedTx = await populateArbitrumRelayTx(txParams, contract);
     }
   } else {
@@ -1102,12 +1109,15 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
   console.log('here');
+  console.log('here');
+  console.log('here');
+  console.log('here');
   let sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
     to: populatedTx.to,
-    value: txParams.value ? Number(txParams.value.toString()) : 0,
     gasLimit: 400000,
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
+    // value: txParams.value ? Number(txParams.value.toString()) : 0,
   };
 
   if (rngRelayer.constructor.name === 'Relayer') {
@@ -1244,7 +1254,12 @@ const populateArbitrumRelayTx = async (
   rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
   contract,
 ) => {
+  console.log('populateArbitrumRelayTx');
+  console.log(populateArbitrumRelayTx);
+  const value = rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value
+  delete rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value
   return await contract.populateTransaction.relay(
     ...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams),
+    { value }
   );
 };
