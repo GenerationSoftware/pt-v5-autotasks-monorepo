@@ -12,20 +12,18 @@ export const instantiateRelayerAccount = async (
   event: RelayerParams | Relayer,
   customRelayerPrivateKey?: string,
 ): Promise<RelayerAccount> => {
-  let signer, relayerAddress, relayer;
+  let wallet, signer, relayerAddress, ozRelayer;
   if (customRelayerPrivateKey) {
-    const wallet = new Wallet(customRelayerPrivateKey, readProvider);
-
+    wallet = new Wallet(customRelayerPrivateKey, readProvider);
     relayerAddress = wallet.address;
-    relayer = wallet;
     signer = wallet;
   } else {
     const signer = new DefenderRelaySigner(event, writeProvider, {
       speed: 'fast',
     });
     relayerAddress = await signer.getAddress();
-    relayer = signer;
+    ozRelayer = signer;
   }
 
-  return { signer, relayer, relayerAddress };
+  return { wallet, signer, ozRelayer, relayerAddress };
 };

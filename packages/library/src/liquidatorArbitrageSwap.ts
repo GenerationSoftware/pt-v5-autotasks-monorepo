@@ -2,11 +2,10 @@ import { ethers, Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { Relayer } from 'defender-relay-client';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ArbLiquidatorConfigParams, ArbLiquidatorContext, VaultWithContext } from './types';
+import { ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
 import {
   logTable,
   logStringValue,
@@ -19,9 +18,11 @@ import {
   getArbLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
   getLiquidationPairComputeExactAmountInMulticall,
+  getGasPrice,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
-import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface SwapExactAmountOutParams {
   liquidationPairAddress: string;
@@ -51,7 +52,8 @@ export async function liquidatorArbitrageSwap(
 ): Promise<void> {
   const {
     chainId,
-    relayer,
+    ozRelayer,
+    wallet,
     relayerAddress,
     readProvider,
     writeProvider,
@@ -247,7 +249,7 @@ export async function liquidatorArbitrageSwap(
 
     // #7. Finally, populate tx when profitable
     try {
-      let transactionPopulated: PopulatedTransaction | undefined;
+      let populatedTx: PopulatedTransaction | undefined;
       console.log(chalk.blue('6. Populating swap transaction ...'));
       printSpacer();
 
@@ -261,26 +263,34 @@ export async function liquidatorArbitrageSwap(
         deadline: Math.floor(Date.now() / 1000) + 100,
       };
 
-      transactionPopulated = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
+      populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
         ...Object.values(swapExactAmountOutParams),
       );
 
-      const isPrivate = canUseIsPrivate(chainId, useFlashbots);
-      console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+      const gasLimit = 1000000;
+      const { gasPrice } = await getGasPrice(readProvider);
+      const tx = await sendPopulatedTx(
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
 
-      let transactionSentToNetwork = await relayer.sendTransaction({
-        isPrivate,
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
-        gasLimit: 1000000,
-      });
+      // let transactionSentToNetwork = await ozRelayer.sendTransaction({
+      //   isPrivate,
+      //   data: populatedTx.data,
+      //   to: populatedTx.to,
+      //   gasLimit: 1000000,
+      // });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', transactionSentToNetwork.hash));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
       stats.push({
         pair,
         estimatedProfitUsd,
-        txHash: transactionSentToNetwork.hash,
+        txHash: tx.hash,
       });
     } catch (error) {
       stats.push({

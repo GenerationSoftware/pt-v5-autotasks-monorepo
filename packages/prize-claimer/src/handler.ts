@@ -20,11 +20,9 @@ export async function handler(event: RelayerParams) {
   );
 
   const prizeClaimerConfigParams: PrizeClaimerConfigParams = {
+    ...relayerAccount,
     chainId,
     readProvider,
-    relayer: relayerAccount.relayer,
-    relayerAddress: relayerAccount.relayerAddress,
-    signer: relayerAccount.signer,
     covalentApiKey: BUILD_COVALENT_API_KEY,
     feeRecipient: BUILD_FEE_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,

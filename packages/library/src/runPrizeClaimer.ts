@@ -8,7 +8,6 @@ import {
   getContract,
   flagClaimedRpc,
 } from '@generationsoftware/pt-v5-utils-js';
-import { Relayer } from 'defender-relay-client';
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
@@ -19,6 +18,9 @@ import {
   TiersContext,
   Token,
   TokenWithRate,
+  SendTransactionArgs,
+  OzSendTransactionArgs,
+  WalletSendTransactionArgs,
 } from './types';
 import {
   logTable,
@@ -31,10 +33,12 @@ import {
   getFeesUsd,
   getEthMainnetTokenMarketRateUsd,
   getNativeTokenMarketRateUsd,
+  getGasPrice,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { getDrawResultsUri } from './getDrawResultsUri';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface ClaimPrizesParams {
   vault: string;
@@ -61,7 +65,14 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   prizeClaimerConfigParams: PrizeClaimerConfigParams,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, useFlashbots, relayer, readProvider } = prizeClaimerConfigParams;
+  const {
+    chainId,
+    covalentApiKey,
+    useFlashbots,
+    ozRelayer,
+    wallet,
+    readProvider,
+  } = prizeClaimerConfigParams;
 
   const contractsVersion = {
     major: 1,
@@ -209,13 +220,24 @@ export async function runPrizeClaimer(
         ...Object.values(claimPrizesParams),
       );
 
-      console.log(chalk.greenBright.bold(`Sending transaction ...`));
-      const tx = await relayer.sendTransaction({
-        isPrivate,
-        data: populatedTx.data,
-        to: populatedTx.to,
-        gasLimit: 20000000,
-      });
+      const gasLimit = 20000000;
+      const { gasPrice } = await getGasPrice(readProvider);
+      const tx = await sendPopulatedTx(
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
+
+      // console.log(chalk.greenBright.bold(`Sending transaction ...`));
+      // const tx = await ozRelayer.sendTransaction({
+      //   isPrivate,
+      //   data: populatedTx.data,
+      //   to: populatedTx.to,
+      //   gasLimit: 20000000,
+      // });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 

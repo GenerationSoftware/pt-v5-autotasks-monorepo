@@ -34,9 +34,7 @@ if (esMain(import.meta)) {
   );
 
   const prizeClaimerConfigParams: PrizeClaimerConfigParams = {
-    signer: relayerAccount.signer,
-    relayer: relayerAccount.relayer,
-    relayerAddress: relayerAccount.relayerAddress,
+    ...relayerAccount,
     readProvider,
     chainId: config.CHAIN_ID,
     feeRecipient: config.FEE_RECIPIENT,
