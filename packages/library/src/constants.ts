@@ -21,5 +21,5 @@ export const RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS = {
   [CHAIN_IDS.optimismSepolia]: '0x48cdb9fe4F71D9b6f17D8e4d72E4036931601BdE', // sepolia -> optimism sepolia
   [CHAIN_IDS.arbitrum]: '', // mainnet -> arbitrum
   [CHAIN_IDS.arbitrumGoerli]: '', // goerli -> arbitrum goerli
-  [CHAIN_IDS.arbitrumSepolia]: '0x149e3B3Bd69f1Cfc1B42b6A6a152a42E38cEeBf1', // sepolia -> arbitrum sepolia
+  [CHAIN_IDS.arbitrumSepolia]: '0xAFD0a893845cb2c278D6629c78fFA7ad403077Bf', // sepolia -> arbitrum sepolia
 };

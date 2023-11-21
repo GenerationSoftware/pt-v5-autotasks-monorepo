@@ -33,7 +33,9 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
   [CHAIN_IDS.goerli]: 0.2, // our estimates will say $6 for 2,300,000 gas limit but etherscan reports fractions of a penny
   [CHAIN_IDS.optimism]: 1,
   [CHAIN_IDS.optimismGoerli]: 1,
-  [CHAIN_IDS.sepolia]: 0.01 // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
+  [CHAIN_IDS.sepolia]: 0.1, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
+  [CHAIN_IDS.arbitrum]: 1,
+  [CHAIN_IDS.arbitrumSepolia]: 1
 };
 
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
@@ -104,12 +106,15 @@ export const getFeesUsd = async (
 
   const l1GasFeeWei = await getL1GasFee(chainId, provider, txData);
 
-  const chainMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
+  let chainGasPriceMultiplier = 1
+  if (CHAIN_GAS_PRICE_MULTIPLIERS[chainId]) {
+    chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
+  }
 
   const avgFeeUsd =
     parseFloat(ethers.utils.formatEther(baseFeeWei.add(l1GasFeeWei))) *
     gasTokenMarketRateUsd *
-    chainMultiplier;
+    chainGasPriceMultiplier;
 
   return { avgFeeUsd };
 };

@@ -31,9 +31,7 @@ export async function handler(event) {
   );
 
   const arbLiquidatorConfigParams: ArbLiquidatorConfigParams = {
-    signer: relayerAccount.signer,
-    relayer: relayerAccount.relayer,
-    relayerAddress: relayerAccount.relayerAddress,
+    ...relayerAccount,
     writeProvider: readProvider, // TODO: Fix this!
     readProvider: readProvider,
     chainId,

@@ -50,7 +50,8 @@ export interface ClaimPrizeContext {
 export interface PrizeClaimerConfigParams {
   chainId: number;
   readProvider: BaseProvider;
-  relayer: Relayer | Wallet;
+  wallet: Wallet;
+  ozRelayer: Relayer;
   relayerAddress: string;
   signer: DefenderRelaySigner | Wallet;
   feeRecipient: string;
@@ -63,7 +64,8 @@ export interface ArbLiquidatorConfigParams {
   chainId: number;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
-  relayer: Relayer | Wallet;
+  wallet: Wallet;
+  ozRelayer: Relayer;
   relayerAddress: string;
   signer: DefenderRelaySigner | Wallet;
   swapRecipient: string;
@@ -94,7 +96,8 @@ export interface WithdrawClaimRewardsContext {
 export interface DrawAuctionConfigParams {
   rngChainId: number;
   rngReadProvider: BaseProvider;
-  rngRelayer: Relayer | Wallet;
+  rngWallet: Wallet;
+  rngOzRelayer: Relayer;
   rngRelayerAddress: string;
   signer: DefenderRelaySigner | Wallet;
   rewardRecipient: string;
@@ -166,8 +169,9 @@ export interface Relay {
 
 export interface RelayerAccount {
   signer: DefenderRelaySigner | Wallet;
-  relayer: Relayer | Wallet;
   relayerAddress: string;
+  ozRelayer: Relayer;
+  wallet: Wallet;
 }
 
 export interface RngAuctionContracts {
@@ -192,7 +196,24 @@ export interface VaultWithContext {
 
 export interface YieldVaultMintRateConfigParams {
   chainId: number;
-  relayer: Relayer | Wallet;
+  wallet: Wallet;
+  ozRelayer: Relayer;
+  readProvider: BaseProvider;
   relayerAddress: string;
   signer: DefenderRelaySigner | Wallet;
+}
+
+export interface SendTransactionArgs {
+  data: string;
+  to: string;
+  gasLimit: number;
+  gasPrice: string;
+}
+
+export interface WalletSendTransactionArgs extends SendTransactionArgs {
+  value?: BigNumber;
+}
+
+export interface OzSendTransactionArgs extends SendTransactionArgs {
+  isPrivate?: boolean;
 }

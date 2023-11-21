@@ -25,7 +25,8 @@ export async function handler(event: RelayerParams) {
 
   const drawAuctionConfigParams: DrawAuctionConfigParams = {
     rngChainId: Number(BUILD_CHAIN_ID),
-    rngRelayer: relayerAccount.relayer,
+    rngOzRelayer: relayerAccount.ozRelayer,
+    rngWallet: relayerAccount.wallet,
     rngRelayerAddress: relayerAccount.relayerAddress,
     rngReadProvider,
     signer: relayerAccount.signer,

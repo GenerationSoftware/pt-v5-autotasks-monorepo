@@ -34,8 +34,8 @@ if (esMain(import.meta)) {
   );
 
   const yieldVaultMintRateConfigParams: YieldVaultMintRateConfigParams = {
-    signer: relayerAccount.signer,
-    relayer: relayerAccount.relayer,
+    ...relayerAccount,
+    readProvider,
     relayerAddress: relayerAccount.relayerAddress,
     chainId: config.CHAIN_ID,
   };
