@@ -2,7 +2,7 @@ import { ethers, BigNumber, Contract, PopulatedTransaction, Wallet } from 'ether
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
 import { formatUnits } from '@ethersproject/units';
-import { Relayer, RelayerTransaction } from 'defender-relay-client';
+import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
 
 import { getArbitrumRelayTxParamsVars } from './getRelayTxParams';
