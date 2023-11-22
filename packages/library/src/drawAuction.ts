@@ -115,6 +115,7 @@ const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
       rngContracts,
       version,
     );
+    console.log(rngAuctionRelayerRemoteOwnerArbitrumContracts[0].relay);
   } catch (e) {
     console.log(
       chalk.yellow('No RngAuctionRelayerRemoteOwnerOptimism contracts found on the RNG L1 chain?'),
@@ -555,13 +556,14 @@ const getRngAuctionRelayerRemoteOwnerArbitrumRelayEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    const value = rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value;
-    delete rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value;
-    console.log(...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams), { value });
-    estimatedGasLimit = await contract.estimateGas.relay(
-      ...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams),
-      { value },
-    );
+    const cloneTxParams = { ...rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams };
+
+    const value = cloneTxParams.value;
+    delete cloneTxParams.value;
+
+    estimatedGasLimit = await contract.estimateGas.relay(...Object.values(cloneTxParams), {
+      value,
+    });
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -1072,6 +1074,7 @@ const sendRelayTransaction = async (
 
   let populatedTx: PopulatedTransaction;
   if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
+    console.log(contract);
     populatedTx = await contract.populateTransaction.relay(...Object.values(txParams));
   } else {
     // TODO: Fill this in if/when we have a need for RelayerDirect (where the PrizePool
@@ -1079,7 +1082,15 @@ const sendRelayTransaction = async (
   }
 
   const gasLimit = 400000;
-  const tx = await sendPopulatedTx(rngOzRelayer, rngWallet, populatedTx, gasLimit, gasPrice);
+  const tx = await sendPopulatedTx(
+    rngOzRelayer,
+    rngWallet,
+    populatedTx,
+    gasLimit,
+    gasPrice,
+    false,
+    txParams,
+  );
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
@@ -1211,10 +1222,9 @@ const populateArbitrumRelayTx = async (
   contract,
 ) => {
   console.log('populateArbitrumRelayTx');
-  const value = rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value;
-  delete rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams.value;
-  return await contract.populateTransaction.relay(
-    ...Object.values(rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams),
-    { value },
-  );
+  const cloneTxParams = { ...rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams };
+
+  const value = cloneTxParams.value;
+  delete cloneTxParams.value;
+  return await contract.populateTransaction.relay(...Object.values(cloneTxParams), { value });
 };
