@@ -394,6 +394,7 @@ const sendStartRngTransaction = async (
   console.log(chalk.greenBright.bold(`Sending transaction ...`));
 
   const gasLimit = 400000;
+  console.log(rngOzRelayer, rngWallet, populatedTx, gasLimit, gasPrice, params.useFlashbots);
   const tx = await sendPopulatedTx(
     rngOzRelayer,
     rngWallet,

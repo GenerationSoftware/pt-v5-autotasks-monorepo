@@ -27,17 +27,27 @@ export const sendPopulatedTx = async (
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
   };
 
+  console.log('sendTransactionArgs');
+  console.log(sendTransactionArgs);
+
   let tx;
   if (rngOzRelayer) {
+    console.log('rngOzRelayer');
+    console.log(rngOzRelayer);
+
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
     };
     tx = await rngOzRelayer.sendTransaction(args);
   } else if (rngWallet) {
+    console.log('rngWallet');
+    console.log(rngWallet);
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,
     };
+    console.log('args');
+    console.log(args);
     tx = await rngWallet.sendTransaction(args);
   }
 
