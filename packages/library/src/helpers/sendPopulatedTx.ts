@@ -14,6 +14,7 @@ export const sendPopulatedTx = async (
   gasLimit: number,
   gasPrice: BigNumber,
   useFlashbots?: boolean,
+  txParams?: any,
 ): Promise<RelayerTransaction | ethers.providers.TransactionResponse> => {
   const isPrivate = false;
   // const isPrivate = useFlashbots ? canUseIsPrivate(chainId, useFlashbots) : false;
@@ -43,9 +44,15 @@ export const sendPopulatedTx = async (
   } else if (rngWallet) {
     console.log('rngWallet');
     console.log(rngWallet);
+    console.log('txParams');
+    console.log(txParams);
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,
     };
+
+    if (txParams.value) {
+      args.value = txParams.value;
+    }
     console.log('args');
     console.log(args);
     tx = await rngWallet.sendTransaction(args);
