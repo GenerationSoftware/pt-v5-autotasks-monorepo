@@ -307,7 +307,6 @@ export async function executeDrawAuctionTxs(
     printAsterisks();
     console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
     printSpacer();
-    console.log('returning?');
 
     return;
   }
