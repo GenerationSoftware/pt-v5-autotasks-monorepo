@@ -401,19 +401,7 @@ const sendStartRngTransaction = async (
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-  // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
-  //       re-submit transactions, effectively giving them different tx hashes
-  //       It is likely good enough for these types of transactions but could cause
-  //       issues if there are a lot of failures or gas price issues
-  //       See querying here:
-  //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
-  console.log('Waiting on transaction to be confirmed ...');
-
-  await provider.waitForTransaction(tx.hash);
-  console.log('Tx confirmed !');
   printSpacer();
-
   printNote();
 };
 
@@ -919,7 +907,6 @@ const getRelayTxParams = async (
         gasPriceBid,
       } = await getArbitrumRelayTxParamsVars(relay, params);
 
-      console.log({ deposit, gasLimit, maxSubmissionCost, gasPriceBid });
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
         relay.chainId,
@@ -970,8 +957,6 @@ const getRelayGasCost = async (
     // exists on same chain as RNG service)
   }
 
-  console.log('populatedTx');
-  console.log(populatedTx);
   const gasCostUsd = await getGasCostUsd(
     estimatedGasLimit,
     chainId,
@@ -1068,7 +1053,7 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
 
-  const gasLimit = 400000;
+  const gasLimit = 550000;
   const tx = await sendPopulatedTx(
     rngOzRelayer,
     rngWallet,
@@ -1081,10 +1066,6 @@ const sendRelayTransaction = async (
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-  console.log('Waiting on transaction to be confirmed ...');
-  await readProvider.waitForTransaction(tx.hash);
-
-  console.log('Tx confirmed !');
   printSpacer();
   printNote();
 

@@ -27,8 +27,6 @@ export const sendPopulatedTx = async (
     gasLimit,
     gasPrice: gasPrice.add(ONE_GWEI).toString(),
   };
-  console.log('txParams');
-  console.log(txParams);
 
   let tx;
   if (rngOzRelayer) {
@@ -47,8 +45,6 @@ export const sendPopulatedTx = async (
     if (txParams && txParams.value) {
       args.value = txParams.value;
     }
-    console.log('args');
-    console.log(args);
     tx = await rngWallet.sendTransaction(args);
   }
 
