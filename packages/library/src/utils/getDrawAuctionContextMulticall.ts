@@ -164,7 +164,6 @@ const getContext = async (
   };
 };
 
-// Gather information about the PrizePool, RNG Relay contracts and token (ie. reserve, reward)
 /**
  * Gather information about the RNG Start Contracts
  *
@@ -252,7 +251,6 @@ export const getRngMulticall = async (
   const rngIsAuctionOpen = results[RNG_AUCTION_IS_AUCTION_OPEN_KEY];
   const rngIsRngComplete = results[RNG_AUCTION_IS_RNG_COMPLETE_KEY];
   const rngCurrentFractionalReward = results[RNG_AUCTION_CURRENT_FRACTIONAL_REWARD_KEY];
-
   const rngCurrentFractionalRewardString = ethers.utils.formatEther(rngCurrentFractionalReward);
 
   // 7. Results: Rng Fee
@@ -378,31 +376,7 @@ export const getRelayMulticall = async (
 
     const prizePoolReserve = resultsOne[PRIZE_POOL_RESERVE_KEY];
     const prizePoolReserveForOpenDraw = resultsOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY];
-    // console.log('prizePoolReserveForOpenDraw');
-    // console.log(prizePoolReserveForOpenDraw);
-    // console.log(prizePoolReserveForOpenDraw.toString());
     const reserve = prizePoolReserve.add(prizePoolReserveForOpenDraw);
-    // console.log('reserve');
-    // console.log(reserve);
-    // console.log(reserve.toString());
-    //
-    // TODO: Calculate the accurate amount of potential reward based on multiple PrizePool's reserves?
-    //       I believe you would earn multiple prize pool's reserve rewards for the start RNG, but not for the relay
-    //       for relay you prob only earn the chain you relay on's prize pool reserve
-    //
-    //
-    // let reserve = BigNumber.from(0);
-    // for (const relay of relays) {
-    //   const prizePoolReserve = await relay.contracts.prizePoolContract.reserve();
-    //   const prizePoolReserveForOpenDraw = await relay.contracts.prizePoolContract.pendingReserveContributions();
-    //   console.log('prizePoolReserve.toString()');
-    //   console.log(prizePoolReserve.toString());
-    //   console.log('prizePoolReserveForOpenDraw.toString()');
-    //   console.log(prizePoolReserveForOpenDraw.toString());
-    //   reserve = reserve.add(prizePoolReserve.add(prizePoolReserveForOpenDraw));
-    //   console.log('reserve.toString()');
-    //   console.log(reserve.toString());
-    // }
 
     queriesTwo[
       RNG_RELAY_IS_SEQUENCE_COMPLETED_KEY
