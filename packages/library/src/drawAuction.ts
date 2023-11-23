@@ -115,7 +115,6 @@ const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
       rngContracts,
       version,
     );
-    console.log(rngAuctionRelayerRemoteOwnerArbitrumContracts[0].relay);
   } catch (e) {
     console.log(
       chalk.yellow('No RngAuctionRelayerRemoteOwnerOptimism contracts found on the RNG L1 chain?'),
@@ -311,9 +310,6 @@ export async function executeDrawAuctionTxs(
     return;
   }
 
-  printSpacer();
-  printSpacer();
-
   // #3. If there is an RNG Fee, figure out if the bot can afford it
   if (context.drawAuctionState === DrawAuctionState.RngStartVrfHelper) {
     console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
@@ -323,8 +319,6 @@ export async function executeDrawAuctionTxs(
     await increaseRngFeeAllowance(signer, rngRelayerAddress, context, rngAuctionContracts);
   }
 
-  printSpacer();
-  printSpacer();
   // #4. Calculate profit and send transactions when profitable
   let rewardUsd = 0;
   if (
@@ -376,7 +370,7 @@ const sendStartRngTransaction = async (
   rngAuctionContracts: RngAuctionContracts,
   params: DrawAuctionConfigParams,
 ) => {
-  console.log(chalk.yellow(`Submitting transaction:`));
+  console.log(chalk.yellow(`Start RNG Transaction:`));
 
   let populatedTx: PopulatedTransaction;
   console.log(
@@ -392,7 +386,7 @@ const sendStartRngTransaction = async (
   );
 
   const { gasPrice } = await getGasPrice(provider);
-  console.log(chalk.greenBright.bold(`Sending transaction ...`));
+  console.log(chalk.greenBright.bold(`Sending ...`));
 
   const gasLimit = 400000;
   console.log(rngOzRelayer, rngWallet, populatedTx, gasLimit, gasPrice, params.useFlashbots);
@@ -436,8 +430,6 @@ const processRelayTransaction = async (
   const contract = findRngAuctionRelayerRemoteOwnerContract(chainId, rngAuctionContracts);
 
   const txParams = await getRelayTxParams(relay, params, context);
-  console.log('txParams');
-  console.log(txParams);
 
   // #5. Get gas cost
   const gasCostUsd = await getRelayGasCost(txParams, relay, contract, context);
@@ -596,8 +588,6 @@ const calculateRngProfit = async (
   const grossProfitUsd = rewardUsd;
   console.log(chalk.magenta('Gross Profit = Reward'));
 
-  console.log('gasCostUsd');
-  console.log(gasCostUsd);
   const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeUsd;
   console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
   console.log(
@@ -965,8 +955,6 @@ const getRelayGasCost = async (
   const { chainId, readProvider } = relay;
   const { nativeTokenMarketRateUsd } = relay.context;
 
-  console.log('way');
-
   let estimatedGasLimit: BigNumber;
   let populatedTx: PopulatedTransaction;
   if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
@@ -974,19 +962,16 @@ const getRelayGasCost = async (
       estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(txParams, contract);
       populatedTx = await populateOptimismRelayTx(txParams, contract);
     } else if (chainIsArbitrum(chainId)) {
-      console.log('getEstimatedGasLimitArbitrumRelayTx');
       estimatedGasLimit = await getEstimatedGasLimitArbitrumRelayTx(txParams, contract);
-      console.log('populateArbitrumRelayTx');
       populatedTx = await populateArbitrumRelayTx(txParams, contract);
-      console.log('populatedTx');
-      console.log(populatedTx);
     }
   } else {
     // TODO: Fill this in if/when we have a need for RelayerDirect (where the PrizePool
     // exists on same chain as RNG service)
   }
 
-  console.log(estimatedGasLimit, chainId, readProvider, nativeTokenMarketRateUsd, populatedTx);
+  console.log('populatedTx');
+  console.log(populatedTx);
   const gasCostUsd = await getGasCostUsd(
     estimatedGasLimit,
     chainId,
@@ -994,10 +979,6 @@ const getRelayGasCost = async (
     nativeTokenMarketRateUsd,
     populatedTx,
   );
-  console.log('estimatedGasLimit');
-  console.log(estimatedGasLimit);
-  console.log('gasCostUsd');
-  console.log(gasCostUsd);
 
   return gasCostUsd;
 };
@@ -1060,7 +1041,7 @@ const sendRelayTransaction = async (
 ) => {
   const { readProvider } = relay;
 
-  console.log(chalk.yellow(`Submitting transaction:`));
+  console.log(chalk.yellow(`Relay Transaction:`));
 
   // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
   const isPrivate = false;
@@ -1069,13 +1050,19 @@ const sendRelayTransaction = async (
 
   const { gasPrice } = await getGasPrice(readProvider);
   console.log(chalk.green(`Execute RngAuctionRelayerRemoteOwner*#relay`));
-  console.log(chalk.greenBright.bold(`Sending transaction ...`));
+  console.log(chalk.greenBright.bold(`Sending ...`));
   printSpacer();
 
   let populatedTx: PopulatedTransaction;
   if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
-    console.log(contract);
-    populatedTx = await contract.populateTransaction.relay(...Object.values(txParams));
+    const cloneTxParams = { ...txParams };
+
+    const value = cloneTxParams.value;
+    delete cloneTxParams.value;
+
+    populatedTx = await contract.populateTransaction.relay(...Object.values(cloneTxParams), {
+      value,
+    });
   } else {
     // TODO: Fill this in if/when we have a need for RelayerDirect (where the PrizePool
     // exists on same chain as RNG service)
@@ -1221,7 +1208,6 @@ const populateArbitrumRelayTx = async (
   rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,
   contract,
 ) => {
-  console.log('populateArbitrumRelayTx');
   const cloneTxParams = { ...rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams };
 
   const value = cloneTxParams.value;
