@@ -67,13 +67,6 @@ export const getArbitrumRelayTxParamsVars = async (
 
   const baseFee = await getBaseFee(l1Provider);
 
-  printSpacer();
-  printSpacer();
-  console.log('baseFee:');
-  console.log(baseFee.toString());
-  printSpacer();
-  printSpacer();
-
   /**
    * The estimateAll method gives us the following values for sending an L1->L2 message
    * (1) maxSubmissionCost: The maximum cost to be paid for submitting the transaction
@@ -92,19 +85,6 @@ export const getArbitrumRelayTxParamsVars = async (
     baseFee,
     l1Provider,
   );
-
-  console.log('deposit:');
-  console.log(deposit.toString());
-  printSpacer();
-  printSpacer();
-  console.log('gasLimit:');
-  console.log(gasLimit.toString());
-  printSpacer();
-  printSpacer();
-  console.log('maxSubmissionCost:');
-  console.log(maxSubmissionCost.toString());
-  printSpacer();
-  printSpacer();
 
   const gasPriceBid = await l2Provider.getGasPrice();
   printSpacer();
