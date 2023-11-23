@@ -5,7 +5,7 @@ import { formatUnits } from '@ethersproject/units';
 import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
 
-import { getArbitrumRelayTxParamsVars } from './getRelayTxParams';
+import { getArbitrumSdkParams } from './getArbitrumSdkParams';
 import { RngAuctionContracts, DrawAuctionContext, DrawAuctionConfigParams, Relay } from './types';
 import {
   logTable,
@@ -307,6 +307,8 @@ export async function executeDrawAuctionTxs(
     printAsterisks();
     console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
     printSpacer();
+    console.log('returning?');
+
     return;
   }
 
@@ -734,7 +736,7 @@ const printContext = (rngChainId: number, relays: Relay[], context: DrawAuctionC
     for (const relay of relays) {
       logStringValue(
         `${chainName(relay.chainId)} PrizePool can start RNG in:`,
-        `${(relay.context.prizePoolOpenDrawEndsAt - Math.ceil(Date.now() / 1000)) / 60} minutes`,
+        `${(relay.context.prizePoolDrawClosesAt - Math.ceil(Date.now() / 1000)) / 60} minutes`,
       );
       printSpacer();
     }
@@ -900,12 +902,17 @@ const getRelayTxParams = async (
         params.rewardRecipient,
       );
     } else if (chainIsArbitrum(chainId)) {
-      const {
-        deposit,
-        gasLimit,
-        maxSubmissionCost,
-        gasPriceBid,
-      } = await getArbitrumRelayTxParamsVars(relay, params);
+      let { deposit, gasLimit, maxSubmissionCost, gasPriceBid } = await getArbitrumSdkParams(
+        relay,
+        params,
+      );
+
+      console.log('gasLimit, maxSubmissionCost, gasPriceBid, deposit');
+      console.log(gasLimit, maxSubmissionCost, gasPriceBid, deposit);
+      gasLimit = gasLimit.mul(2);
+      maxSubmissionCost = maxSubmissionCost.mul(2);
+      gasPriceBid = gasPriceBid.mul(2);
+      deposit = deposit.mul(2);
 
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
