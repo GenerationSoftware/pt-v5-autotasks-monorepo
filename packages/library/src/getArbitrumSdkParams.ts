@@ -17,10 +17,7 @@ import {
 // const RANDOM_BYTES_32_STRING = '0x90344b8b6d0f5572c26c9897fd0170c6d4b3a435268062468c51261fbf8274e9';
 const RANDOM_BYTES_32_STRING = '0x00000000000000000000000000000000000000000000000000000000000004e9';
 
-export const getArbitrumRelayTxParamsVars = async (
-  relay: Relay,
-  params: DrawAuctionConfigParams,
-) => {
+export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConfigParams) => {
   const { readProvider: l2Provider, chainId } = relay;
 
   const l1Provider = params.rngReadProvider;
