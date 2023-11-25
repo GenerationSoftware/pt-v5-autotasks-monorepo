@@ -849,9 +849,10 @@ const getRngGasCost = async (
     //   transferFeeAndStartRngRequestTxParams,
     // );
 
-    populatedTx = await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
-      ...Object.values(transferFeeAndStartRngRequestTxParams),
-    );
+    populatedTx =
+      await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
+        ...Object.values(transferFeeAndStartRngRequestTxParams),
+      );
 
     // This was a previous tx gas usage on Goerli + buffer room
     estimatedGasLimit = BigNumber.from(330000);
@@ -908,10 +909,22 @@ const getRelayTxParams = async (
 
       console.log('gasLimit, maxSubmissionCost, gasPriceBid, deposit');
       console.log(gasLimit, maxSubmissionCost, gasPriceBid, deposit);
-      gasLimit = gasLimit.mul(2);
-      maxSubmissionCost = maxSubmissionCost.mul(2);
-      gasPriceBid = gasPriceBid.mul(2);
-      deposit = deposit.mul(2);
+      console.log(
+        gasLimit.toString(),
+        maxSubmissionCost.toString(),
+        gasPriceBid.toString(),
+        deposit.toString(),
+      );
+      gasLimit = gasLimit.mul(4);
+      maxSubmissionCost = maxSubmissionCost.mul(4);
+      gasPriceBid = gasPriceBid.mul(4);
+      deposit = deposit.mul(4);
+      console.log(
+        gasLimit.toString(),
+        maxSubmissionCost.toString(),
+        gasPriceBid.toString(),
+        deposit.toString(),
+      );
 
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
