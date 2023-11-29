@@ -35,8 +35,6 @@ export async function handler(event: RelayerParams) {
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
-  console.log('drawAuctionConfigParams');
-  console.log(drawAuctionConfigParams);
 
   await executeTransactions(drawAuctionConfigParams, BUILD_RELAYS);
 }

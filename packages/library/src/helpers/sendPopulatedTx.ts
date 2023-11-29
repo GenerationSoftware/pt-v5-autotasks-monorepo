@@ -21,11 +21,12 @@ export const sendPopulatedTx = async (
   console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
   printSpacer();
 
+  const gasPriceStr = gasPrice.add(ONE_GWEI).toString();
+
   const sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
     to: populatedTx.to,
     gasLimit,
-    gasPrice: BigNumber.from(gasPrice.add(ONE_GWEI).toString()),
   };
 
   let tx;
@@ -33,13 +34,19 @@ export const sendPopulatedTx = async (
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
+      gasPrice: gasPriceStr,
     };
+
+    if (txParams && txParams.value) {
+      args.value = txParams.value;
+    }
 
     // @ts-ignore
     tx = await rngOzRelayer.sendTransaction(args);
   } else if (rngWallet) {
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,
+      gasPrice: BigNumber.from(gasPriceStr),
     };
 
     if (txParams && txParams.value) {

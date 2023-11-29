@@ -9,7 +9,7 @@ import { RelayerAccount } from '../types';
 export const instantiateRelayerAccount = async (
   writeProvider: DefenderRelayProvider | Provider,
   readProvider: DefenderRelayProvider | Provider,
-  event: RelayerParams | Relayer,
+  event: RelayerParams,
   customRelayerPrivateKey?: string,
 ): Promise<RelayerAccount> => {
   let wallet, signer, relayerAddress, ozRelayer;
@@ -22,7 +22,7 @@ export const instantiateRelayerAccount = async (
       speed: 'fast',
     });
     relayerAddress = await signer.getAddress();
-    ozRelayer = signer;
+    ozRelayer = new Relayer(event);
   }
 
   return { wallet, signer, ozRelayer, relayerAddress };
