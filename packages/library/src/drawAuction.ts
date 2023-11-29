@@ -357,14 +357,16 @@ export async function executeDrawAuctionTxs(
     }
   } else if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     for (const relay of relays) {
-      await processRelayTransaction(
-        rngWallet,
-        rngOzRelayer,
-        relay,
-        rngAuctionContracts,
-        params,
-        context,
-      );
+      if (relay.context.rngRelayIsAuctionOpen) {
+        await processRelayTransaction(
+          rngWallet,
+          rngOzRelayer,
+          relay,
+          rngAuctionContracts,
+          params,
+          context,
+        );
+      }
     }
   }
 }
