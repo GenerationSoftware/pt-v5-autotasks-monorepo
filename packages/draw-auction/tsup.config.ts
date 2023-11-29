@@ -24,7 +24,7 @@ export default defineConfig((opt) => {
         BUILD_CUSTOM_RELAYER_PRIVATE_KEY: `'${config.get(
           `${CHAIN_ID}.CUSTOM_RELAYER_PRIVATE_KEY`,
         )}'`,
-        BUILD_RELAYS: `'${config.get(`${CHAIN_ID}.RELAYS`)}'`,
+        BUILD_RELAYS: `'${JSON.stringify(config.get(`${CHAIN_ID}.RELAYS`))}'`,
       };
     },
     noExternal: [
@@ -38,6 +38,6 @@ export default defineConfig((opt) => {
     entry: ['src/handler.ts'],
     splitting: false,
     clean: true,
-    minify: true,
+    minify: false,
   };
 });
