@@ -358,6 +358,7 @@ export async function executeDrawAuctionTxs(
   } else if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     for (const relay of relays) {
       if (relay.context.rngRelayIsAuctionOpen) {
+        console.log(chalk.yellow(`Processing relay for ${chainName(relay.chainId)}:`));
         await processRelayTransaction(
           rngWallet,
           rngOzRelayer,
@@ -365,6 +366,11 @@ export async function executeDrawAuctionTxs(
           rngAuctionContracts,
           params,
           context,
+        );
+      } else {
+        printSpacer();
+        console.log(
+          chalk.yellow(`Skipping ${chainName(relay.chainId)} as relay auction is currently closed`),
         );
       }
     }

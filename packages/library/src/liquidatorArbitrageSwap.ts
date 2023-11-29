@@ -344,8 +344,15 @@ const approve = async (
           `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum ...`,
         ),
       );
+      console.log(liquidationRouter.address);
 
+      console.log('signer');
+      console.log(signer);
       const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
+      console.log('tx');
+      console.log(tx);
+      console.log('txhash');
+      console.log(tx.hash);
       await tx.wait();
 
       const newAllowanceResult = await token.functions.allowance(
