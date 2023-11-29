@@ -18,7 +18,8 @@ export async function runYieldVaultHandleMintRate(
       throw new Error('YieldVault: Contract Unavailable');
     }
 
-    const populatedTx: PopulatedTransaction = await yieldVaultContract.populateTransaction.mintRate();
+    const populatedTx: PopulatedTransaction =
+      await yieldVaultContract.populateTransaction.mintRate();
 
     try {
       const gasLimit = 200000;

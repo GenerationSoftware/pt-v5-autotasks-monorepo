@@ -1,4 +1,4 @@
-import { Contract, BigNumber, Wallet } from 'ethers';
+import { Contract, BigNumber, Wallet, Signer } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
@@ -53,7 +53,7 @@ export interface PrizeClaimerConfigParams {
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
-  signer: DefenderRelaySigner | Wallet;
+  signer: DefenderRelaySigner | Signer;
   feeRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -67,7 +67,7 @@ export interface ArbLiquidatorConfigParams {
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
-  signer: DefenderRelaySigner | Wallet;
+  signer: DefenderRelaySigner | Signer;
   swapRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -99,7 +99,7 @@ export interface DrawAuctionConfigParams {
   rngWallet: Wallet;
   rngOzRelayer: Relayer;
   rngRelayerAddress: string;
-  signer: DefenderRelaySigner | Wallet;
+  signer: DefenderRelaySigner | Signer;
   rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -168,7 +168,7 @@ export interface Relay {
 }
 
 export interface RelayerAccount {
-  signer: DefenderRelaySigner | Wallet;
+  signer: DefenderRelaySigner | Signer;
   relayerAddress: string;
   ozRelayer: Relayer;
   wallet: Wallet;
@@ -200,14 +200,14 @@ export interface YieldVaultMintRateConfigParams {
   ozRelayer: Relayer;
   readProvider: BaseProvider;
   relayerAddress: string;
-  signer: DefenderRelaySigner | Wallet;
+  signer: DefenderRelaySigner | Signer;
 }
 
 export interface SendTransactionArgs {
   data: string;
   to: string;
   gasLimit: number;
-  gasPrice: string;
+  gasPrice: BigNumber;
 }
 
 export interface WalletSendTransactionArgs extends SendTransactionArgs {
@@ -216,4 +216,5 @@ export interface WalletSendTransactionArgs extends SendTransactionArgs {
 
 export interface OzSendTransactionArgs extends SendTransactionArgs {
   isPrivate?: boolean;
+  value?: BigNumber;
 }

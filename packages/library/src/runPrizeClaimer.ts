@@ -65,14 +65,8 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   prizeClaimerConfigParams: PrizeClaimerConfigParams,
 ): Promise<undefined> {
-  const {
-    chainId,
-    covalentApiKey,
-    useFlashbots,
-    ozRelayer,
-    wallet,
-    readProvider,
-  } = prizeClaimerConfigParams;
+  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, readProvider } =
+    prizeClaimerConfigParams;
 
   const contractsVersion = {
     major: 1,

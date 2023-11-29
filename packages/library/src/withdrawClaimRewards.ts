@@ -14,7 +14,6 @@ import {
   parseBigNumberAsFloat,
   MARKET_RATE_CONTRACT_DECIMALS,
   getFeesUsd,
-  getGasPrice,
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   getEthMainnetTokenMarketRateUsd,
@@ -255,16 +254,6 @@ const calculateProfit = async (
     18,
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
   );
-
-  printSpacer();
-  const { gasPrice } = await getGasPrice(readProvider);
-  logBigNumber(
-    'Recent Gas Price (wei):',
-    gasPrice,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
-    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
-  );
-  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
 
   printSpacer();
   logTable({ avgFeeUsd });

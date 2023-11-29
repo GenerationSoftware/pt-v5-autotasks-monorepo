@@ -18,7 +18,7 @@ export const instantiateRelayerAccount = async (
     relayerAddress = wallet.address;
     signer = wallet;
   } else {
-    const signer = new DefenderRelaySigner(event, writeProvider, {
+    signer = new DefenderRelaySigner(event, writeProvider, {
       speed: 'fast',
     });
     relayerAddress = await signer.getAddress();
