@@ -11,10 +11,7 @@ import Configstore from 'configstore';
 
 interface RELAY_CONFIG {
   RELAY_CHAIN_ID: number;
-  RELAY_RELAYER_API_KEY: string;
-  RELAY_RELAYER_API_SECRET: string;
   RELAY_JSON_RPC_URI: string;
-  RELAY_CUSTOM_RELAYER_PRIVATE_KEY?: string;
 }
 
 interface PACKAGE_CONFIG {
@@ -29,7 +26,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
     message: chalk.green(
       'Enter the reward recipient address (the account which will receive the rewards profit):',
     ),
-    validate: function(value) {
+    validate: function (value) {
       if (value.length) {
         return true;
       } else {
@@ -44,7 +41,7 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
     message: chalk.green(
       'How much profit would you like to make per transaction (in USD, default is 2.50):',
     ),
-    validate: function(value) {
+    validate: function (value) {
       if (value.length) {
         return true;
       } else {
@@ -64,35 +61,11 @@ export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & 
       return camelize(val.match(/.*(?= - )/)[0].trim()); // chars before first hypen
     },
   },
-  RELAY_RELAYER_API_KEY: {
-    name: 'RELAY_RELAYER_API_KEY',
-    type: 'password',
-    message: chalk.green(`Enter this relay chain's OZ Defender Relayer API key:`),
-    validate: function(value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the new relay chain's OZ Defender Relayer API key:";
-      }
-    },
-  },
-  RELAY_RELAYER_API_SECRET: {
-    name: 'RELAY_RELAYER_API_SECRET',
-    type: 'password',
-    message: chalk.green(`Enter this relay chain's OZ Defender Relayer API secret:`),
-    validate: function(value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the new relay chain's OZ Defender Relayer API secret:";
-      }
-    },
-  },
   RELAY_JSON_RPC_URI: {
     name: 'RELAY_JSON_RPC_URI',
     type: 'password',
     message: chalk.green(`Enter this relay chain's JSON RPC read provider URI:`),
-    validate: function(value) {
+    validate: function (value) {
       if (value.length) {
         return true;
       } else {
@@ -100,26 +73,13 @@ export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & 
       }
     },
   },
-  RELAY_CUSTOM_RELAYER_PRIVATE_KEY: {
-    name: 'RELAY_CUSTOM_RELAYER_PRIVATE_KEY',
-    type: 'password',
-    message: chalk.green(
-      '(Optional) Enter your own EOA private key for relaying transactions on this L2 relayer:',
-    ),
-  },
 };
 
 export const askQuestions = (config: Configstore) => {
   return populateConfig<{}, PACKAGE_CONFIG | RELAY_CONFIG>(config, {
     extraConfig: {
       network: [PACKAGE_QUESTIONS.REWARD_RECIPIENT, PACKAGE_QUESTIONS.MIN_PROFIT_THRESHOLD_USD],
-      relay: [
-        RELAY_QUESTIONS.RELAY_CHAIN_ID,
-        RELAY_QUESTIONS.RELAY_RELAYER_API_KEY,
-        RELAY_QUESTIONS.RELAY_RELAYER_API_SECRET,
-        RELAY_QUESTIONS.RELAY_JSON_RPC_URI,
-        RELAY_QUESTIONS.RELAY_CUSTOM_RELAYER_PRIVATE_KEY,
-      ],
+      relay: [RELAY_QUESTIONS.RELAY_CHAIN_ID, RELAY_QUESTIONS.RELAY_JSON_RPC_URI],
     },
   });
 };

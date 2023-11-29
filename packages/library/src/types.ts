@@ -151,16 +151,13 @@ export interface RelayDrawAuctionContext {
 
 export interface RelayConfig {
   RELAY_CHAIN_ID: string;
-  RELAY_RELAYER_API_KEY: string;
-  RELAY_RELAYER_API_SECRET: string;
   RELAY_JSON_RPC_URI: string;
-  RELAY_CUSTOM_RELAYER_PRIVATE_KEY?: string;
 }
 
 export interface Relay {
   chainId: number;
   contractsBlob: ContractsBlob;
-  relayerAccount: RelayerAccount;
+  // relayerAddress: string;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
   contracts?: RelayAuctionContracts;
@@ -207,14 +204,15 @@ export interface SendTransactionArgs {
   data: string;
   to: string;
   gasLimit: number;
-  gasPrice: BigNumber;
 }
 
 export interface WalletSendTransactionArgs extends SendTransactionArgs {
+  gasPrice?: BigNumber;
   value?: BigNumber;
 }
 
 export interface OzSendTransactionArgs extends SendTransactionArgs {
+  gasPrice?: string;
   isPrivate?: boolean;
   value?: BigNumber;
 }

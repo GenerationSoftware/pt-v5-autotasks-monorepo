@@ -48,8 +48,6 @@ REWARD_RECIPIENT: Address of the contract/EOA account that will receive the prof
 
 RELAYS: {}
  - RELAY_CHAIN_ID: The network to relay the RNG to (ie. RNG starts on ETH mainnet, gets relayed to Optimism)
- - RELAY_RELAYER_API_KEY: The OpenZeppelin transaction relayer API key for the relay PrizePool chain
- - RELAY_RELAYER_API_SECRET: The OpenZeppelin transaction relayer API secret for the relay PrizePool chain
  - RELAY_JSON_RPC_URI: The Infura/Alchemy/etc JSON RPC URI for the relay PrizePool chain
 
 ```
