@@ -1,4 +1,4 @@
-import { ethers, Contract, BigNumber } from 'ethers';
+import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
@@ -28,7 +28,7 @@ interface SwapExactAmountOutParams {
   liquidationPairAddress: string;
   swapRecipient: string;
   amountOut: BigNumber;
-  amountInMin: BigNumber;
+  amountInMax: BigNumber;
   deadline: number;
 }
 
@@ -54,6 +54,7 @@ export async function liquidatorArbitrageSwap(
     chainId,
     ozRelayer,
     wallet,
+    signer,
     relayerAddress,
     readProvider,
     writeProvider,
@@ -146,7 +147,7 @@ export async function liquidatorArbitrageSwap(
       }
     };
 
-    const { amountIn, amountInMin, wantedAmountsIn } = await getAmountInValues();
+    const { amountIn, amountInMax, wantedAmountsIn } = await getAmountInValues();
 
     if (amountIn.eq(0)) {
       stats.push({
@@ -189,14 +190,14 @@ export async function liquidatorArbitrageSwap(
 
     // #4. Get allowance approval (necessary before upcoming static call)
     //
-    await approve(amountIn, liquidationRouterContract, writeProvider, relayerAddress, context);
+    await approve(amountIn, liquidationRouterContract, signer, relayerAddress, context);
 
     // #5. Find an estimated amount of gas cost
     const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
       amountOut: originalMaxAmountOut,
-      amountInMin,
+      amountInMax,
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
 
@@ -215,13 +216,13 @@ export async function liquidatorArbitrageSwap(
       console.log(chalk.yellow('Could not estimate gas costs!'));
       console.log(chalk.yellow('---'));
 
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error: `Could not get gas cost`,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
+      // stats.push({
+      //   pair,
+      //   estimatedProfitUsd: 0,
+      //   error: `Could not get gas cost`,
+      // });
+      // logNextPair(liquidationPair, liquidationPairContracts);
+      // continue;
     }
 
     // #6. Decide if profitable or not
@@ -259,7 +260,7 @@ export async function liquidatorArbitrageSwap(
         liquidationPairAddress: liquidationPair.address,
         swapRecipient,
         amountOut: wantedAmountsOut[selectedIndex],
-        amountInMin,
+        amountInMax,
         deadline: Math.floor(Date.now() / 1000) + 100,
       };
 
@@ -324,7 +325,7 @@ export async function liquidatorArbitrageSwap(
 const approve = async (
   amountIn: BigNumber,
   liquidationRouter: Contract,
-  writeProvider: Provider | DefenderRelaySigner,
+  signer: Signer | DefenderRelaySigner,
   relayerAddress: string,
   context: ArbLiquidatorContext,
 ) => {
@@ -333,7 +334,7 @@ const approve = async (
     console.log("Checking 'tokenIn' ERC20 allowance...");
 
     const tokenInAddress = context.tokenIn.address;
-    const token = new ethers.Contract(tokenInAddress, ERC20Abi, writeProvider);
+    const token = new ethers.Contract(tokenInAddress, ERC20Abi, signer);
 
     const allowance = context.relayer.tokenInAllowance;
 
@@ -547,6 +548,7 @@ const getGasCost = async (
   const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
   );
+
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
@@ -554,6 +556,7 @@ const getGasCost = async (
     readProvider,
     populatedTx.data,
   );
+
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${nativeTokenMarketRateUsd}`,
@@ -642,7 +645,7 @@ const calculateAmountIn = async (
   wantedAmountsOut: BigNumber[],
 ): Promise<{
   amountIn: BigNumber;
-  amountInMin: BigNumber;
+  amountInMax: BigNumber;
   wantedAmountsIn: BigNumber[];
 }> => {
   printSpacer();
@@ -654,12 +657,12 @@ const calculateAmountIn = async (
   );
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
-  const amountInMin = ethers.constants.MaxInt256;
+  const amountInMax = ethers.constants.MaxInt256;
 
   if (amountIn.eq(0)) {
     return {
       amountIn,
-      amountInMin,
+      amountInMax,
       wantedAmountsIn,
     };
   }
@@ -672,7 +675,7 @@ const calculateAmountIn = async (
 
   return {
     amountIn,
-    amountInMin,
+    amountInMax,
     wantedAmountsIn,
   };
 };

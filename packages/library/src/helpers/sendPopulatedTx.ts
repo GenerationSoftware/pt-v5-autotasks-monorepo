@@ -25,17 +25,17 @@ export const sendPopulatedTx = async (
     data: populatedTx.data,
     to: populatedTx.to,
     gasLimit,
-    gasPrice: gasPrice.add(ONE_GWEI).toString(),
+    gasPrice: BigNumber.from(gasPrice.add(ONE_GWEI).toString()),
   };
 
   let tx;
   if (rngOzRelayer) {
-    console.log(rngOzRelayer);
-    console.log(rngOzRelayer);
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
     };
+
+    // @ts-ignore
     tx = await rngOzRelayer.sendTransaction(args);
   } else if (rngWallet) {
     const args: WalletSendTransactionArgs = {

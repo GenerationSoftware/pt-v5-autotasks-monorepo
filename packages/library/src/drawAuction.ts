@@ -1,4 +1,4 @@
-import { ethers, BigNumber, Contract, PopulatedTransaction, Wallet } from 'ethers';
+import { ethers, BigNumber, Contract, PopulatedTransaction, Wallet, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
 import { formatUnits } from '@ethersproject/units';
@@ -28,6 +28,7 @@ import {
 } from './utils/getDrawAuctionContextMulticall';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
+import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 interface TransferFeeAndStartRngRequestTxParams {
   rewardRecipient: string;
@@ -316,7 +317,11 @@ export async function executeDrawAuctionTxs(
     console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
     printSpacer();
 
-    checkBalance(context);
+    const enoughBalance = checkBalance(context);
+    if (!enoughBalance) {
+      return;
+    }
+
     await increaseRngFeeAllowance(signer, rngRelayerAddress, context, rngAuctionContracts);
   }
 
@@ -390,7 +395,7 @@ const sendStartRngTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
 
   const gasLimit = 400000;
-  console.log(rngOzRelayer, rngWallet, populatedTx, gasLimit, gasPrice, params.useFlashbots);
+  // console.log(rngOzRelayer, rngWallet, populatedTx, gasLimit, gasPrice, params.useFlashbots);
   const tx = await sendPopulatedTx(
     rngOzRelayer,
     rngWallet,
@@ -445,7 +450,7 @@ const processRelayTransaction = async (
   }
 };
 
-const checkBalance = (context: DrawAuctionContext) => {
+const checkBalance = (context: DrawAuctionContext): boolean => {
   logBigNumber(
     `Relayer RNG Fee Token Balance:`,
     context.rngRelayer.rngFeeTokenBalance,
@@ -463,6 +468,8 @@ const checkBalance = (context: DrawAuctionContext) => {
         `Need to increase RNG L1 relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
       ),
     );
+
+    return false;
   } else {
     console.log(chalk.green('Sufficient balance ✔'));
 
@@ -472,6 +479,7 @@ const checkBalance = (context: DrawAuctionContext) => {
       `Estimate DrawAuction RNG requests left at current balance:`,
       estimateCount.toString(),
     );
+    return true;
   }
 };
 
@@ -915,10 +923,10 @@ const getRelayTxParams = async (
         gasPriceBid.toString(),
         deposit.toString(),
       );
-      gasLimit = gasLimit.mul(4);
-      maxSubmissionCost = maxSubmissionCost.mul(4);
-      gasPriceBid = gasPriceBid.mul(4);
-      deposit = deposit.mul(4);
+      // gasLimit = gasLimit.mul(2);
+      // maxSubmissionCost = maxSubmissionCost.mul(2);
+      // gasPriceBid = gasPriceBid.mul(2);
+      // deposit = deposit.mul(2);
       console.log(
         gasLimit.toString(),
         maxSubmissionCost.toString(),
@@ -1072,6 +1080,10 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
 
+  console.log('populatedTx');
+  console.log(populatedTx);
+  console.log('txParams');
+  console.log(txParams);
   const gasLimit = 550000;
   const tx = await sendPopulatedTx(
     rngOzRelayer,
@@ -1092,7 +1104,7 @@ const sendRelayTransaction = async (
 };
 
 const increaseRngFeeAllowance = async (
-  signer,
+  signer: DefenderRelaySigner | Signer,
   rngRelayerAddress: string,
   context: DrawAuctionContext,
   rngAuctionContracts: RngAuctionContracts,
@@ -1113,7 +1125,7 @@ const increaseRngFeeAllowance = async (
  * @returns {undefined} - void function
  */
 const approve = async (
-  signer,
+  signer: DefenderRelaySigner | Signer,
   rngRelayerAddress: string,
   rngAuctionContracts: RngAuctionContracts,
   context: DrawAuctionContext,
