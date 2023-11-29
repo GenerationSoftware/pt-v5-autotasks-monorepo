@@ -70,7 +70,7 @@ export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConf
    * (2) gasLimit: The L2 gas limit
    * (3) deposit: The total amount to deposit on L1 to cover L2 gas and L2 message value
    */
-  const { deposit, gasLimit, maxSubmissionCost } = await l1ToL2MessageGasEstimate.estimateAll(
+  let { deposit, gasLimit, maxSubmissionCost } = await l1ToL2MessageGasEstimate.estimateAll(
     {
       from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
       to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[chainId],
@@ -86,6 +86,11 @@ export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConf
   const gasPriceBid = await l2Provider.getGasPrice();
   printSpacer();
   console.log(chalk.yellow(`L2 gas price bid: ${gasPriceBid.toString()}`));
+  printSpacer();
+
+  gasLimit = gasLimit.mul(2);
+  printSpacer();
+  console.log(chalk.yellow(`L2 gas limit modified by 2x: ${gasLimit.toString()}`));
   printSpacer();
 
   return { deposit, gasLimit, maxSubmissionCost, gasPriceBid };
