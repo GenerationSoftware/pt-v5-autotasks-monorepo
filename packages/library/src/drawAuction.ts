@@ -359,6 +359,7 @@ export async function executeDrawAuctionTxs(
     for (const relay of relays) {
       if (relay.context.rngRelayIsAuctionOpen) {
         console.log(chalk.yellow(`Processing relay for ${chainName(relay.chainId)}:`));
+
         await processRelayTransaction(
           rngWallet,
           rngOzRelayer,
@@ -419,6 +420,19 @@ const sendStartRngTransaction = async (
   printNote();
 };
 
+const recentRelayExists = async (
+  rngReadProvider: Provider,
+  contract: Contract,
+): Promise<boolean> => {
+  const latestBlockNumber = await rngReadProvider.getBlockNumber();
+
+  let filter = contract.filters.RelayedToDispatcher();
+  let events = await contract.queryFilter(filter);
+  // 100 blocks is about 25 minutes worth of events
+  events = events.filter((event) => event.blockNumber > latestBlockNumber - 100);
+  return events.length > 0;
+};
+
 const processRelayTransaction = async (
   rngWallet: Wallet,
   rngOzRelayer: Relayer,
@@ -428,12 +442,23 @@ const processRelayTransaction = async (
   context: DrawAuctionContext,
 ) => {
   const { chainId } = relay;
+  const { rngReadProvider } = params;
 
   const contract = findRngAuctionRelayerRemoteOwnerContract(chainId, rngAuctionContracts);
 
+  // #1. Check to see if a recent relay has been sent
+  const relayExists = recentRelayExists(rngReadProvider, contract);
+  if (relayExists) {
+    console.log(chalk.dim(`Found a recent 'RelayedToDispatcher' event, skipping ...`));
+    return;
+  } else {
+    // console.log(`Did not find a recent 'RelayedToDispatcher' event, continuing ...`);
+  }
+
+  // #2. Collect the transaction parameters
   const txParams = await getRelayTxParams(relay, params, context);
 
-  // #5. Get gas cost
+  // #3. Get gas cost
   const gasCostUsd = await getRelayGasCost(txParams, relay, contract, context);
   if (gasCostUsd === 0) {
     printAsterisks();
@@ -441,14 +466,14 @@ const processRelayTransaction = async (
     return;
   }
 
-  // #6. Decide if profitable or not
+  // #4. Decide if profitable or not
   const profitable = await calculateRelayProfit(
     params,
     relay.context.rngRelayExpectedRewardUsd,
     gasCostUsd,
   );
 
-  // #7. Send transaction
+  // #5. Send transaction
   if (profitable) {
     await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, relay, contract, context);
   } else {
