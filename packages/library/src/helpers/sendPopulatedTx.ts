@@ -37,9 +37,9 @@ export const sendPopulatedTx = async (
       gasPrice: gasPriceStr,
     };
 
-    // if (txParams && txParams.value) {
-    //   args.value = txParams.value;
-    // }
+    if (txParams && txParams.value) {
+      args.value = txParams.value.toString();
+    }
 
     // @ts-ignore
     tx = await rngOzRelayer.sendTransaction(args);

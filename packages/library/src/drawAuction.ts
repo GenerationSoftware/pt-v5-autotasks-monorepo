@@ -917,25 +917,6 @@ const getRelayTxParams = async (
         params,
       );
 
-      console.log('gasLimit, maxSubmissionCost, gasPriceBid, deposit');
-      console.log(gasLimit, maxSubmissionCost, gasPriceBid, deposit);
-      console.log(
-        gasLimit.toString(),
-        maxSubmissionCost.toString(),
-        gasPriceBid.toString(),
-        deposit.toString(),
-      );
-      // gasLimit = gasLimit.mul(2);
-      // maxSubmissionCost = maxSubmissionCost.mul(2);
-      // gasPriceBid = gasPriceBid.mul(2);
-      // deposit = deposit.mul(2);
-      console.log(
-        gasLimit.toString(),
-        maxSubmissionCost.toString(),
-        gasPriceBid.toString(),
-        deposit.toString(),
-      );
-
       txParams = buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams(
         ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
         relay.chainId,
