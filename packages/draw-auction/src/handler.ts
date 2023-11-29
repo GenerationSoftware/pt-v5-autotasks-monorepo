@@ -36,5 +36,5 @@ export async function handler(event: RelayerParams) {
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
 
-  await executeTransactions(drawAuctionConfigParams, BUILD_RELAYS);
+  await executeTransactions(drawAuctionConfigParams, JSON.parse(BUILD_RELAYS));
 }
