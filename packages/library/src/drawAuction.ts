@@ -430,6 +430,7 @@ const recentRelayExists = async (
   let events = await contract.queryFilter(filter);
   // 100 blocks is about 25 minutes worth of events
   events = events.filter((event) => event.blockNumber > latestBlockNumber - 100);
+
   return events.length > 0;
 };
 
@@ -447,7 +448,7 @@ const processRelayTransaction = async (
   const contract = findRngAuctionRelayerRemoteOwnerContract(chainId, rngAuctionContracts);
 
   // #1. Check to see if a recent relay has been sent
-  const relayExists = recentRelayExists(rngReadProvider, contract);
+  const relayExists = await recentRelayExists(rngReadProvider, contract);
   if (relayExists) {
     console.log(chalk.dim(`Found a recent 'RelayedToDispatcher' event, skipping ...`));
     return;
@@ -1094,10 +1095,6 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
 
-  console.log('populatedTx');
-  console.log(populatedTx);
-  console.log('txParams');
-  console.log(txParams);
   const gasLimit = 550000;
   const tx = await sendPopulatedTx(
     rngOzRelayer,
