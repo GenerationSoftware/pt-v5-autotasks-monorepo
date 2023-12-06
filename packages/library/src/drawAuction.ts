@@ -476,7 +476,7 @@ const processRelayTransaction = async (
 
   // #5. Send transaction
   if (profitable) {
-    await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, relay, contract, context);
+    await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, relay, contract, context, params);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -1065,9 +1065,8 @@ const sendRelayTransaction = async (
   relay: Relay,
   contract: Contract,
   context: DrawAuctionContext,
+  params: DrawAuctionConfigParams,
 ) => {
-  const { readProvider } = relay;
-
   console.log(chalk.yellow(`Relay Transaction:`));
 
   // const isPrivate = canUseIsPrivate(chainId, params.useFlashbots);
@@ -1075,7 +1074,8 @@ const sendRelayTransaction = async (
   console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
   printSpacer();
 
-  const { gasPrice } = await getGasPrice(readProvider);
+  const { gasPrice } = await getGasPrice(params.rngReadProvider);
+
   console.log(chalk.green(`Execute RngAuctionRelayerRemoteOwner*#relay`));
   console.log(chalk.greenBright.bold(`Sending ...`));
   printSpacer();
