@@ -216,6 +216,9 @@ export async function liquidatorArbitrageSwap(
       // console.log(chalk.yellow('Could not estimate gas costs!'));
       // console.log(chalk.yellow('---'));
 
+      // TODO: Will need to use `callStatic` on Arbitrum to ensure a tx
+      // will go through prior to sending if gas estimations always fail
+      // on that network
       stats.push({
         pair,
         estimatedProfitUsd: 0,
