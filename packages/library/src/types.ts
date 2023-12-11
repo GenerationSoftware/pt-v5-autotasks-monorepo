@@ -1,7 +1,8 @@
-import { Contract, BigNumber } from 'ethers';
+import { Contract, BigNumber, Wallet, Signer } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
+import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
@@ -46,8 +47,13 @@ export interface ClaimPrizeContext {
   };
 }
 
-export interface ExecuteClaimerProfitablePrizeTxsParams {
+export interface PrizeClaimerConfigParams {
   chainId: number;
+  readProvider: BaseProvider;
+  wallet: Wallet;
+  ozRelayer: Relayer;
+  relayerAddress: string;
+  signer: DefenderRelaySigner | Signer;
   feeRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -58,8 +64,11 @@ export interface ArbLiquidatorConfigParams {
   chainId: number;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
-  swapRecipient: string;
+  wallet: Wallet;
+  ozRelayer: Relayer;
   relayerAddress: string;
+  signer: DefenderRelaySigner | Signer;
+  swapRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
   covalentApiKey?: string;
@@ -86,12 +95,11 @@ export interface WithdrawClaimRewardsContext {
 
 export interface DrawAuctionConfigParams {
   rngChainId: number;
-  relayChainId: number;
   rngReadProvider: BaseProvider;
-  relayReadProvider: BaseProvider;
-  rngWriteProvider: Provider | DefenderRelaySigner;
-  relayWriteProvider: Provider | DefenderRelaySigner;
-  relayerAddress: string;
+  rngWallet: Wallet;
+  rngOzRelayer: Relayer;
+  rngRelayerAddress: string;
+  signer: DefenderRelaySigner | Signer;
   rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
@@ -105,34 +113,75 @@ export interface RngDrawAuctionContext {
   rngFeeUsd: number;
   rngIsAuctionOpen: boolean;
   rngIsRngComplete: boolean;
-  rngExpectedReward: number;
-  relayer: DrawAuctionRelayerContext;
+  rngCurrentFractionalRewardString: string;
+  rngRelayer: DrawAuctionRelayerContext;
+}
+
+export interface DrawAuctionContext extends RngDrawAuctionContext {
+  rngNativeTokenMarketRateUsd: number;
+  relays: Relay[];
+  drawAuctionState?: DrawAuctionState;
+  rngExpectedRewardTotal?: BigNumber; // sum of all rewards from all prize pools
+  rngExpectedRewardTotalUsd?: number; // sum of all rewards from all prize pools in USD
+}
+
+export interface RngResults {
+  randomNumber: BigNumber;
+  rngCompletedAt: number;
+}
+
+export interface AuctionResult {
+  recipient: string;
+  rewardFraction: number;
 }
 
 export interface RelayDrawAuctionContext {
-  prizePoolOpenDrawEndsAt: number;
+  prizePoolDrawClosesAt: number;
+  rngResults: RngResults;
+  rngLastAuctionResult: AuctionResult;
+  rngExpectedReward: number; // why is this a number and not a BigNumber like `rngRelayExpectedReward` or `rngExpectedReward`?
+  rngExpectedRewardUsd: number;
   rewardToken: TokenWithRate;
   rngRelayIsAuctionOpen: boolean;
   rngRelayExpectedReward: BigNumber;
   rngRelayExpectedRewardUsd: number;
   rngRelayLastSequenceId: number;
+  nativeTokenMarketRateUsd?: number;
 }
 
-export interface DrawAuctionContext extends RngDrawAuctionContext, RelayDrawAuctionContext {
-  rngNativeTokenMarketRateUsd: number;
-  relayNativeTokenMarketRateUsd: number;
-  drawAuctionState?: DrawAuctionState;
-  rngExpectedRewardUsd?: number;
+export interface RelayConfig {
+  RELAY_CHAIN_ID: string;
+  RELAY_JSON_RPC_URI: string;
 }
 
-export interface AuctionContracts {
-  prizePoolContract: Contract;
+export interface Relay {
+  chainId: number;
+  contractsBlob: ContractsBlob;
+  // relayerAddress: string;
+  readProvider: BaseProvider;
+  writeProvider: Provider | DefenderRelaySigner;
+  contracts?: RelayAuctionContracts;
+  context?: RelayDrawAuctionContext;
+}
+
+export interface RelayerAccount {
+  signer: DefenderRelaySigner | Signer;
+  relayerAddress: string;
+  ozRelayer: Relayer;
+  wallet: Wallet;
+}
+
+export interface RngAuctionContracts {
   chainlinkVRFV2DirectRngAuctionHelperContract: Contract;
-  remoteOwnerContract: Contract;
   rngAuctionContract: Contract;
-  rngRelayAuctionContract: Contract;
-  rngAuctionRelayerRemoteOwnerContract: Contract;
+  rngAuctionRelayerRemoteOwnerContracts: Contract[];
   rngAuctionRelayerDirect?: Contract;
+}
+
+export interface RelayAuctionContracts {
+  prizePoolContract: Contract;
+  remoteOwnerContract: Contract;
+  rngRelayAuctionContract: Contract;
 }
 
 export interface VaultWithContext {
@@ -140,4 +189,30 @@ export interface VaultWithContext {
   vaultContract: Contract;
   liquidationPair?: string;
   asset?: string;
+}
+
+export interface YieldVaultMintRateConfigParams {
+  chainId: number;
+  wallet: Wallet;
+  ozRelayer: Relayer;
+  readProvider: BaseProvider;
+  relayerAddress: string;
+  signer: DefenderRelaySigner | Signer;
+}
+
+export interface SendTransactionArgs {
+  data: string;
+  to: string;
+  gasLimit: number;
+}
+
+export interface WalletSendTransactionArgs extends SendTransactionArgs {
+  gasPrice?: BigNumber;
+  value?: BigNumber;
+}
+
+export interface OzSendTransactionArgs extends SendTransactionArgs {
+  gasPrice?: string;
+  isPrivate?: boolean;
+  value?: BigNumber;
 }

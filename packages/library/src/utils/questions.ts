@@ -3,6 +3,7 @@ import Configstore from 'configstore';
 import inquirer, { DistinctQuestion } from 'inquirer';
 
 import { CHAIN_IDS } from './network';
+import { migrateOldRelayEntry, startManageRelays } from './relayConfig';
 
 export type CHAIN_CONFIG = {
   CHAIN_ID: number; // stores last-selected chain ID
@@ -19,6 +20,7 @@ export type NETWORK_CONFIG = {
   RELAYER_API_SECRET: string;
   JSON_RPC_URI: string;
   USE_FLASHBOTS: boolean;
+  CUSTOM_RELAYER_PRIVATE_KEY?: string;
   COVALENT_API_KEY?: string;
 };
 
@@ -36,8 +38,12 @@ export async function askChainId(config: Configstore) {
       ...(previousNetworkName ? [`Last Used (${previousNetworkName})`] : []),
       'Mainnet',
       'Optimism',
+      'Arbitrum',
+      'Arbitrum Sepolia',
+      'Arbitrum Goerli',
       'Goerli',
       'Sepolia',
+      'Optimism Sepolia',
       'Optimism Goerli',
     ],
     filter(val: string) {
@@ -52,33 +58,34 @@ export async function askChainId(config: Configstore) {
   return CHAIN_ID;
 }
 
-const GLOBAL_CONFIG_QUESTIONS: { [key in keyof GLOBAL_CONFIG]: DistinctQuestion & { name: key } } =
-  {
-    DEFENDER_TEAM_API_KEY: {
-      name: 'DEFENDER_TEAM_API_KEY',
-      type: 'password',
-      message: chalk.green('Enter your OpenZeppelin Defender Team API Key:'),
-      validate: function (value) {
-        if (value.length) {
-          return true;
-        } else {
-          return 'Please enter your OpenZeppelin Defender Team API Key.';
-        }
-      },
+const GLOBAL_CONFIG_QUESTIONS: {
+  [key in keyof GLOBAL_CONFIG]: DistinctQuestion & { name: key };
+} = {
+  DEFENDER_TEAM_API_KEY: {
+    name: 'DEFENDER_TEAM_API_KEY',
+    type: 'password',
+    message: chalk.green('Enter your OpenZeppelin Defender Team API Key:'),
+    validate: function(value) {
+      if (value.length) {
+        return true;
+      } else {
+        return 'Please enter your OpenZeppelin Defender Team API Key.';
+      }
     },
-    DEFENDER_TEAM_SECRET_KEY: {
-      name: 'DEFENDER_TEAM_SECRET_KEY',
-      type: 'password',
-      message: chalk.green('Enter your OpenZeppelin Defender Team Secret Key:'),
-      validate: function (value) {
-        if (value.length) {
-          return true;
-        } else {
-          return 'Please enter your OpenZeppelin Defender Team Secret Key.';
-        }
-      },
+  },
+  DEFENDER_TEAM_SECRET_KEY: {
+    name: 'DEFENDER_TEAM_SECRET_KEY',
+    type: 'password',
+    message: chalk.green('Enter your OpenZeppelin Defender Team Secret Key:'),
+    validate: function(value) {
+      if (value.length) {
+        return true;
+      } else {
+        return 'Please enter your OpenZeppelin Defender Team Secret Key.';
+      }
     },
-  };
+  },
+};
 
 /* These will be prefixed in the config with `${CHAIN_ID}.` before the key name. */
 export const NETWORK_CONFIG_QUESTIONS: {
@@ -88,7 +95,7 @@ export const NETWORK_CONFIG_QUESTIONS: {
     name: 'AUTOTASK_ID',
     type: 'input',
     message: chalk.green('Enter your OpenZeppelin Defender Autotask ID:'),
-    validate: function (value) {
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
@@ -100,7 +107,7 @@ export const NETWORK_CONFIG_QUESTIONS: {
     name: 'RELAYER_API_KEY',
     type: 'password',
     message: chalk.green('Enter your OpenZeppelin Defender Relayer API Key:'),
-    validate: function (value) {
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
@@ -112,7 +119,7 @@ export const NETWORK_CONFIG_QUESTIONS: {
     name: 'RELAYER_API_SECRET',
     type: 'password',
     message: chalk.green('Enter your OpenZeppelin Defender Relayer API Secret:'),
-    validate: function (value) {
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
@@ -124,13 +131,18 @@ export const NETWORK_CONFIG_QUESTIONS: {
     name: 'JSON_RPC_URI',
     type: 'password',
     message: chalk.green('Enter your JSON RPC URI:'),
-    validate: function (value) {
+    validate: function(value) {
       if (value.length) {
         return true;
       } else {
         return 'Please enter your JSON RPC URI.';
       }
     },
+  },
+  CUSTOM_RELAYER_PRIVATE_KEY: {
+    name: 'CUSTOM_RELAYER_PRIVATE_KEY',
+    type: 'password',
+    message: chalk.green('(Optional) Enter your own EOA private key for relaying transactions:'),
   },
   COVALENT_API_KEY: {
     name: 'COVALENT_API_KEY',
@@ -170,7 +182,7 @@ export const configHasKeys = (config: Configstore | Record<string, any>, keys: s
  */
 export const populateConfig = async <
   G extends Record<string, any> = {},
-  N extends Record<string, any> = {},
+  N extends Record<string, any> = {}
 >(
   config: Configstore,
   {
@@ -179,9 +191,12 @@ export const populateConfig = async <
     extraConfig?: {
       global?: DistinctQuestion[];
       network?: DistinctQuestion[];
+      relay?: DistinctQuestion[];
     };
   } = {},
-): Promise<CHAIN_CONFIG & GLOBAL_CONFIG & NETWORK_CONFIG & G & N> => {
+  // TODO: bring this back:
+  // ): Promise<CHAIN_CONFIG & GLOBAL_CONFIG & NETWORK_CONFIG & G & N> => {
+) => {
   const globalQuestions = [
     ...Object.values(GLOBAL_CONFIG_QUESTIONS),
     ...(extraConfig?.global ?? []),
@@ -190,10 +205,13 @@ export const populateConfig = async <
     ...Object.values(NETWORK_CONFIG_QUESTIONS),
     ...(extraConfig?.network ?? []),
   ];
+  const relayQuestions = [...(extraConfig?.relay ?? [])];
   const globalKeys = globalQuestions.map((x) => x.name);
   const networkKeys = networkQuestions.map((x) => x.name);
+  const relayKeys = relayQuestions.map((x) => x.name);
   let globalAnswers = {};
   let networkAnswers = {};
+  let relayAnswers = {};
 
   // Ask for chain info:
   const CHAIN_ID = await askChainId(config);
@@ -248,16 +266,50 @@ export const populateConfig = async <
     );
   }
 
+  // DRAW AUCTION BOT-specific
+  let manageRelayConfig = false;
+  if (relayKeys.length > 0) {
+    // for backwards-compat:
+    migrateOldRelayEntry(CHAIN_ID, config);
+
+    const { MANAGE_RELAY_CONFIG } = await inquirer.prompt({
+      name: 'MANAGE_RELAY_CONFIG',
+      type: 'list',
+      message: chalk.green(
+        'Do you want to manage L2 relay configs (L2s where the RngRelayAuction and PrizePool contracts live)?',
+      ),
+      choices: ['No', 'Yes'],
+      filter(val: string) {
+        return val.toLowerCase().startsWith('y');
+      },
+    });
+    manageRelayConfig = MANAGE_RELAY_CONFIG;
+  }
+
+  // Ask draw auction bot specific L2-relay questions:
+  if (manageRelayConfig) {
+    await startManageRelays(CHAIN_ID, config, relayQuestions);
+  }
+
+  //
   // Set config:
+  //
   let flattenedConfig = { CHAIN_ID };
+
+  // - Global:
   for (const [key, value] of Object.entries(globalAnswers)) {
     config.set(key, value);
     flattenedConfig[key] = value;
   }
+
+  // - Network:
   for (const [key, value] of Object.entries(networkAnswers)) {
     config.set(`${CHAIN_ID}.${key}`, value);
     flattenedConfig[key] = value;
   }
+
+  // - Relays:
+  flattenedConfig['RELAYS'] = config.get(`${CHAIN_ID}.RELAYS`);
 
   // Return flattened config:
   return flattenedConfig as any;
@@ -265,7 +317,7 @@ export const populateConfig = async <
 
 export function camelize(str) {
   return str
-    .replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+    .replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
       return index === 0 ? word.toLowerCase() : word.toUpperCase();
     })
     .replace(/\s+/g, '');

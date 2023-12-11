@@ -2,7 +2,7 @@ import { ethers, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import chalk from 'chalk';
 
-import { NETWORK_NATIVE_TOKEN_INFO } from './network';
+import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './network';
 import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
@@ -29,12 +29,13 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
-  1: 1,
-  5: 0.2, // goerli, our estimates will say $6 for 2,300,000 gas limit but etherscan reports fractions of a penny
-  10: 1, // optimism
-  420: 1, // opt goerli
-  11155111: 0.01, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
-  80001: 24, // mumbai seems to return a much cheaper gas price then it bills you for
+  [CHAIN_IDS.mainnet]: 1,
+  [CHAIN_IDS.goerli]: 0.2, // our estimates will say $6 for 2,300,000 gas limit but etherscan reports fractions of a penny
+  [CHAIN_IDS.optimism]: 1,
+  [CHAIN_IDS.optimismGoerli]: 1,
+  [CHAIN_IDS.sepolia]: 0.1, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
+  [CHAIN_IDS.arbitrum]: 1,
+  [CHAIN_IDS.arbitrumSepolia]: 1
 };
 
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
@@ -105,12 +106,15 @@ export const getFeesUsd = async (
 
   const l1GasFeeWei = await getL1GasFee(chainId, provider, txData);
 
-  const chainMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
+  let chainGasPriceMultiplier = 1
+  if (CHAIN_GAS_PRICE_MULTIPLIERS[chainId]) {
+    chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
+  }
 
   const avgFeeUsd =
     parseFloat(ethers.utils.formatEther(baseFeeWei.add(l1GasFeeWei))) *
     gasTokenMarketRateUsd *
-    chainMultiplier;
+    chainGasPriceMultiplier;
 
   return { avgFeeUsd };
 };
@@ -239,7 +243,7 @@ const getL1GasFee = async (
   provider: Provider,
   txData: any,
 ): Promise<BigNumber> => {
-  if (chainId === 10) {
+  if (chainId === CHAIN_IDS.optimism) {
     if (!txData) {
       console.error(chalk.red('txData not provided to `getL1GasFee`, required on Optimism'));
     }

@@ -30,16 +30,17 @@
     "url": "https://github.com/generationsoftware/pt-v5-autotasks/issues"
   },
   "dependencies": {
+    "@arbitrum/sdk": "^3.1.13",
     "chalk": "^4.1.2",
     "defender-relay-client": "1.39.0",
     "ethers": "5.7.2",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
-    "inquirer": "^9.2.6",
+    "inquirer": "^9.2.11",
     "tsc-watch": "^6.0.4"
   },
   "devDependencies": {
-    "@types/inquirer": "^9.0.3",
+    "@types/inquirer": "^9.0.6",
     "typescript": "4.8.4"
   }
 }

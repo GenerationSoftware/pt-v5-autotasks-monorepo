@@ -1,8 +1,8 @@
-export { executeClaimerProfitablePrizeTxs } from './claimerProfitablePrizeTxs';
+export { runPrizeClaimer } from './runPrizeClaimer';
 export { liquidatorArbitrageSwap } from './liquidatorArbitrageSwap';
-export { yieldVaultHandleMintRate } from './yieldVaultHandleMintRate';
+export { runYieldVaultHandleMintRate } from './runYieldVaultHandleMintRate';
 export { getWithdrawClaimRewardsTx } from './withdrawClaimRewards';
-export { prepareDrawAuctionTxs } from './drawAuction';
+export { executeDrawAuctionTxs } from './drawAuction';
 
 export * from './abis';
 export * from './types';
