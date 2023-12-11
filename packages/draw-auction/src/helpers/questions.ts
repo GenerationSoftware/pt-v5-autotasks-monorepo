@@ -1,64 +1,25 @@
 import chalk from 'chalk';
 import { DistinctQuestion } from 'inquirer';
 
-import { camelize, CHAIN_IDS, populateConfig } from '@generationsoftware/pt-v5-autotasks-library';
+import {
+  camelize,
+  CHAINS_BY_ID,
+  CHAIN_IDS,
+  populateConfig,
+} from '@generationsoftware/pt-v5-autotasks-library';
 import Configstore from 'configstore';
 
-interface PACKAGE_CONFIG {
+interface RELAY_CONFIG {
   RELAY_CHAIN_ID: number;
-  RELAY_RELAYER_API_KEY: string;
-  RELAY_RELAYER_API_SECRET: string;
   RELAY_JSON_RPC_URI: string;
+}
+
+interface PACKAGE_CONFIG {
   REWARD_RECIPIENT: string;
   MIN_PROFIT_THRESHOLD_USD: string;
 }
 
 const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { name: key } } = {
-  RELAY_CHAIN_ID: {
-    name: 'RELAY_CHAIN_ID',
-    type: 'list',
-    message: chalk.green('Which network are the RngRelayAuction and PrizePool contracts on?'),
-    choices: ['Mainnet', 'Optimism', 'Goerli', 'Sepolia', 'Optimism Goerli'],
-    filter(val: string) {
-      return CHAIN_IDS[camelize(val)];
-    },
-  },
-  RELAY_RELAYER_API_KEY: {
-    name: 'RELAY_RELAYER_API_KEY',
-    type: 'password',
-    message: chalk.green(`Enter the relay chain's OZ Defender Relayer API key:`),
-    validate: function (value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the relay chain's OZ Defender Relayer API key:";
-      }
-    },
-  },
-  RELAY_RELAYER_API_SECRET: {
-    name: 'RELAY_RELAYER_API_SECRET',
-    type: 'password',
-    message: chalk.green(`Enter the relay chain's OZ Defender Relayer API secret:`),
-    validate: function (value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the relay chain's OZ Defender Relayer API secret:";
-      }
-    },
-  },
-  RELAY_JSON_RPC_URI: {
-    name: 'RELAY_JSON_RPC_URI',
-    type: 'password',
-    message: chalk.green(`Enter the relay chain's JSON RPC read provider URI:`),
-    validate: function (value) {
-      if (value.length) {
-        return true;
-      } else {
-        return "Please enter the relay chain's JSON RPC read provider URI:";
-      }
-    },
-  },
   REWARD_RECIPIENT: {
     name: 'REWARD_RECIPIENT',
     type: 'input',
@@ -90,17 +51,35 @@ const PACKAGE_QUESTIONS: { [key in keyof PACKAGE_CONFIG]: DistinctQuestion & { n
   },
 };
 
+export const RELAY_QUESTIONS: { [key in keyof RELAY_CONFIG]: DistinctQuestion & { name: key } } = {
+  RELAY_CHAIN_ID: {
+    name: 'RELAY_CHAIN_ID',
+    type: 'list',
+    message: chalk.green('Which network to add L2 relayer config for?'),
+    choices: Object.values(CHAINS_BY_ID),
+    filter(val: string) {
+      return camelize(val.match(/.*(?= - )/)[0].trim()); // chars before first hypen
+    },
+  },
+  RELAY_JSON_RPC_URI: {
+    name: 'RELAY_JSON_RPC_URI',
+    type: 'password',
+    message: chalk.green(`Enter this relay chain's JSON RPC read provider URI:`),
+    validate: function (value) {
+      if (value.length) {
+        return true;
+      } else {
+        return "Please enter the new relay chain's JSON RPC read provider URI:";
+      }
+    },
+  },
+};
+
 export const askQuestions = (config: Configstore) => {
-  return populateConfig<{}, PACKAGE_CONFIG>(config, {
+  return populateConfig<{}, PACKAGE_CONFIG | RELAY_CONFIG>(config, {
     extraConfig: {
-      network: [
-        PACKAGE_QUESTIONS.RELAY_CHAIN_ID,
-        PACKAGE_QUESTIONS.RELAY_RELAYER_API_KEY,
-        PACKAGE_QUESTIONS.RELAY_RELAYER_API_SECRET,
-        PACKAGE_QUESTIONS.RELAY_JSON_RPC_URI,
-        PACKAGE_QUESTIONS.REWARD_RECIPIENT,
-        PACKAGE_QUESTIONS.MIN_PROFIT_THRESHOLD_USD,
-      ],
+      network: [PACKAGE_QUESTIONS.REWARD_RECIPIENT, PACKAGE_QUESTIONS.MIN_PROFIT_THRESHOLD_USD],
+      relay: [RELAY_QUESTIONS.RELAY_CHAIN_ID, RELAY_QUESTIONS.RELAY_JSON_RPC_URI],
     },
   });
 };

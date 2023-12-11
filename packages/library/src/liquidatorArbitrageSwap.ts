@@ -1,12 +1,11 @@
-import { ethers, Contract, BigNumber } from 'ethers';
+import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { Relayer } from 'defender-relay-client';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ArbLiquidatorConfigParams, ArbLiquidatorContext, VaultWithContext } from './types';
+import { ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
 import {
   logTable,
   logStringValue,
@@ -19,15 +18,17 @@ import {
   getArbLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
   getLiquidationPairComputeExactAmountInMulticall,
+  getGasPrice,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
-import { canUseIsPrivate, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface SwapExactAmountOutParams {
   liquidationPairAddress: string;
   swapRecipient: string;
   amountOut: BigNumber;
-  amountInMin: BigNumber;
+  amountInMax: BigNumber;
   deadline: number;
 }
 
@@ -41,25 +42,26 @@ interface Stat {
 /**
  * Iterates through all LiquidationPairs to see if there is any profitable arb opportunities
  *
- * Curently this does not return PopulatedTransactions like the other bots as
- * we want to send each swap transaction the instant we know if it is profitable
- * or not as we iterate through all LiquidityPairs.
+ * Curently this sends each swap transaction the instant we know if it is profitable
+ * or not as we iterate through all LiquidityPairs
  * @returns {undefined} - void function
  */
 export async function liquidatorArbitrageSwap(
   contracts: ContractsBlob,
-  relayer: Relayer,
-  params: ArbLiquidatorConfigParams,
-) {
+  arbLiquidatorConfigParams: ArbLiquidatorConfigParams,
+): Promise<void> {
   const {
     chainId,
+    ozRelayer,
+    wallet,
+    signer,
     relayerAddress,
     readProvider,
     writeProvider,
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
-  } = params;
+  } = arbLiquidatorConfigParams;
 
   // #1. Get contracts
   //
@@ -68,7 +70,7 @@ export async function liquidatorArbitrageSwap(
 
   const { liquidationRouterContract, liquidationPairContracts } = await getLiquidationContracts(
     contracts,
-    params,
+    arbLiquidatorConfigParams,
   );
 
   printSpacer();
@@ -145,7 +147,7 @@ export async function liquidatorArbitrageSwap(
       }
     };
 
-    const { amountIn, amountInMin, wantedAmountsIn } = await getAmountInValues();
+    const { amountIn, amountInMax, wantedAmountsIn } = await getAmountInValues();
 
     if (amountIn.eq(0)) {
       stats.push({
@@ -188,14 +190,14 @@ export async function liquidatorArbitrageSwap(
 
     // #4. Get allowance approval (necessary before upcoming static call)
     //
-    await approve(amountIn, liquidationRouterContract, writeProvider, relayerAddress, context);
+    await approve(amountIn, liquidationRouterContract, signer, relayerAddress, context);
 
     // #5. Find an estimated amount of gas cost
     const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
       amountOut: originalMaxAmountOut,
-      amountInMin,
+      amountInMax,
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
 
@@ -210,10 +212,13 @@ export async function liquidatorArbitrageSwap(
     } catch (e) {
       console.error(chalk.red(e));
 
-      console.log(chalk.yellow('---'));
-      console.log(chalk.yellow('Could not estimate gas costs!'));
-      console.log(chalk.yellow('---'));
+      // console.log(chalk.yellow('---'));
+      // console.log(chalk.yellow('Could not estimate gas costs!'));
+      // console.log(chalk.yellow('---'));
 
+      // TODO: Will need to use `callStatic` on Arbitrum to ensure a tx
+      // will go through prior to sending if gas estimations always fail
+      // on that network
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -248,7 +253,7 @@ export async function liquidatorArbitrageSwap(
 
     // #7. Finally, populate tx when profitable
     try {
-      let transactionPopulated: PopulatedTransaction | undefined;
+      let populatedTx: PopulatedTransaction | undefined;
       console.log(chalk.blue('6. Populating swap transaction ...'));
       printSpacer();
 
@@ -258,30 +263,38 @@ export async function liquidatorArbitrageSwap(
         liquidationPairAddress: liquidationPair.address,
         swapRecipient,
         amountOut: wantedAmountsOut[selectedIndex],
-        amountInMin,
+        amountInMax,
         deadline: Math.floor(Date.now() / 1000) + 100,
       };
 
-      transactionPopulated = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
+      populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
         ...Object.values(swapExactAmountOutParams),
       );
 
-      const isPrivate = canUseIsPrivate(chainId, useFlashbots);
-      console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
+      const gasLimit = 1000000;
+      const { gasPrice } = await getGasPrice(readProvider);
+      const tx = await sendPopulatedTx(
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
 
-      let transactionSentToNetwork = await relayer.sendTransaction({
-        isPrivate,
-        data: transactionPopulated.data,
-        to: transactionPopulated.to,
-        gasLimit: 1000000,
-      });
+      // let transactionSentToNetwork = await ozRelayer.sendTransaction({
+      //   isPrivate,
+      //   data: populatedTx.data,
+      //   to: populatedTx.to,
+      //   gasLimit: 1000000,
+      // });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', transactionSentToNetwork.hash));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
       stats.push({
         pair,
         estimatedProfitUsd,
-        txHash: transactionSentToNetwork.hash,
+        txHash: tx.hash,
       });
     } catch (error) {
       stats.push({
@@ -315,7 +328,7 @@ export async function liquidatorArbitrageSwap(
 const approve = async (
   amountIn: BigNumber,
   liquidationRouter: Contract,
-  writeProvider: Provider | DefenderRelaySigner,
+  signer: Signer | DefenderRelaySigner,
   relayerAddress: string,
   context: ArbLiquidatorContext,
 ) => {
@@ -324,7 +337,7 @@ const approve = async (
     console.log("Checking 'tokenIn' ERC20 allowance...");
 
     const tokenInAddress = context.tokenIn.address;
-    const token = new ethers.Contract(tokenInAddress, ERC20Abi, writeProvider);
+    const token = new ethers.Contract(tokenInAddress, ERC20Abi, signer);
 
     const allowance = context.relayer.tokenInAllowance;
 
@@ -334,8 +347,15 @@ const approve = async (
           `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum ...`,
         ),
       );
+      console.log(liquidationRouter.address);
 
+      console.log('signer');
+      console.log(signer);
       const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
+      console.log('tx');
+      console.log(tx);
+      console.log('txhash');
+      console.log(tx.hash);
       await tx.wait();
 
       const newAllowanceResult = await token.functions.allowance(
@@ -538,6 +558,7 @@ const getGasCost = async (
   const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
   );
+
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
@@ -545,6 +566,7 @@ const getGasCost = async (
     readProvider,
     populatedTx.data,
   );
+
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${nativeTokenMarketRateUsd}`,
@@ -633,7 +655,7 @@ const calculateAmountIn = async (
   wantedAmountsOut: BigNumber[],
 ): Promise<{
   amountIn: BigNumber;
-  amountInMin: BigNumber;
+  amountInMax: BigNumber;
   wantedAmountsIn: BigNumber[];
 }> => {
   printSpacer();
@@ -645,12 +667,12 @@ const calculateAmountIn = async (
   );
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
-  const amountInMin = ethers.constants.MaxInt256;
+  const amountInMax = ethers.constants.MaxInt256;
 
   if (amountIn.eq(0)) {
     return {
       amountIn,
-      amountInMin,
+      amountInMax,
       wantedAmountsIn,
     };
   }
@@ -663,7 +685,7 @@ const calculateAmountIn = async (
 
   return {
     amountIn,
-    amountInMin,
+    amountInMax,
     wantedAmountsIn,
   };
 };

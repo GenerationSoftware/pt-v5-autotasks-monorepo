@@ -8,17 +8,19 @@ import {
   getContract,
   flagClaimedRpc,
 } from '@generationsoftware/pt-v5-utils-js';
-import { Relayer } from 'defender-relay-client';
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 
 import {
   ClaimPrizeContext,
-  ExecuteClaimerProfitablePrizeTxsParams,
+  PrizeClaimerConfigParams,
   TiersContext,
   Token,
   TokenWithRate,
+  SendTransactionArgs,
+  OzSendTransactionArgs,
+  WalletSendTransactionArgs,
 } from './types';
 import {
   logTable,
@@ -31,10 +33,12 @@ import {
   getFeesUsd,
   getEthMainnetTokenMarketRateUsd,
   getNativeTokenMarketRateUsd,
+  getGasPrice,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { getDrawResultsUri } from './getDrawResultsUri';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface ClaimPrizesParams {
   vault: string;
@@ -57,13 +61,12 @@ const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 60;
  *
  * @returns {undefined} void function
  */
-export async function executeClaimerProfitablePrizeTxs(
+export async function runPrizeClaimer(
   contracts: ContractsBlob,
-  relayer: Relayer,
-  readProvider: Provider,
-  params: ExecuteClaimerProfitablePrizeTxsParams,
+  prizeClaimerConfigParams: PrizeClaimerConfigParams,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, useFlashbots } = params;
+  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, readProvider } =
+    prizeClaimerConfigParams;
 
   const contractsVersion = {
     major: 1,
@@ -190,7 +193,7 @@ export async function executeClaimerProfitablePrizeTxs(
       groupedClaims,
       tierRemainingPrizeCounts,
       context,
-      params,
+      prizeClaimerConfigParams,
     );
 
     // It's profitable if there is at least 1 claim to claim
@@ -211,13 +214,24 @@ export async function executeClaimerProfitablePrizeTxs(
         ...Object.values(claimPrizesParams),
       );
 
-      console.log(chalk.greenBright.bold(`Sending transaction ...`));
-      const tx = await relayer.sendTransaction({
-        isPrivate,
-        data: populatedTx.data,
-        to: populatedTx.to,
-        gasLimit: 20000000,
-      });
+      const gasLimit = 20000000;
+      const { gasPrice } = await getGasPrice(readProvider);
+      const tx = await sendPopulatedTx(
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
+
+      // console.log(chalk.greenBright.bold(`Sending transaction ...`));
+      // const tx = await ozRelayer.sendTransaction({
+      //   isPrivate,
+      //   data: populatedTx.data,
+      //   to: populatedTx.to,
+      //   gasLimit: 20000000,
+      // });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
@@ -291,9 +305,9 @@ const calculateProfit = async (
   groupedClaims: any,
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   context: ClaimPrizeContext,
-  params: ExecuteClaimerProfitablePrizeTxsParams,
+  prizeClaimerConfigParams: PrizeClaimerConfigParams,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, feeRecipient } = params;
+  const { chainId, minProfitThresholdUsd, feeRecipient } = prizeClaimerConfigParams;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);

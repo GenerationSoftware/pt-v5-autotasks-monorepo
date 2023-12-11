@@ -4,12 +4,12 @@ import figlet from 'figlet';
 import chalk from 'chalk';
 import { ethers } from 'ethers';
 import {
+  instantiateRelayerAccount,
   liquidatorArbitrageSwap,
   ArbLiquidatorConfigParams,
+  RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { ContractsBlob, downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
-import { Relayer } from 'defender-relay-client';
-import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 import { askQuestions } from './helpers/questions';
 
@@ -21,21 +21,24 @@ console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
 if (esMain(import.meta)) {
   const config = await askQuestions(new Configstore(pkg.name));
 
-  const fakeEvent = {
+  const mockEvent = {
     apiKey: config.RELAYER_API_KEY,
     apiSecret: config.RELAYER_API_SECRET,
   };
-  const relayer = new Relayer(fakeEvent);
-  const provider = new DefenderRelayProvider(fakeEvent);
-  const signer = new DefenderRelaySigner(fakeEvent, provider, {
-    speed: 'fast',
-  });
-  const relayerAddress = await signer.getAddress();
 
-  const params: ArbLiquidatorConfigParams = {
-    relayerAddress,
-    writeProvider: signer,
-    readProvider: new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID),
+  const readProvider = new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID);
+
+  const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
+    readProvider, // TODO: Fix this!
+    readProvider,
+    mockEvent,
+    config.CUSTOM_RELAYER_PRIVATE_KEY,
+  );
+
+  const arbLiquidatorConfigParams: ArbLiquidatorConfigParams = {
+    ...relayerAccount,
+    writeProvider: readProvider, // TODO: Fix this!
+    readProvider: readProvider,
     covalentApiKey: config.COVALENT_API_KEY,
     chainId: config.CHAIN_ID,
     swapRecipient: config.SWAP_RECIPIENT,
@@ -46,7 +49,7 @@ if (esMain(import.meta)) {
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
     const contracts: ContractsBlob = await downloadContractsBlob(config.CHAIN_ID);
-    await liquidatorArbitrageSwap(contracts, relayer, params);
+    await liquidatorArbitrageSwap(contracts, arbLiquidatorConfigParams);
   } catch (error) {
     throw new Error(error);
   }
