@@ -1,0 +1,23 @@
+CHAIN_ID: The chain ID of which network to run the autotask on
+JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
+
+CUSTOM_RELAYER_PRIVATE_KEY: Your own EOA private key to use to relay transactions
+
+### OR: 
+
+DEFENDER_TEAM_API_KEY: OZ Defender Team API Key
+DEFENDER_TEAM_API_KEY: OZ Defender Team Secret Key
+AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
+RELAYER_API_KEY: OZ Defender chain Relayer API Key
+RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
+
+REWARD_RECIPIENT: Address of the contract/EOA account that will receive the profit for starting and relaying the RNG
+
+RELAY_CHAIN_IDS: A comma-seperated list of network IDs to relay the RNG to (ie. RNG starts on ETH mainnet, gets relayed to Optimism, Arbitrum, etc.) ex. for Optimism and Arbitrum enter: 42161,10
+
+ARBITRUM_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
+OPTIMISM_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
+
+ARBITRUM_SEPOLIA_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
+OPTIMISM_SEPOLIA_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism

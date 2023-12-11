@@ -18,45 +18,72 @@ PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to start the RNG
 
 ## 🖥️ Usage
 
-This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
-
 ### 1. Run autotask
 
-To run the OpenZeppelin Defender autotask locally:
+To run the OpenZeppelin Defender autotask locally, first set up your environment variables using `dotenv`:
+
+#### ENV
+
+Copy `.envrc.example` and write down the env variables needed to run this project.
 
 ```
-yarn start
+cp .envrc.example .envrc
 ```
 
-You will be prompted to fill in the following necessary variables:
+Once your env variables are setup, load them with:
+
+```
+direnv allow
+```
+
+#### LIST OF ENVIRONMENT VARIABLES
 
 ```
 CHAIN_ID: The chain ID of which network to run the autotask on
+JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
+```
+
+Either one of the following:
+
+```
+CUSTOM_RELAYER_PRIVATE_KEY: Your own EOA private key to use to relay transactions
+```
+
+or for OpenZeppelin Defender:
+
+```
 DEFENDER_TEAM_API_KEY: OZ Defender Team API Key
 DEFENDER_TEAM_API_KEY: OZ Defender Team Secret Key
 AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
 RELAYER_API_KEY: OZ Defender chain Relayer API Key
 RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
-JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
-COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
 ```
 
 The following is unique to the Draw Auction bot:
 
-````
-REWARD_RECIPIENT: Address of the contract/EOA account that will receive the profit for starting and completing the RNG?
+```
+REWARD_RECIPIENT: Address of the contract/EOA account that will receive the profit for starting and relaying the RNG
 
-RELAYS: {}
- - RELAY_CHAIN_ID: The network to relay the RNG to (ie. RNG starts on ETH mainnet, gets relayed to Optimism)
- - RELAY_JSON_RPC_URI: The Infura/Alchemy/etc JSON RPC URI for the relay PrizePool chain
+RELAY_CHAIN_IDS: A comma-seperated list of network IDs to relay the RNG to (ie. RNG starts on ETH mainnet, gets relayed to Optimism, Arbitrum, etc.) ex. for Optimism and Arbitrum enter: 42161,10
 
+ARBITRUM_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
+OPTIMISM_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
+
+ARBITRUM_SEPOLIA_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
+OPTIMISM_SEPOLIA_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
 ```
 
-If everything looks good, you can upload the task to OZ Defender to be run periodically.
+#### START THE BOT
+
+```
+yarn start
+```
 
 ### 2. Update autotask
+
+If everything looks good, you can upload the task to OZ Defender to be run periodically.
 
 With the config in place from step 1, you can build and update the autotask on OpenZeppelin Defender using:
 
 `yarn update`
-````
