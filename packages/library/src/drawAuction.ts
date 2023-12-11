@@ -476,7 +476,7 @@ const processRelayTransaction = async (
 
   // #5. Send transaction
   if (profitable) {
-    await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, relay, contract, context, params);
+    await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, contract, context, params);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -1062,7 +1062,6 @@ const sendRelayTransaction = async (
   txParams:
     | RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams
     | RngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
-  relay: Relay,
   contract: Contract,
   context: DrawAuctionContext,
   params: DrawAuctionConfigParams,
