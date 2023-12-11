@@ -212,17 +212,17 @@ export async function liquidatorArbitrageSwap(
     } catch (e) {
       console.error(chalk.red(e));
 
-      console.log(chalk.yellow('---'));
-      console.log(chalk.yellow('Could not estimate gas costs!'));
-      console.log(chalk.yellow('---'));
+      // console.log(chalk.yellow('---'));
+      // console.log(chalk.yellow('Could not estimate gas costs!'));
+      // console.log(chalk.yellow('---'));
 
-      // stats.push({
-      //   pair,
-      //   estimatedProfitUsd: 0,
-      //   error: `Could not get gas cost`,
-      // });
-      // logNextPair(liquidationPair, liquidationPairContracts);
-      // continue;
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Could not get gas cost`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
+      continue;
     }
 
     // #6. Decide if profitable or not
