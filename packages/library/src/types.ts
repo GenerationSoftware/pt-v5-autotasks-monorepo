@@ -93,17 +93,30 @@ export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
 }
 
-export interface DrawAuctionConfigParams {
-  rngChainId: number;
-  rngReadProvider: BaseProvider;
+export interface BasicBotConfigParams {
+  chainId: number;
+  readProvider: BaseProvider;
+  useFlashbots: boolean;
+  rewardRecipient: string;
+  minProfitThresholdUsd: number;
+
+  customRelayerPrivateKey?: string;
+  relayerApiKey?: string;
+  relayerApiSecret?: string;
+  covalentApiKey?: string;
+}
+
+export interface DrawAuctionConfigParams extends BasicBotConfigParams {
   rngWallet: Wallet;
   rngOzRelayer: Relayer;
   rngRelayerAddress: string;
   signer: DefenderRelaySigner | Signer;
-  rewardRecipient: string;
-  useFlashbots: boolean;
-  minProfitThresholdUsd: number;
-  covalentApiKey?: string;
+
+  relayChainIds: Array<number>;
+  arbitrumRelayJsonRpcUri: string;
+  optimismRelayJsonRpcUri: string;
+  arbitrumSepoliaRelayJsonRpcUri: string;
+  optimismSepoliaRelayJsonRpcUri: string;
 }
 
 export interface RngDrawAuctionContext {
@@ -147,11 +160,6 @@ export interface RelayDrawAuctionContext {
   rngRelayExpectedRewardUsd: number;
   rngRelayLastSequenceId: number;
   nativeTokenMarketRateUsd?: number;
-}
-
-export interface RelayConfig {
-  RELAY_CHAIN_ID: string;
-  RELAY_JSON_RPC_URI: string;
 }
 
 export interface Relay {

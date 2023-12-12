@@ -35,7 +35,7 @@ You will be prompted to fill in the following necessary variables:
 ```
 CHAIN_ID: The chain ID of which network to run the autotask on
 DEFENDER_TEAM_API_KEY: OZ Defender Team API Key
-DEFENDER_TEAM_API_KEY: OZ Defender Team Secret Key
+DEFENDER_TEAM_API_SECRET: OZ Defender Team Secret Key
 AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
 RELAYER_API_KEY: OZ Defender chain Relayer API Key
 RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
