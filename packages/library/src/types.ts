@@ -93,9 +93,9 @@ export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
 }
 
-export interface BasicBotConfigParams {
-  chainId: number;
-  readProvider: BaseProvider;
+export interface BasicBotConfig {
+  l1ChainId: number;
+  l1Provider: BaseProvider;
   useFlashbots: boolean;
   rewardRecipient: string;
   minProfitThresholdUsd: number;
@@ -106,7 +106,7 @@ export interface BasicBotConfigParams {
   covalentApiKey?: string;
 }
 
-export interface DrawAuctionConfigParams extends BasicBotConfigParams {
+export interface DrawAuctionConfig extends BasicBotConfig {
   rngWallet: Wallet;
   rngOzRelayer: Relayer;
   rngRelayerAddress: string;
@@ -163,11 +163,11 @@ export interface RelayDrawAuctionContext {
 }
 
 export interface Relay {
-  chainId: number;
-  contractsBlob: ContractsBlob;
-  // relayerAddress: string;
-  readProvider: BaseProvider;
+  l2ChainId: number;
+  l2Provider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
+  // relayerAddress: string;
+  contractsBlob: ContractsBlob;
   contracts?: RelayAuctionContracts;
   context?: RelayDrawAuctionContext;
 }

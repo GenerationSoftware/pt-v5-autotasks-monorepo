@@ -1,10 +1,11 @@
 import esMain from 'es-main';
 import figlet from 'figlet';
 import chalk from 'chalk';
+import yn from 'yn';
 import { ethers } from 'ethers';
 import {
   instantiateRelayerAccount,
-  DrawAuctionConfigParams,
+  DrawAuctionConfig,
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
@@ -38,7 +39,7 @@ const loadEnvVars = () => {
 if (esMain(import.meta)) {
   const envVars = loadEnvVars();
 
-  const rngReadProvider = new ethers.providers.JsonRpcProvider(
+  const l1Provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI, // is RNG chain RPC URI
     envVars.CHAIN_ID, // is RNG chain ID
   );
@@ -51,19 +52,16 @@ if (esMain(import.meta)) {
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     rngWriteProvider,
-    rngReadProvider,
+    l1Provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  console.log('Boolean(envVars.USE_FLASHBOTS)');
-  console.log(Boolean(envVars.USE_FLASHBOTS));
-
-  const drawAuctionConfigParams: DrawAuctionConfigParams = {
-    chainId: envVars.CHAIN_ID,
-    readProvider: rngReadProvider,
+  const drawAuctionConfig: DrawAuctionConfig = {
+    l1ChainId: envVars.CHAIN_ID,
+    l1Provider: l1Provider,
     covalentApiKey: envVars.COVALENT_API_KEY,
-    useFlashbots: Boolean(envVars.USE_FLASHBOTS),
+    useFlashbots: yn(envVars.USE_FLASHBOTS),
     rewardRecipient: envVars.REWARD_RECIPIENT,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
 
@@ -84,7 +82,7 @@ if (esMain(import.meta)) {
     rngRelayerAddress: relayerAccount.relayerAddress,
   };
 
-  await executeTransactions(drawAuctionConfigParams);
+  await executeTransactions(drawAuctionConfig);
 }
 
 export function main() {}

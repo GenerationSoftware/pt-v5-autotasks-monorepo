@@ -6,7 +6,7 @@ import { Interface } from '@ethersproject/abi';
 import { L1ToL2MessageGasEstimator } from '@arbitrum/sdk';
 
 import { printSpacer } from './utils';
-import { DrawAuctionConfigParams, Relay } from './types';
+import { DrawAuctionConfig, Relay } from './types';
 import {
   ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
   ERC_5164_MESSAGE_EXECUTOR_ADDRESS,
@@ -17,10 +17,10 @@ import {
 // const RANDOM_BYTES_32_STRING = '0x90344b8b6d0f5572c26c9897fd0170c6d4b3a435268062468c51261fbf8274e9';
 const RANDOM_BYTES_32_STRING = '0x00000000000000000000000000000000000000000000000000000000000004e9';
 
-export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConfigParams) => {
-  const { readProvider: l2Provider, chainId } = relay;
+export const getArbitrumSdkParams = async (relay: Relay, config: DrawAuctionConfig) => {
+  const { l2Provider, l2ChainId } = relay;
 
-  const l1Provider = params.rngReadProvider;
+  const l1Provider = config.l1Provider;
 
   const messageId = RANDOM_BYTES_32_STRING;
 
@@ -30,7 +30,7 @@ export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConf
   ]).encodeFunctionData('rngComplete', [
     relay.context.rngResults.randomNumber,
     relay.context.rngResults.rngCompletedAt,
-    params.rewardRecipient,
+    config.rewardRecipient,
     relay.context.rngRelayLastSequenceId,
     [
       relay.context.rngLastAuctionResult.recipient,
@@ -56,8 +56,8 @@ export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConf
     relay.contracts.remoteOwnerContract.address,
     remoteOwnerCalldata,
     messageId,
-    params.rngChainId,
-    RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[chainId],
+    config.l1ChainId,
+    RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS[l2ChainId],
   ]);
 
   const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
@@ -72,11 +72,11 @@ export const getArbitrumSdkParams = async (relay: Relay, params: DrawAuctionConf
    */
   let { deposit, gasLimit, maxSubmissionCost } = await l1ToL2MessageGasEstimate.estimateAll(
     {
-      from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[chainId],
-      to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[chainId],
+      from: ERC_5164_MESSAGE_DISPATCHER_ADDRESS[l2ChainId],
+      to: ERC_5164_MESSAGE_EXECUTOR_ADDRESS[l2ChainId],
       l2CallValue: BigNumber.from(0),
-      excessFeeRefundAddress: params.rngRelayerAddress,
-      callValueRefundAddress: params.rngRelayerAddress,
+      excessFeeRefundAddress: config.rngRelayerAddress,
+      callValueRefundAddress: config.rngRelayerAddress,
       data: executeMessageData,
     },
     baseFee,
