@@ -1,8 +1,4 @@
-import {
-  CHAIN_IDS,
-  Relay,
-  DrawAuctionConfigParams,
-} from '@generationsoftware/pt-v5-autotasks-library';
+import { CHAIN_IDS, Relay, DrawAuctionConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { ethers } from 'ethers';
 
@@ -15,24 +11,22 @@ export const JSON_RPC_URI_KEYS = {
 
 // This sets up each relay chain with a object of type 'Relay', containing it's contracts,
 // relayerAccount, read and write providers and chainId
-export const getRelays = async (
-  drawAuctionConfigParams: DrawAuctionConfigParams,
-): Promise<Relay[]> => {
+export const getRelays = async (DrawAuctionConfig: DrawAuctionConfig): Promise<Relay[]> => {
   let relays: Relay[] = [];
 
-  for (const chainId of drawAuctionConfigParams.relayChainIds) {
-    const readProvider = new ethers.providers.JsonRpcProvider(
-      drawAuctionConfigParams[JSON_RPC_URI_KEYS[chainId]],
-      chainId,
+  for (const l2ChainId of DrawAuctionConfig.relayChainIds) {
+    const l2Provider = new ethers.providers.JsonRpcProvider(
+      DrawAuctionConfig[JSON_RPC_URI_KEYS[l2ChainId]],
+      l2ChainId,
     );
 
-    const contractsBlob: ContractsBlob = await downloadContractsBlob(chainId);
+    const contractsBlob: ContractsBlob = await downloadContractsBlob(l2ChainId);
 
     relays.push({
-      chainId,
+      l2ChainId,
+      l2Provider,
+      writeProvider: l2Provider,
       contractsBlob,
-      readProvider,
-      writeProvider: readProvider,
     });
   }
 

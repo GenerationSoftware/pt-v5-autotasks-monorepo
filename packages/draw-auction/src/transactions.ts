@@ -2,19 +2,17 @@ import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   executeDrawAuctionTxs,
   Relay,
-  DrawAuctionConfigParams,
+  DrawAuctionConfig,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { getRelays } from './getRelays';
 
-export const executeTransactions = async (
-  drawAuctionConfigParams: DrawAuctionConfigParams,
-): Promise<void> => {
+export const executeTransactions = async (drawAuctionConfig: DrawAuctionConfig): Promise<void> => {
   try {
-    const rngContracts = await downloadContractsBlob(drawAuctionConfigParams.chainId);
+    const rngContracts = await downloadContractsBlob(drawAuctionConfig.l1ChainId);
 
-    const relays: Relay[] = await getRelays(drawAuctionConfigParams);
+    const relays: Relay[] = await getRelays(drawAuctionConfig);
 
-    await executeDrawAuctionTxs(rngContracts, drawAuctionConfigParams, relays);
+    await executeDrawAuctionTxs(rngContracts, drawAuctionConfig, relays);
   } catch (e) {
     console.error(e);
   }

@@ -3,7 +3,7 @@ import { RelayerParams } from 'defender-relay-client';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 import {
   instantiateRelayerAccount,
-  DrawAuctionConfigParams,
+  DrawAuctionConfig,
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
@@ -23,7 +23,7 @@ export async function handler(event: RelayerParams) {
     BUILD_CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const drawAuctionConfigParams: DrawAuctionConfigParams = {
+  const drawAuctionConfig: DrawAuctionConfig = {
     rngChainId: Number(BUILD_CHAIN_ID),
     rngOzRelayer: relayerAccount.ozRelayer,
     rngWallet: relayerAccount.wallet,
@@ -36,5 +36,5 @@ export async function handler(event: RelayerParams) {
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
 
-  await executeTransactions(drawAuctionConfigParams, JSON.parse(BUILD_RELAYS));
+  await executeTransactions(drawAuctionConfig);
 }
