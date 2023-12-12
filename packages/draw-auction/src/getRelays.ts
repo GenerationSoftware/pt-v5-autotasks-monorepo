@@ -11,12 +11,15 @@ export const JSON_RPC_URI_KEYS = {
 
 // This sets up each relay chain with a object of type 'Relay', containing it's contracts,
 // relayerAccount, read and write providers and chainId
-export const getRelays = async (DrawAuctionConfig: DrawAuctionConfig): Promise<Relay[]> => {
+export const getRelays = async (drawAuctionConfig: DrawAuctionConfig): Promise<Relay[]> => {
   let relays: Relay[] = [];
 
-  for (const l2ChainId of DrawAuctionConfig.relayChainIds) {
+  console.log('drawAuctionConfig.relayChainIds');
+  console.log(drawAuctionConfig.relayChainIds);
+
+  for (const l2ChainId of drawAuctionConfig.relayChainIds) {
     const l2Provider = new ethers.providers.JsonRpcProvider(
-      DrawAuctionConfig[JSON_RPC_URI_KEYS[l2ChainId]],
+      drawAuctionConfig[JSON_RPC_URI_KEYS[l2ChainId]],
       l2ChainId,
     );
 
