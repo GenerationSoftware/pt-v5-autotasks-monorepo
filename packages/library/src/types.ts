@@ -106,6 +106,23 @@ export interface BasicBotConfig {
   covalentApiKey?: string;
 }
 
+export interface DrawAuctionEnvVars {
+  CHAIN_ID: number;
+  JSON_RPC_URI: string;
+  USE_FLASHBOTS: boolean;
+  MIN_PROFIT_THRESHOLD_USD: string;
+  REWARD_RECIPIENT: string;
+  RELAY_CHAIN_IDS: Array<number>;
+  COVALENT_API_KEY?: string;
+  CUSTOM_RELAYER_PRIVATE_KEY?: string;
+  RELAYER_API_KEY?: string;
+  RELAYER_API_SECRET?: string;
+  ARBITRUM_JSON_RPC_URI?: string;
+  OPTIMISM_JSON_RPC_URI?: string;
+  ARBITRUM_SEPOLIA_JSON_RPC_URI?: string;
+  OPTIMISM_SEPOLIA_JSON_RPC_URI?: string;
+}
+
 export interface DrawAuctionConfig extends BasicBotConfig {
   rngWallet: Wallet;
   rngOzRelayer: Relayer;

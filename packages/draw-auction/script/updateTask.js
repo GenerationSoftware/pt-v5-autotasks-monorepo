@@ -3,8 +3,6 @@
 import { AutotaskClient } from 'defender-autotask-client';
 import fs from 'fs';
 
-const chainId = config.get('CHAIN_ID');
-
 async function updateAutotask(autotaskId, file) {
   const config = {
     apiKey: process.env.DEFENDER_TEAM_API_KEY,

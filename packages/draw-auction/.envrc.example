@@ -22,8 +22,10 @@ export REWARD_RECIPIENT='Address of the contract/EOA account that will receive t
 
 export RELAY_CHAIN_IDS='A comma-seperated list of network IDs to relay the RNG to (ie. RNG starts on ETH mainnet, gets relayed to Optimism, Arbitrum, etc.) ex. for Optimism and Arbitrum enter: 42161,10'
 
-export ARBITRUM_RELAY_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum'
-export OPTIMISM_RELAY_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism'
+export MAINNET_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for ETH Mainnet'
+export ARBITRUM_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Arbitrum'
+export OPTIMISM_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Optimism'
 
-export ARBITRUM_SEPOLIA_RELAY_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum'
-export OPTIMISM_SEPOLIA_RELAY_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism'
+export SEPOLIA_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Sepolia'
+export ARBITRUM_SEPOLIA_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Arbitrum Sepolia'
+export OPTIMISM_SEPOLIA_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Optimism Sepolia'

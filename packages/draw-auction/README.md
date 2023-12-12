@@ -67,11 +67,11 @@ REWARD_RECIPIENT: Address of the contract/EOA account that will receive the prof
 
 RELAY_CHAIN_IDS: A comma-seperated list of network IDs to relay the RNG to (ie. RNG starts on ETH mainnet, gets relayed to Optimism, Arbitrum, etc.) ex. for Optimism and Arbitrum enter: 42161,10
 
-ARBITRUM_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
-OPTIMISM_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
+ARBITRUM_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
+OPTIMISM_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
 
-ARBITRUM_SEPOLIA_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
-OPTIMISM_SEPOLIA_RELAY_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
+ARBITRUM_SEPOLIA_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
+OPTIMISM_SEPOLIA_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
 ```
 
 #### START THE BOT
