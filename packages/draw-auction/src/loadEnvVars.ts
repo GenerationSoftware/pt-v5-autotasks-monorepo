@@ -46,8 +46,8 @@ export const loadEnvVars = (build?, event?): DrawAuctionEnvVars => {
   let arbitrumSepoliaJsonRpcUri = process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI;
   let optimismSepoliaJsonRpcUri = process.env.OPTIMISM_SEPOLIA_JSON_RPC_URI;
   let jsonRpcUri = process.env.JSON_RPC_URI;
-  let chainRelayerApiKey = process.env.relayerApiKey;
-  let chainRelayerApiSecret = process.env.relayerApiSecret;
+  let chainRelayerApiKey = process.env.RELAYER_API_KEY;
+  let chainRelayerApiSecret = process.env.RELAYER_API_SECRET;
 
   if (event?.secrets) {
     const jsonRpcUriKey = JSON_RPC_URI_KEYS[chainId];
