@@ -5,7 +5,7 @@ import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-
 import {
   instantiateRelayerAccount,
   liquidatorArbitrageSwap,
-  ArbLiquidatorConfigParams,
+  LiquidatorConfig,
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import fetch from 'node-fetch';
@@ -30,7 +30,7 @@ export async function handler(event) {
     BUILD_CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const arbLiquidatorConfigParams: ArbLiquidatorConfigParams = {
+  const config: LiquidatorConfig = {
     ...relayerAccount,
     writeProvider: readProvider, // TODO: Fix this!
     readProvider: readProvider,
@@ -43,11 +43,8 @@ export async function handler(event) {
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
-    const contracts: ContractsBlob = await downloadContractsBlob(
-      arbLiquidatorConfigParams.chainId,
-      fetch,
-    );
-    await liquidatorArbitrageSwap(contracts, arbLiquidatorConfigParams);
+    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, fetch);
+    await liquidatorArbitrageSwap(contracts, config);
   } catch (error) {
     throw new Error(error);
   }

@@ -3,7 +3,7 @@ import Configstore from 'configstore';
 import figlet from 'figlet';
 import chalk from 'chalk';
 import { ethers } from 'ethers';
-import { WithdrawClaimRewardsConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
+import { WithdrawClaimRewardsConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 import { populateTransaction, processPopulatedTransaction } from './transactions';
@@ -24,7 +24,7 @@ if (esMain(import.meta)) {
   const signer = new DefenderRelaySigner(fakeEvent, provider, { speed: 'fast' });
   const relayerAddress = await signer.getAddress();
 
-  const params: WithdrawClaimRewardsConfigParams = {
+  const params: WithdrawClaimRewardsConfig = {
     relayerAddress,
     rewardsRecipient: config.REWARDS_RECIPIENT,
     chainId: config.CHAIN_ID,

@@ -6,6 +6,8 @@ import {
   instantiateRelayerAccount,
   RelayerAccount,
   YieldVaultMintRateConfig,
+  loadEnvVars,
+  AutotaskEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { processTransactions } from './transactions';
@@ -14,25 +16,27 @@ console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('YieldVault MintRate Bot')));
 
 if (esMain(import.meta)) {
-  const readProvider = new ethers.providers.JsonRpcProvider(config.JSON_RPC_URI, config.CHAIN_ID);
+  const envVars: AutotaskEnvVars = loadEnvVars();
+
+  const readProvider = new ethers.providers.JsonRpcProvider(envVars.JSON_RPC_URI, envVars.CHAIN_ID);
 
   const mockEvent = {
-    apiKey: config.RELAYER_API_KEY,
-    apiSecret: config.RELAYER_API_SECRET,
+    apiKey: envVars.RELAYER_API_KEY,
+    apiSecret: envVars.RELAYER_API_SECRET,
   };
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     readProvider, // TODO: Fix this!
     readProvider,
     mockEvent,
-    config.CUSTOM_RELAYER_PRIVATE_KEY,
+    envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const config: YieldVaultMintRateConfig = {
     ...relayerAccount,
     readProvider,
     relayerAddress: relayerAccount.relayerAddress,
-    chainId: config.CHAIN_ID,
+    chainId: envVars.CHAIN_ID,
   };
 
   await processTransactions(config);

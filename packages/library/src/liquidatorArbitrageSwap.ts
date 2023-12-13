@@ -5,7 +5,7 @@ import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ArbLiquidatorConfigParams, ArbLiquidatorContext } from './types';
+import { LiquidatorConfig, ArbLiquidatorContext } from './types';
 import {
   logTable,
   logStringValue,
@@ -48,7 +48,7 @@ interface Stat {
  */
 export async function liquidatorArbitrageSwap(
   contracts: ContractsBlob,
-  arbLiquidatorConfigParams: ArbLiquidatorConfigParams,
+  config: LiquidatorConfig,
 ): Promise<void> {
   const {
     chainId,
@@ -61,7 +61,7 @@ export async function liquidatorArbitrageSwap(
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
-  } = arbLiquidatorConfigParams;
+  } = config;
 
   // #1. Get contracts
   //
@@ -70,7 +70,7 @@ export async function liquidatorArbitrageSwap(
 
   const { liquidationRouterContract, liquidationPairContracts } = await getLiquidationContracts(
     contracts,
-    arbLiquidatorConfigParams,
+    config,
   );
 
   printSpacer();
@@ -378,12 +378,12 @@ const approve = async (
  */
 const getLiquidationContracts = async (
   contracts: ContractsBlob,
-  params: ArbLiquidatorConfigParams,
+  config: LiquidatorConfig,
 ): Promise<{
   liquidationRouterContract: Contract;
   liquidationPairContracts: Contract[];
 }> => {
-  const { chainId, readProvider, writeProvider } = params;
+  const { chainId, readProvider, writeProvider } = config;
 
   const contractsVersion = {
     major: 1,

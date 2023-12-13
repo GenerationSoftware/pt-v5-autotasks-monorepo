@@ -1,11 +1,11 @@
 import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
-import { WithdrawClaimRewardsConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
+import { WithdrawClaimRewardsConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 import { populateTransaction, processPopulatedTransaction } from './transactions';
 
-const handlerLoadParams = (relayerAddress): WithdrawClaimRewardsConfigParams => {
+const handlerLoadParams = (relayerAddress): WithdrawClaimRewardsConfig => {
   return {
     chainId: Number(BUILD_CHAIN_ID),
     covalentApiKey: BUILD_COVALENT_API_KEY,

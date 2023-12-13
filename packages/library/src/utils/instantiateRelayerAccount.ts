@@ -11,7 +11,7 @@ import { printSpacer } from './logging';
 export const instantiateRelayerAccount = async (
   writeProvider: DefenderRelayProvider | Provider,
   readProvider: DefenderRelayProvider | Provider,
-  event: RelayerParams,
+  event,
   customRelayerPrivateKey?: string,
 ): Promise<RelayerAccount> => {
   let wallet, signer, relayerAddress, ozRelayer;

@@ -4,7 +4,7 @@ import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { Token, WithdrawClaimRewardsConfigParams, WithdrawClaimRewardsContext } from './types';
+import { Token, WithdrawClaimRewardsConfig, WithdrawClaimRewardsContext } from './types';
 import {
   logTable,
   logBigNumber,
@@ -34,10 +34,15 @@ interface WithdrawClaimRewardsParams {
 export async function getWithdrawClaimRewardsTx(
   contracts: ContractsBlob,
   readProvider: Provider,
-  params: WithdrawClaimRewardsConfigParams,
+  params: WithdrawClaimRewardsConfig,
 ): Promise<PopulatedTransaction | undefined> {
-  const { chainId, rewardsRecipient, relayerAddress, minProfitThresholdUsd, covalentApiKey } =
-    params;
+  const {
+    chainId,
+    rewardsRecipient,
+    relayerAddress,
+    minProfitThresholdUsd,
+    covalentApiKey,
+  } = params;
 
   const contractsVersion = {
     major: 1,
