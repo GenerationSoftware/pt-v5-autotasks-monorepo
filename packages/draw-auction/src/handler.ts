@@ -9,7 +9,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { executeTransactions } from './transactions';
-import { loadEnvVars } from './loadEnvVars';
+import { loadDrawAuctionEnvVars } from './loadDrawAuctionEnvVars';
 
 export async function handler(event) {
   const buildVars = {
@@ -20,7 +20,7 @@ export async function handler(event) {
     relayChainIds: BUILD_RELAY_CHAIN_IDS,
   };
 
-  const envVars: DrawAuctionEnvVars = loadEnvVars(buildVars, event);
+  const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars(buildVars, event);
   const rngWriteProvider = new DefenderRelayProvider(event);
   const l1Provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,

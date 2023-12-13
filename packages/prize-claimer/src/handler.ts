@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
 import {
   instantiateRelayerAccount,
-  PrizeClaimerConfigParams,
+  PrizeClaimerConfig,
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
@@ -19,7 +19,7 @@ export async function handler(event: RelayerParams) {
     BUILD_CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const prizeClaimerConfigParams: PrizeClaimerConfigParams = {
+  const prizeClaimerConfig: PrizeClaimerConfig = {
     ...relayerAccount,
     chainId,
     readProvider,
@@ -29,5 +29,5 @@ export async function handler(event: RelayerParams) {
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
 
-  await executeTransactions(prizeClaimerConfigParams);
+  await executeTransactions(prizeClaimerConfig);
 }

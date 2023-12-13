@@ -14,7 +14,7 @@ import fetch from 'node-fetch';
 
 import {
   ClaimPrizeContext,
-  PrizeClaimerConfigParams,
+  PrizeClaimerConfig,
   TiersContext,
   Token,
   TokenWithRate,
@@ -63,10 +63,16 @@ const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 60;
  */
 export async function runPrizeClaimer(
   contracts: ContractsBlob,
-  prizeClaimerConfigParams: PrizeClaimerConfigParams,
+  prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, readProvider } =
-    prizeClaimerConfigParams;
+  const {
+    chainId,
+    covalentApiKey,
+    useFlashbots,
+    ozRelayer,
+    wallet,
+    readProvider,
+  } = prizeClaimerConfig;
 
   const contractsVersion = {
     major: 1,
@@ -166,7 +172,9 @@ export async function runPrizeClaimer(
     if (!enoughLiquidity) {
       printSpacer();
       console.log(
-        chalk.redBright(`Tier #${tierWords(context, Number(tier))} insuff liquidity, skipping ...`),
+        chalk.redBright(
+          `Tier #${tierWords(context, Number(tier))} insufficient liquidity, skipping ...`,
+        ),
       );
       printSpacer();
       continue;
@@ -193,7 +201,7 @@ export async function runPrizeClaimer(
       groupedClaims,
       tierRemainingPrizeCounts,
       context,
-      prizeClaimerConfigParams,
+      prizeClaimerConfig,
     );
 
     // It's profitable if there is at least 1 claim to claim
@@ -305,9 +313,9 @@ const calculateProfit = async (
   groupedClaims: any,
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   context: ClaimPrizeContext,
-  prizeClaimerConfigParams: PrizeClaimerConfigParams,
+  prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, feeRecipient } = prizeClaimerConfigParams;
+  const { chainId, minProfitThresholdUsd, feeRecipient } = prizeClaimerConfig;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
@@ -631,7 +639,7 @@ const getClaimInfo = async (
       printSpacer();
       console.log(
         chalk.redBright(
-          `Tier #${tierWords(context, Number(tier))} insuff liquidity, exiting tier ...`,
+          `Tier #${tierWords(context, Number(tier))} insufficient liquidity, exiting tier ...`,
         ),
       );
       printSpacer();

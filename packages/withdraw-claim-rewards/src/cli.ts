@@ -6,7 +6,6 @@ import { ethers } from 'ethers';
 import { WithdrawClaimRewardsConfigParams } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
-import { askQuestions } from './helpers/questions';
 import { populateTransaction, processPopulatedTransaction } from './transactions';
 
 import pkg from '../package.json';

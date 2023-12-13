@@ -12,13 +12,13 @@ import {
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
 import { executeTransactions } from './transactions';
-import { loadEnvVars } from './loadEnvVars';
+import { loadDrawAuctionEnvVars } from './loadDrawAuctionEnvVars';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
 
 if (esMain(import.meta)) {
-  const envVars: DrawAuctionEnvVars = loadEnvVars();
+  const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars();
 
   const l1Provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI, // is RNG chain RPC URI

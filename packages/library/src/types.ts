@@ -47,7 +47,7 @@ export interface ClaimPrizeContext {
   };
 }
 
-export interface PrizeClaimerConfigParams {
+export interface PrizeClaimerConfig {
   chainId: number;
   readProvider: BaseProvider;
   wallet: Wallet;
@@ -60,7 +60,7 @@ export interface PrizeClaimerConfigParams {
   covalentApiKey?: string;
 }
 
-export interface ArbLiquidatorConfigParams {
+export interface LiquidatorConfig {
   chainId: number;
   readProvider: BaseProvider;
   writeProvider: Provider | DefenderRelaySigner;
@@ -81,7 +81,7 @@ export interface ArbLiquidatorContext {
   relayer: ArbLiquidatorRelayerContext;
 }
 
-export interface WithdrawClaimRewardsConfigParams {
+export interface WithdrawClaimRewardsConfig {
   chainId: number;
   rewardsRecipient: string;
   relayerAddress: string;
@@ -93,26 +93,11 @@ export interface WithdrawClaimRewardsContext {
   rewardsToken: TokenWithRate;
 }
 
-export interface BasicBotConfig {
-  l1ChainId: number;
-  l1Provider: BaseProvider;
-  useFlashbots: boolean;
-  rewardRecipient: string;
-  minProfitThresholdUsd: number;
-
-  customRelayerPrivateKey?: string;
-  relayerApiKey?: string;
-  relayerApiSecret?: string;
-  covalentApiKey?: string;
-}
-
-export interface DrawAuctionEnvVars {
+export interface AutotaskEnvVars {
   CHAIN_ID: number;
   JSON_RPC_URI: string;
   USE_FLASHBOTS: boolean;
   MIN_PROFIT_THRESHOLD_USD: string;
-  REWARD_RECIPIENT: string;
-  RELAY_CHAIN_IDS: Array<number>;
   COVALENT_API_KEY?: string;
   CUSTOM_RELAYER_PRIVATE_KEY?: string;
   RELAYER_API_KEY?: string;
@@ -123,17 +108,44 @@ export interface DrawAuctionEnvVars {
   OPTIMISM_SEPOLIA_JSON_RPC_URI?: string;
 }
 
-export interface DrawAuctionConfig extends BasicBotConfig {
+export interface DrawAuctionEnvVars extends AutotaskEnvVars {
+  REWARD_RECIPIENT: string;
+  RELAY_CHAIN_IDS: Array<number>;
+}
+
+export interface LiquidatorEnvVars extends AutotaskEnvVars {
+  SWAP_RECIPIENT: string;
+}
+
+export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
+  FEE_RECIPIENT: string;
+}
+
+export interface AutotaskConfig {
+  l1ChainId: number;
+  l1Provider: BaseProvider;
+  useFlashbots: boolean;
+  rewardRecipient: string;
+  minProfitThresholdUsd: number;
+
+  customRelayerPrivateKey?: string;
+  relayerApiKey?: string;
+  relayerApiSecret?: string;
+  covalentApiKey?: string;
+
   rngWallet: Wallet;
   rngOzRelayer: Relayer;
   rngRelayerAddress: string;
   signer: DefenderRelaySigner | Signer;
 
+  arbitrumRelayJsonRpcUri?: string;
+  optimismRelayJsonRpcUri?: string;
+  arbitrumSepoliaRelayJsonRpcUri?: string;
+  optimismSepoliaRelayJsonRpcUri?: string;
+}
+
+export interface DrawAuctionConfig extends AutotaskConfig {
   relayChainIds: Array<number>;
-  arbitrumRelayJsonRpcUri: string;
-  optimismRelayJsonRpcUri: string;
-  arbitrumSepoliaRelayJsonRpcUri: string;
-  optimismSepoliaRelayJsonRpcUri: string;
 }
 
 export interface RngDrawAuctionContext {
@@ -216,7 +228,7 @@ export interface VaultWithContext {
   asset?: string;
 }
 
-export interface YieldVaultMintRateConfigParams {
+export interface YieldVaultMintRateConfig {
   chainId: number;
   wallet: Wallet;
   ozRelayer: Relayer;

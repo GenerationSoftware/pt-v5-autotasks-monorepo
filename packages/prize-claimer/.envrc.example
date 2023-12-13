@@ -1,0 +1,21 @@
+export CHAIN_ID=''
+export JSON_RPC_URI=''
+export COVALENT_API_KEY=''
+export USE_FLASHBOTS='false'
+export MIN_PROFIT_THRESHOLD_USD='1'
+
+### THIS:
+
+export CUSTOM_RELAYER_PRIVATE_KEY=
+
+### OR THIS:
+
+export DEFENDER_TEAM_API_KEY=''
+export DEFENDER_TEAM_API_SECRET=''
+export AUTOTASK_ID=''
+export RELAYER_API_KEY=''
+export RELAYER_API_SECRET=''
+
+### PRIZE CLAIMER SPECIFIC:
+
+export FEE_RECIPIENT=''

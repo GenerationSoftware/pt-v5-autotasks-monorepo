@@ -1,12 +1,12 @@
 import { Contract, PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, getContracts } from '@generationsoftware/pt-v5-utils-js';
-import { YieldVaultMintRateConfigParams } from './types';
+import { YieldVaultMintRateConfig } from './types';
 import { getGasPrice } from './utils';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 export async function runYieldVaultHandleMintRate(
   contracts: ContractsBlob,
-  params: YieldVaultMintRateConfigParams,
+  params: YieldVaultMintRateConfig,
 ): Promise<void> {
   const { chainId, ozRelayer, wallet, readProvider } = params;
 
@@ -18,8 +18,7 @@ export async function runYieldVaultHandleMintRate(
       throw new Error('YieldVault: Contract Unavailable');
     }
 
-    const populatedTx: PopulatedTransaction =
-      await yieldVaultContract.populateTransaction.mintRate();
+    const populatedTx: PopulatedTransaction = await yieldVaultContract.populateTransaction.mintRate();
 
     try {
       const gasLimit = 200000;
