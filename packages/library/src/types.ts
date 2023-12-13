@@ -132,7 +132,6 @@ export interface AutotaskConfig {
   relayerApiKey?: string;
   relayerApiSecret?: string;
   covalentApiKey?: string;
-
   rngWallet: Wallet;
   rngOzRelayer: Relayer;
   rngRelayerAddress: string;
