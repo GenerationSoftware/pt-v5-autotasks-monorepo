@@ -14,9 +14,6 @@ export const JSON_RPC_URI_KEYS = {
 export const getRelays = async (drawAuctionConfig: DrawAuctionConfig): Promise<Relay[]> => {
   let relays: Relay[] = [];
 
-  console.log('drawAuctionConfig.relayChainIds');
-  console.log(drawAuctionConfig.relayChainIds);
-
   for (const l2ChainId of drawAuctionConfig.relayChainIds) {
     const l2Provider = new ethers.providers.JsonRpcProvider(
       drawAuctionConfig[JSON_RPC_URI_KEYS[l2ChainId]],

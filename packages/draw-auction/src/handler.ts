@@ -21,7 +21,6 @@ export async function handler(event) {
   };
 
   const envVars: DrawAuctionEnvVars = loadEnvVars(buildVars, event);
-
   const rngWriteProvider = new DefenderRelayProvider(event);
   const l1Provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,
@@ -35,9 +34,6 @@ export async function handler(event) {
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  console.log('process.env.RELAY_CHAIN_IDS');
-  console.log(process.env.RELAY_CHAIN_IDS);
-
   const drawAuctionConfig: DrawAuctionConfig = {
     l1ChainId: Number(envVars.CHAIN_ID),
     l1Provider,
@@ -46,16 +42,16 @@ export async function handler(event) {
     rewardRecipient: envVars.REWARD_RECIPIENT,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
 
-    customRelayerPrivateKey: process.env.CUSTOM_RELAYER_PRIVATE_KEY,
+    customRelayerPrivateKey: envVars.CUSTOM_RELAYER_PRIVATE_KEY,
 
-    relayerApiKey: process.env.RELAYER_API_KEY,
-    relayerApiSecret: process.env.RELAYER_API_SECRET,
+    relayerApiKey: envVars.RELAYER_API_KEY,
+    relayerApiSecret: envVars.RELAYER_API_SECRET,
 
-    relayChainIds: process.env.RELAY_CHAIN_IDS.split(',').map((chainId) => Number(chainId)),
-    arbitrumRelayJsonRpcUri: process.env.ARBITRUM_JSON_RPC_URI,
-    optimismRelayJsonRpcUri: process.env.OPTIMISM_JSON_RPC_URI,
-    arbitrumSepoliaRelayJsonRpcUri: process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI,
-    optimismSepoliaRelayJsonRpcUri: process.env.OPTIMISM_SEPOLIA_JSON_RPC_URI,
+    relayChainIds: envVars.RELAY_CHAIN_IDS,
+    arbitrumRelayJsonRpcUri: envVars.ARBITRUM_JSON_RPC_URI,
+    optimismRelayJsonRpcUri: envVars.OPTIMISM_JSON_RPC_URI,
+    arbitrumSepoliaRelayJsonRpcUri: envVars.ARBITRUM_SEPOLIA_JSON_RPC_URI,
+    optimismSepoliaRelayJsonRpcUri: envVars.OPTIMISM_SEPOLIA_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
     rngOzRelayer: relayerAccount.ozRelayer,

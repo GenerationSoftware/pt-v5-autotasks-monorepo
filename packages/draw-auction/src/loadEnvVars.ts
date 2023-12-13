@@ -30,13 +30,13 @@ const CHAIN_RELAYER_API_SECRET_KEYS = {
   [CHAIN_IDS.arbitrumSepolia]: 'ARBITRUM_SEPOLIA_RELAYER_API_SECRET',
 };
 
-export const loadEnvVars = (build?, event?): DrawAuctionEnvVars => {
-  const chainId = Number(build?.chainId || process.env.CHAIN_ID);
-  const useFlashbots = yn(build?.useFlashbots || process.env.USE_FLASHBOTS);
+export const loadEnvVars = (buildVars?, event?): DrawAuctionEnvVars => {
+  const chainId = Number(buildVars?.chainId || process.env.CHAIN_ID);
+  const useFlashbots = yn(buildVars?.useFlashbots || process.env.USE_FLASHBOTS);
   const minProfitThresholdUsd =
-    build?.minProfitThresholdUsd || process.env.MIN_PROFIT_THRESHOLD_USD;
-  const rewardRecipient = build?.rewardRecipient || process.env.REWARD_RECIPIENT;
-  const relayChainIds = build?.relayChainIds || process.env.RELAY_CHAIN_IDS;
+    buildVars?.minProfitThresholdUsd || process.env.MIN_PROFIT_THRESHOLD_USD;
+  const rewardRecipient = buildVars?.rewardRecipient || process.env.REWARD_RECIPIENT;
+  const relayChainIds = buildVars?.relayChainIds || process.env.RELAY_CHAIN_IDS;
 
   // Secrets (API keys, etc) not safe for building into a flat file
   let covalentApiKey = process.env.COVALENT_API_KEY;
@@ -59,8 +59,10 @@ export const loadEnvVars = (build?, event?): DrawAuctionEnvVars => {
     const chainRelayerApiSecretKey = CHAIN_RELAYER_API_SECRET_KEYS[chainId];
     chainRelayerApiSecret = event.secrets[chainRelayerApiSecretKey];
 
-    covalentApiKey = event.secrets.covalentApiKey;
-    customRelayerPrivateKey = event.secrets.customRelayerPrivateKey;
+    covalentApiKey = event.secrets.COVALENT_API_KEY;
+    // TODO: Technically this makes no sense, as we don't want a custom privkey when running on OZ Defender
+    // (where there is event.secrets)
+    customRelayerPrivateKey = event.secrets.CUSTOM_RELAYER_PRIVATE_KEY;
 
     const arbitrumJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.arbitrum];
     arbitrumJsonRpcUri = event.secrets[arbitrumJsonRpcUriKey];
@@ -74,9 +76,6 @@ export const loadEnvVars = (build?, event?): DrawAuctionEnvVars => {
     const optimismSepoliaJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.optimismSepolia];
     optimismSepoliaJsonRpcUri = event.secrets[optimismSepoliaJsonRpcUriKey];
   }
-
-  console.log('jsonRpcUri');
-  console.log(jsonRpcUri);
 
   return {
     CHAIN_ID: Number(chainId),
