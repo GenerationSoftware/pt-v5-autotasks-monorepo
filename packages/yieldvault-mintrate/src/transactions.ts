@@ -5,8 +5,12 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 import fetch from 'node-fetch';
 
-export async function processTransactions(config: YieldVaultMintRateConfig): Promise<void> {
-  const { chainId } = config;
-  const contracts: ContractsBlob = await downloadContractsBlob(chainId, fetch);
-  await runYieldVaultMintRate(contracts, config);
+export async function executeTransactions(config: YieldVaultMintRateConfig): Promise<void> {
+  try {
+    const { chainId } = config;
+    const contracts: ContractsBlob = await downloadContractsBlob(chainId, fetch);
+    await runYieldVaultMintRate(contracts, config);
+  } catch (e) {
+    console.error(e);
+  }
 }

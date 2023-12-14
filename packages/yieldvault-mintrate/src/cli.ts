@@ -11,7 +11,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
-import { processTransactions } from './transactions';
+import { executeTransactions } from './transactions';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('YieldVault MintRate Bot')));
@@ -44,7 +44,7 @@ if (esMain(import.meta)) {
     chainId: envVars.CHAIN_ID,
   };
 
-  await processTransactions(config);
+  await executeTransactions(config);
 }
 
 export function main() {}

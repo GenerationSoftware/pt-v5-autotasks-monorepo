@@ -6,7 +6,7 @@ import {
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { processTransactions } from './transactions';
+import { executeTransactions } from './transactions';
 
 export async function handler(event: RelayerParams) {
   const buildVars = {
@@ -38,5 +38,5 @@ export async function handler(event: RelayerParams) {
     readProvider,
   };
 
-  await processTransactions(config);
+  await executeTransactions(config);
 }

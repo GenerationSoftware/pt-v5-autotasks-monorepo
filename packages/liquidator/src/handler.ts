@@ -1,15 +1,14 @@
 import { ethers } from 'ethers';
-import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   instantiateRelayerAccount,
-  runLiquidator,
   LiquidatorConfig,
   LiquidatorEnvVars,
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
 
 import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
+import { executeTransactions } from './transactions';
 
 export async function handler(event) {
   const buildVars = {
@@ -49,11 +48,5 @@ export async function handler(event) {
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
   };
 
-  // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
-  try {
-    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, fetch);
-    await runLiquidator(contracts, config);
-  } catch (error) {
-    throw new Error(error);
-  }
+  await executeTransactions(config);
 }

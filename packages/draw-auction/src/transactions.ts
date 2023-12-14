@@ -6,13 +6,13 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { getRelays } from './getRelays';
 
-export const executeTransactions = async (drawAuctionConfig: DrawAuctionConfig): Promise<void> => {
+export const executeTransactions = async (config: DrawAuctionConfig): Promise<void> => {
   try {
-    const rngContracts = await downloadContractsBlob(drawAuctionConfig.l1ChainId);
+    const rngContracts = await downloadContractsBlob(config.l1ChainId);
 
-    const relays: Relay[] = await getRelays(drawAuctionConfig);
+    const relays: Relay[] = await getRelays(config);
 
-    await runDrawAuction(rngContracts, drawAuctionConfig, relays);
+    await runDrawAuction(rngContracts, config, relays);
   } catch (e) {
     console.error(e);
   }

@@ -7,8 +7,8 @@ import {
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { executeTransactions } from './transactions';
 import { loadPrizeClaimerEnvVars } from './loadPrizeClaimerEnvVars';
+import { executeTransactions } from './transactions';
 
 export async function handler(event: RelayerParams) {
   const buildVars = {

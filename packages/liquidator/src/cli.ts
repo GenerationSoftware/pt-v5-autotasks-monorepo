@@ -4,14 +4,13 @@ import chalk from 'chalk';
 import { ethers } from 'ethers';
 import {
   instantiateRelayerAccount,
-  runLiquidator,
   LiquidatorConfig,
   RelayerAccount,
   LiquidatorEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import { ContractsBlob, downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 
 import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
+import { executeTransactions } from './transactions';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
@@ -36,7 +35,7 @@ if (esMain(import.meta)) {
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const liquidatorConfig: LiquidatorConfig = {
+  const config: LiquidatorConfig = {
     ...relayerAccount,
     writeProvider: readProvider, // TODO: Fix this!
     readProvider: readProvider,
@@ -47,13 +46,7 @@ if (esMain(import.meta)) {
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
   };
 
-  // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
-  try {
-    const contracts: ContractsBlob = await downloadContractsBlob(envVars.CHAIN_ID);
-    await runLiquidator(contracts, liquidatorConfig);
-  } catch (error) {
-    throw new Error(error);
-  }
+  await executeTransactions(config);
 }
 
 export function main() {}
