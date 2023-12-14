@@ -18,11 +18,9 @@ export default defineConfig((opt) => {
       };
     },
     noExternal: [
-      'inquirer',
       '@generationsoftware/pt-v5-autotasks-library',
       '@generationsoftware/pt-v5-utils-js',
       'ethers-multicall-provider',
-      'configstore',
       'yn',
     ],
     format: 'cjs',

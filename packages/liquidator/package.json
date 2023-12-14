@@ -1,5 +1,5 @@
 {
-  "name": "@generationsoftware/pt-v5-autotasks-arb-liquidator",
+  "name": "@generationsoftware/pt-v5-autotasks-liquidator",
   "version": "0.0.1",
   "description": "Autotask to make arbitrage profit for PoolTogether v5.",
   "author": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/generationsoftware"
   },
   "license": "MIT",
-  "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/arb-liquidator/README.md",
+  "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/liquidator/README.md",
   "type": "module",
   "main": "dist/handler.js",
   "directories": {
@@ -41,7 +41,6 @@
   },
   "devDependencies": {
     "builtin-modules": "3.3.0",
-    "configstore": "^6.0.0",
     "defender-autotask-client": "1.37.0",
     "dotenv": "16.0.3",
     "es-main": "1.2.0",

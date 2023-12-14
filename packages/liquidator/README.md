@@ -6,9 +6,9 @@
 
 # 🤖 PoolTogether V5
 
-### @generationsoftware/pt-v5-autotasks-arb-liquidator
+### @generationsoftware/pt-v5-autotasks-liquidator
 
-![title image for PoolTogether Arbitrage Liquidator Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/arb-liquidator/arb-liquidator-img.png "title image for PoolTogether Arbitrage Liquidator Bot")
+![title image for PoolTogether Arbitrage Liquidator Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/liquidator/arb-liquidator-img.png "title image for PoolTogether Arbitrage Liquidator Bot")
 
 PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to find arbitrage opportunities and liquidate the prize token (likely POOL) for yield.
 
