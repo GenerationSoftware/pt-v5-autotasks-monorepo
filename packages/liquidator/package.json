@@ -44,6 +44,7 @@
     "defender-autotask-client": "1.37.0",
     "dotenv": "16.0.3",
     "es-main": "1.2.0",
-    "ts-node": "10.9.1"
+    "ts-node": "10.9.1",
+    "tsup": "^6.7.0"
   }
 }

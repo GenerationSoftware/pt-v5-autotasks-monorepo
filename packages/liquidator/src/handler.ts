@@ -1,44 +1,52 @@
-import { Relayer } from 'defender-relay-client';
 import { ethers } from 'ethers';
-import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   instantiateRelayerAccount,
   liquidatorArbitrageSwap,
   LiquidatorConfig,
   RelayerAccount,
+  LiquidatorEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import fetch from 'node-fetch';
 
+import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
+
 export async function handler(event) {
-  const chainId = Number(BUILD_CHAIN_ID);
-  const covalentApiKey = BUILD_COVALENT_API_KEY;
+  const buildVars = {
+    chainId: BUILD_CHAIN_ID,
+    useFlashbots: BUILD_USE_FLASHBOTS,
+    minProfitThresholdUsd: BUILD_MIN_PROFIT_THRESHOLD_USD,
+    swapRecipient: BUILD_SWAP_RECIPIENT,
+  };
 
-  // const relayer = new Relayer(event);
-  // const provider = new DefenderRelayProvider(event);
-  // const signer = new DefenderRelaySigner(event, provider, {
-  //   speed: 'fast',
-  // });
-  // const relayerAddress = await signer.getAddress();
+  const envVars: LiquidatorEnvVars = loadLiquidatorEnvVars(buildVars, event);
 
-  const readProvider = new ethers.providers.JsonRpcProvider(BUILD_JSON_RPC_URI, chainId);
+  const mockEvent = {
+    apiKey: envVars.RELAYER_API_KEY,
+    apiSecret: envVars.RELAYER_API_SECRET,
+  };
+
+  const readProvider = new ethers.providers.JsonRpcProvider(
+    envVars.JSON_RPC_URI,
+    Number(envVars.CHAIN_ID),
+  );
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     readProvider, // TODO: Fix this!
     readProvider,
-    event,
-    BUILD_CUSTOM_RELAYER_PRIVATE_KEY,
+    mockEvent,
+    envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const config: LiquidatorConfig = {
     ...relayerAccount,
     writeProvider: readProvider, // TODO: Fix this!
     readProvider: readProvider,
-    chainId,
-    covalentApiKey,
-    swapRecipient: BUILD_SWAP_RECIPIENT,
-    useFlashbots: BUILD_USE_FLASHBOTS,
-    minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
+    covalentApiKey: envVars.COVALENT_API_KEY,
+    chainId: envVars.CHAIN_ID,
+    swapRecipient: envVars.SWAP_RECIPIENT,
+    useFlashbots: envVars.USE_FLASHBOTS,
+    minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
   };
 
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
