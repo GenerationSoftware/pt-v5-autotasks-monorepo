@@ -4,7 +4,7 @@ import { YieldVaultMintRateConfig } from './types';
 import { getGasPrice } from './utils';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
-export async function runYieldVaultHandleMintRate(
+export async function runYieldVaultMintRate(
   contracts: ContractsBlob,
   params: YieldVaultMintRateConfig,
 ): Promise<void> {

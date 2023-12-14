@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   instantiateRelayerAccount,
-  liquidatorArbitrageSwap,
+  runLiquidator,
   LiquidatorConfig,
   LiquidatorEnvVars,
   RelayerAccount,
@@ -52,7 +52,7 @@ export async function handler(event) {
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
     const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, fetch);
-    await liquidatorArbitrageSwap(contracts, config);
+    await runLiquidator(contracts, config);
   } catch (error) {
     throw new Error(error);
   }

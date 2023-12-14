@@ -20,7 +20,7 @@ PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to find arbitrag
 
 This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
 
-The bulk of determining if an arbitrage is profitable is in **[/packages/library/src/liquidatorArbitrageSwap.ts#L44](../library)**.
+The bulk of determining if an arbitrage is profitable is in **[/packages/library/src/liquidator.ts#L44](../library)**.
 
 ### 1. Run autotask
 

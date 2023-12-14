@@ -46,7 +46,7 @@ interface Stat {
  * or not as we iterate through all LiquidityPairs
  * @returns {undefined} - void function
  */
-export async function liquidatorArbitrageSwap(
+export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {

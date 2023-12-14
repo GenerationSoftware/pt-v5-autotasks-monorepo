@@ -267,7 +267,7 @@ const instantiateRelayAuctionContracts = (relays: Relay[]): Relay[] => {
  *
  * @returns {undefined} void function
  */
-export async function executeDrawAuctionTxs(
+export async function runDrawAuction(
   rngContracts: ContractsBlob,
   config: DrawAuctionConfig,
   relays: Relay[],

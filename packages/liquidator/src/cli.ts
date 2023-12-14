@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import { ethers } from 'ethers';
 import {
   instantiateRelayerAccount,
-  liquidatorArbitrageSwap,
+  runLiquidator,
   LiquidatorConfig,
   RelayerAccount,
   LiquidatorEnvVars,
@@ -50,7 +50,7 @@ if (esMain(import.meta)) {
   // TODO: Simply use the populate/processPopulatedTransactions pattern here as well
   try {
     const contracts: ContractsBlob = await downloadContractsBlob(envVars.CHAIN_ID);
-    await liquidatorArbitrageSwap(contracts, liquidatorConfig);
+    await runLiquidator(contracts, liquidatorConfig);
   } catch (error) {
     throw new Error(error);
   }
