@@ -16,15 +16,15 @@ export const instantiateRelayerAccount = async (
 ): Promise<RelayerAccount> => {
   let wallet, signer, relayerAddress, ozRelayer;
 
-  if (!customRelayerPrivateKey && (!event.apiKey || !event.apiSecret)) {
-    console.log(
-      chalk.yellow(
-        'Missing private key or OZ Defender relayer auth credentials, are env vars (local) or secrets (remote) set and exported properly?',
-      ),
-    );
-    printSpacer();
-    printSpacer();
-  }
+  // if (!customRelayerPrivateKey && (!event.apiKey || !event.apiSecret)) {
+  //   console.log(
+  //     chalk.yellow(
+  //       'Missing private key or OZ Defender relayer auth credentials, are env vars (local) or secrets (remote) set and exported properly?',
+  //     ),
+  //   );
+  //   printSpacer();
+  //   printSpacer();
+  // }
 
   if (customRelayerPrivateKey) {
     wallet = new Wallet(customRelayerPrivateKey, readProvider);

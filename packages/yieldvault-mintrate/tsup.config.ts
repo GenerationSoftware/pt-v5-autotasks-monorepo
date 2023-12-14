@@ -16,9 +16,6 @@ export default defineConfig((opt) => {
       options.define = {
         ...(options.define ?? {}),
         BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
-        BUILD_CUSTOM_RELAYER_PRIVATE_KEY: `'${config.get(
-          `${CHAIN_ID}.CUSTOM_RELAYER_PRIVATE_KEY`,
-        )}'`,
       };
     },
     noExternal: [
