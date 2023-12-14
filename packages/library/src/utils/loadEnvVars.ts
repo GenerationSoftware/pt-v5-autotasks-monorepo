@@ -1,7 +1,8 @@
 import yn from 'yn';
+import chalk from 'chalk';
 
 import { AutotaskEnvVars } from '../types';
-import { CHAIN_IDS } from './network';
+import { chainName, CHAIN_IDS } from './network';
 
 // Could potentially collapse this into a dynamic string generator, since it's a lot of repetition
 // the only thing that changes is the network name
@@ -37,6 +38,8 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
   const useFlashbots = yn(buildVars?.useFlashbots || process.env.USE_FLASHBOTS);
   const minProfitThresholdUsd =
     buildVars?.minProfitThresholdUsd || process.env.MIN_PROFIT_THRESHOLD_USD;
+
+  console.log(chalk.blue(`Operating on: ${chainName(chainId)}`));
 
   // Secrets (API keys, etc) not safe for building into a flat file
   let covalentApiKey = process.env.COVALENT_API_KEY;
