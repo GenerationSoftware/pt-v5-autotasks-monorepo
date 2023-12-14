@@ -1,6 +1,6 @@
 export * from './math';
 export * from './getUsd';
-export * from './getArbLiquidatorContextMulticall';
+export * from './getLiquidatorContextMulticall';
 export * from './getLiquidationPairsMulticall';
 export * from './getLiquidationPairComputeExactAmountInMulticall';
 export * from './logging';

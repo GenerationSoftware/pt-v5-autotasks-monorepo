@@ -6,7 +6,7 @@ import {
 } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { ArbLiquidatorContext, ArbLiquidatorRelayerContext, Token, TokenWithRate } from '../types';
+import { LiquidatorContext, LiquidatorRelayerContext, Token, TokenWithRate } from '../types';
 import { printSpacer, getEthMainnetTokenMarketRateUsd } from '../utils';
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { ERC4626Abi } from '../abis/ERC4626Abi';
@@ -29,13 +29,13 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns
  */
-export const getArbLiquidatorContextMulticall = async (
+export const getLiquidatorContextMulticall = async (
   liquidationRouterContract: Contract,
   liquidationPairContract: Contract,
   readProvider: Provider,
   relayerAddress: string,
   covalentApiKey?: string,
-): Promise<ArbLiquidatorContext> => {
+): Promise<LiquidatorContext> => {
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(readProvider);
 
@@ -141,7 +141,7 @@ export const getArbLiquidatorContextMulticall = async (
     assetRateUsd: underlyingAssetAssetRateUsd,
   };
 
-  const relayer: ArbLiquidatorRelayerContext = {
+  const relayer: LiquidatorRelayerContext = {
     tokenInBalance: BigNumber.from(results['tokenIn-balanceOf']),
     tokenInAllowance: BigNumber.from(results['tokenIn-allowance']),
   };

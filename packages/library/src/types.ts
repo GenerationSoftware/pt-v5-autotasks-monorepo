@@ -6,7 +6,7 @@ import { ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
-export interface ArbLiquidatorRelayerContext {
+export interface LiquidatorRelayerContext {
   tokenInAllowance: BigNumber;
   tokenInBalance: BigNumber;
 }
@@ -74,11 +74,11 @@ export interface LiquidatorConfig {
   covalentApiKey?: string;
 }
 
-export interface ArbLiquidatorContext {
+export interface LiquidatorContext {
   tokenIn: TokenWithRate;
   tokenOut: Token;
   underlyingAssetToken: TokenWithRate;
-  relayer: ArbLiquidatorRelayerContext;
+  relayer: LiquidatorRelayerContext;
 }
 
 export interface WithdrawClaimRewardsConfig {

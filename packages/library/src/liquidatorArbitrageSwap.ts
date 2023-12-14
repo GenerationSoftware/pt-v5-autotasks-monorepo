@@ -5,7 +5,7 @@ import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { LiquidatorConfig, ArbLiquidatorContext } from './types';
+import { LiquidatorConfig, LiquidatorContext } from './types';
 import {
   logTable,
   logStringValue,
@@ -15,7 +15,7 @@ import {
   getFeesUsd,
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
-  getArbLiquidatorContextMulticall,
+  getLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
   getLiquidationPairComputeExactAmountInMulticall,
   getGasPrice,
@@ -101,7 +101,7 @@ export async function liquidatorArbitrageSwap(
       readProvider,
     );
 
-    const context: ArbLiquidatorContext = await getArbLiquidatorContextMulticall(
+    const context: LiquidatorContext = await getLiquidatorContextMulticall(
       liquidationRouterContract,
       liquidationPairContract,
       readProvider,
@@ -330,7 +330,7 @@ const approve = async (
   liquidationRouter: Contract,
   signer: Signer | DefenderRelaySigner,
   relayerAddress: string,
-  context: ArbLiquidatorContext,
+  context: LiquidatorContext,
 ) => {
   try {
     printSpacer();
@@ -443,7 +443,7 @@ const printContext = (context) => {
  * @returns {Promise} Promise boolean if the balance is sufficient to swap
  */
 const checkBalance = async (
-  context: ArbLiquidatorContext,
+  context: LiquidatorContext,
   exactAmountIn: BigNumber,
 ): Promise<boolean> => {
   printAsterisks();
@@ -461,7 +461,7 @@ const checkBalance = async (
  * @returns {Promise} Promise boolean of profitability
  */
 const calculateProfit = async (
-  context: ArbLiquidatorContext,
+  context: LiquidatorContext,
   minProfitThresholdUsd: number,
   wantedAmountsIn: BigNumber[],
   wantedAmountsOut: BigNumber[],
@@ -591,7 +591,7 @@ const getGasCost = async (
  */
 const calculateAmountOut = async (
   liquidationPair: Contract,
-  context: ArbLiquidatorContext,
+  context: LiquidatorContext,
 ): Promise<{
   originalMaxAmountOut: BigNumber;
   wantedAmountsOut: BigNumber[];
@@ -650,7 +650,7 @@ const calculateAmountOut = async (
 const calculateAmountIn = async (
   readProvider: Provider,
   liquidationPairContract: Contract,
-  context: ArbLiquidatorContext,
+  context: LiquidatorContext,
   originalMaxAmountOut: BigNumber,
   wantedAmountsOut: BigNumber[],
 ): Promise<{
