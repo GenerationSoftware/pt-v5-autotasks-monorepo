@@ -4,8 +4,8 @@ import {
   instantiateRelayerAccount,
   liquidatorArbitrageSwap,
   LiquidatorConfig,
-  RelayerAccount,
   LiquidatorEnvVars,
+  RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 import fetch from 'node-fetch';
 
