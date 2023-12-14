@@ -6,9 +6,9 @@ import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 export async function runYieldVaultMintRate(
   contracts: ContractsBlob,
-  params: YieldVaultMintRateConfig,
+  config: YieldVaultMintRateConfig,
 ): Promise<void> {
-  const { chainId, ozRelayer, wallet, readProvider } = params;
+  const { chainId, ozRelayer, wallet, readProvider } = config;
 
   const yieldVaultContracts: Contract[] = getContracts(
     'YieldVault',

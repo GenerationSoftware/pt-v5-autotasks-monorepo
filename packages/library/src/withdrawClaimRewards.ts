@@ -34,7 +34,7 @@ interface WithdrawClaimRewardsParams {
 export async function getWithdrawClaimRewardsTx(
   contracts: ContractsBlob,
   readProvider: Provider,
-  params: WithdrawClaimRewardsConfig,
+  config: WithdrawClaimRewardsConfig,
 ): Promise<PopulatedTransaction | undefined> {
   const {
     chainId,
@@ -42,7 +42,7 @@ export async function getWithdrawClaimRewardsTx(
     relayerAddress,
     minProfitThresholdUsd,
     covalentApiKey,
-  } = params;
+  } = config;
 
   const contractsVersion = {
     major: 1,
