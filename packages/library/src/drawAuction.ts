@@ -887,10 +887,9 @@ const getRngGasCost = async (
     //   transferFeeAndStartRngRequestTxParams,
     // );
 
-    populatedTx =
-      await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
-        ...Object.values(transferFeeAndStartRngRequestTxParams),
-      );
+    populatedTx = await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
+      ...Object.values(transferFeeAndStartRngRequestTxParams),
+    );
 
     // This was a previous tx gas usage on Goerli + buffer room
     estimatedGasLimit = BigNumber.from(330000);

@@ -10,22 +10,24 @@ export async function runYieldVaultHandleMintRate(
 ): Promise<void> {
   const { chainId, ozRelayer, wallet, readProvider } = params;
 
-  const relayer = ozRelayer ? ozRelayer : wallet;
-  const yieldVaultContracts: Contract[] = getContracts('YieldVault', chainId, relayer, contracts);
+  const yieldVaultContracts: Contract[] = getContracts(
+    'YieldVault',
+    chainId,
+    readProvider,
+    contracts,
+  );
 
   for (const yieldVaultContract of yieldVaultContracts) {
     if (!yieldVaultContract) {
       throw new Error('YieldVault: Contract Unavailable');
     }
-
     const populatedTx: PopulatedTransaction = await yieldVaultContract.populateTransaction.mintRate();
 
     try {
       const gasLimit = 200000;
       const { gasPrice } = await getGasPrice(readProvider);
-      const tx = await sendPopulatedTx(ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
       console.log(`YieldVault: mintRate() ${yieldVaultContract.address}`);
-
+      const tx = await sendPopulatedTx(ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
       console.log('TransactionHash:', tx.hash);
       console.log('');
     } catch (error) {

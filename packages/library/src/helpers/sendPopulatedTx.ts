@@ -31,6 +31,8 @@ export const sendPopulatedTx = async (
 
   let tx;
   if (rngOzRelayer) {
+    console.log('rngOzRelayer');
+    console.log(rngOzRelayer);
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
@@ -41,8 +43,13 @@ export const sendPopulatedTx = async (
       args.value = txParams.value.toString();
     }
 
+    console.log('args');
+    console.log(args);
+
     // @ts-ignore
     tx = await rngOzRelayer.sendTransaction(args);
+    console.log('tx');
+    console.log(tx);
   } else if (rngWallet) {
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,

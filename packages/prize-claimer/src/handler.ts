@@ -38,7 +38,7 @@ export async function handler(event: RelayerParams) {
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const prizeClaimerConfig: PrizeClaimerConfig = {
+  const config: PrizeClaimerConfig = {
     ...relayerAccount,
     chainId: envVars.CHAIN_ID,
     readProvider,
@@ -48,5 +48,5 @@ export async function handler(event: RelayerParams) {
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };
 
-  await executeTransactions(prizeClaimerConfig);
+  await executeTransactions(config);
 }

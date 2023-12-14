@@ -1,0 +1,14 @@
+export CHAIN_ID=''
+export JSON_RPC_URI=''
+
+### THIS:
+
+export CUSTOM_RELAYER_PRIVATE_KEY=
+
+### OR THIS:
+
+export DEFENDER_TEAM_API_KEY=''
+export DEFENDER_TEAM_API_SECRET=''
+export AUTOTASK_ID=''
+export RELAYER_API_KEY=''
+export RELAYER_API_SECRET=''

@@ -1,13 +1,42 @@
+import { ethers } from 'ethers';
 import { RelayerParams } from 'defender-relay-client';
+import {
+  instantiateRelayerAccount,
+  loadEnvVars,
+  RelayerAccount,
+} from '@generationsoftware/pt-v5-autotasks-library';
 
 import { processTransactions } from './transactions';
 
-const handlerLoadParams = () => {
-  return { chainId: Number(BUILD_CHAIN_ID) };
-};
-
 export async function handler(event: RelayerParams) {
-  const params = handlerLoadParams();
+  const buildVars = {
+    chainId: BUILD_CHAIN_ID,
+  };
 
-  await processTransactions(event, params);
+  const envVars = loadEnvVars(buildVars, event);
+
+  const mockEvent = {
+    apiKey: envVars.RELAYER_API_KEY,
+    apiSecret: envVars.RELAYER_API_SECRET,
+  };
+
+  const readProvider = new ethers.providers.JsonRpcProvider(
+    envVars.JSON_RPC_URI,
+    Number(envVars.CHAIN_ID),
+  );
+
+  const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
+    readProvider,
+    readProvider,
+    mockEvent,
+    envVars.CUSTOM_RELAYER_PRIVATE_KEY,
+  );
+
+  const config = {
+    ...relayerAccount,
+    chainId: envVars.CHAIN_ID,
+    readProvider,
+  };
+
+  await processTransactions(config);
 }
