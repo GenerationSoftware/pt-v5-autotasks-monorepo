@@ -8,8 +8,8 @@ import { printSpacer } from '../utils';
 const ONE_GWEI = '1000000000';
 
 export const sendPopulatedTx = async (
-  rngOzRelayer: Relayer,
-  rngWallet: Wallet,
+  relayer: Relayer,
+  wallet: Wallet,
   populatedTx: PopulatedTransaction,
   gasLimit: number,
   gasPrice: BigNumber,
@@ -30,9 +30,9 @@ export const sendPopulatedTx = async (
   };
 
   let tx;
-  if (rngOzRelayer) {
-    console.log('rngOzRelayer');
-    console.log(rngOzRelayer);
+  if (relayer) {
+    console.log('relayer');
+    console.log(relayer);
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
@@ -47,10 +47,10 @@ export const sendPopulatedTx = async (
     console.log(args);
 
     // @ts-ignore
-    tx = await rngOzRelayer.sendTransaction(args);
+    tx = await relayer.sendTransaction(args);
     console.log('tx');
     console.log(tx);
-  } else if (rngWallet) {
+  } else if (wallet) {
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,
       gasPrice: BigNumber.from(gasPriceStr),
@@ -59,7 +59,7 @@ export const sendPopulatedTx = async (
     if (txParams && txParams.value) {
       args.value = txParams.value;
     }
-    tx = await rngWallet.sendTransaction(args);
+    tx = await wallet.sendTransaction(args);
   }
 
   return tx;
