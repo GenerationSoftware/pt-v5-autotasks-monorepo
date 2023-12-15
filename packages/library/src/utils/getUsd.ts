@@ -18,14 +18,16 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
   DAI: 'dai',
 };
 
+// Note: Lowercase!
 const ADDRESS_TO_COVALENT_LOOKUP = {
   '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Sepolia -> ETH
   '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> ETH
-  '0x94DC94FE29Ff0E591a284619622B493fbf3A64E8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism Goerli -> ETH
+  '0x94dc94fe29ff0e591a284619622b493fbf3a64e8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism Goerli -> ETH
   '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> ETH
   '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Optimism -> ETH
-  '0x7F5c764cBc14f9669B88837ca1490cCa17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> ETH
-  '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> ETH
+  '0x7f5c764cbc14f9669b88837ca1490cca17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> ETH
+  '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> ETH
+  '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> ETH
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
@@ -143,7 +145,6 @@ export const getEthMainnetTokenMarketRateUsd = async (
   }
 
   let marketRateUsd;
-
   try {
     marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
   } catch (err) {
@@ -172,7 +173,7 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
   try {
     const response = await fetch(uri);
     if (!response.ok) {
-      console.log(chalk.yellow(`Unable to fetch current USD value of '${symbol}' token.`));
+      console.log(chalk.yellow(`Unable to fetch current USD value from Coingecko of '${symbol}' token.`));
       throw new Error(response.statusText);
     }
     marketRate = await response.json();
@@ -189,7 +190,6 @@ export const getCovalentMarketRateUsd = async (
   covalentApiKey: string,
 ): Promise<number> => {
   const address = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress.toLowerCase()];
-
   let rateUsd;
   try {
     const url = new URL(
@@ -202,7 +202,7 @@ export const getCovalentMarketRateUsd = async (
     if (!response.ok) {
       console.log(
         chalk.yellow(
-          `Unable to fetch current USD value of ETH Mainnet token with CA: '${address}'.`,
+          `Unable to fetch current USD value from Covalent of token with CA: '${address}'.`,
         ),
       );
       throw new Error(response.statusText);
