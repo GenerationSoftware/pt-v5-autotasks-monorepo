@@ -10,7 +10,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
-import { executeTransactions } from './transactions';
+import { executeTransactions } from './executeTransactions';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));

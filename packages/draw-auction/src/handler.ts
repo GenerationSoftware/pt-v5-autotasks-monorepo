@@ -1,6 +1,4 @@
-import yn from 'yn';
 import { ethers } from 'ethers';
-import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 import {
   instantiateRelayerAccount,
   DrawAuctionConfig,
@@ -8,7 +6,7 @@ import {
   DrawAuctionEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { executeTransactions } from './transactions';
+import { executeTransactions } from './executeTransactions';
 import { loadDrawAuctionEnvVars } from './loadDrawAuctionEnvVars';
 
 export async function handler(event) {
@@ -36,7 +34,7 @@ export async function handler(event) {
     l1ChainId: Number(envVars.CHAIN_ID),
     l1Provider,
     covalentApiKey: envVars.COVALENT_API_KEY,
-    useFlashbots: yn(envVars.USE_FLASHBOTS),
+    useFlashbots: envVars.USE_FLASHBOTS,
     rewardRecipient: envVars.REWARD_RECIPIENT,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
 

@@ -11,7 +11,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
-import { executeTransactions } from './transactions';
+import { executeTransactions } from './executeTransactions';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('YieldVault MintRate Bot')));

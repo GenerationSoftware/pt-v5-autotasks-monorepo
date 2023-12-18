@@ -9,7 +9,7 @@ import {
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { executeTransactions } from './transactions';
+import { executeTransactions } from './executeTransactions';
 import { loadPrizeClaimerEnvVars } from './loadPrizeClaimerEnvVars';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));

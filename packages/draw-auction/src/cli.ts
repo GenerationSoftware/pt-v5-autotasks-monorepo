@@ -1,7 +1,6 @@
 import esMain from 'es-main';
 import figlet from 'figlet';
 import chalk from 'chalk';
-import yn from 'yn';
 import { ethers } from 'ethers';
 import {
   instantiateRelayerAccount,
@@ -11,7 +10,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
-import { executeTransactions } from './transactions';
+import { executeTransactions } from './executeTransactions';
 import { loadDrawAuctionEnvVars } from './loadDrawAuctionEnvVars';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
@@ -40,7 +39,7 @@ if (esMain(import.meta)) {
     l1ChainId: Number(envVars.CHAIN_ID),
     l1Provider: l1Provider,
     covalentApiKey: envVars.COVALENT_API_KEY,
-    useFlashbots: yn(envVars.USE_FLASHBOTS),
+    useFlashbots: envVars.USE_FLASHBOTS,
     rewardRecipient: envVars.REWARD_RECIPIENT,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
 

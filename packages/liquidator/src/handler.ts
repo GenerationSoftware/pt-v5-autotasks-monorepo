@@ -8,7 +8,7 @@ import {
 // import fetch from 'node-fetch';
 
 import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
-import { executeTransactions } from './transactions';
+import { executeTransactions } from './executeTransactions';
 
 export async function handler(event) {
   const buildVars = {

@@ -37,6 +37,7 @@
     "defender-relay-client": "1.39.0",
     "ethers-multicall-provider": "^3.0.5",
     "figlet": "^1.6.0",
+    "node-fetch": "^3.3.1",
     "tsdx": "^0.14.1"
   },
   "devDependencies": {

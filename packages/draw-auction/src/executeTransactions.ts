@@ -1,3 +1,4 @@
+import nodeFetch from 'node-fetch';
 import { downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   runDrawAuction,
@@ -8,7 +9,7 @@ import { getRelays } from './getRelays';
 
 export const executeTransactions = async (config: DrawAuctionConfig): Promise<void> => {
   try {
-    const rngContracts = await downloadContractsBlob(config.l1ChainId);
+    const rngContracts = await downloadContractsBlob(config.l1ChainId, nodeFetch);
 
     const relays: Relay[] = await getRelays(config);
 

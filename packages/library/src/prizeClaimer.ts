@@ -1,3 +1,4 @@
+import nodeFetch from 'node-fetch';
 import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import {
@@ -65,14 +66,8 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const {
-    chainId,
-    covalentApiKey,
-    useFlashbots,
-    ozRelayer,
-    wallet,
-    l1Provider,
-  } = prizeClaimerConfig;
+  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, l1Provider } =
+    prizeClaimerConfig;
 
   const contractsVersion = {
     major: 1,
@@ -741,11 +736,12 @@ const fetchClaims = async (
   const drawResultsUri = getDrawResultsUri(chainId, prizePoolAddress, drawId);
 
   try {
-    const response = await fetch(drawResultsUri);
+    const response = await nodeFetch(drawResultsUri);
     if (!response.ok) {
       console.log(chalk.yellow(`Draw results not yet populated for new draw.`));
       throw new Error(response.statusText);
     }
+    // @ts-ignore
     claims = await response.json();
   } catch (err) {
     console.log(err);

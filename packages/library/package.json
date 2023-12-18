@@ -36,6 +36,7 @@
     "ethers": "5.7.2",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
+    "node-fetch": "^3.3.1",
     "tsc-watch": "^6.0.4"
   },
   "devDependencies": {
