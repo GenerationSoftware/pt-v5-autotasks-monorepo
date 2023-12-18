@@ -26,14 +26,13 @@ export async function handler(event: RelayerParams) {
     apiSecret: envVars.RELAYER_API_SECRET,
   };
 
-  const readProvider = new ethers.providers.JsonRpcProvider(
+  const l1Provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,
     Number(envVars.CHAIN_ID),
   );
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    readProvider,
-    readProvider,
+    l1Provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
@@ -41,7 +40,7 @@ export async function handler(event: RelayerParams) {
   const config: PrizeClaimerConfig = {
     ...relayerAccount,
     chainId: envVars.CHAIN_ID,
-    readProvider,
+    l1Provider,
     covalentApiKey: envVars.COVALENT_API_KEY,
     feeRecipient: BUILD_FEE_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,

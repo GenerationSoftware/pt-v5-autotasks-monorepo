@@ -1,16 +1,16 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 import { Wallet } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { Relayer, RelayerParams } from 'defender-relay-client';
+import { Relayer } from 'defender-relay-client';
 import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
+
+// import { printSpacer } from './logging';
 import { RelayerAccount } from '../types';
-import { printSpacer } from './logging';
 
 // Takes a generic set of providers, the lambda event params (in the case of an OZ Defender setup),
 // and an optional EOA private key and creates a RelayerAccount
 export const instantiateRelayerAccount = async (
-  writeProvider: DefenderRelayProvider | Provider,
-  readProvider: DefenderRelayProvider | Provider,
+  l1Provider: DefenderRelayProvider | Provider,
   event,
   customRelayerPrivateKey?: string,
 ): Promise<RelayerAccount> => {
@@ -27,11 +27,11 @@ export const instantiateRelayerAccount = async (
   // }
 
   if (customRelayerPrivateKey) {
-    wallet = new Wallet(customRelayerPrivateKey, readProvider);
+    wallet = new Wallet(customRelayerPrivateKey, l1Provider);
     relayerAddress = wallet.address;
     signer = wallet;
   } else {
-    signer = new DefenderRelaySigner(event, writeProvider, {
+    signer = new DefenderRelaySigner(event, l1Provider, {
       speed: 'fast',
     });
     relayerAddress = await signer.getAddress();

@@ -21,14 +21,12 @@ export async function handler(event) {
   };
 
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars(buildVars, event);
-  const rngWriteProvider = new DefenderRelayProvider(event);
   const l1Provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,
     Number(envVars.CHAIN_ID),
   );
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    rngWriteProvider,
     l1Provider,
     event,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,

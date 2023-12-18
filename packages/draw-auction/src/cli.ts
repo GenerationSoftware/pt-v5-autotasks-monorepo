@@ -29,10 +29,8 @@ if (esMain(import.meta)) {
     apiKey: envVars.RELAYER_API_KEY, // RNG chain OZ relayer API Key
     apiSecret: envVars.RELAYER_API_SECRET, // RNG chain OZ relayer API secret
   };
-  const rngWriteProvider = new DefenderRelayProvider(mockEvent);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    rngWriteProvider,
     l1Provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,

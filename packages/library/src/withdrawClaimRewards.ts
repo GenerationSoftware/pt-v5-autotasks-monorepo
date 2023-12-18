@@ -33,7 +33,7 @@ interface WithdrawClaimRewardsParams {
  */
 export async function getWithdrawClaimRewardsTx(
   contracts: ContractsBlob,
-  readProvider: Provider,
+  l1Provider: Provider,
   config: WithdrawClaimRewardsConfig,
 ): Promise<PopulatedTransaction | undefined> {
   const {
@@ -52,7 +52,7 @@ export async function getWithdrawClaimRewardsTx(
   const prizePoolContract = getContract(
     'PrizePool',
     chainId,
-    readProvider,
+    l1Provider,
     contracts,
     contractsVersion,
   );
@@ -64,7 +64,7 @@ export async function getWithdrawClaimRewardsTx(
   // #1. Get context about the prize pool prize token, etc
   const context: WithdrawClaimRewardsContext = await getContext(
     prizePoolContract,
-    readProvider,
+    l1Provider,
     covalentApiKey,
   );
   printContext(context);
@@ -129,7 +129,7 @@ export async function getWithdrawClaimRewardsTx(
     prizePoolContract,
     rewardsTokenUsd,
     withdrawClaimRewardsParams,
-    readProvider,
+    l1Provider,
     minProfitThresholdUsd,
   );
   if (!profitable) {
@@ -155,12 +155,12 @@ export async function getWithdrawClaimRewardsTx(
  */
 const getContext = async (
   prizePoolContract: Contract,
-  readProvider: Provider,
+  l1Provider: Provider,
   covalentApiKey?: string,
 ): Promise<WithdrawClaimRewardsContext> => {
   const rewardsTokenAddress = await prizePoolContract.prizeToken();
 
-  const tokenInContract = new ethers.Contract(rewardsTokenAddress, ERC20Abi, readProvider);
+  const tokenInContract = new ethers.Contract(rewardsTokenAddress, ERC20Abi, l1Provider);
 
   const rewardsToken: Token = {
     address: rewardsTokenAddress,
@@ -220,7 +220,7 @@ const calculateProfit = async (
   prizePoolContract: Contract,
   rewardsTokenUsd: number,
   withdrawClaimRewardsParams: WithdrawClaimRewardsParams,
-  readProvider: Provider,
+  l1Provider: Provider,
   minProfitThresholdUsd: number,
 ): Promise<Boolean> => {
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
@@ -245,7 +245,7 @@ const calculateProfit = async (
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
-    readProvider,
+    l1Provider,
     populatedTx.data,
   );
   logStringValue(

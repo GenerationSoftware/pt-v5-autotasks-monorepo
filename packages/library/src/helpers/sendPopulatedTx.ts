@@ -31,8 +31,6 @@ export const sendPopulatedTx = async (
 
   let tx;
   if (relayer) {
-    console.log('relayer');
-    console.log(relayer);
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
@@ -43,13 +41,8 @@ export const sendPopulatedTx = async (
       args.value = txParams.value.toString();
     }
 
-    console.log('args');
-    console.log(args);
-
     // @ts-ignore
     tx = await relayer.sendTransaction(args);
-    console.log('tx');
-    console.log(tx);
   } else if (wallet) {
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,

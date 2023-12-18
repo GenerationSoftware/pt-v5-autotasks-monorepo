@@ -865,7 +865,7 @@ const buildRngAuctionRelayerRemoteOwnerArbitrumRelayTxParams = (
 };
 
 const getRngGasCost = async (
-  readProvider: Provider,
+  provider: Provider,
   rngAuctionContracts: RngAuctionContracts,
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
@@ -908,7 +908,7 @@ const getRngGasCost = async (
   const gasCostUsd = await getGasCostUsd(
     estimatedGasLimit,
     config.l1ChainId,
-    readProvider,
+    provider,
     context.rngNativeTokenMarketRateUsd,
     populatedTx,
   );
@@ -1009,7 +1009,7 @@ const getRelayGasCost = async (
 const getGasCostUsd = async (
   estimatedGasLimit,
   chainId,
-  readProvider,
+  provider,
   nativeTokenMarketRateUsd,
   populatedTx,
 ): Promise<number> => {
@@ -1025,7 +1025,7 @@ const getGasCostUsd = async (
     );
   }
 
-  const { gasPrice } = await getGasPrice(readProvider);
+  const { gasPrice } = await getGasPrice(provider);
   logBigNumber(
     'Recent Gas Price (wei):',
     gasPrice,
@@ -1040,7 +1040,7 @@ const getGasCostUsd = async (
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
-    readProvider,
+    provider,
     populatedTx.data,
   );
   console.log(

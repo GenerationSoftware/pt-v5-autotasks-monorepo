@@ -49,7 +49,7 @@ export interface ClaimPrizeContext {
 
 export interface PrizeClaimerConfig {
   chainId: number;
-  readProvider: BaseProvider;
+  l1Provider: BaseProvider;
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
@@ -62,8 +62,7 @@ export interface PrizeClaimerConfig {
 
 export interface LiquidatorConfig {
   chainId: number;
-  readProvider: BaseProvider;
-  writeProvider: Provider | DefenderRelaySigner;
+  l1Provider: BaseProvider;
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
@@ -193,7 +192,6 @@ export interface RelayDrawAuctionContext {
 export interface Relay {
   l2ChainId: number;
   l2Provider: BaseProvider;
-  writeProvider: Provider | DefenderRelaySigner;
   // relayerAddress: string;
   contractsBlob: ContractsBlob;
   contracts?: RelayAuctionContracts;
@@ -231,7 +229,7 @@ export interface YieldVaultMintRateConfig {
   chainId: number;
   wallet: Wallet;
   ozRelayer: Relayer;
-  readProvider: BaseProvider;
+  l1Provider: BaseProvider;
   relayerAddress: string;
   signer: DefenderRelaySigner | Signer;
 }

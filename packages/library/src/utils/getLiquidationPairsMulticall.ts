@@ -14,15 +14,15 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * LiquidationPairFactory
  *
  * @param liquidationPairFactoryContract ethers contract instance of the LiquidationPairFactory to query
- * @param readProvider a read-capable provider for the chain that should be queried
+ * @param l1Provider provider for the chain that will be queried
  * @returns
  */
 export const getLiquidationPairsMulticall = async (
   liquidationPairFactoryContract: Contract,
-  readProvider: Provider,
+  l1Provider: Provider,
 ): Promise<Contract[]> => {
   // @ts-ignore Provider == BaseProvider
-  const multicallProvider = MulticallWrapper.wrap(readProvider);
+  const multicallProvider = MulticallWrapper.wrap(l1Provider);
 
   let queries: Record<string, any> = {};
 

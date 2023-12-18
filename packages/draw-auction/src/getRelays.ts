@@ -25,7 +25,6 @@ export const getRelays = async (drawAuctionConfig: DrawAuctionConfig): Promise<R
     relays.push({
       l2ChainId,
       l2Provider,
-      writeProvider: l2Provider,
       contractsBlob,
     });
   }

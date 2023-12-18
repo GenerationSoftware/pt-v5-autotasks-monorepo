@@ -71,7 +71,7 @@ export async function runPrizeClaimer(
     useFlashbots,
     ozRelayer,
     wallet,
-    readProvider,
+    l1Provider,
   } = prizeClaimerConfig;
 
   const contractsVersion = {
@@ -82,17 +82,11 @@ export async function runPrizeClaimer(
   const prizePoolContract = getContract(
     'PrizePool',
     chainId,
-    readProvider,
+    l1Provider,
     contracts,
     contractsVersion,
   );
-  const claimerContract = getContract(
-    'Claimer',
-    chainId,
-    readProvider,
-    contracts,
-    contractsVersion,
-  );
+  const claimerContract = getContract('Claimer', chainId, l1Provider, contracts, contractsVersion);
 
   if (!claimerContract) {
     throw new Error('Contract Unavailable');
@@ -104,7 +98,7 @@ export async function runPrizeClaimer(
   const context: ClaimPrizeContext = await getContext(
     contracts,
     prizePoolContract,
-    readProvider,
+    l1Provider,
     covalentApiKey,
   );
   printContext(context);
@@ -123,7 +117,7 @@ export async function runPrizeClaimer(
   let claims = await fetchClaims(chainId, prizePoolContract.address, context.drawId);
 
   // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
-  claims = await flagClaimedRpc(readProvider, contracts, claims);
+  claims = await flagClaimedRpc(l1Provider, contracts, claims);
 
   let unclaimedClaims = claims.filter((claim) => !claim.claimed);
   const claimedClaims = claims.filter((claim) => claim.claimed);
@@ -194,7 +188,7 @@ export async function runPrizeClaimer(
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
     const claimPrizesParams = await calculateProfit(
-      readProvider,
+      l1Provider,
       vault,
       Number(tier),
       claimerContract,
@@ -215,31 +209,21 @@ export async function runPrizeClaimer(
 
       const isPrivate = canUseIsPrivate(chainId, useFlashbots);
 
-      console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-      printSpacer();
-
       const populatedTx = await claimerContract.populateTransaction.claimPrizes(
         ...Object.values(claimPrizesParams),
       );
 
       const gasLimit = 20000000;
-      const { gasPrice } = await getGasPrice(readProvider);
+      const { gasPrice } = await getGasPrice(l1Provider);
       const tx = await sendPopulatedTx(
         ozRelayer,
         wallet,
         populatedTx,
         gasLimit,
         gasPrice,
-        useFlashbots,
+        isPrivate,
       );
 
-      // console.log(chalk.greenBright.bold(`Sending transaction ...`));
-      // const tx = await ozRelayer.sendTransaction({
-      //   isPrivate,
-      //   data: populatedTx.data,
-      //   to: populatedTx.to,
-      //   gasLimit: 20000000,
-      // });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
@@ -250,7 +234,7 @@ export async function runPrizeClaimer(
       //       See querying here:
       //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
       console.log('Waiting on transaction to be confirmed ...');
-      await readProvider.waitForTransaction(tx.hash);
+      await l1Provider.waitForTransaction(tx.hash);
       console.log('Tx confirmed !');
     } else {
       console.log(
@@ -306,7 +290,7 @@ const getEstimatedGasLimit = async (
  * @returns {Promise} Promise of a boolean for profitability
  */
 const calculateProfit = async (
-  readProvider: Provider,
+  l1Provider: Provider,
   vault: string,
   tier: number,
   claimerContract: Contract,
@@ -326,7 +310,7 @@ const calculateProfit = async (
 
   printSpacer();
   const gasCost = await getGasCost(
-    readProvider,
+    l1Provider,
     chainId,
     vault,
     tier,
@@ -362,7 +346,7 @@ const calculateProfit = async (
 
   // FEES USD
   const netProfitUsd = claimFeesUsd - totalCostUsd;
-  console.log(chalk.magenta('Net profit = (Earned fees - Gas cost [Max])'));
+  console.log(chalk.magenta('Net profit = (Gross Profit - Gas Cost [Max])'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
@@ -418,18 +402,18 @@ const logClaims = (claims: Claim[]) => {
 const getContext = async (
   contracts: ContractsBlob,
   prizePool: Contract,
-  readProvider: Provider,
+  l1Provider: Provider,
   covalentApiKey?: string,
 ): Promise<ClaimPrizeContext> => {
   const feeTokenAddress = await prizePool.prizeToken();
 
   console.log(chalk.dim('Getting prize pool info ...'));
 
-  const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
+  const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(l1Provider, contracts);
   const { drawId, isDrawFinalized, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
 
-  const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, readProvider);
+  const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, l1Provider);
 
   console.log(chalk.dim('Getting prize context ...'));
 
@@ -498,7 +482,7 @@ const buildParams = (
 };
 
 const getGasCost = async (
-  readProvider: Provider,
+  l1Provider: Provider,
   chainId: number,
   vault: string,
   tier: number,
@@ -530,7 +514,7 @@ const getGasCost = async (
     chainId,
     estimatedGasLimitForOne,
     gasTokenMarketRateUsd,
-    readProvider,
+    l1Provider,
     populatedTx.data,
   );
 
@@ -585,7 +569,7 @@ const getGasCost = async (
     chainId,
     gasCostEachFollowingClaim,
     gasTokenMarketRateUsd,
-    readProvider,
+    l1Provider,
     populatedTx.data,
   );
   console.log(
@@ -652,7 +636,7 @@ const getClaimInfo = async (
     );
 
     // COSTS USD
-    const totalCostUsd =
+    totalCostUsd =
       numClaims === 1
         ? gasCost.gasCostOneClaimUsd
         : gasCost.gasCostOneClaimUsd + gasCost.gasCostEachFollowingClaimUsd * (numClaims - 1);
@@ -661,7 +645,7 @@ const getClaimInfo = async (
 
     console.log(
       chalk.green(
-        `Total Gas Fees: ${numClaims} Claim(s) (USD):`,
+        `Total gas cost: ${numClaims} Claim(s) (USD):`,
         `$${roundTwoDecimalPlaces(totalCostUsd)}`,
       ),
       chalk.dim(`($${totalCostUsd})`),
@@ -706,44 +690,9 @@ const getClaimInfo = async (
     );
     printSpacer();
 
-    // To push through 1 non-profitable tx for debugging:
-    // if (numClaims === 1) {
-    //   claimCount = numClaims;
-    //   claimFees = nextClaimFees;
-    //   minVrgdaFeePerClaim = nextClaimFees.toString();
-    //   return { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim };
-    // }
-
     const netProfitUsd = nextClaimFeesUsd - totalCostUsd;
 
-    // DEBUG INFO
-    // const feeDiff = nextClaimFeesUsd - claimFeesUsd;
-    // console.log('feeDiff');
-    // console.log(feeDiff);
-    // printSpacer();
-
-    // console.log('netProfitUsd');
-    // console.log(netProfitUsd);
-    // printSpacer();
-
-    // console.log('minProfitThresholdUsd');
-    // console.log(minProfitThresholdUsd);
-    // printSpacer();
-
-    // console.log('previousNetProfitUsd');
-    // console.log(previousNetProfitUsd);
-    // printSpacer();
-
-    // console.log('netProfitUsd > previousNetProfitUsd');
-    // console.log(netProfitUsd > previousNetProfitUsd);
-    // printSpacer();
-
-    // console.log('netProfitUsd > minProfitThresholdUsd');
-    // console.log(netProfitUsd > minProfitThresholdUsd);
-    // printSpacer();
-    // END DEBUG INFO
-
-    console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Avg])'));
+    console.log(chalk.dim('Net profit = (Gross Profit - Gas Cost [Avg])'));
     console.log(
       chalk.greenBright(
         `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(

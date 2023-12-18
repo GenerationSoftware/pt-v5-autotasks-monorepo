@@ -24,7 +24,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  *
  * @param liquidationRouterContract ethers contract instance for the liquidationRouter contract
  * @param liquidationPairContract ethers contract instance for the liquidationPair contract
- * @param readProvider a read-capable provider for the chain that should be queried
+ * @param l1Provider provider for the chain that will be queried
  * @param contracts blob of contracts to pull PrizePool abi/etc from
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns
@@ -32,12 +32,12 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 export const getLiquidatorContextMulticall = async (
   liquidationRouterContract: Contract,
   liquidationPairContract: Contract,
-  readProvider: Provider,
+  l1Provider: Provider,
   relayerAddress: string,
   covalentApiKey?: string,
 ): Promise<LiquidatorContext> => {
   // @ts-ignore Provider == BaseProvider
-  const multicallProvider = MulticallWrapper.wrap(readProvider);
+  const multicallProvider = MulticallWrapper.wrap(l1Provider);
 
   let queries: Record<string, any> = {};
 

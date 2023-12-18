@@ -18,7 +18,7 @@ console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
 if (esMain(import.meta)) {
   const envVars: PrizeClaimerEnvVars = loadPrizeClaimerEnvVars();
 
-  const readProvider = new ethers.providers.JsonRpcProvider(envVars.JSON_RPC_URI, envVars.CHAIN_ID);
+  const l1Provider = new ethers.providers.JsonRpcProvider(envVars.JSON_RPC_URI, envVars.CHAIN_ID);
 
   const mockEvent = {
     apiKey: envVars.RELAYER_API_KEY,
@@ -26,15 +26,14 @@ if (esMain(import.meta)) {
   };
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    readProvider, // TODO: Fix this!
-    readProvider,
+    l1Provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const config: PrizeClaimerConfig = {
     ...relayerAccount,
-    readProvider,
+    l1Provider,
     chainId: envVars.CHAIN_ID,
     feeRecipient: envVars.FEE_RECIPIENT,
     useFlashbots: envVars.USE_FLASHBOTS,

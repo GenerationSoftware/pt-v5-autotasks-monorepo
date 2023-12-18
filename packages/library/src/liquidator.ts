@@ -56,8 +56,7 @@ export async function runLiquidator(
     wallet,
     signer,
     relayerAddress,
-    readProvider,
-    writeProvider,
+    l1Provider,
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
@@ -98,13 +97,13 @@ export async function runLiquidator(
     const liquidationPairContract = new ethers.Contract(
       liquidationPair.address,
       liquidationPairData.abi,
-      readProvider,
+      l1Provider,
     );
 
     const context: LiquidatorContext = await getLiquidatorContextMulticall(
       liquidationRouterContract,
       liquidationPairContract,
-      readProvider,
+      l1Provider,
       relayerAddress,
     );
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
@@ -132,7 +131,7 @@ export async function runLiquidator(
     const getAmountInValues = async () => {
       try {
         return calculateAmountIn(
-          readProvider,
+          l1Provider,
           liquidationPairContract,
           context,
           originalMaxAmountOut,
@@ -207,14 +206,14 @@ export async function runLiquidator(
         chainId,
         liquidationRouterContract,
         swapExactAmountOutParams,
-        readProvider,
+        l1Provider,
       );
     } catch (e) {
       console.error(chalk.red(e));
 
-      // console.log(chalk.yellow('---'));
-      // console.log(chalk.yellow('Could not estimate gas costs!'));
-      // console.log(chalk.yellow('---'));
+      console.log(chalk.yellow('---'));
+      console.log(chalk.yellow('Could not estimate gas costs!'));
+      console.log(chalk.yellow('---'));
 
       // TODO: Will need to use `callStatic` on Arbitrum to ensure a tx
       // will go through prior to sending if gas estimations always fail
@@ -272,7 +271,7 @@ export async function runLiquidator(
       );
 
       const gasLimit = 1000000;
-      const { gasPrice } = await getGasPrice(readProvider);
+      const { gasPrice } = await getGasPrice(l1Provider);
       const tx = await sendPopulatedTx(
         ozRelayer,
         wallet,
@@ -349,13 +348,7 @@ const approve = async (
       );
       console.log(liquidationRouter.address);
 
-      console.log('signer');
-      console.log(signer);
       const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
-      console.log('tx');
-      console.log(tx);
-      console.log('txhash');
-      console.log(tx.hash);
       await tx.wait();
 
       const newAllowanceResult = await token.functions.allowance(
@@ -383,7 +376,7 @@ const getLiquidationContracts = async (
   liquidationRouterContract: Contract;
   liquidationPairContracts: Contract[];
 }> => {
-  const { chainId, readProvider, writeProvider } = config;
+  const { chainId, l1Provider } = config;
 
   const contractsVersion = {
     major: 1,
@@ -394,19 +387,19 @@ const getLiquidationContracts = async (
   const liquidationPairFactoryContract = getContract(
     'LiquidationPairFactory',
     chainId,
-    readProvider,
+    l1Provider,
     contracts,
     contractsVersion,
   );
   const liquidationPairContracts = await getLiquidationPairsMulticall(
     liquidationPairFactoryContract,
-    readProvider,
+    l1Provider,
   );
 
   const liquidationRouterContract = getContract(
     'LiquidationRouter',
     chainId,
-    writeProvider,
+    l1Provider,
     contracts,
     contractsVersion,
   );
@@ -544,7 +537,7 @@ const getGasCost = async (
   chainId: number,
   liquidationRouter: Contract,
   swapExactAmountOutParams: SwapExactAmountOutParams,
-  readProvider: Provider,
+  l1Provider: Provider,
 ): Promise<number> => {
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
@@ -563,7 +556,7 @@ const getGasCost = async (
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
-    readProvider,
+    l1Provider,
     populatedTx.data,
   );
 
@@ -648,7 +641,7 @@ const calculateAmountOut = async (
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
 const calculateAmountIn = async (
-  readProvider: Provider,
+  l1Provider: Provider,
   liquidationPairContract: Contract,
   context: LiquidatorContext,
   originalMaxAmountOut: BigNumber,
@@ -680,7 +673,7 @@ const calculateAmountIn = async (
   wantedAmountsIn = await getLiquidationPairComputeExactAmountInMulticall(
     liquidationPairContract,
     wantedAmountsOut,
-    readProvider,
+    l1Provider,
   );
 
   return {

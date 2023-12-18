@@ -12,16 +12,16 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * Uses multicall to gather information about each vault
  *
  * @param populatedVaults vaults with a vaultContract ethers Contract initialized
- * @param readProvider a read-capable provider for the chain that should be queried
+ * @param l1Provider provider for the chain that will be queried
  * @returns
  */
 export const getVaultsWithContextMulticall = async (
   vaults: Vault[],
-  readProvider: Provider,
+  l1Provider: Provider,
   contracts: ContractsBlob,
 ): Promise<VaultWithContext[]> => {
   // @ts-ignore Provider == BaseProvider
-  const multicallProvider = MulticallWrapper.wrap(readProvider);
+  const multicallProvider = MulticallWrapper.wrap(l1Provider);
 
   let queries: Record<string, any> = {};
 
