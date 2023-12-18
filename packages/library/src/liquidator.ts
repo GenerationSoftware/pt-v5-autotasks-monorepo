@@ -60,6 +60,7 @@ export async function runLiquidator(
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
+    covalentApiKey,
   } = config;
 
   // #1. Get contracts
@@ -105,6 +106,7 @@ export async function runLiquidator(
       liquidationPairContract,
       l1Provider,
       relayerAddress,
+      covalentApiKey,
     );
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
@@ -346,7 +348,6 @@ const approve = async (
           `Increasing relayer '${relayerAddress}' ${context.tokenIn.symbol} allowance for the LiquidationRouter to maximum ...`,
         ),
       );
-      console.log(liquidationRouter.address);
 
       const tx = await token.approve(liquidationRouter.address, ethers.constants.MaxInt256);
       await tx.wait();

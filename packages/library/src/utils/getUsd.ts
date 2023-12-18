@@ -16,6 +16,7 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
   WETH: 'ethereum',
   USDC: 'usd-coin',
   DAI: 'dai',
+  GUSD: 'gemini-dollar',
 };
 
 // Note: Lowercase!
@@ -29,6 +30,7 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> ETH
   '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> ETH
   '0x779275fc1b987db24463801f3708f42f3c6f6ceb': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Arb Sepolia -> ETH
+  '0x1a188719711d62423abf1a4de7d8aa9014a39d73': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Opt Sepolia -> gUSD: Ethereum
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {

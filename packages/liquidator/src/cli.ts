@@ -17,7 +17,6 @@ console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
 
 if (esMain(import.meta)) {
   const envVars: LiquidatorEnvVars = loadLiquidatorEnvVars();
-
   const mockEvent = {
     apiKey: envVars.RELAYER_API_KEY,
     apiSecret: envVars.RELAYER_API_SECRET,
