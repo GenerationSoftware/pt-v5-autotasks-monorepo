@@ -1064,11 +1064,6 @@ const sendRelayTransaction = async (
 ) => {
   console.log(chalk.yellow(`Relay Transaction:`));
 
-  // const isPrivate = canUseIsPrivate(l1ChainId, config.useFlashbots);
-  const isPrivate = false;
-  console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-  printSpacer();
-
   const { gasPrice } = await getGasPrice(config.l1Provider);
 
   console.log(chalk.green(`Execute RngAuctionRelayerRemoteOwner*#relay`));

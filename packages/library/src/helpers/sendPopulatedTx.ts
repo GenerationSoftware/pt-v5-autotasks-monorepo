@@ -16,10 +16,10 @@ export const sendPopulatedTx = async (
   useFlashbots?: boolean,
   txParams?: any,
 ): Promise<RelayerTransaction | ethers.providers.TransactionResponse> => {
+  printSpacer();
   const isPrivate = false;
   // const isPrivate = useFlashbots ? canUseIsPrivate(chainId, useFlashbots) : false;
   console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
-  printSpacer();
 
   const gasPriceStr = gasPrice.add(ONE_GWEI).toString();
 
@@ -54,6 +54,7 @@ export const sendPopulatedTx = async (
     }
     tx = await wallet.sendTransaction(args);
   }
+  printSpacer();
 
   return tx;
 };
