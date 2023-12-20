@@ -31,6 +31,7 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> ETH
   '0x779275fc1b987db24463801f3708f42f3c6f6ceb': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Arb Sepolia -> ETH
   '0x1a188719711d62423abf1a4de7d8aa9014a39d73': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Opt Sepolia -> gUSD: Ethereum
+  '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819': '0x5f98805a4e8be255a32880fdec7f6728c6568ba0', // LUSD: Opt -> LUSD: Ethereum
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
@@ -40,7 +41,7 @@ const CHAIN_GAS_PRICE_MULTIPLIERS = {
   [CHAIN_IDS.optimismGoerli]: 1,
   [CHAIN_IDS.sepolia]: 0.1, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
   [CHAIN_IDS.arbitrum]: 1,
-  [CHAIN_IDS.arbitrumSepolia]: 1
+  [CHAIN_IDS.arbitrumSepolia]: 1,
 };
 
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
@@ -111,7 +112,7 @@ export const getFeesUsd = async (
 
   const l1GasFeeWei = await getL1GasFee(chainId, provider, txData);
 
-  let chainGasPriceMultiplier = 1
+  let chainGasPriceMultiplier = 1;
   if (CHAIN_GAS_PRICE_MULTIPLIERS[chainId]) {
     chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
   }
@@ -176,7 +177,9 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
   try {
     const response = await fetch(uri);
     if (!response.ok) {
-      console.log(chalk.yellow(`Unable to fetch current USD value from Coingecko of '${symbol}' token.`));
+      console.log(
+        chalk.yellow(`Unable to fetch current USD value from Coingecko of '${symbol}' token.`),
+      );
       throw new Error(response.statusText);
     }
     marketRate = await response.json();
