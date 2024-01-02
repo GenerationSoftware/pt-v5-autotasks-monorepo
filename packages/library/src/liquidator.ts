@@ -240,6 +240,30 @@ export async function runLiquidator(
       continue;
     }
 
+    // Simulate tx for failures
+    try {
+      const simulationOut = await liquidationRouterContract.callStatic.swapExactAmountOut(
+        ...Object.values(swapExactAmountOutParams),
+      );
+      console.log('simulationOut');
+      console.log(simulationOut);
+    } catch (e) {
+      console.error(chalk.red(e));
+      console.error(chalk.cyan(e.message));
+
+      console.log(chalk.yellow('---'));
+      console.log(chalk.yellow('Tx fail, simulation failed.'));
+      console.log(chalk.yellow('---'));
+
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `TX simulation failed`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
+      continue;
+    }
+
     // #6. Decide if profitable or not
     const { estimatedProfitUsd, profitable, selectedIndex } = await calculateProfit(
       context,
@@ -556,9 +580,12 @@ const getGasCost = async (
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
 
-  const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
-    ...Object.values(swapExactAmountOutParams),
-  );
+  // Hard-code gas limit (based on recent liquidations, with additional headroom):
+  const estimatedGasLimit = BigNumber.from(500000);
+  // Estimate gas limit from chain:
+  // const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
+  //   ...Object.values(swapExactAmountOutParams),
+  // );
 
   const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
@@ -626,19 +653,10 @@ const calculateAmountOut = async (
   // Get multiple points across the auction function to determine the most amount of profitability
   // most amount out for least amount of token in
   // (depending on the state of the gradual auction)
-  printSpacer();
   for (let i = 1; i <= 100; i++) {
     const amountToSendPercent = i;
     // const amountToSendPercent = i * 10; when number of divisions is 10, instead of 100
     const wantedAmountOut = amountOut.mul(ethers.BigNumber.from(amountToSendPercent)).div(100);
-
-    // logBigNumber(
-    //   'Wanted amount out:',
-    //   wantedAmountOut,
-    //   context.tokenOut.decimals,
-    //   context.tokenOut.symbol,
-    // );
-
     wantedAmountsOut.push(wantedAmountOut);
   }
 

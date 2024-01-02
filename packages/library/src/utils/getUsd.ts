@@ -22,18 +22,23 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
 
 // Note: Lowercase!
 const ADDRESS_TO_COVALENT_LOOKUP = {
-  '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Sepolia -> ETH
-  '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> ETH
-  '0x94dc94fe29ff0e591a284619622b493fbf3a64e8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism Goerli -> ETH
-  '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> ETH
-  '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Optimism -> ETH
-  '0x7f5c764cbc14f9669b88837ca1490cca17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> ETH
-  '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> ETH
-  '0x395ae52bb17aef68c2888d941736a71dc6d4e125': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> ETH
-  '0x779275fc1b987db24463801f3708f42f3c6f6ceb': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Arb Sepolia -> ETH
+  '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Sepolia -> POOL: Ethereum
+  '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Arb Sepolia -> POOL: Ethereum
+  '0x94dc94fe29ff0e591a284619622b493fbf3a64e8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Opt Goerli -> POOL: Ethereum
+  '0x395ae52bb17aef68c2888d941736a71dc6d4e125': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> POOL: Ethereum
+  '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> LINK: Ethereum
+  '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> LINK: Ethereum
+  '0x1bc266e1f397517ece9e384c55c7a5414b683639': '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', // wBTC: Arb Sepolia -> wBTC: Ethereum
+  '0x779275fc1b987db24463801f3708f42f3c6f6ceb': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // wETH: Arb Sepolia -> wETH: Ethereum
+  '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // wETH: Optimism -> wETH: Ethereum
+  '0x7f5c764cbc14f9669b88837ca1490cca17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> USDC: Ethereum
+  '0x7a6dbc7ff4f1a2d864291db3aec105a8eee4a3d2': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Arb Sepolia -> USDC: Ethereum
+  '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> DAI: Ethereum
+  '0x08c19fe57af150a1af975cb9a38769848c7df98e': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Arb Sepolia -> DAI: Ethereum
   '0x1a188719711d62423abf1a4de7d8aa9014a39d73': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Opt Sepolia -> gUSD: Ethereum
-  '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819': '0x5f98805a4e8be255a32880fdec7f6728c6568ba0', // LUSD: Opt -> LUSD: Ethereum
-  '0x4200000000000000000000000000000000000042': '0x2eecb20df51dc76d05afcf1270c73a2ff1035388', // OP: Opt -> OP: Ethereum
+  '0xb84460d777133a4b86540d557db35952e4adfee7': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Arb Sepolia -> gUSD: Ethereum
+  '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819': '0x5f98805a4e8be255a32880fdec7f6728c6568ba0', // lUSD: Optimism -> lUSD: Ethereum
+  '0x4200000000000000000000000000000000000042': '0x2eecb20df51dc76d05afcf1270c73a2ff1035388', // OP: Optimism -> OP: Ethereum
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
@@ -199,42 +204,51 @@ export const getCovalentMarketRateUsd = async (
   covalentApiKey: string,
 ): Promise<number> => {
   const address = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress.toLowerCase()];
+
   let rateUsd;
-  try {
-    const url = new URL(
-      `${COVALENT_API_URL}/pricing/historical_by_addresses_v2/eth-mainnet/usd/${address}/`,
-    );
-    url.searchParams.set('key', covalentApiKey);
-    url.searchParams.set('from', getDateXDaysAgo(3));
-    const response = await fetch(url.toString());
-
-    if (!response.ok) {
-      console.log(
-        chalk.yellow(
-          `Unable to fetch current USD value from Covalent of token with CA: '${address}'.`,
-        ),
+  if (address) {
+    try {
+      const url = new URL(
+        `${COVALENT_API_URL}/pricing/historical_by_addresses_v2/eth-mainnet/usd/${address}/`,
       );
-      throw new Error(response.statusText);
-    }
+      url.searchParams.set('key', covalentApiKey);
+      url.searchParams.set('from', getDateXDaysAgo(3));
+      const response = await fetch(url.toString());
 
-    const tokenPricesArray = (await response.json()).data;
+      if (!response.ok) {
+        console.log(
+          chalk.yellow(
+            `Error while fetching USD value from Covalent of token with CA: '${address}'.`,
+          ),
+        );
+        throw new Error(response.statusText);
+      }
 
-    const tokenPrices = {};
-    tokenPricesArray.forEach((token) => {
-      let tokenPrice: number | null = null;
-      token.prices.forEach((day) => {
-        if (tokenPrice === null) {
-          tokenPrice = day.price;
+      const tokenPricesArray = (await response.json()).data;
+
+      const tokenPrices = {};
+      tokenPricesArray.forEach((token) => {
+        let tokenPrice: number | null = null;
+        token.prices.forEach((day) => {
+          if (tokenPrice === null) {
+            tokenPrice = day.price;
+          }
+        });
+        if (tokenPrice !== null) {
+          tokenPrices[token.contract_address.toLowerCase() as `0x${string}`] = tokenPrice;
         }
       });
-      if (tokenPrice !== null) {
-        tokenPrices[token.contract_address.toLowerCase() as `0x${string}`] = tokenPrice;
-      }
-    });
 
-    rateUsd = tokenPrices[address.toLowerCase()];
-  } catch (err) {
-    console.log(err);
+      rateUsd = tokenPrices[address.toLowerCase()];
+    } catch (err) {
+      console.log(err);
+    }
+  } else {
+    console.log(
+      chalk.yellow(
+        `Unable to fetch current USD value from Covalent of token: '${tokenAddress}', missing lookup contract address on ETH mainnet.`,
+      ),
+    );
   }
 
   return rateUsd;
