@@ -17,6 +17,7 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
   USDC: 'usd-coin',
   DAI: 'dai',
   GUSD: 'gemini-dollar',
+  OP: 'optimism',
 };
 
 // Note: Lowercase!
@@ -28,10 +29,11 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Optimism -> ETH
   '0x7f5c764cbc14f9669b88837ca1490cca17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> ETH
   '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> ETH
-  '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> ETH
+  '0x395ae52bb17aef68c2888d941736a71dc6d4e125': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> ETH
   '0x779275fc1b987db24463801f3708f42f3c6f6ceb': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH: Arb Sepolia -> ETH
   '0x1a188719711d62423abf1a4de7d8aa9014a39d73': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Opt Sepolia -> gUSD: Ethereum
   '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819': '0x5f98805a4e8be255a32880fdec7f6728c6568ba0', // LUSD: Opt -> LUSD: Ethereum
+  '0x4200000000000000000000000000000000000042': '0x2eecb20df51dc76d05afcf1270c73a2ff1035388', // OP: Opt -> OP: Ethereum
 };
 
 const CHAIN_GAS_PRICE_MULTIPLIERS = {
@@ -150,15 +152,16 @@ export const getEthMainnetTokenMarketRateUsd = async (
 
   let marketRateUsd;
   try {
-    marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
+    if (Boolean(tokenAddress) && Boolean(covalentApiKey)) {
+      marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
+    }
   } catch (err) {
     console.log(err);
   }
 
   try {
-    if (!marketRateUsd && Boolean(tokenAddress) && Boolean(covalentApiKey)) {
-      console.log('COINGECKO FAIL, trying Covalent!');
-      marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
+    if (!marketRateUsd) {
+      marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
     }
   } catch (err) {
     console.log(err);

@@ -120,6 +120,17 @@ export async function runLiquidator(
       liquidationPairContract,
       context,
     );
+
+    if (!context.underlyingAssetToken.assetRateUsd) {
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Could not get underlying asset USD value to calculate profit with`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
+      continue;
+    }
+
     if (originalMaxAmountOut.eq(0)) {
       stats.push({
         pair,
