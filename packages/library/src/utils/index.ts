@@ -7,3 +7,4 @@ export * from './logging';
 export * from './loadEnvVars';
 export * from './network';
 export * from './instantiateRelayerAccount';
+export * from './vaultDeployedByVaultFactory';

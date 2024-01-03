@@ -20,6 +20,7 @@ import {
   getLiquidationPairComputeExactAmountInMulticall,
   getGasPrice,
 } from './utils';
+import { vaultDeployedByVaultFactory } from './utils/vaultDeployedByVaultFactory';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
@@ -112,6 +113,30 @@ export async function runLiquidator(
 
     printContext(context);
     printAsterisks();
+
+    // *****************************
+    // *****************************
+    // *****************************
+    console.log('checking if deployed by VF');
+    const deployedByVaultFactory = vaultDeployedByVaultFactory(
+      l1Provider,
+      chainId,
+      liquidationPair.address,
+    );
+    if (!deployedByVaultFactory) {
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Not deployed by VaultFactory V1 or V2`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
+
+      continue;
+    }
+
+    // *****************************
+    // *****************************
+    // *****************************
 
     // #2. Calculate amounts
     console.log(chalk.blue(`1. Amounts:`));
