@@ -988,7 +988,8 @@ const getRelayGasCost = async (
   console.log(chalk.blue(`Estimating relay gas costs ...`));
   printSpacer();
 
-  const { l2ChainId, l2Provider } = relay;
+  const { l1ChainId, l1Provider } = config;
+  const { l2ChainId } = relay;
   const { nativeTokenMarketRateUsd } = relay.context;
 
   let estimatedGasLimit: BigNumber;
@@ -1008,8 +1009,8 @@ const getRelayGasCost = async (
 
   const gasCostUsd = await getGasCostUsd(
     estimatedGasLimit,
-    config.l1ChainId,
-    l2Provider,
+    l1ChainId,
+    l1Provider,
     nativeTokenMarketRateUsd,
     populatedTx,
   );
