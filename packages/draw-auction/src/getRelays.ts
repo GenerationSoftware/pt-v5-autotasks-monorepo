@@ -1,3 +1,4 @@
+import nodeFetch from 'node-fetch';
 import { CHAIN_IDS, Relay, DrawAuctionConfig } from '@generationsoftware/pt-v5-autotasks-library';
 import { downloadContractsBlob, ContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import { ethers } from 'ethers';
@@ -20,7 +21,7 @@ export const getRelays = async (drawAuctionConfig: DrawAuctionConfig): Promise<R
       l2ChainId,
     );
 
-    const contractsBlob: ContractsBlob = await downloadContractsBlob(l2ChainId);
+    const contractsBlob: ContractsBlob = await downloadContractsBlob(l2ChainId, nodeFetch);
 
     relays.push({
       l2ChainId,

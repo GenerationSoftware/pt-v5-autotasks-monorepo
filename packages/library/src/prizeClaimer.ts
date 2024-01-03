@@ -11,7 +11,6 @@ import {
 } from '@generationsoftware/pt-v5-utils-js';
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
-import fetch from 'node-fetch';
 
 import {
   ClaimPrizeContext,

@@ -5,7 +5,6 @@ import {
   LiquidatorEnvVars,
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
-// import fetch from 'node-fetch';
 
 import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
 import { executeTransactions } from './executeTransactions';
