@@ -177,6 +177,7 @@ export interface AuctionResult {
 
 export interface RelayDrawAuctionContext {
   prizePoolDrawClosesAt: number;
+  auctionClosesSoon: boolean;
   rngResults: RngResults;
   rngLastAuctionResult: AuctionResult;
   rngExpectedReward: number; // why is this a number and not a BigNumber like `rngRelayExpectedReward` or `rngExpectedReward`?

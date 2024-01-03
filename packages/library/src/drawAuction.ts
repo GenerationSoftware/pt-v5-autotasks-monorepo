@@ -470,8 +470,18 @@ const processRelayTransaction = async (
     gasCostUsd,
   );
 
+  // check if the recipient for the previous RNG auction is the same as the upcoming Relay
+  // (this is a bit naïve as the RNG reward recipient could differ from the relay reward recipient,
+  //   but it's likely this will be the same address)
+  const sameRecipient = relay.context.rngLastAuctionResult.recipient === config.rewardRecipient;
+  console.log('sameRecipient');
+  console.log(sameRecipient);
+  const forceRelay = relay.context.auctionClosesSoon && sameRecipient;
+  console.log('forceRelay');
+  console.log(forceRelay);
+
   // #5. Send transaction
-  if (profitable) {
+  if (profitable || forceRelay) {
     await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, contract, context, config);
   } else {
     console.log(
@@ -887,9 +897,10 @@ const getRngGasCost = async (
     //   transferFeeAndStartRngRequestTxParams,
     // );
 
-    populatedTx = await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
-      ...Object.values(transferFeeAndStartRngRequestTxParams),
-    );
+    populatedTx =
+      await chainlinkRngAuctionHelperContract.populateTransaction.transferFeeAndStartRngRequest(
+        ...Object.values(transferFeeAndStartRngRequestTxParams),
+      );
 
     // This was a previous tx gas usage on Goerli + buffer room
     estimatedGasLimit = BigNumber.from(330000);

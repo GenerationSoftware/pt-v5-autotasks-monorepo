@@ -28,6 +28,7 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0x395ae52bb17aef68c2888d941736a71dc6d4e125': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> POOL: Ethereum
   '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> LINK: Ethereum
   '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> LINK: Ethereum
+  '0x514910771af9ca656af840dff83e8264ecf986ca': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> LINK: Ethereum
   '0x1bc266e1f397517ece9e384c55c7a5414b683639': '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', // wBTC: Arb Sepolia -> wBTC: Ethereum
   '0x779275fc1b987db24463801f3708f42f3c6f6ceb': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // wETH: Arb Sepolia -> wETH: Ethereum
   '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // wETH: Optimism -> wETH: Ethereum
