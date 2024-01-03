@@ -61,8 +61,8 @@ interface RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams {
   value: BigNumber;
 }
 
-const ONE_GWEI = '1000000000';
 const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
+const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = 10;
 
 // Instantiates all RngAuctionRelayerRemoteOwner contracts that are found in the ContractsBlob
 const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
@@ -464,19 +464,13 @@ const processRelayTransaction = async (
   }
 
   // #4. Decide if profitable or not
-  const profitable = await calculateRelayProfit(
+  const { netProfitUsd, profitable } = await calculateRelayProfit(
     config,
     relay.context.rngRelayExpectedRewardUsd,
     gasCostUsd,
   );
 
-  // check if the recipient for the previous RNG auction is the same as the upcoming Relay
-  // (this is a bit naïve as the RNG reward recipient could differ from the relay reward recipient,
-  //   but it's likely this will be the same address)
-  const sameRecipient = relay.context.rngLastAuctionResult.recipient === config.rewardRecipient;
-  console.log('sameRecipient');
-  console.log(sameRecipient);
-  const forceRelay = relay.context.auctionClosesSoon && sameRecipient;
+  const forceRelay = calculateForceRelay(relay, config, netProfitUsd);
   console.log('forceRelay');
   console.log(forceRelay);
 
@@ -488,6 +482,31 @@ const processRelayTransaction = async (
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
+};
+
+// If we already submitted the StartRNG request - and therefore paid the LINK/RNG fee
+// and gas fee for it - we should make sure the relay goes through, assuming
+// it was us who won the StartRNG auction, that the amount of loss we'll take is within
+// acceptable range
+const calculateForceRelay = (relay: Relay, config: DrawAuctionConfig, netProfitUsd: number) => {
+  // Is recipient for the StartRNG auction same as the upcoming Relay?
+  // (this is a bit naïve as the RNG reward recipient could differ from the relay reward recipient,
+  //   but it's likely this will be the same address)
+  const sameRecipient = relay.context.rngLastAuctionResult.recipient === config.rewardRecipient;
+  console.log('sameRecipient');
+  console.log(sameRecipient);
+
+  console.log('netProfitUsd');
+  console.log(netProfitUsd);
+
+  console.log('MAX_FORCE_RELAY_LOSS_THRESHOLD_USD');
+  console.log(MAX_FORCE_RELAY_LOSS_THRESHOLD_USD);
+
+  const lossOkay = netProfitUsd < MAX_FORCE_RELAY_LOSS_THRESHOLD_USD;
+  console.log('lossOkay');
+  console.log(lossOkay);
+
+  return relay.context.auctionClosesSoon && sameRecipient && lossOkay;
 };
 
 const checkBalance = (context: DrawAuctionContext): boolean => {
@@ -660,7 +679,7 @@ const calculateRelayProfit = async (
   config: DrawAuctionConfig,
   rewardUsd: number,
   gasCostUsd: number,
-): Promise<boolean> => {
+): Promise<{ netProfitUsd: number; profitable: boolean }> => {
   printSpacer();
   printSpacer();
   console.log(chalk.blue(`Calculating profit ...`));
@@ -693,7 +712,7 @@ const calculateRelayProfit = async (
   });
   printSpacer();
 
-  return profitable;
+  return { netProfitUsd, profitable };
 };
 
 /**
