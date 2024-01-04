@@ -25,6 +25,7 @@ import {
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { VrfRngAbi } from '../abis/VrfRngAbi';
 import { printSpacer } from './logging';
+import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -125,6 +126,7 @@ const getContext = async (
   // 2. Rng Info
   const rngContext = await getRngMulticall(
     l1Provider,
+    rngChainId,
     rngAuctionContracts,
     rngRelayerAddress,
     covalentApiKey,
@@ -175,6 +177,7 @@ const getContext = async (
  */
 export const getRngMulticall = async (
   l1Provider: Provider,
+  rngChainId: number,
   rngAuctionContracts: RngAuctionContracts,
   rngRelayerAddress: string,
   covalentApiKey?: string,
@@ -264,8 +267,15 @@ export const getRngMulticall = async (
       ),
     };
 
+    let chainGasPriceMultiplier = 1;
+    if (CHAIN_GAS_PRICE_MULTIPLIERS[rngChainId]) {
+      chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[rngChainId];
+    }
+
     rngFeeUsd =
-      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) * rngFeeToken.assetRateUsd;
+      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) *
+      rngFeeToken.assetRateUsd *
+      chainGasPriceMultiplier;
   }
 
   return {

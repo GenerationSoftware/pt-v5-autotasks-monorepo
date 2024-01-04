@@ -3,6 +3,7 @@ import { Provider } from '@ethersproject/providers';
 import chalk from 'chalk';
 
 import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './network';
+import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
 import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
@@ -40,16 +41,6 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0xb84460d777133a4b86540d557db35952e4adfee7': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Arb Sepolia -> gUSD: Ethereum
   '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819': '0x5f98805a4e8be255a32880fdec7f6728c6568ba0', // lUSD: Optimism -> lUSD: Ethereum
   '0x4200000000000000000000000000000000000042': '0x2eecb20df51dc76d05afcf1270c73a2ff1035388', // OP: Optimism -> OP: Ethereum
-};
-
-const CHAIN_GAS_PRICE_MULTIPLIERS = {
-  [CHAIN_IDS.mainnet]: 1,
-  [CHAIN_IDS.goerli]: 0.2, // our estimates will say $6 for 2,300,000 gas limit but etherscan reports fractions of a penny
-  [CHAIN_IDS.optimism]: 1,
-  [CHAIN_IDS.optimismGoerli]: 1,
-  [CHAIN_IDS.sepolia]: 0.1, // if we want Sepolia to act more like Optimism/etc, set this to a fraction such as 0.1
-  [CHAIN_IDS.arbitrum]: 1,
-  [CHAIN_IDS.arbitrumSepolia]: 1,
 };
 
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
