@@ -20,10 +20,9 @@ import {
   getLiquidationPairComputeExactAmountInMulticall,
   getGasPrice,
 } from './utils';
-import { vaultDeployedByVaultFactory } from './utils/vaultDeployedByVaultFactory';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
-import { LIQUIDATION_TOKEN_ALLOW_LIST } from './utils/tokens';
+import { LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/tokens';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface SwapExactAmountOutParams {
@@ -114,13 +113,10 @@ export async function runLiquidator(
 
     printContext(context);
     printAsterisks();
-
-    // *****************************
     printSpacer();
 
     const tokenOutInAllowList = tokenOutAllowListed(chainId, context);
     if (!tokenOutInAllowList) {
-      console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -423,7 +419,7 @@ const approve = async (
 
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
 // possibility of manually deployed malicious vaults/pairs
-const tokenOutAllowListed = async (chainId: number, context: LiquidatorContext) => {
+const tokenOutAllowListed = (chainId: number, context: LiquidatorContext) => {
   console.log(
     chalk.dim(
       `Checking if tokenOut '${
@@ -432,22 +428,25 @@ const tokenOutAllowListed = async (chainId: number, context: LiquidatorContext) 
     ),
   );
 
+  let tokenOutInAllowList = false;
   try {
-    const tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
+    tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
       context.tokenOut.address.toLowerCase(),
     );
-
-    if (tokenOutInAllowList) {
-      console.log(`tokenOut is in the allow list! 👍`);
-    } else {
-      console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
-    }
   } catch (e) {
     console.error(chalk.red(e));
     console.error(
       chalk.white(`Perhaps chain has not been added to LIQUIDATION_TOKEN_ALLOW_LIST ?`),
     );
   }
+
+  if (tokenOutInAllowList) {
+    console.log(`tokenOut is in the allow list! 👍`);
+  } else {
+    console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
+  }
+
+  return tokenOutInAllowList;
 };
 
 /**

@@ -11,7 +11,7 @@ const VAULT_FACTORY_V2_ADDRESSES = {
   [CHAIN_IDS.optimism]: ['0x6b17ee3a95bccd605340454c5919e693ef8eff0e'],
 };
 
-export const vaultDeployedByVaultFactory = async (
+export const deployedByVaultFactory = async (
   l1Provider: Provider,
   chainId: number,
   address: string,
