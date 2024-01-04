@@ -62,7 +62,7 @@ interface RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams {
 }
 
 const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
-const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = 10;
+const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -10;
 
 // Instantiates all RngAuctionRelayerRemoteOwner contracts that are found in the ContractsBlob
 const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
@@ -502,7 +502,7 @@ const calculateForceRelay = (relay: Relay, config: DrawAuctionConfig, netProfitU
   console.log('MAX_FORCE_RELAY_LOSS_THRESHOLD_USD');
   console.log(MAX_FORCE_RELAY_LOSS_THRESHOLD_USD);
 
-  const lossOkay = netProfitUsd < MAX_FORCE_RELAY_LOSS_THRESHOLD_USD;
+  const lossOkay = netProfitUsd > MAX_FORCE_RELAY_LOSS_THRESHOLD_USD;
   console.log('lossOkay');
   console.log(lossOkay);
 
