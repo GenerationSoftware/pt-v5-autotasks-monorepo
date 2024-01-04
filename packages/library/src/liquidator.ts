@@ -117,69 +117,22 @@ export async function runLiquidator(
 
     // *****************************
     printSpacer();
-    console.log(
-      chalk.dim(
-        `Checking if tokenOut '${
+
+    const tokenOutInAllowList = tokenOutAllowListed(chainId, context);
+    if (!tokenOutInAllowList) {
+      console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `tokenOut '${
           context.tokenOut.symbol
-        }' (CA: ${context.tokenOut.address.toLowerCase()}) is in allow list ...`,
-      ),
-    );
+        }' (CA: ${context.tokenOut.address.toLowerCase()}) not in token allow list`,
+      });
+      logNextPair(liquidationPair, liquidationPairContracts);
 
-    try {
-      const tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
-        context.tokenOut.address.toLowerCase(),
-      );
-
-      if (tokenOutInAllowList) {
-        console.log(`tokenOut is in the allow list! 👍`);
-      } else {
-        console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
-        stats.push({
-          pair,
-          estimatedProfitUsd: 0,
-          error: `tokenOut '${
-            context.tokenOut.symbol
-          }' (CA: ${context.tokenOut.address.toLowerCase()}) not in token allow list`,
-        });
-        logNextPair(liquidationPair, liquidationPairContracts);
-
-        continue;
-      }
-    } catch (e) {
-      console.error(chalk.red(e));
+      continue;
     }
-
-    // printSpacer();
-    // console.log(
-    //   chalk.dim(`Checking if LiquidationPair's tokenOut was deployed by known VaultFactory ...`),
-    // );
-    // const deployedByVaultFactory = await vaultDeployedByVaultFactory(
-    //   l1Provider,
-    //   chainId,
-    //   context.tokenOut.address.toLowerCase(),
-    // );
-    // if (deployedByVaultFactory) {
-    //   console.log(`LiquidationPair's tokenOut was deployed by known VaultFactory! 👍`);
-    // } else {
-    //   console.log(chalk.yellow(`LiquidationPair's tokenOut was deployed manually ❌`));
-    // }
-    // printSpacer();
-
-    // if (!deployedByVaultFactory && !tokenOutInAllowList) {
-    //   stats.push({
-    //     pair,
-    //     estimatedProfitUsd: 0,
-    //     error: 'LiquidationPair tokenOut not in allow list and vault not created by vault factory',
-    //   });
-    //   logNextPair(liquidationPair, liquidationPairContracts);
-
-    //   continue;
-    // }
     printSpacer();
-
-    // *****************************
-    // *****************************
-    // *****************************
 
     // #2. Calculate amounts
     console.log(chalk.blue(`1. Amounts:`));
@@ -465,6 +418,35 @@ const approve = async (
     }
   } catch (error) {
     console.log(chalk.red('error: ', error));
+  }
+};
+
+// Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
+// possibility of manually deployed malicious vaults/pairs
+const tokenOutAllowListed = async (chainId: number, context: LiquidatorContext) => {
+  console.log(
+    chalk.dim(
+      `Checking if tokenOut '${
+        context.tokenOut.symbol
+      }' (CA: ${context.tokenOut.address.toLowerCase()}) is in allow list ...`,
+    ),
+  );
+
+  try {
+    const tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
+      context.tokenOut.address.toLowerCase(),
+    );
+
+    if (tokenOutInAllowList) {
+      console.log(`tokenOut is in the allow list! 👍`);
+    } else {
+      console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
+    }
+  } catch (e) {
+    console.error(chalk.red(e));
+    console.error(
+      chalk.white(`Perhaps chain has not been added to LIQUIDATION_TOKEN_ALLOW_LIST ?`),
+    );
   }
 };
 
