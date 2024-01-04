@@ -27,6 +27,7 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Arb Sepolia -> POOL: Ethereum
   '0x94dc94fe29ff0e591a284619622b493fbf3a64e8': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Opt Goerli -> POOL: Ethereum
   '0x395ae52bb17aef68c2888d941736a71dc6d4e125': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism -> POOL: Ethereum
+  '0xd675b9c8eea7f6bd506d5ff66a10cf7b887cd293': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Optimism Sepolia -> POOL: Ethereum
   '0x779877a7b0d9e8603169ddbd7836e478b4624789': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Sepolia -> LINK: Ethereum
   '0x326c977e6efc84e512bb9c30f76e30c160ed06fb': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> LINK: Ethereum
   '0x514910771af9ca656af840dff83e8264ecf986ca': '0x514910771af9ca656af840dff83e8264ecf986ca', // LINK: Goerli -> LINK: Ethereum
@@ -35,8 +36,10 @@ const ADDRESS_TO_COVALENT_LOOKUP = {
   '0x4200000000000000000000000000000000000006': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // wETH: Optimism -> wETH: Ethereum
   '0x7f5c764cbc14f9669b88837ca1490cca17c31607': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Optimism -> USDC: Ethereum
   '0x7a6dbc7ff4f1a2d864291db3aec105a8eee4a3d2': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Arb Sepolia -> USDC: Ethereum
+  '0x8067f3cb6eef936256108ff19a05574b8ad99cf3': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC: Opt Sepolia -> USDC: Ethereum
   '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Optimism -> DAI: Ethereum
   '0x08c19fe57af150a1af975cb9a38769848c7df98e': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Arb Sepolia -> DAI: Ethereum
+  '0xd590ec14364731b62265a5cc807164a17c6797d4': '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI: Opt Sepolia -> DAI: Ethereum
   '0x1a188719711d62423abf1a4de7d8aa9014a39d73': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Opt Sepolia -> gUSD: Ethereum
   '0xb84460d777133a4b86540d557db35952e4adfee7': '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd', // gUSD: Arb Sepolia -> gUSD: Ethereum
   '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819': '0x5f98805a4e8be255a32880fdec7f6728c6568ba0', // lUSD: Optimism -> lUSD: Ethereum
