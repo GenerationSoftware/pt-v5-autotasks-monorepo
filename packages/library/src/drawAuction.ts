@@ -21,7 +21,8 @@ import {
   ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
   RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS,
 } from './constants';
-import { chainName, CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { chainName } from './utils/network';
+import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,

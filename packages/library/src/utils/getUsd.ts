@@ -2,7 +2,7 @@ import { ethers, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import chalk from 'chalk';
 
-import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './network';
+import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from '../constants/network';
 import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
 import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi';
 import { ADDRESS_TO_COVALENT_LOOKUP } from '../constants/tokens';

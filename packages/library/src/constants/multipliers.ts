@@ -1,4 +1,4 @@
-import { CHAIN_IDS } from '../utils/network';
+import { CHAIN_IDS } from './network';
 
 export const CHAIN_GAS_PRICE_MULTIPLIERS = {
   [CHAIN_IDS.mainnet]: 1,

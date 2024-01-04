@@ -1,4 +1,4 @@
-import { CHAIN_IDS } from '../utils/network';
+import { CHAIN_IDS } from './network';
 
 export const KNOWN_TOKENS = {
   [CHAIN_IDS.mainnet]: {

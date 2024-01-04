@@ -19,7 +19,7 @@ import {
   getEthMainnetTokenMarketRateUsd,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
-import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
 
 interface WithdrawClaimRewardsParams {
   amount: BigNumber;
@@ -36,13 +36,8 @@ export async function getWithdrawClaimRewardsTx(
   l1Provider: Provider,
   config: WithdrawClaimRewardsConfig,
 ): Promise<PopulatedTransaction | undefined> {
-  const {
-    chainId,
-    rewardsRecipient,
-    relayerAddress,
-    minProfitThresholdUsd,
-    covalentApiKey,
-  } = config;
+  const { chainId, rewardsRecipient, relayerAddress, minProfitThresholdUsd, covalentApiKey } =
+    config;
 
   const contractsVersion = {
     major: 1,

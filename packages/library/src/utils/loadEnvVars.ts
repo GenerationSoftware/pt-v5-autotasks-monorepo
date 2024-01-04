@@ -2,7 +2,8 @@ import yn from 'yn';
 import chalk from 'chalk';
 
 import { AutotaskEnvVars } from '../types';
-import { chainName, CHAIN_IDS } from './network';
+import { chainName } from './network';
+import { CHAIN_IDS } from '../constants/network';
 
 // Could potentially collapse this into a dynamic string generator, since it's a lot of repetition
 // the only thing that changes is the network name

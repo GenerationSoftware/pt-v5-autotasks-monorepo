@@ -21,7 +21,7 @@ import {
   getGasPrice,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
-import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
 import { LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/tokens';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
