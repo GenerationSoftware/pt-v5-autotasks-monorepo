@@ -11,11 +11,11 @@ const VAULT_FACTORY_V2_ADDRESSES = {
   [CHAIN_IDS.optimism]: ['0x6b17ee3a95bccd605340454c5919e693ef8eff0e'],
 };
 
-export const vaultDeployedByVaultFactory = (
+export const vaultDeployedByVaultFactory = async (
   l1Provider: Provider,
   chainId: number,
   address: string,
-): boolean => {
+): Promise<boolean> => {
   let vaultFactoryContracts = [];
 
   for (let vaultFactoryAddress of VAULT_FACTORY_V1_ADDRESSES[chainId]) {
@@ -24,10 +24,13 @@ export const vaultDeployedByVaultFactory = (
   for (let vaultFactoryAddress of VAULT_FACTORY_V2_ADDRESSES[chainId]) {
     vaultFactoryContracts.push(new Contract(vaultFactoryAddress, VaultFactoryAbi, l1Provider));
   }
+
   for (let vaultFactoryContract of vaultFactoryContracts) {
-    const deployedByVault = vaultFactoryContract.deployedVaults(address);
-    console.log('deployedByVault');
-    console.log(deployedByVault);
+    const deployedByVault = await vaultFactoryContract.deployedVaults(address);
+
+    if (deployedByVault) {
+      return true;
+    }
   }
 
   return false;

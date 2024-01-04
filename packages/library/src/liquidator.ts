@@ -2,7 +2,7 @@ import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
+import { CHAIN_IDS, ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import { LiquidatorConfig, LiquidatorContext } from './types';
@@ -23,6 +23,7 @@ import {
 import { vaultDeployedByVaultFactory } from './utils/vaultDeployedByVaultFactory';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './utils/network';
+import { LIQUIDATION_TOKEN_ALLOW_LIST } from './utils/tokens';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface SwapExactAmountOutParams {
@@ -115,24 +116,47 @@ export async function runLiquidator(
     printAsterisks();
 
     // *****************************
-    // *****************************
-    // *****************************
-    console.log('checking if deployed by VF');
-    const deployedByVaultFactory = vaultDeployedByVaultFactory(
-      l1Provider,
-      chainId,
-      liquidationPair.address,
-    );
-    if (!deployedByVaultFactory) {
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error: `Not deployed by VaultFactory V1 or V2`,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
+    printSpacer();
+    console.log(chalk.dim(`Checking if LiquidationPair's tokenOut is in allow list ...`));
+    console.log(context.tokenOut.address.toLowerCase());
 
-      continue;
+    const tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
+      context.tokenOut.address.toLowerCase(),
+    );
+    if (tokenOutInAllowList) {
+      console.log(`LiquidationPair's tokenOut is in the allow list! 👍`);
+    } else {
+      console.log(chalk.yellow(`LiquidationPair's tokenOut is not in the allow list ❌`));
+
+      printSpacer();
+      console.log(
+        chalk.dim(`Checking if LiquidationPair's tokenOut was deployed by known VaultFactory ...`),
+      );
+      const deployedByVaultFactory = await vaultDeployedByVaultFactory(
+        l1Provider,
+        chainId,
+        context.tokenOut.address.toLowerCase(),
+      );
+      if (deployedByVaultFactory) {
+        console.log(`LiquidationPair's tokenOut was deployed by known VaultFactory! 👍`);
+      } else {
+        console.log(chalk.yellow(`LiquidationPair's tokenOut was deployed manually ❌`));
+      }
+      printSpacer();
+
+      if (!deployedByVaultFactory && !tokenOutInAllowList) {
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error:
+            'LiquidationPair tokenOut not in allow list and vault not created by vault factory',
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+
+        continue;
+      }
     }
+    printSpacer();
 
     // *****************************
     // *****************************

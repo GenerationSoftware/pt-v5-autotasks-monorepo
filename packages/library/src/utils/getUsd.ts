@@ -20,7 +20,7 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
   OP: 'optimism',
 };
 
-// Note: Lowercase!
+// Note: Ensure addresses are lowercase!
 const ADDRESS_TO_COVALENT_LOOKUP = {
   '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Sepolia -> POOL: Ethereum
   '0xf401d1482dfaa89a050f111992a222e9ad123e14': '0x0cec1a9154ff802e7934fc916ed7ca50bde6844e', // POOL: Arb Sepolia -> POOL: Ethereum

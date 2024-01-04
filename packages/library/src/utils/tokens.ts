@@ -1,0 +1,26 @@
+import { CHAIN_IDS } from './network';
+
+// Ensure addresses are lowercase!
+export const KNOWN_TOKENS = {
+  [CHAIN_IDS.optimism]: {
+    // 0x395Ae52bB17aef68C2888d941736A71dC6d4e125
+    // 0x395ae52bb17aef68c2888d941736a71dc6d4e125
+    POOL: '0x395ae52bb17aef68c2888d941736a71dc6d4e125',
+    WETH: '0x4200000000000000000000000000000000000006',
+    USDC: '0x7f5c764cbc14f9669b88837ca1490cca17c31607',
+    DAI: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1',
+    LUSD: '0xc40f949f8a4e094d1b49a23ea9241d289b7b2819',
+    OP: '0x4200000000000000000000000000000000000042',
+  },
+};
+
+export const LIQUIDATION_TOKEN_ALLOW_LIST = {
+  [CHAIN_IDS.optimism]: [
+    KNOWN_TOKENS[CHAIN_IDS.optimism].POOL,
+    KNOWN_TOKENS[CHAIN_IDS.optimism].WETH,
+    KNOWN_TOKENS[CHAIN_IDS.optimism].USDC,
+    KNOWN_TOKENS[CHAIN_IDS.optimism].DAI,
+    KNOWN_TOKENS[CHAIN_IDS.optimism].LUSD,
+    KNOWN_TOKENS[CHAIN_IDS.optimism].OP,
+  ],
+};
