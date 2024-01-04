@@ -2,7 +2,7 @@ import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { CHAIN_IDS, ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import { LiquidatorConfig, LiquidatorContext } from './types';
@@ -257,30 +257,6 @@ export async function runLiquidator(
       continue;
     }
 
-    // Simulate tx for failures
-    try {
-      const simulationOut = await liquidationRouterContract.callStatic.swapExactAmountOut(
-        ...Object.values(swapExactAmountOutParams),
-      );
-      console.log('simulationOut');
-      console.log(simulationOut);
-    } catch (e) {
-      console.error(chalk.red(e));
-      console.error(chalk.cyan(e.message));
-
-      console.log(chalk.yellow('---'));
-      console.log(chalk.yellow('Tx fail, simulation failed.'));
-      console.log(chalk.yellow('---'));
-
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error: `TX simulation failed`,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
-
     // #6. Decide if profitable or not
     const { estimatedProfitUsd, profitable, selectedIndex } = await calculateProfit(
       context,
@@ -335,12 +311,6 @@ export async function runLiquidator(
         useFlashbots,
       );
 
-      // let transactionSentToNetwork = await ozRelayer.sendTransaction({
-      //   isPrivate,
-      //   data: populatedTx.data,
-      //   to: populatedTx.to,
-      //   gasLimit: 1000000,
-      // });
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
@@ -461,7 +431,7 @@ const getLiquidationContracts = async (
   liquidationRouterContract: Contract;
   liquidationPairContracts: Contract[];
 }> => {
-  const { chainId, l1Provider } = config;
+  const { chainId, l1Provider, signer } = config;
 
   const contractsVersion = {
     major: 1,
@@ -472,7 +442,7 @@ const getLiquidationContracts = async (
   const liquidationPairFactoryContract = getContract(
     'LiquidationPairFactory',
     chainId,
-    l1Provider,
+    signer,
     contracts,
     contractsVersion,
   );
@@ -480,11 +450,10 @@ const getLiquidationContracts = async (
     liquidationPairFactoryContract,
     l1Provider,
   );
-
   const liquidationRouterContract = getContract(
     'LiquidationRouter',
     chainId,
-    l1Provider,
+    signer,
     contracts,
     contractsVersion,
   );
@@ -629,12 +598,10 @@ const getGasCost = async (
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
 
-  // Hard-code gas limit (based on recent liquidations, with additional headroom):
-  const estimatedGasLimit = BigNumber.from(500000);
   // Estimate gas limit from chain:
-  // const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
-  //   ...Object.values(swapExactAmountOutParams),
-  // );
+  const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
+    ...Object.values(swapExactAmountOutParams),
+  );
 
   const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
