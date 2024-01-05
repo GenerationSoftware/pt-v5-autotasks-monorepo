@@ -210,6 +210,7 @@ export async function runPrizeClaimer(
       const gasLimit = 20000000;
       const { gasPrice } = await getGasPrice(l1Provider);
       const tx = await sendPopulatedTx(
+        chainId,
         ozRelayer,
         wallet,
         populatedTx,

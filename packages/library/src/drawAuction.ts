@@ -341,6 +341,7 @@ export async function runDrawAuction(
 
     if (profitable) {
       await sendStartRngTransaction(
+        l1ChainId,
         rngWallet,
         rngOzRelayer,
         l1Provider,
@@ -376,6 +377,7 @@ export async function runDrawAuction(
 }
 
 const sendStartRngTransaction = async (
+  chainId: number,
   rngWallet: Wallet,
   rngOzRelayer: Relayer,
   provider: Provider,
@@ -401,8 +403,8 @@ const sendStartRngTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
 
   const gasLimit = 400000;
-  // console.log(rngOzRelayer, rngWallet, populatedTx, gasLimit, gasPrice, config.useFlashbots);
   const tx = await sendPopulatedTx(
+    chainId,
     rngOzRelayer,
     rngWallet,
     populatedTx,
@@ -440,7 +442,7 @@ const processRelayTransaction = async (
   context: DrawAuctionContext,
 ) => {
   const { l2ChainId } = relay;
-  const { l1Provider } = config;
+  const { l1ChainId, l1Provider } = config;
 
   const contract = findRngAuctionRelayerRemoteOwnerContract(l2ChainId, rngAuctionContracts);
 
@@ -477,7 +479,15 @@ const processRelayTransaction = async (
 
   // #5. Send transaction
   if (profitable || forceRelay) {
-    await sendRelayTransaction(rngWallet, rngOzRelayer, txParams, contract, context, config);
+    await sendRelayTransaction(
+      l1ChainId,
+      rngWallet,
+      rngOzRelayer,
+      txParams,
+      contract,
+      context,
+      config,
+    );
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -1068,7 +1078,7 @@ const getGasCostUsd = async (
 
   // 3. Convert gas costs to USD
   printSpacer();
-  const { avgFeeUsd: gasCostUsd } = await getFeesUsd(
+  const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
@@ -1077,14 +1087,15 @@ const getGasCostUsd = async (
   );
   console.log(
     chalk.grey(`Gas Cost (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostUsd)}`),
-    chalk.dim(`$${gasCostUsd}`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(avgFeeUsd)}`),
+    chalk.dim(`$${avgFeeUsd}`),
   );
 
-  return gasCostUsd;
+  return avgFeeUsd;
 };
 
 const sendRelayTransaction = async (
+  chainId: number,
   rngWallet: Wallet,
   rngOzRelayer: Relayer,
   txParams:
@@ -1119,6 +1130,7 @@ const sendRelayTransaction = async (
 
   const gasLimit = 550000;
   const tx = await sendPopulatedTx(
+    chainId,
     rngOzRelayer,
     rngWallet,
     populatedTx,

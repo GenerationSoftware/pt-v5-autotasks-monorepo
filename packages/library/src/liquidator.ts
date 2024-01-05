@@ -263,7 +263,7 @@ export async function runLiquidator(
       minProfitThresholdUsd,
       wantedAmountsIn,
       wantedAmountsOut,
-      avgFeeUsd,
+      gasFeeUsd,
     );
     if (!profitable) {
       console.log(
@@ -300,9 +300,10 @@ export async function runLiquidator(
         ...Object.values(swapExactAmountOutParams),
       );
 
-      const gasLimit = 1000000;
+      const gasLimit = 500000;
       const { gasPrice } = await getGasPrice(l1Provider);
       const tx = await sendPopulatedTx(
+        chainId,
         ozRelayer,
         wallet,
         populatedTx,
@@ -602,6 +603,8 @@ const getGasCost = async (
   const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
   );
+  printSpacer();
+  printSpacer();
 
   const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),

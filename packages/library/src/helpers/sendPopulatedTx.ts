@@ -1,4 +1,5 @@
 import { ethers, BigNumber, PopulatedTransaction, Wallet } from 'ethers';
+import { CHAIN_IDS } from '../constants/network';
 import { Relayer, RelayerTransaction } from 'defender-relay-client';
 import chalk from 'chalk';
 
@@ -8,6 +9,7 @@ import { printSpacer } from '../utils';
 const ONE_GWEI = '1000000000';
 
 export const sendPopulatedTx = async (
+  chainId: number,
   relayer: Relayer,
   wallet: Wallet,
   populatedTx: PopulatedTransaction,
@@ -21,7 +23,10 @@ export const sendPopulatedTx = async (
   // const isPrivate = useFlashbots ? canUseIsPrivate(chainId, useFlashbots) : false;
   console.log(chalk.green.bold(`Flashbots (Private transaction) support:`, isPrivate));
 
-  const gasPriceStr = gasPrice.add(ONE_GWEI).toString();
+  // If this is mainnet let's get the current base gas price and add 1 Gwei in
+  // hopes it will get picked up quicker
+  const gasPriceStr =
+    chainId === CHAIN_IDS.mainnet ? gasPrice.add(ONE_GWEI).toString() : gasPrice.toString();
 
   const sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,

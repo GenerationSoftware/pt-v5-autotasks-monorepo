@@ -21,13 +21,14 @@ export async function runYieldVaultMintRate(
     if (!yieldVaultContract) {
       throw new Error('YieldVault: Contract Unavailable');
     }
-    const populatedTx: PopulatedTransaction = await yieldVaultContract.populateTransaction.mintRate();
+    const populatedTx: PopulatedTransaction =
+      await yieldVaultContract.populateTransaction.mintRate();
 
     try {
       const gasLimit = 200000;
       const { gasPrice } = await getGasPrice(l1Provider);
       console.log(`YieldVault: mintRate() ${yieldVaultContract.address}`);
-      const tx = await sendPopulatedTx(ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
+      const tx = await sendPopulatedTx(chainId, ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
       console.log('TransactionHash:', tx.hash);
       console.log('');
     } catch (error) {
