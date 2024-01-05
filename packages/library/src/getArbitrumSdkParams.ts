@@ -11,7 +11,7 @@ import {
   ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
   ERC_5164_MESSAGE_EXECUTOR_ADDRESS,
   RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS,
-} from './constants';
+} from './constants/drawAuctionAddresses';
 
 // This is a fake message ID, used for estimating gas costs on Arbitrum
 // const RANDOM_BYTES_32_STRING = '0x90344b8b6d0f5572c26c9897fd0170c6d4b3a435268062468c51261fbf8274e9';

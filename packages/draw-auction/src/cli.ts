@@ -8,7 +8,6 @@ import {
   RelayerAccount,
   DrawAuctionEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
 import { executeTransactions } from './executeTransactions';
 import { loadDrawAuctionEnvVars } from './loadDrawAuctionEnvVars';

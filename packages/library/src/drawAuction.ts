@@ -20,7 +20,7 @@ import {
 import {
   ERC_5164_MESSAGE_DISPATCHER_ADDRESS,
   RNG_AUCTION_RELAYER_REMOTE_OWNER_ADDRESS,
-} from './constants';
+} from './constants/drawAuctionAddresses';
 import { chainName } from './utils/network';
 import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
 import {
@@ -1157,7 +1157,6 @@ const increaseRngFeeAllowance = async (
   printSpacer();
   printSpacer();
   console.log(chalk.blue(`Checking allowance ...`));
-  printSpacer();
 
   // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
   await approve(signer, rngRelayerAddress, rngAuctionContracts, context);
@@ -1207,6 +1206,7 @@ const approve = async (
   } catch (error) {
     console.log(chalk.red('error: ', error));
   }
+  printSpacer();
 };
 
 const checkOrX = (bool: boolean): string => {
