@@ -263,7 +263,7 @@ export async function runLiquidator(
       minProfitThresholdUsd,
       wantedAmountsIn,
       wantedAmountsOut,
-      gasFeeUsd,
+      avgFeeUsd,
     );
     if (!profitable) {
       console.log(
