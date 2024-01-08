@@ -22,7 +22,6 @@ Monorepo grouping PoolTogether v5 hyperstructure OpenZeppelin Defender autotasks
 - **[Arbitrage Liquidator Bot](./packages/liquidator)**: OpenZeppelin Defender autotask to find arbitrage opportunities and liquidate the prize tokens (likely POOL) for yield.
 - **[Draw Auction Bot](./packages/draw-auction)**: OpenZeppelin Defender autotask to start and complete draws using the DrawAuction system.
 - **[Prize Claiming Bot](./packages/prize-claimer)**: OpenZeppelin Defender autotask to claim prizes on behalf of depositors.
-- **[Withdraw Claim Rewards Bot](./packages/withdraw-claim-rewards)**: OpenZeppelin Defender autotask to withdraw prize claim rewards on behalf of a claimer.
 
 #### Testnet-only Packages
 

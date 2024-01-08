@@ -80,18 +80,6 @@ export interface LiquidatorContext {
   relayer: LiquidatorRelayerContext;
 }
 
-export interface WithdrawClaimRewardsConfig {
-  chainId: number;
-  rewardsRecipient: string;
-  relayerAddress: string;
-  minProfitThresholdUsd: number;
-  covalentApiKey?: string;
-}
-
-export interface WithdrawClaimRewardsContext {
-  rewardsToken: TokenWithRate;
-}
-
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
   JSON_RPC_URI: string;

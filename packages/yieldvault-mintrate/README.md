@@ -10,36 +10,60 @@
 
 ## TESTNET-ONLY
 
-PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to touch the MintRate on each YieldVault.
+PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to touch the MintRate on each YieldVault (testnet only!)
 
-### 1. Run autotask
+## 🖥️ Usage
 
-To run the OpenZeppelin Defender autotask locally:
+### 1. Setup
 
+To run the OpenZeppelin Defender autotask locally or build for OpenZeppelin Defender, first set up your environment variables using `dotenv`:
+
+#### ENV
+
+Copy `.envrc.example` and input the env variables needed to run this project.
+
+```sh
+cp .envrc.example .envrc
 ```
-yarn start
+
+Once your env variables are setup, load them with:
+
+```sh
+direnv allow
 ```
 
-You will be prompted to fill in the following necessary variables:
+#### LIST OF ENVIRONMENT VARIABLES
 
-```
+```sh
 CHAIN_ID: The chain ID of which network to run the autotask on
+JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+
+### THIS:
+
+CUSTOM_RELAYER_PRIVATE_KEY: run liquidations using your own EOA
+
+### OR THIS (recommended):
+
 DEFENDER_TEAM_API_KEY: OZ Defender Team API Key
-DEFENDER_TEAM_API_KEY: OZ Defender Team Secret Key
+DEFENDER_TEAM_API_SECRET: OZ Defender Team Secret Key
 AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
 RELAYER_API_KEY: OZ Defender chain Relayer API Key
 RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
-JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+
 ```
 
-Once the config has been saved with all of those variables, the script will run.
+### 2. Start liquidating
 
-If everything looks good, you can upload the task to OpenZeppelin Defender to be run periodically.
+When everything is set and the env vars have been exported you can run the bot locally:
 
-### 2. Update autotask
+```sh
+yarn start
+```
+
+### 3. Update remote autotask
 
 With the config in place from step 1, you can build and update the autotask on OpenZeppelin Defender using:
 
-```
+```sh
 yarn update
 ```
