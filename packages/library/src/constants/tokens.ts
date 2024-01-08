@@ -40,6 +40,12 @@ export const KNOWN_TOKENS = {
     USDC: '0x7a6dbc7ff4f1a2d864291db3aec105a8eee4a3d2',
     DAI: '0x08c19fe57af150a1af975cb9a38769848c7df98e',
     GUSD: '0xb84460d777133a4b86540d557db35952e4adfee7',
+    PDAILYT: '0x3adaa1d4f23c82130e1681c2ca9b38f5fb9a0892',
+    PDAIHYT: '0x4dbf73fe0d23a6d275aefebc7c00600045ab8b9e',
+    PUSDCLYT: '0xa723cf5d90c1a472c7de7285e5bd314aea107ede',
+    PUSDCHYT: '0xb81b725b16e99c840ac17b396590da9c93c5bc3b',
+    PWETH1: '0xe3235057ee444e9f53a5f41e66c03348c68b22c2',
+    PWETH2: '0xa5905161eab67b6a13104537a09a949ef043366e',
   },
   [CHAIN_IDS.optimismSepolia]: {
     POOL: '0xd675b9c8eea7f6bd506d5ff66a10cf7b887cd293',
@@ -81,6 +87,17 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PDAIHYT.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PDAILY.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PDAIHY.toLowerCase(),
+  ],
+  [CHAIN_IDS.arbitrumSepolia]: [
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].POOL.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].USDC.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].DAI.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].PDAILYT.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].PDAIHYT.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].PUSDCLYT.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].PUSDCHYT.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].PWETH1.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].PWETH2.toLowerCase(),
   ],
 };
 

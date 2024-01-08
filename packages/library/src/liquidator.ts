@@ -300,7 +300,7 @@ export async function runLiquidator(
         ...Object.values(swapExactAmountOutParams),
       );
 
-      const gasLimit = 500000;
+      const gasLimit = 750000;
       const { gasPrice } = await getGasPrice(l1Provider);
       const tx = await sendPopulatedTx(
         chainId,
