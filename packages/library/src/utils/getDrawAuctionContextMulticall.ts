@@ -362,23 +362,9 @@ export const getRelayMulticall = async (
 
     // Store if this relay auction is coming to an end
     const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
-    console.log('auctionDuration - elapsedTime');
-    console.log(auctionDuration - elapsedTime);
 
-    console.log('auctionDuration');
-    console.log(auctionDuration);
-    console.log(auctionDuration.toString());
-
-    console.log('elapsedTime');
-    console.log(elapsedTime);
-    console.log(elapsedTime.toString());
-
-    console.log('percentRemaining');
-    console.log(percentRemaining);
     const auctionClosesSoon =
       percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
-    console.log('auctionClosesSoon');
-    console.log(auctionClosesSoon);
 
     // 7. Results One: Reward Token
     const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
