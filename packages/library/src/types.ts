@@ -75,14 +75,17 @@ export interface LiquidatorConfig {
 
 export interface FlashLiquidatorConfig extends LiquidatorConfig {}
 
-export interface LiquidatorContext {
+export interface BaseLiquidatorContext {
   tokenIn: TokenWithRate;
   tokenOut: Token;
   underlyingAssetToken: TokenWithRate;
+}
+
+export interface LiquidatorContext extends BaseLiquidatorContext {
   relayer: LiquidatorRelayerContext;
 }
 
-export interface FlashLiquidatorContext extends LiquidatorContext {}
+export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
