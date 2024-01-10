@@ -73,12 +73,16 @@ export interface LiquidatorConfig {
   covalentApiKey?: string;
 }
 
+export interface FlashLiquidatorConfig extends LiquidatorConfig {}
+
 export interface LiquidatorContext {
   tokenIn: TokenWithRate;
   tokenOut: Token;
   underlyingAssetToken: TokenWithRate;
   relayer: LiquidatorRelayerContext;
 }
+
+export interface FlashLiquidatorContext extends LiquidatorContext {}
 
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
@@ -103,6 +107,8 @@ export interface DrawAuctionEnvVars extends AutotaskEnvVars {
 export interface LiquidatorEnvVars extends AutotaskEnvVars {
   SWAP_RECIPIENT: string;
 }
+
+export interface FlashLiquidatorEnvVars extends LiquidatorEnvVars {}
 
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
   FEE_RECIPIENT: string;
@@ -239,3 +245,15 @@ export interface OzSendTransactionArgs extends SendTransactionArgs {
   isPrivate?: boolean;
   value?: BigNumber;
 }
+
+export interface LiquidationPair {
+  chainId: number;
+  address: string;
+  swapPath: SwapPath;
+  swapPathEncoded: string;
+}
+
+export type SwapPath =
+  | [string, number, string]
+  | [string, number, string, number, string]
+  | [string, number, string, number, string, number, string];
