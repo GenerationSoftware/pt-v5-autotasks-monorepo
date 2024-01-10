@@ -114,17 +114,18 @@ export async function runFlashLiquidator(
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
     printContext(context);
-    printAsterisks();
     printSpacer();
 
     // Calculate amounts
     if (!context.underlyingAssetToken.assetRateUsd) {
+      console.log(
+        chalk.yellow(`Could not get underlying asset USD value to calculate profit with`),
+      );
       stats.push({
         pair,
         estimatedProfitUsd: 0,
         error: `Could not get underlying asset USD value to calculate profit with`,
       });
-      // logNextPair(flashLiquidationPair, flashLiquidationPairContracts);
       continue;
     }
 
@@ -144,6 +145,12 @@ export async function runFlashLiquidator(
       console.log(
         chalk.yellow('A flash liquidation on this pair would fail right now, try again soon.'),
       );
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Would fail right now`,
+      });
+
       printSpacer();
       continue;
     }
@@ -169,107 +176,85 @@ export async function runFlashLiquidator(
       );
     } catch (e) {
       console.error(chalk.red(e));
-
-      console.log(chalk.yellow('---'));
       console.log(chalk.yellow('Could not estimate gas costs!'));
-      console.log(chalk.yellow('---'));
 
       stats.push({
         pair,
         estimatedProfitUsd: 0,
         error: `Could not get gas cost`,
       });
-      // logNextPair(liquidationPair, liquidationPairContracts);
       continue;
     }
-    console.log('avgFeeUsd');
-    console.log(avgFeeUsd);
 
-    //   // #6. Decide if profitable or not
-    //   const { estimatedProfitUsd, profitable, selectedIndex } = await calculateProfit(
-    //     context,
-    //     minProfitThresholdUsd,
-    //     wantedAmountsIn,
-    //     wantedAmountsOut,
-    //     avgFeeUsd,
-    //   );
-    //   if (!profitable) {
-    //     console.log(
-    //       chalk.red(
-    //         `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`,
-    //       ),
-    //     );
-    //     stats.push({
-    //       pair,
-    //       estimatedProfitUsd: 0,
-    //       error: `Not profitable`,
-    //     });
-    //     logNextPair(liquidationPair, liquidationPairContracts);
-    //     continue;
-    //   }
+    // Decide if profitable or not
+    const { estimatedProfitUsd, profitable } = await calculateProfit(
+      context,
+      bestQuote.profit,
+      minProfitThresholdUsd,
+      avgFeeUsd,
+    );
+    if (!profitable) {
+      const msg = `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`;
+      console.log(chalk.red(msg));
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: msg,
+      });
+      continue;
+    }
 
-    //   // #7. Finally, populate tx when profitable
-    //   try {
-    //     let populatedTx: PopulatedTransaction | undefined;
-    //     console.log(chalk.blue('6. Populating swap transaction ...'));
-    //     printSpacer();
+    // Send tx when profitable
+    try {
+      let populatedTx: PopulatedTransaction | undefined;
+      console.log(chalk.blue('6. Populating swap transaction ...'));
+      printSpacer();
 
-    //     // Re-create the params for the swap tx, this time using the dynamically chosen amountOut
-    //     // based on the maximum amount of profit
-    //     const swapExactAmountOutParams: SwapExactAmountOutParams = {
-    //       liquidationPairAddress: liquidationPair.address,
-    //       swapRecipient,
-    //       amountOut: wantedAmountsOut[selectedIndex],
-    //       amountInMax,
-    //       deadline: Math.floor(Date.now() / 1000) + 100,
-    //     };
+      populatedTx = await flashLiquidationContract.populateTransaction.flashLiquidate(
+        ...Object.values(flashLiquidateParams),
+      );
 
-    //     populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
-    //       ...Object.values(swapExactAmountOutParams),
-    //     );
+      const gasLimit = 850000;
+      const { gasPrice } = await getGasPrice(l1Provider);
+      const tx = await sendPopulatedTx(
+        chainId,
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
 
-    //     const gasLimit = 850000;
-    //     const { gasPrice } = await getGasPrice(l1Provider);
-    //     const tx = await sendPopulatedTx(
-    //       chainId,
-    //       ozRelayer,
-    //       wallet,
-    //       populatedTx,
-    //       gasLimit,
-    //       gasPrice,
-    //       useFlashbots,
-    //     );
+      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
-    //     console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-    //     console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-    //     stats.push({
-    //       pair,
-    //       estimatedProfitUsd,
-    //       txHash: tx.hash,
-    //     });
-    //   } catch (error) {
-    //     stats.push({
-    //       pair,
-    //       estimatedProfitUsd: 0,
-    //       error: error.message,
-    //     });
-    //     throw new Error(error);
-    //   }
-    // }
-
-    // printSpacer();
-    // printSpacer();
-    // printAsterisks();
-    // console.log(chalk.greenBright.bold(`SUMMARY`));
-    // console.table(stats);
-    // const estimatedProfitUsdTotal = stats.reduce((accumulator, stat) => {
-    //   return accumulator + stat.estimatedProfitUsd;
-    // }, 0);
-    // console.log(
-    //   chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
-    // );
+      stats.push({
+        pair,
+        estimatedProfitUsd,
+        txHash: tx.hash,
+      });
+    } catch (error) {
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: error.message,
+      });
+      throw new Error(error);
+    }
   }
+
+  printSpacer();
+  printSpacer();
+  printAsterisks();
+  console.log(chalk.greenBright.bold(`SUMMARY`));
+  console.table(stats);
+  const estimatedProfitUsdTotal = stats.reduce((accumulator, stat) => {
+    return accumulator + stat.estimatedProfitUsd;
+  }, 0);
+  console.log(
+    chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
+  );
 }
 
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
@@ -364,53 +349,22 @@ const printContext = (context) => {
  */
 const calculateProfit = async (
   context: FlashLiquidatorContext,
+  bestQuoteProfit: BigNumber,
   minProfitThresholdUsd: number,
-  wantedAmountsIn: BigNumber[],
-  wantedAmountsOut: BigNumber[],
   avgFeeUsd: number,
-): Promise<{ estimatedProfitUsd: number; profitable: boolean; selectedIndex: number }> => {
+): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   printAsterisks();
   console.log(chalk.blue('5. Profit/Loss (USD):'));
   printSpacer();
 
   console.log(chalk.blueBright('Gross profit = tokenOut - tokenIn'));
-  const grossProfitsUsd = [];
-  for (let i = 0; i < wantedAmountsIn.length; i++) {
-    const amountOut = wantedAmountsOut[i];
-    const amountIn = wantedAmountsIn[i];
-
-    const underlyingAssetTokenUsd =
-      parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
-      context.underlyingAssetToken.assetRateUsd;
-    const tokenInUsd =
-      parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
-      context.tokenIn.assetRateUsd;
-
-    const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
-
-    console.log(
-      chalk.dim(`Index ${i}:`),
-      chalk.greenBright(
-        `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
-          underlyingAssetTokenUsd,
-        )} - $${roundTwoDecimalPlaces(tokenInUsd)}`,
-      ),
-    );
-
-    grossProfitsUsd.push(grossProfitUsd);
-  }
   printSpacer();
 
-  const getMaxGrossProfit = (grossProfitsUsd: number[]) => {
-    const max = grossProfitsUsd.reduce((a, b) => Math.max(a, b), -Infinity);
-    return { maxGrossProfit: max, selectedIndex: grossProfitsUsd.indexOf(max) };
-  };
+  // formatEther (18 units) as profit is always in POOL for flash liquidations
+  const maxGrossProfit =
+    parseFloat(ethers.utils.formatEther(bestQuoteProfit)) * context.tokenIn.assetRateUsd;
 
-  const { selectedIndex, maxGrossProfit } = getMaxGrossProfit(grossProfitsUsd);
-  console.log(
-    chalk.dim(`Selected Index ${selectedIndex} -`),
-    chalk.blueBright(`$${roundTwoDecimalPlaces(maxGrossProfit)}`),
-  );
+  console.log(chalk.blueBright(`$${roundTwoDecimalPlaces(maxGrossProfit)}`));
   printSpacer();
 
   const netProfitUsd = maxGrossProfit - avgFeeUsd;
@@ -435,7 +389,7 @@ const calculateProfit = async (
 
   const estimatedProfitUsd = roundTwoDecimalPlaces(netProfitUsd);
 
-  return { estimatedProfitUsd, profitable, selectedIndex };
+  return { estimatedProfitUsd, profitable };
 };
 
 /**
@@ -452,8 +406,6 @@ const getGasCost = async (
 
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
-
-  console.log(...Object.values(flashLiquidateParams));
 
   // Estimate gas limit from chain:
   const estimatedGasLimit = await flashLiquidationContract.estimateGas.flashLiquidate(
@@ -473,9 +425,6 @@ const getGasCost = async (
     l1Provider,
     populatedTx.data,
   );
-  console.log('doubt');
-  console.log('avgFeeUsd');
-  console.log(avgFeeUsd);
 
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
