@@ -8,13 +8,7 @@
 
 ### @generationsoftware/pt-v5-autotasks-flash-liquidator
 
-![title image for PoolTogether Arbitrage Liquidator Bot](https://github.com/generationsoftware/pt-v5-autotasks/raw/main/packages/liquidator/arb-liquidator-img.png "title image for PoolTogether Arbitrage Liquidator Bot")
-
-PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to find arbitrage opportunities and liquidate the prize token (likely POOL) for yield.
-
-## 📖 Tutorial
-
-### [Creating a PoolTogether Arbitrage Swapping bot](https://mirror.xyz/chuckbergeron-g9.eth/ES-IJduktYPb0X_sBikfqL-PVFRweNpoPrlr01zcVX8)
+PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to find arbitrage opportunities and only pay for gas (in ETH) in exchange for yield.
 
 ## 🖥️ Usage
 
@@ -61,7 +55,7 @@ AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
 RELAYER_API_KEY: OZ Defender chain Relayer API Key
 RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
 
-### LIQUIDATOR SPECIFIC:
+### FLASH LIQUIDATOR SPECIFIC:
 
 SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can set to the relayer address or any other contract/EOA address
 

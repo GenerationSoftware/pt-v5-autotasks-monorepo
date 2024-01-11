@@ -1,7 +1,7 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-flash-liquidator",
   "version": "0.0.1",
-  "description": "Autotask to make arbitrage profit for PoolTogether v5.",
+  "description": "PoolTogether v5 Flash Liquidator Autotask - make profit without holding POOL (only ETH for gas).",
   "author": {
     "name": "G9 Software Inc.",
     "url": "https://github.com/generationsoftware"
