@@ -111,28 +111,6 @@ export async function runLiquidator(
     );
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
-    ////////////// SKIP
-    const skipLpAddresses = [
-      '0xde5deFa124faAA6d85E98E56b36616d249e543Ca'.toLowerCase(),
-      '0xe7680701a2794E6E0a38aC72630c535B9720dA5b'.toLowerCase(),
-    ];
-    if (skipLpAddresses.includes(liquidationPair.address.toLowerCase())) {
-      printSpacer();
-      console.log(chalk.red('Skipping'));
-      console.log(chalk.blue('To give preference to'));
-      console.log(chalk.yellow('flash liquidations.'));
-
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error: `Skipping to give preference to flash liquidations.`,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-
-      continue;
-    }
-    ////////////// END SKIP
-
     printContext(context);
     printAsterisks();
     printSpacer();
