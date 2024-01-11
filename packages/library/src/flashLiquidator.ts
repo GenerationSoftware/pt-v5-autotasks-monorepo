@@ -136,6 +136,7 @@ export async function runFlashLiquidator(
         flashLiquidationPair.swapPathEncoded,
       );
     } catch (e) {
+      console.error(e);
       console.error('Cannot flash liquidate this pair at this time.');
       // console.error(e.message);
       console.error(chalk.red(e.reason));

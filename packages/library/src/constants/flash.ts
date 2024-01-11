@@ -16,6 +16,16 @@ const PUSDCE_SWAP_PATH: SwapPath = [
   KNOWN_TOKENS[CHAIN_IDS.optimism].POOL,
 ];
 
+const PUSDC_SWAP_PATH: SwapPath = [
+  KNOWN_TOKENS[CHAIN_IDS.optimism].PUSDC,
+  100,
+  KNOWN_TOKENS[CHAIN_IDS.optimism].USDC,
+  500,
+  KNOWN_TOKENS[CHAIN_IDS.optimism].WETH,
+  10000,
+  KNOWN_TOKENS[CHAIN_IDS.optimism].POOL,
+];
+
 const PWETH_SWAP_PATH: SwapPath = [
   KNOWN_TOKENS[CHAIN_IDS.optimism].PWETH1,
   100,
@@ -35,6 +45,15 @@ export const FLASH_LIQUIDATION_PAIRS: LiquidationPair[] = [
     swapPathEncoded: ethers.utils.solidityPack(
       ['address', 'uint24', 'address', 'uint24', 'address', 'uint24', 'address'],
       PUSDCE_SWAP_PATH,
+    ),
+  },
+  {
+    chainId: CHAIN_IDS.optimism,
+    address: '0x217ef9C355f7eb59C789e0471dc1f4398e004EDc',
+    swapPath: PUSDC_SWAP_PATH,
+    swapPathEncoded: ethers.utils.solidityPack(
+      ['address', 'uint24', 'address', 'uint24', 'address', 'uint24', 'address'],
+      PUSDC_SWAP_PATH,
     ),
   },
   {

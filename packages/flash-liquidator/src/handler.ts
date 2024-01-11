@@ -6,7 +6,7 @@ import {
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
+import { loadFlashLiquidatorEnvVars } from './loadFlashLiquidatorEnvVars';
 import { executeTransactions } from './executeTransactions';
 
 export async function handler(event) {
@@ -17,7 +17,7 @@ export async function handler(event) {
     swapRecipient: BUILD_SWAP_RECIPIENT,
   };
 
-  const envVars: LiquidatorEnvVars = loadLiquidatorEnvVars(buildVars, event);
+  const envVars: LiquidatorEnvVars = loadFlashLiquidatorEnvVars(buildVars, event);
 
   const mockEvent = {
     apiKey: envVars.RELAYER_API_KEY,
