@@ -1,8 +1,6 @@
 import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
-import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import { FlashLiquidatorConfig, FlashLiquidatorContext } from './types';
@@ -16,16 +14,12 @@ import {
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   getFlashLiquidatorContextMulticall,
-  getLiquidationPairsMulticall,
-  getLiquidationPairComputeExactAmountInMulticall,
   getGasPrice,
 } from './utils';
-import { ERC20Abi } from './abis/ERC20Abi';
 import { FlashLiquidatorAbi } from './abis/FlashLiquidatorAbi';
 import { LiquidationPairAbi } from './abis/LiquidationPairAbi';
 import { FLASH_LIQUIDATION_PAIRS, FLASH_LIQUIDATOR_CONTRACT_ADDRESS } from './constants/flash';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
-import { LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/tokens';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 interface FlashLiquidateParams {
@@ -52,16 +46,12 @@ interface Stat {
  * or not as we iterate through all LiquidityPairs
  * @returns {undefined} - void function
  */
-export async function runFlashLiquidator(
-  contracts: ContractsBlob,
-  config: FlashLiquidatorConfig,
-): Promise<void> {
+export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise<void> {
   const {
     chainId,
     ozRelayer,
     wallet,
     signer,
-    relayerAddress,
     l1Provider,
     swapRecipient,
     useFlashbots,
@@ -80,10 +70,6 @@ export async function runFlashLiquidator(
     signer,
   );
 
-  // const { liquidationRouterContract, liquidationPairContracts } = await getLiquidationContracts(
-  //   contracts,
-  //   config,
-  // );
   printSpacer();
 
   // Loop through flash liquidation pairs
@@ -116,7 +102,6 @@ export async function runFlashLiquidator(
     printContext(context);
     printSpacer();
 
-    // Calculate amounts
     if (!context.underlyingAssetToken.assetRateUsd) {
       console.log(
         chalk.yellow(`Could not get underlying asset USD value to calculate profit with`),
@@ -129,6 +114,7 @@ export async function runFlashLiquidator(
       continue;
     }
 
+    // Get profit quote
     let bestQuote;
     try {
       bestQuote = await flashLiquidationContract.callStatic.findBestQuoteStatic(
@@ -138,7 +124,6 @@ export async function runFlashLiquidator(
     } catch (e) {
       console.error(e);
       console.error('Cannot flash liquidate this pair at this time.');
-      // console.error(e.message);
       console.error(chalk.red(e.reason));
     }
 
@@ -258,80 +243,6 @@ export async function runFlashLiquidator(
   );
 }
 
-// Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
-// possibility of manually deployed malicious vaults/pairs
-const tokenOutAllowListed = (chainId: number, context: FlashLiquidatorContext) => {
-  console.log(
-    chalk.dim(
-      `Checking if tokenOut '${
-        context.tokenOut.symbol
-      }' (CA: ${context.tokenOut.address.toLowerCase()}) is in allow list ...`,
-    ),
-  );
-
-  let tokenOutInAllowList = false;
-  try {
-    tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
-      context.tokenOut.address.toLowerCase(),
-    );
-  } catch (e) {
-    console.error(chalk.red(e));
-    console.error(
-      chalk.white(`Perhaps chain has not been added to LIQUIDATION_TOKEN_ALLOW_LIST ?`),
-    );
-  }
-
-  if (tokenOutInAllowList) {
-    console.log(`tokenOut is in the allow list! 👍`);
-  } else {
-    console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
-  }
-
-  return tokenOutInAllowList;
-};
-
-/**
- * Find and initialize the various contracts we will need for all liquidation pairs
- * @returns {Promise} All of the LiquidationPair contracts, the LiquidationRouter contract
- *                    and the MarketRate contract initialized as ethers contracts
- */
-const getLiquidationContracts = async (
-  contracts: ContractsBlob,
-  config: FlashLiquidatorConfig,
-): Promise<{
-  liquidationRouterContract: Contract;
-  liquidationPairContracts: Contract[];
-}> => {
-  const { chainId, l1Provider, signer } = config;
-
-  const contractsVersion = {
-    major: 1,
-    minor: 0,
-    patch: 0,
-  };
-
-  const liquidationPairFactoryContract = getContract(
-    'LiquidationPairFactory',
-    chainId,
-    signer,
-    contracts,
-    contractsVersion,
-  );
-  const liquidationPairContracts = await getLiquidationPairsMulticall(
-    liquidationPairFactoryContract,
-    l1Provider,
-  );
-  const liquidationRouterContract = getContract(
-    'LiquidationRouter',
-    chainId,
-    signer,
-    contracts,
-    contractsVersion,
-  );
-
-  return { liquidationRouterContract, liquidationPairContracts };
-};
-
 const printContext = (context) => {
   printAsterisks();
   console.log(chalk.blue(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
@@ -443,106 +354,4 @@ const getGasCost = async (
   logTable({ avgFeeUsd });
 
   return avgFeeUsd;
-};
-
-/**
- * Calculates necessary input parameters for the swap call based on current state of the contracts
- * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
- */
-const calculateAmountOut = async (
-  liquidationPair: Contract,
-  context: FlashLiquidatorContext,
-): Promise<{
-  originalMaxAmountOut: BigNumber;
-  wantedAmountsOut: BigNumber[];
-}> => {
-  const wantedAmountsOut = [];
-
-  const amountOut = await liquidationPair.callStatic.maxAmountOut();
-  logBigNumber(
-    `Max amount out available:`,
-    amountOut,
-    context.tokenOut.decimals,
-    context.tokenOut.symbol,
-  );
-
-  if (amountOut.eq(0)) {
-    console.warn(
-      chalk.bgBlack.yellowBright(
-        `Max amount out available is 0: (Not enough interest accrued ... Is yield deposited and draws have completed?)`,
-      ),
-    );
-    return {
-      originalMaxAmountOut: BigNumber.from(0),
-      wantedAmountsOut,
-    };
-  }
-
-  // Get multiple points across the auction function to determine the most amount of profitability
-  // most amount out for least amount of token in
-  // (depending on the state of the gradual auction)
-  for (let i = 1; i <= 100; i++) {
-    const amountToSendPercent = i;
-    // const amountToSendPercent = i * 10; when number of divisions is 10, instead of 100
-    const wantedAmountOut = amountOut.mul(ethers.BigNumber.from(amountToSendPercent)).div(100);
-    wantedAmountsOut.push(wantedAmountOut);
-  }
-
-  return {
-    originalMaxAmountOut: amountOut,
-    wantedAmountsOut,
-  };
-};
-
-/**
- * Calculates necessary input parameters for the swap call based on current state of the contracts
- * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
- */
-const calculateAmountIn = async (
-  l1Provider: Provider,
-  liquidationPairContract: Contract,
-  context: FlashLiquidatorContext,
-  originalMaxAmountOut: BigNumber,
-  wantedAmountsOut: BigNumber[],
-): Promise<{
-  amountIn: BigNumber;
-  amountInMax: BigNumber;
-  wantedAmountsIn: BigNumber[];
-}> => {
-  printSpacer();
-
-  let wantedAmountsIn = [];
-
-  const amountIn: BigNumber = await liquidationPairContract.callStatic.computeExactAmountIn(
-    originalMaxAmountOut,
-  );
-  logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
-
-  const amountInMax = ethers.constants.MaxInt256;
-
-  if (amountIn.eq(0)) {
-    return {
-      amountIn,
-      amountInMax,
-      wantedAmountsIn,
-    };
-  }
-
-  wantedAmountsIn = await getLiquidationPairComputeExactAmountInMulticall(
-    liquidationPairContract,
-    wantedAmountsOut,
-    l1Provider,
-  );
-
-  return {
-    amountIn,
-    amountInMax,
-    wantedAmountsIn,
-  };
-};
-
-const logNextPair = (liquidationPair, liquidationPairContracts) => {
-  if (liquidationPair !== liquidationPairContracts[liquidationPairContracts.length - 1]) {
-    console.warn(chalk.yellow(`Moving to next pair ...`));
-  }
 };

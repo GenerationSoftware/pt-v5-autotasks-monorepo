@@ -22,7 +22,6 @@ export default defineConfig((opt) => {
       '@generationsoftware/pt-v5-utils-js',
       'ethers-multicall-provider',
       'yn',
-      'node-fetch',
     ],
     format: 'cjs',
     entry: ['src/handler.ts'],
