@@ -19,7 +19,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * `tokenOut` is either the Vault (vault shares, ERC4626 with .asset() as the underlying ERC20)
  * or a straight up ERC20 token (ie. DAI, USDC)
  *
- * @param liquidationPairContract ethers contract instance for the liquidationPair contract
+ * @param liquidationPairContract ethers contract instance of the LiquidationPair contract
  * @param l1Provider provider for the chain that will be queried
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns

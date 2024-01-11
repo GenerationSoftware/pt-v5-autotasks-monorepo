@@ -72,6 +72,7 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   [CHAIN_IDS.optimism]: [
     KNOWN_TOKENS[CHAIN_IDS.optimism].POOL.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].WETH.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.optimism].USDC.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].USDCE.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].DAI.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].LUSD.toLowerCase(),
@@ -131,7 +132,8 @@ export const ADDRESS_TO_COVALENT_LOOKUP = {
   [optimismTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(), // Optimism WETH -> Ethereum WETH
   [optimismSepoliaTokens.WBTC.toLowerCase()]: mainnetTokens.WBTC.toLowerCase(), // Optimism WBTC Sepolia -> Ethereum WETH
   [optimismSepoliaTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(), // Optimism WETH Sepolia -> Ethereum WBTC
-  [optimismTokens.USDCE.toLowerCase()]: mainnetTokens.USDC.toLowerCase(), // Optimism USDC -> Ethereum USDC
+  [optimismTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(), // Optimism USDC -> Ethereum USDC
+  [optimismTokens.USDCE.toLowerCase()]: mainnetTokens.USDC.toLowerCase(), // Optimism USDC.e -> Ethereum USDC
   [arbitrumSepoliaTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(), // Arb USDC Sepolia -> Ethereum USDC
   [optimismSepoliaTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(), // Opt USDC Sepolia -> Ethereum USDC
   [optimismTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(), // Optimism DAI -> Ethereum DAI
