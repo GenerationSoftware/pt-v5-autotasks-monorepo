@@ -162,7 +162,7 @@ export async function runFlashLiquidator(
       receiver: swapRecipient,
       amountOut: bestQuote.amountOut,
       amountInMax: bestQuote.amountIn.mul(101).div(100), // +1% slippage
-      profitMin: bestQuote.profit.mul(99).div(100), // -1% slippage
+      profitMin: bestQuote.profit.mul(98).div(100), // -2% slippage
       deadline: Math.floor(Date.now() / 1000) + 60, // +1 min
       swapPath: flashLiquidationPair.swapPathEncoded,
     };
