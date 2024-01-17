@@ -1128,7 +1128,7 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
 
-  const gasLimit = 550000;
+  const gasLimit = 250000;
   const tx = await sendPopulatedTx(
     chainId,
     rngOzRelayer,
