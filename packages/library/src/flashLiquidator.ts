@@ -127,6 +127,11 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
       console.error(e);
       console.error('Cannot flash liquidate this pair at this time.');
       console.error(chalk.red(e.reason));
+      stats.push({
+        pair,
+        estimatedProfitUsd: 0,
+        error: `Error querying findBestQuoteStatic, Cannot flash liquidate this pair at this time`,
+      });
       continue;
     }
 
