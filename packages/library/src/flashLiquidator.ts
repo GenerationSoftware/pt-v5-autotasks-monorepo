@@ -121,8 +121,6 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
         flashLiquidationPair.address,
         flashLiquidationPair.swapPathEncoded,
       );
-      console.log('bestQuote');
-      console.log(bestQuote);
     } catch (e) {
       console.error(e);
       console.error('Cannot flash liquidate this pair at this time.');
