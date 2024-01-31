@@ -402,7 +402,7 @@ const sendStartRngTransaction = async (
   const { gasPrice } = await getGasPrice(provider);
   console.log(chalk.greenBright.bold(`Sending ...`));
 
-  const gasLimit = 400000;
+  const gasLimit = 330000;
   const tx = await sendPopulatedTx(
     chainId,
     rngOzRelayer,
@@ -583,26 +583,26 @@ const getStartRngRequestEstimatedGasLimit = async (
   return estimatedGasLimit;
 };
 
-/**
- * Figures out how much gas is required to run the RngAuctionRelayerRemoteOwnerOptimism relay contract function
- *
- * @returns {Promise} Promise of a BigNumber with the gas limit
- */
-const getRngAuctionRelayerRemoteOwnerOptimismRelayEstimatedGasLimit = async (
-  contract: Contract,
-  rngAuctionRelayerRemoteOwnerOptimismRelayTxParams: RngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
-): Promise<BigNumber> => {
-  let estimatedGasLimit;
-  try {
-    estimatedGasLimit = await contract.estimateGas.relay(
-      ...Object.values(rngAuctionRelayerRemoteOwnerOptimismRelayTxParams),
-    );
-  } catch (e) {
-    console.log(chalk.red(e));
-  }
+// /**
+//  * Figures out how much gas is required to run the RngAuctionRelayerRemoteOwnerOptimism relay contract function
+//  *
+//  * @returns {Promise} Promise of a BigNumber with the gas limit
+//  */
+// const getRngAuctionRelayerRemoteOwnerOptimismRelayEstimatedGasLimit = async (
+//   contract: Contract,
+//   rngAuctionRelayerRemoteOwnerOptimismRelayTxParams: RngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+// ): Promise<BigNumber> => {
+//   let estimatedGasLimit;
+//   try {
+//     estimatedGasLimit = await contract.estimateGas.relay(
+//       ...Object.values(rngAuctionRelayerRemoteOwnerOptimismRelayTxParams),
+//     );
+//   } catch (e) {
+//     console.log(chalk.red(e));
+//   }
 
-  return estimatedGasLimit;
-};
+//   return estimatedGasLimit;
+// };
 
 /**
  * Figures out how much gas is required to run the RngAuctionRelayerRemoteOwnerArbitrum relay contract function
@@ -1026,10 +1026,14 @@ const getRelayGasCost = async (
   let populatedTx: PopulatedTransaction;
   if (context.drawAuctionState === DrawAuctionState.RngRelayBridge) {
     if (chainIsOptimism(l2ChainId)) {
-      estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(txParams, contract);
+      // The relay uses 156,000~ gas, set to 200k just in case
+      estimatedGasLimit = BigNumber.from(200000);
+      // estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(txParams, contract);
       populatedTx = await populateOptimismRelayTx(txParams, contract);
     } else if (chainIsArbitrum(l2ChainId)) {
-      estimatedGasLimit = await getEstimatedGasLimitArbitrumRelayTx(txParams, contract);
+      // The relay uses 156,000~ gas, set to 200k just in case
+      estimatedGasLimit = BigNumber.from(200000);
+      // estimatedGasLimit = await getEstimatedGasLimitArbitrumRelayTx(txParams, contract);
       populatedTx = await populateArbitrumRelayTx(txParams, contract);
     }
   } else {
@@ -1128,7 +1132,7 @@ const sendRelayTransaction = async (
     // exists on same chain as RNG service)
   }
 
-  const gasLimit = 250000;
+  const gasLimit = 200000;
   const tx = await sendPopulatedTx(
     chainId,
     rngOzRelayer,
@@ -1232,15 +1236,15 @@ const chainIsOptimism = (chainId: number) =>
 const chainIsArbitrum = (chainId: number) =>
   [CHAIN_IDS.arbitrum, CHAIN_IDS.arbitrumSepolia, CHAIN_IDS.arbitrumGoerli].includes(chainId);
 
-const getEstimatedGasLimitOptimismRelayTx = async (
-  rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
-  contract,
-) => {
-  return await getRngAuctionRelayerRemoteOwnerOptimismRelayEstimatedGasLimit(
-    contract,
-    rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
-  );
-};
+// const getEstimatedGasLimitOptimismRelayTx = async (
+//   rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+//   contract,
+// ) => {
+//   return await getRngAuctionRelayerRemoteOwnerOptimismRelayEstimatedGasLimit(
+//     contract,
+//     rngAuctionRelayerRemoteOwnerOptimismRelayTxParams,
+//   );
+// };
 
 const getEstimatedGasLimitArbitrumRelayTx = async (
   rngAuctionRelayerRemoteOwnerArbitrumRelayTxParams,

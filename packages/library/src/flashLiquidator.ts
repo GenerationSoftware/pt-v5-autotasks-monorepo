@@ -206,7 +206,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
         ...Object.values(flashLiquidateParams),
       );
 
-      const gasLimit = 850000;
+      const gasLimit = 1050000;
       const { gasPrice } = await getGasPrice(l1Provider);
       const tx = await sendPopulatedTx(
         chainId,
