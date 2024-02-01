@@ -345,7 +345,7 @@ export const getRelayMulticall = async (
     queriesTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY] =
       relay.contracts.prizePoolContract.drawClosesAt(drawId);
 
-    // 6. Results One: Auction info
+    // 7. Results One: Auction info
     const [randomNumber, rngCompletedAt] = resultsOne[RNG_AUCTION_GET_RNG_RESULTS_KEY];
     const rngResults: RngResults = { randomNumber, rngCompletedAt };
 
@@ -362,11 +362,10 @@ export const getRelayMulticall = async (
 
     // Store if this relay auction is coming to an end
     const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
-
     const auctionClosesSoon =
       percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
 
-    // 7. Results One: Reward Token
+    // 8. Results One: Reward Token
     const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
     const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, relay.l2Provider);
 
@@ -374,20 +373,21 @@ export const getRelayMulticall = async (
     queriesTwo[REWARD_NAME_KEY] = rewardTokenContract.name();
     queriesTwo[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
 
-    // 7. Results: Rng Reward
+    // 9. Results: Rng Reward
     const rngRelayLastSequenceId = resultsOne[RNG_AUCTION_LAST_SEQUENCE_ID_KEY];
 
     const prizePoolReserve = resultsOne[PRIZE_POOL_RESERVE_KEY];
-    const prizePoolReserveForOpenDraw = resultsOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY];
-    const reserve = prizePoolReserve.add(prizePoolReserveForOpenDraw);
+    const prizePoolPendingReserveContributions =
+      resultsOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY];
+    const reserveTotal = prizePoolReserve.add(prizePoolPendingReserveContributions);
 
     queriesTwo[RNG_RELAY_IS_SEQUENCE_COMPLETED_KEY] =
       relay.contracts.rngRelayAuctionContract.isSequenceCompleted(rngRelayLastSequenceId);
 
-    // 8. Get second set of multicall results
+    // 10. Get second set of multicall results
     const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
 
-    // 9. Results two: Auction Info
+    // 11. Results two: Auction Info
     const lastSequenceCompleted = resultsTwo[RNG_RELAY_IS_SEQUENCE_COMPLETED_KEY];
 
     const rngRelayIsAuctionOpen =
@@ -396,13 +396,12 @@ export const getRelayMulticall = async (
       !lastSequenceCompleted &&
       !auctionExpired;
 
-    // 10. Results two: Reward token
+    // 12. Results two: Reward token
     const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
       resultsTwo[REWARD_SYMBOL_KEY],
       rewardTokenAddress,
       covalentApiKey,
     );
-
     const rewardToken: TokenWithRate = {
       address: rewardTokenAddress,
       decimals: resultsTwo[REWARD_DECIMALS_KEY],
@@ -411,15 +410,15 @@ export const getRelayMulticall = async (
       assetRateUsd: rewardTokenMarketRateUsd,
     };
 
-    // 11. Results two: Auction info
-    const reserveStr = ethers.utils.formatUnits(reserve, rewardToken.decimals);
+    // 13. Results two: Auction info
+    const reserveTotalStr = ethers.utils.formatUnits(reserveTotal, rewardToken.decimals);
     const rngExpectedReward =
-      Number(reserveStr) * Number(rngContext.rngCurrentFractionalRewardString);
+      Number(reserveTotalStr) * Number(rngContext.rngCurrentFractionalRewardString);
     const rngExpectedRewardUsd = rngExpectedReward * rewardToken.assetRateUsd;
 
     const prizePoolDrawClosesAt = Number(resultsTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
 
-    // 12. Results: Draw/Relayer Reward
+    // 14. Results: Draw/Relayer Reward
     let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
     if (rngRelayIsAuctionOpen) {
       const rngRelayRewardFraction =
@@ -464,13 +463,13 @@ export const getRelayMulticall = async (
   return relays;
 };
 
-//    If in RNG Start state figure out if we need to run:
-//     RngAuction#startRngRequest (if blockhash),
-//     ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest (if VRF),
+// If in RNG Start state figure out if we need to run:
+//   RngAuction#startRngRequest (if blockhash),
+//   ChainlinkVRFV2DirectRngAuctionHelper#transferFeeAndStartRngRequest (if VRF),
 //
-//    If in relay state,
-//     or RngRelayAuction#relay (if blockhash), or
-//     rngAuctionRelayerRemoteOwnerContract#relay (if VRF)
+// If in relay state,
+//   or RngRelayAuction#relay (if blockhash), or
+//   rngAuctionRelayerRemoteOwnerContract#relay (if VRF)
 const getDrawAuctionState = (context: DrawAuctionContext, relays: Relay[]): DrawAuctionState => {
   const anyRelaysOpen = relays
     .map((relay) => relay.context.rngRelayIsAuctionOpen)

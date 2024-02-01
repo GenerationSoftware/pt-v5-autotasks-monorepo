@@ -60,7 +60,7 @@ export const getLiquidatorContextMulticall = async (
   printSpacer();
   printSpacer();
 
-  // Find out if this LiquidationPair's tokenOut is an ERC4626 Vault or a straight-up ERC20 token
+  // Find out if this LiquidationPair's tokenOut is an ERC4626 Vault or an ERC20 token
   const liquidationPairTokenOutAsVault = new ethers.Contract(
     tokenOutAddress,
     ERC4626Abi,
@@ -69,21 +69,16 @@ export const getLiquidatorContextMulticall = async (
   let underlyingAssetAddress;
   try {
     underlyingAssetAddress = await liquidationPairTokenOutAsVault.asset();
-    console.log(chalk.dim('Underlying Asset Address:'));
-    console.log(chalk.dim(underlyingAssetAddress));
+    // console.log(chalk.dim('Underlying Asset Address:'));
+    // console.log(chalk.dim(underlyingAssetAddress));
   } catch (e) {
-    // console.error(e);
-    // console.log('---');
-    // console.error(e);
-  }
-
-  if (!underlyingAssetAddress) {
+    console.log(
+      chalk.yellow('liquidationPairTokenOutAsVault.asset() test failed, likely and ERC20 token'),
+    );
     underlyingAssetAddress = tokenOutAddress;
-
-    console.log('underlyingAssetAddress 2');
-    console.log(underlyingAssetAddress);
+    // console.log('underlyingAssetAddress 2');
+    // console.log(underlyingAssetAddress);
   }
-
   const underlyingAssetContract = new ethers.Contract(
     underlyingAssetAddress,
     ERC20Abi,
