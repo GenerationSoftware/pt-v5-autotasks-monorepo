@@ -63,7 +63,7 @@ interface RngAuctionRelayerRemoteOwnerArbitrumRelayTxParams {
 }
 
 const RNG_AUCTION_RELAYER_OPTIMISM_CUSTOM_GAS_LIMIT = '50000';
-const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -10;
+const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
 
 // Instantiates all RngAuctionRelayerRemoteOwner contracts that are found in the ContractsBlob
 const instantiateAllRngAuctionRelayerRemoteOwnerContracts = (
