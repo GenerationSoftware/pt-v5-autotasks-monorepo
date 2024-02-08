@@ -12,16 +12,7 @@ import {
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 
-import {
-  ClaimPrizeContext,
-  PrizeClaimerConfig,
-  TiersContext,
-  Token,
-  TokenWithRate,
-  SendTransactionArgs,
-  OzSendTransactionArgs,
-  WalletSendTransactionArgs,
-} from './types';
+import { ClaimPrizeContext, PrizeClaimerConfig, TiersContext, Token, TokenWithRate } from './types';
 import {
   logTable,
   logStringValue,
@@ -294,7 +285,7 @@ const calculateProfit = async (
   context: ClaimPrizeContext,
   prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, claimRewardRecipient } = prizeClaimerConfig;
+  const { chainId, minProfitThresholdUsd, rewardRecipient } = prizeClaimerConfig;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
@@ -311,7 +302,7 @@ const calculateProfit = async (
     tier,
     claimerContract,
     groupedClaims,
-    claimRewardRecipient,
+    rewardRecipient,
     nativeTokenMarketRateUsd,
     '100',
   );
@@ -331,7 +322,7 @@ const calculateProfit = async (
     vault,
     tier,
     claimsSlice,
-    claimRewardRecipient,
+    rewardRecipient,
     minVrgdaFeePerClaim,
   );
 
@@ -390,7 +381,7 @@ const logClaims = (claims: Claim[]) => {
 };
 
 /**
- * Gather information about the given prize pool's reward token, fee token price in USD
+ * Gather information about the given prize pool's reward token price in USD
  * and the last drawId
  * @returns {Promise} Promise of a ClaimPrizeContext object
  */
@@ -453,7 +444,7 @@ const buildParams = (
   vault: string,
   tier: number,
   claims: Claim[],
-  claimRewardRecipient: string,
+  rewardRecipient: string,
   minVrgdaFeePerClaim: string,
 ): ClaimPrizesParams => {
   let winners: string[] = [];
@@ -471,7 +462,7 @@ const buildParams = (
     tier,
     winners,
     prizeIndices,
-    claimRewardRecipient,
+    rewardRecipient,
     minVrgdaFeePerClaim,
   };
 };
@@ -483,17 +474,17 @@ const getGasCost = async (
   tier: number,
   claimerContract: Contract,
   claims: Claim[],
-  claimRewardRecipient: string,
+  rewardRecipient: string,
   gasTokenMarketRateUsd: number,
-  estimateMinReward: string,
+  estimateMinVrgdaFeePerClaim: string,
 ) => {
   let claimsSlice = claims.slice(0, 1);
   let claimPrizesParams = buildParams(
     vault,
     tier,
     claimsSlice,
-    claimRewardRecipient,
-    estimateMinReward,
+    rewardRecipient,
+    estimateMinVrgdaFeePerClaim,
   );
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
@@ -523,7 +514,13 @@ const getGasCost = async (
   let estimatedGasLimitForTwo;
   if (claims.length > 1) {
     claimsSlice = claims.slice(0, 2);
-    claimPrizesParams = buildParams(vault, tier, claimsSlice, claimRewardRecipient, estimateMinFee);
+    claimPrizesParams = buildParams(
+      vault,
+      tier,
+      claimsSlice,
+      rewardRecipient,
+      estimateMinVrgdaFeePerClaim,
+    );
 
     estimatedGasLimitForTwo = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
     if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
@@ -655,17 +652,17 @@ const getClaimInfo = async (
 
     if (claimCount !== 0) {
       claimRewardUsd =
-        parseFloat(ethers.utils.formatUnits(claimFees.toString(), context.feeToken.decimals)) *
-        context.feeToken.assetRateUsd;
+        parseFloat(ethers.utils.formatUnits(claimReward.toString(), context.prizeToken.decimals)) *
+        context.prizeToken.assetRateUsd;
       logBigNumber(
-        `Claim Fees: ${claimCount} Claim(s) (WEI):`,
-        claimFees,
-        context.feeToken.decimals,
-        context.feeToken.symbol,
+        `Claim Reward: ${claimCount} Claim(s) (WEI):`,
+        claimReward,
+        context.prizeToken.decimals,
+        context.prizeToken.symbol,
       );
       console.log(
         chalk.green(
-          `Claim Fees: ${claimCount} Claim(s) (USD):`,
+          `Claim Reward: ${claimCount} Claim(s) (USD):`,
           `$${roundTwoDecimalPlaces(claimRewardUsd)}`,
         ),
         chalk.dim(`($${claimRewardUsd})`),
@@ -674,17 +671,18 @@ const getClaimInfo = async (
     }
 
     const nextClaimRewardUsd =
-      parseFloat(ethers.utils.formatUnits(nextClaimFees.toString(), context.feeToken.decimals)) *
-      context.feeToken.assetRateUsd;
+      parseFloat(
+        ethers.utils.formatUnits(nextClaimReward.toString(), context.prizeToken.decimals),
+      ) * context.prizeToken.assetRateUsd;
     logBigNumber(
-      `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
-      nextClaimFees,
-      context.feeToken.decimals,
-      context.feeToken.symbol,
+      `Next Claim Reward: ${numClaims} Claim(s) (WEI):`,
+      nextClaimReward,
+      context.prizeToken.decimals,
+      context.prizeToken.symbol,
     );
     console.log(
       chalk.green(
-        `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
+        `Next Claim Reward: ${numClaims} Claim(s) (USD):`,
         `$${roundTwoDecimalPlaces(nextClaimRewardUsd)}`,
       ),
       chalk.dim(`($${nextClaimRewardUsd})`),
@@ -710,12 +708,12 @@ const getClaimInfo = async (
     ) {
       tierRemainingPrizeCounts[tier.toString()]--;
 
-      const claimFeesUnpacked = claimFees[0] ? claimFees[0] : claimFees;
-      minVrgdaFeePerClaim = nextClaimFees[0].sub(claimFeesUnpacked);
+      const claimRewardUnpacked = claimReward[0] ? claimReward[0] : claimReward;
+      minVrgdaFeePerClaim = nextClaimReward[0].sub(claimRewardUnpacked);
 
       previousNetProfitUsd = netProfitUsd;
       claimCount = numClaims;
-      claimFees = nextClaimFees;
+      claimReward = nextClaimReward;
       claimRewardUsd = nextClaimRewardUsd;
 
       printSpacer();

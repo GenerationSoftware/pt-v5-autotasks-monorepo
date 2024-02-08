@@ -38,7 +38,7 @@ export interface TiersContext {
 }
 
 export interface ClaimPrizeContext {
-  feeToken: TokenWithRate;
+  prizeToken: TokenWithRate;
   drawId: number;
   isDrawFinalized: boolean;
   tiers: TiersContext;
@@ -54,7 +54,7 @@ export interface PrizeClaimerConfig {
   ozRelayer: Relayer;
   relayerAddress: string;
   signer: DefenderRelaySigner | Signer;
-  feeRecipient: string;
+  rewardRecipient: string;
   useFlashbots: boolean;
   minProfitThresholdUsd: number;
   covalentApiKey?: string;
@@ -114,7 +114,7 @@ export interface LiquidatorEnvVars extends AutotaskEnvVars {
 export interface FlashLiquidatorEnvVars extends LiquidatorEnvVars {}
 
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
-  FEE_RECIPIENT: string;
+  REWARD_RECIPIENT: string;
 }
 
 export interface AutotaskConfig {

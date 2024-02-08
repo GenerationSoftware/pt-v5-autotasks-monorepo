@@ -63,7 +63,7 @@ RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
 
 ### PRIZE CLAIMER SPECIFIC:
 
-FEE_RECIPIENT: Address of the account that will receive the profit for claiming prizes on other's behalf
+REWARD_RECIPIENT: Address of the account that will receive the profit for claiming prizes on other's behalf
 
 ```
 
