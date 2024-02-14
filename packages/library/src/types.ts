@@ -50,6 +50,7 @@ export interface ClaimPrizeContext {
 export interface PrizeClaimerConfig {
   chainId: number;
   l1Provider: BaseProvider;
+  contractVersion: ContractVersion;
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
