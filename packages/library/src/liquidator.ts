@@ -660,7 +660,7 @@ const calculateAmountOut = async (
   if (amountOut.eq(0)) {
     console.warn(
       chalk.bgBlack.yellowBright(
-        `Max amount out available is 0: (Not enough interest accrued ... Is yield deposited and draws have completed?)`,
+        `Max amount out available is 0: (Not enough interest accrued ... Is enough deposited to generate yield?)`,
       ),
     );
     return {

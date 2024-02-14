@@ -63,6 +63,7 @@ export interface PrizeClaimerConfig {
 export interface LiquidatorConfig {
   chainId: number;
   l1Provider: BaseProvider;
+  contractVersion: ContractVersion;
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;

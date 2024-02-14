@@ -36,6 +36,7 @@ if (esMain(import.meta)) {
   const config: LiquidatorConfig = {
     ...relayerAccount,
     l1Provider,
+    contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,
     swapRecipient: envVars.SWAP_RECIPIENT,
