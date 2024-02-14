@@ -154,13 +154,23 @@ const instantiateRngAuctionContracts = (
     rngContracts,
     version,
   );
-  const chainlinkVRFV2DirectRngAuctionHelperContract = getContract(
-    'ChainlinkVRFV2DirectRngAuctionHelper',
-    rngChainId,
-    rngReadProvider,
-    rngContracts,
-    version,
-  );
+
+  let chainlinkVRFV2DirectRngAuctionHelperContract: Contract;
+  try {
+    chainlinkVRFV2DirectRngAuctionHelperContract = getContract(
+      'ChainlinkVRFV2DirectRngAuctionHelper',
+      rngChainId,
+      rngReadProvider,
+      rngContracts,
+      version,
+    );
+  } catch (e) {
+    console.log(
+      chalk.dim(
+        'No ChainlinkVRFV2DirectRngAuctionHelperContract contract found on the RNG L1 chain - possibly using Direct RNG method?',
+      ),
+    );
+  }
 
   const rngAuctionRelayerRemoteOwnerContracts = instantiateAllRngAuctionRelayerRemoteOwnerContracts(
     rngChainId,
@@ -189,7 +199,7 @@ const instantiateRngAuctionContracts = (
   printSpacer();
   logTable({
     chainlinkVRFV2DirectRngAuctionHelperContract:
-      chainlinkVRFV2DirectRngAuctionHelperContract.address,
+      chainlinkVRFV2DirectRngAuctionHelperContract?.address,
     rngAuctionContract: rngAuctionContract.address,
     rngAuctionRelayerDirect: rngAuctionRelayerDirect?.address,
   });

@@ -9,6 +9,6 @@ export const loadDrawAuctionEnvVars = (buildVars?, event?): DrawAuctionEnvVars =
   return {
     ...envVars,
     REWARD_RECIPIENT: rewardRecipient,
-    RELAY_CHAIN_IDS: relayChainIds.split(',').map((chainId) => Number(chainId)),
+    RELAY_CHAIN_IDS: relayChainIds?.split(',').map((chainId) => Number(chainId)),
   };
 };

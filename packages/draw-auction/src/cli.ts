@@ -37,6 +37,7 @@ if (esMain(import.meta)) {
   const drawAuctionConfig: DrawAuctionConfig = {
     l1ChainId: Number(envVars.CHAIN_ID),
     l1Provider: l1Provider,
+    contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     useFlashbots: envVars.USE_FLASHBOTS,
     rewardRecipient: envVars.REWARD_RECIPIENT,
@@ -47,7 +48,7 @@ if (esMain(import.meta)) {
     relayerApiKey: process.env.RELAYER_API_KEY,
     relayerApiSecret: process.env.RELAYER_API_SECRET,
 
-    relayChainIds: process.env.RELAY_CHAIN_IDS.split(',').map((chainId) => Number(chainId)),
+    relayChainIds: process.env.RELAY_CHAIN_IDS?.split(',').map((chainId) => Number(chainId)),
     arbitrumRelayJsonRpcUri: process.env.ARBITRUM_JSON_RPC_URI,
     optimismRelayJsonRpcUri: process.env.OPTIMISM_JSON_RPC_URI,
     arbitrumSepoliaRelayJsonRpcUri: process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI,

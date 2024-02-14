@@ -36,6 +36,7 @@ const CHAIN_RELAYER_API_SECRET_KEYS = {
 
 export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
   const chainId = Number(buildVars?.chainId || process.env.CHAIN_ID);
+  const contractVersion = buildVars?.contractVersion || process.env.CONTRACT_VERSION;
   const useFlashbots = yn(buildVars?.useFlashbots || process.env.USE_FLASHBOTS);
   const minProfitThresholdUsd =
     buildVars?.minProfitThresholdUsd || process.env.MIN_PROFIT_THRESHOLD_USD;
@@ -84,6 +85,7 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
   return {
     CHAIN_ID: Number(chainId),
     JSON_RPC_URI: jsonRpcUri || process.env.JSON_RPC_URI,
+    CONTRACT_VERSION: contractVersion || process.env.CONTRACT_VERSION,
     USE_FLASHBOTS: useFlashbots,
     MIN_PROFIT_THRESHOLD_USD: minProfitThresholdUsd,
     COVALENT_API_KEY: covalentApiKey,

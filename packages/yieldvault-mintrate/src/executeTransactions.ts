@@ -8,7 +8,11 @@ import {
 export async function executeTransactions(config: YieldVaultMintRateConfig): Promise<void> {
   try {
     const { chainId } = config;
-    const contracts: ContractsBlob = await downloadContractsBlob(chainId, nodeFetch);
+    const contracts: ContractsBlob = await downloadContractsBlob(
+      chainId,
+      config.contractVersion,
+      nodeFetch,
+    );
     await runYieldVaultMintRate(contracts, config);
   } catch (e) {
     console.error(e);

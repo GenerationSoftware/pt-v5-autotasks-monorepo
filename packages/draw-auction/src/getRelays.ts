@@ -15,19 +15,25 @@ export const JSON_RPC_URI_KEYS = {
 export const getRelays = async (drawAuctionConfig: DrawAuctionConfig): Promise<Relay[]> => {
   let relays: Relay[] = [];
 
-  for (const l2ChainId of drawAuctionConfig.relayChainIds) {
-    const l2Provider = new ethers.providers.JsonRpcProvider(
-      drawAuctionConfig[JSON_RPC_URI_KEYS[l2ChainId]],
-      l2ChainId,
-    );
+  if (drawAuctionConfig.relayChainIds?.length > 0) {
+    for (const l2ChainId of drawAuctionConfig.relayChainIds) {
+      const l2Provider = new ethers.providers.JsonRpcProvider(
+        drawAuctionConfig[JSON_RPC_URI_KEYS[l2ChainId]],
+        l2ChainId,
+      );
 
-    const contractsBlob: ContractsBlob = await downloadContractsBlob(l2ChainId, nodeFetch);
+      const contractsBlob: ContractsBlob = await downloadContractsBlob(
+        l2ChainId,
+        drawAuctionConfig.contractVersion,
+        nodeFetch,
+      );
 
-    relays.push({
-      l2ChainId,
-      l2Provider,
-      contractsBlob,
-    });
+      relays.push({
+        l2ChainId,
+        l2Provider,
+        contractsBlob,
+      });
+    }
   }
 
   return relays;

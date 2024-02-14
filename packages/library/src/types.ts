@@ -2,7 +2,7 @@ import { Contract, BigNumber, Wallet, Signer } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
+import { ContractVersion, ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
@@ -90,6 +90,7 @@ export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
   JSON_RPC_URI: string;
+  CONTRACT_VERSION: ContractVersion;
   USE_FLASHBOTS: boolean;
   MIN_PROFIT_THRESHOLD_USD: string;
   COVALENT_API_KEY?: string;
@@ -120,6 +121,7 @@ export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
 export interface AutotaskConfig {
   l1ChainId: number;
   l1Provider: BaseProvider;
+  contractVersion: ContractVersion;
   useFlashbots: boolean;
   rewardRecipient: string;
   minProfitThresholdUsd: number;

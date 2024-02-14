@@ -4,7 +4,11 @@ import { runPrizeClaimer, PrizeClaimerConfig } from '@generationsoftware/pt-v5-a
 
 export const executeTransactions = async (config: PrizeClaimerConfig): Promise<void> => {
   try {
-    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
+    const contracts: ContractsBlob = await downloadContractsBlob(
+      config.chainId,
+      config.contractVersion,
+      nodeFetch,
+    );
     await runPrizeClaimer(contracts, config);
   } catch (e) {
     console.error(e);

@@ -57,7 +57,6 @@ const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
 
 const RNG_AUCTION_LAST_AUCTION_RESULT_KEY = 'rng-lastAuctionResultKey';
 const RNG_AUCTION_IS_AUCTION_OPEN_KEY = 'rng-isAuctionOpen';
-const RNG_AUCTION_IS_RNG_COMPLETE_KEY = 'rng-isRngComplete';
 const RNG_AUCTION_CURRENT_FRACTIONAL_REWARD_KEY = 'rng-currentFractionalReward';
 const RNG_AUCTION_LAST_SEQUENCE_ID_KEY = 'rngAuction-lastSequenceId';
 const RNG_AUCTION_GET_RNG_RESULTS_KEY = 'rngAuction-getRngResults';
@@ -199,8 +198,12 @@ export const getRngMulticall = async (
 
   const chainlinkVRFV2DirectRngAuctionHelperContract =
     rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
-  queries[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE] =
-    chainlinkVRFV2DirectRngAuctionHelperContract.callStatic.estimateRequestFee(requestGasPriceWei);
+  if (chainlinkVRFV2DirectRngAuctionHelperContract) {
+    queries[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE] =
+      chainlinkVRFV2DirectRngAuctionHelperContract.callStatic.estimateRequestFee(
+        requestGasPriceWei,
+      );
+  }
 
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
   if (rngFeeTokenIsSet) {
@@ -218,10 +221,20 @@ export const getRngMulticall = async (
   }
 
   // 3. RNG Auction
+
   queries[RNG_AUCTION_IS_AUCTION_OPEN_KEY] = rngAuctionContracts.rngAuctionContract.isAuctionOpen();
-  queries[RNG_AUCTION_IS_RNG_COMPLETE_KEY] = rngAuctionContracts.rngAuctionContract.isRngComplete();
   queries[RNG_AUCTION_CURRENT_FRACTIONAL_REWARD_KEY] =
     rngAuctionContracts.rngAuctionContract.currentFractionalReward();
+
+  let rngIsRngComplete = false;
+  try {
+    rngIsRngComplete = await rngAuctionContracts.rngAuctionContract.isRngComplete();
+  } catch (e) {
+    console.log('');
+    console.log(chalk.yellow('Caught isRngComplete exception:'));
+    console.log(chalk.yellow(e));
+    console.log('');
+  }
 
   // -------------------------------
 
@@ -249,33 +262,39 @@ export const getRngMulticall = async (
 
   // 6. Results: Auction Info
   const rngIsAuctionOpen = results[RNG_AUCTION_IS_AUCTION_OPEN_KEY];
-  const rngIsRngComplete = results[RNG_AUCTION_IS_RNG_COMPLETE_KEY];
   const rngCurrentFractionalReward = results[RNG_AUCTION_CURRENT_FRACTIONAL_REWARD_KEY];
   const rngCurrentFractionalRewardString = ethers.utils.formatEther(rngCurrentFractionalReward);
 
   // 7. Results: Rng Fee
-  const vrfHelperRequestFee = results[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE];
-  const rngFeeAmount = vrfHelperRequestFee._requestFee;
-
+  // const chainlinkVRFV2DirectRngAuctionHelperContract =
+  //   rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
+  let rngFeeAmount;
   let rngRelayer: DrawAuctionRelayerContext;
   let rngFeeUsd = 0;
-  if (rngFeeTokenIsSet) {
-    rngRelayer = {
-      rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
-      rngFeeTokenAllowance: BigNumber.from(
-        results[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY],
-      ),
-    };
+  if (chainlinkVRFV2DirectRngAuctionHelperContract) {
+    const vrfHelperRequestFee = results[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE];
+    rngFeeAmount = vrfHelperRequestFee._requestFee;
+    console.log('rngFeeAmount');
+    console.log(rngFeeAmount);
 
-    let chainGasPriceMultiplier = 1;
-    if (CHAIN_GAS_PRICE_MULTIPLIERS[rngChainId]) {
-      chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[rngChainId];
+    if (rngFeeTokenIsSet) {
+      rngRelayer = {
+        rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
+        rngFeeTokenAllowance: BigNumber.from(
+          results[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY],
+        ),
+      };
+
+      let chainGasPriceMultiplier = 1;
+      if (CHAIN_GAS_PRICE_MULTIPLIERS[rngChainId]) {
+        chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[rngChainId];
+      }
+
+      rngFeeUsd =
+        parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) *
+        rngFeeToken.assetRateUsd *
+        chainGasPriceMultiplier;
     }
-
-    rngFeeUsd =
-      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) *
-      rngFeeToken.assetRateUsd *
-      chainGasPriceMultiplier;
   }
 
   return {

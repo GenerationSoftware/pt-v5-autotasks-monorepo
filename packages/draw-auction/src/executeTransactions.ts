@@ -9,7 +9,11 @@ import { getRelays } from './getRelays';
 
 export const executeTransactions = async (config: DrawAuctionConfig): Promise<void> => {
   try {
-    const rngContracts = await downloadContractsBlob(config.l1ChainId, nodeFetch);
+    const rngContracts = await downloadContractsBlob(
+      config.l1ChainId,
+      config.contractVersion,
+      nodeFetch,
+    );
 
     const relays: Relay[] = await getRelays(config);
 
