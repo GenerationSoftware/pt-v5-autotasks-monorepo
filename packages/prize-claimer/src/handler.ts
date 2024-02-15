@@ -16,7 +16,7 @@ export async function handler(event: RelayerParams) {
     contractVersion: BUILD_CONTRACT_VERSION,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: BUILD_MIN_PROFIT_THRESHOLD_USD,
-    feeRecipient: BUILD_FEE_RECIPIENT,
+    rewardRecipient: BUILD_REWARD_RECIPIENT,
   };
 
   const envVars: PrizeClaimerEnvVars = loadPrizeClaimerEnvVars(buildVars, event);
@@ -44,7 +44,7 @@ export async function handler(event: RelayerParams) {
     l1Provider,
     contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
-    feeRecipient: BUILD_FEE_RECIPIENT,
+    rewardRecipient: BUILD_REWARD_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: Number(BUILD_MIN_PROFIT_THRESHOLD_USD),
   };

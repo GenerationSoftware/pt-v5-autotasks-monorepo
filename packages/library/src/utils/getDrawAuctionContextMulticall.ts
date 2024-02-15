@@ -524,8 +524,8 @@ const getDrawAuctionState = (context: DrawAuctionContext, relays: Relay[]): Draw
     return DrawAuctionState.RngStart;
   } else if (anyRelaysOpen) {
     return DrawAuctionState.RngRelayBridge;
-  } else if (anyRelaysOpen) {
-    // TODO: Obviously this state doesn't ever get chosen, this will need to be re-worked
+  } else {
+    // TODO: This state should never be active. This will need to be re-worked
     //       if we ever have a PrizePool on the same chain as the RNG
     return DrawAuctionState.RngRelayDirect;
   }

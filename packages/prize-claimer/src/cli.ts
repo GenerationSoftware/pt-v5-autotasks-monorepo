@@ -35,7 +35,7 @@ if (esMain(import.meta)) {
     ...relayerAccount,
     l1Provider,
     chainId: envVars.CHAIN_ID,
-    feeRecipient: envVars.FEE_RECIPIENT,
+    rewardRecipient: envVars.REWARD_RECIPIENT,
     useFlashbots: envVars.USE_FLASHBOTS,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,

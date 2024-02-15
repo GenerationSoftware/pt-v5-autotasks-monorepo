@@ -12,16 +12,7 @@ import {
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 
-import {
-  ClaimPrizeContext,
-  PrizeClaimerConfig,
-  TiersContext,
-  Token,
-  TokenWithRate,
-  SendTransactionArgs,
-  OzSendTransactionArgs,
-  WalletSendTransactionArgs,
-} from './types';
+import { ClaimPrizeContext, PrizeClaimerConfig, TiersContext, Token, TokenWithRate } from './types';
 import {
   logTable,
   logStringValue,
@@ -45,7 +36,7 @@ interface ClaimPrizesParams {
   tier: number;
   winners: string[];
   prizeIndices: number[][];
-  feeRecipient: string;
+  rewardRecipient: string;
   minVrgdaFeePerClaim: string;
 }
 
@@ -294,7 +285,7 @@ const calculateProfit = async (
   context: ClaimPrizeContext,
   prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, feeRecipient } = prizeClaimerConfig;
+  const { chainId, minProfitThresholdUsd, rewardRecipient } = prizeClaimerConfig;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
@@ -311,12 +302,12 @@ const calculateProfit = async (
     tier,
     claimerContract,
     groupedClaims,
-    feeRecipient,
+    rewardRecipient,
     nativeTokenMarketRateUsd,
     '100',
   );
 
-  const { claimCount, claimFeesUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
+  const { claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
     context,
     claimerContract,
     tier,
@@ -331,7 +322,7 @@ const calculateProfit = async (
     vault,
     tier,
     claimsSlice,
-    feeRecipient,
+    rewardRecipient,
     minVrgdaFeePerClaim,
   );
 
@@ -340,15 +331,15 @@ const calculateProfit = async (
   printSpacer();
 
   // FEES USD
-  const netProfitUsd = claimFeesUsd - totalCostUsd;
+  const netProfitUsd = claimRewardUsd - totalCostUsd;
   console.log(chalk.magenta('Net profit = (Gross Profit - Gas Cost [Max])'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-        claimFeesUsd,
+        claimRewardUsd,
       )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
     ),
-    chalk.dim(`$${netProfitUsd} = ($${claimFeesUsd} - $${totalCostUsd})`),
+    chalk.dim(`$${netProfitUsd} = ($${claimRewardUsd} - $${totalCostUsd})`),
   );
   printSpacer();
 
@@ -390,7 +381,7 @@ const logClaims = (claims: Claim[]) => {
 };
 
 /**
- * Gather information about the given prize pool's fee token, fee token price in USD
+ * Gather information about the given prize pool's reward token price in USD
  * and the last drawId
  * @returns {Promise} Promise of a ClaimPrizeContext object
  */
@@ -400,7 +391,7 @@ const getContext = async (
   l1Provider: Provider,
   covalentApiKey?: string,
 ): Promise<ClaimPrizeContext> => {
-  const feeTokenAddress = await prizePool.prizeToken();
+  const prizeTokenAddress = await prizePool.prizeToken();
 
   console.log(chalk.dim('Getting prize pool info ...'));
 
@@ -408,27 +399,27 @@ const getContext = async (
   const { drawId, isDrawFinalized, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
 
-  const feeTokenContract = new ethers.Contract(feeTokenAddress, ERC20Abi, l1Provider);
+  const prizeTokenContract = new ethers.Contract(prizeTokenAddress, ERC20Abi, l1Provider);
 
   console.log(chalk.dim('Getting prize context ...'));
 
-  const feeTokenBasic: Token = {
-    address: feeTokenAddress,
-    decimals: await feeTokenContract.decimals(),
-    name: await feeTokenContract.name(),
-    symbol: await feeTokenContract.symbol(),
+  const prizeTokenBasic: Token = {
+    address: prizeTokenAddress,
+    decimals: await prizeTokenContract.decimals(),
+    name: await prizeTokenContract.name(),
+    symbol: await prizeTokenContract.symbol(),
   };
 
-  const feeToken: TokenWithRate = {
-    ...feeTokenBasic,
+  const prizeToken: TokenWithRate = {
+    ...prizeTokenBasic,
     assetRateUsd: await getEthMainnetTokenMarketRateUsd(
-      feeTokenBasic.symbol,
-      feeTokenBasic.address,
+      prizeTokenBasic.symbol,
+      prizeTokenBasic.address,
       covalentApiKey,
     ),
   };
 
-  return { feeToken, drawId, isDrawFinalized, tiers, tierPrizeData };
+  return { prizeToken, drawId, isDrawFinalized, tiers, tierPrizeData };
 };
 
 /**
@@ -437,15 +428,15 @@ const getContext = async (
  */
 const printContext = (context) => {
   printAsterisks();
-  console.log(chalk.blue.bold(`1. Prize token: ${context.feeToken.symbol}`));
+  console.log(chalk.blue.bold(`1. Prize token: ${context.prizeToken.symbol}`));
   printSpacer();
 
-  logTable({ feeToken: context.feeToken });
+  logTable({ prizeToken: context.prizeToken });
   logTable({ tiers: context.tiers });
   logStringValue('Draw ID:', context.drawId);
   logStringValue(
-    `Fee Token ${context.feeToken.symbol} MarketRate USD: `,
-    `$${context.feeToken.assetRateUsd}`,
+    `Prize Token ${context.prizeToken.symbol} MarketRate USD: `,
+    `$${context.prizeToken.assetRateUsd}`,
   );
 };
 
@@ -453,7 +444,7 @@ const buildParams = (
   vault: string,
   tier: number,
   claims: Claim[],
-  feeRecipient: string,
+  rewardRecipient: string,
   minVrgdaFeePerClaim: string,
 ): ClaimPrizesParams => {
   let winners: string[] = [];
@@ -471,7 +462,7 @@ const buildParams = (
     tier,
     winners,
     prizeIndices,
-    feeRecipient,
+    rewardRecipient,
     minVrgdaFeePerClaim,
   };
 };
@@ -483,12 +474,18 @@ const getGasCost = async (
   tier: number,
   claimerContract: Contract,
   claims: Claim[],
-  feeRecipient: string,
+  rewardRecipient: string,
   gasTokenMarketRateUsd: number,
-  estimateMinFee: string,
+  estimateMinVrgdaFeePerClaim: string,
 ) => {
   let claimsSlice = claims.slice(0, 1);
-  let claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient, estimateMinFee);
+  let claimPrizesParams = buildParams(
+    vault,
+    tier,
+    claimsSlice,
+    rewardRecipient,
+    estimateMinVrgdaFeePerClaim,
+  );
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
@@ -517,7 +514,13 @@ const getGasCost = async (
   let estimatedGasLimitForTwo;
   if (claims.length > 1) {
     claimsSlice = claims.slice(0, 2);
-    claimPrizesParams = buildParams(vault, tier, claimsSlice, feeRecipient, estimateMinFee);
+    claimPrizesParams = buildParams(
+      vault,
+      tier,
+      claimsSlice,
+      rewardRecipient,
+      estimateMinVrgdaFeePerClaim,
+    );
 
     estimatedGasLimitForTwo = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
     if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
@@ -588,7 +591,7 @@ const getGasCost = async (
 
 interface ClaimInfo {
   claimCount: number;
-  claimFeesUsd: number;
+  claimRewardUsd: number;
   totalCostUsd: number;
   minVrgdaFeePerClaim: string;
 }
@@ -603,8 +606,8 @@ const getClaimInfo = async (
   minProfitThresholdUsd: number,
 ): Promise<ClaimInfo> => {
   let claimCount = 0;
-  let claimFees = BigNumber.from(0);
-  let claimFeesUsd = 0;
+  let claimReward = BigNumber.from(0);
+  let claimRewardUsd = 0;
   let totalCostUsd = 0;
   let previousNetProfitUsd = 0;
   let minVrgdaFeePerClaim = BigNumber.from(0);
@@ -625,7 +628,7 @@ const getClaimInfo = async (
       break;
     }
 
-    const nextClaimFees = await claimerContract.functions['computeTotalFees(uint8,uint256)'](
+    const nextClaimReward = await claimerContract.functions['computeTotalFees(uint8,uint256)'](
       tier,
       numClaims,
     );
@@ -648,53 +651,54 @@ const getClaimInfo = async (
     printSpacer();
 
     if (claimCount !== 0) {
-      claimFeesUsd =
-        parseFloat(ethers.utils.formatUnits(claimFees.toString(), context.feeToken.decimals)) *
-        context.feeToken.assetRateUsd;
+      claimRewardUsd =
+        parseFloat(ethers.utils.formatUnits(claimReward.toString(), context.prizeToken.decimals)) *
+        context.prizeToken.assetRateUsd;
       logBigNumber(
-        `Claim Fees: ${claimCount} Claim(s) (WEI):`,
-        claimFees,
-        context.feeToken.decimals,
-        context.feeToken.symbol,
+        `Claim Reward: ${claimCount} Claim(s) (WEI):`,
+        claimReward,
+        context.prizeToken.decimals,
+        context.prizeToken.symbol,
       );
       console.log(
         chalk.green(
-          `Claim Fees: ${claimCount} Claim(s) (USD):`,
-          `$${roundTwoDecimalPlaces(claimFeesUsd)}`,
+          `Claim Reward: ${claimCount} Claim(s) (USD):`,
+          `$${roundTwoDecimalPlaces(claimRewardUsd)}`,
         ),
-        chalk.dim(`($${claimFeesUsd})`),
+        chalk.dim(`($${claimRewardUsd})`),
       );
       printSpacer();
     }
 
-    const nextClaimFeesUsd =
-      parseFloat(ethers.utils.formatUnits(nextClaimFees.toString(), context.feeToken.decimals)) *
-      context.feeToken.assetRateUsd;
+    const nextClaimRewardUsd =
+      parseFloat(
+        ethers.utils.formatUnits(nextClaimReward.toString(), context.prizeToken.decimals),
+      ) * context.prizeToken.assetRateUsd;
     logBigNumber(
-      `Next Claim Fees: ${numClaims} Claim(s) (WEI):`,
-      nextClaimFees,
-      context.feeToken.decimals,
-      context.feeToken.symbol,
+      `Next Claim Reward: ${numClaims} Claim(s) (WEI):`,
+      nextClaimReward,
+      context.prizeToken.decimals,
+      context.prizeToken.symbol,
     );
     console.log(
       chalk.green(
-        `Next Claim Fees: ${numClaims} Claim(s) (USD):`,
-        `$${roundTwoDecimalPlaces(nextClaimFeesUsd)}`,
+        `Next Claim Reward: ${numClaims} Claim(s) (USD):`,
+        `$${roundTwoDecimalPlaces(nextClaimRewardUsd)}`,
       ),
-      chalk.dim(`($${nextClaimFeesUsd})`),
+      chalk.dim(`($${nextClaimRewardUsd})`),
     );
     printSpacer();
 
-    const netProfitUsd = nextClaimFeesUsd - totalCostUsd;
+    const netProfitUsd = nextClaimRewardUsd - totalCostUsd;
 
     console.log(chalk.dim('Net profit = (Gross Profit - Gas Cost [Avg])'));
     console.log(
       chalk.greenBright(
         `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-          nextClaimFeesUsd,
+          nextClaimRewardUsd,
         )} - $${roundTwoDecimalPlaces(totalCostUsd)})`,
       ),
-      chalk.dim(`$${netProfitUsd} = ($${nextClaimFeesUsd} - $${totalCostUsd})`),
+      chalk.dim(`$${netProfitUsd} = ($${nextClaimRewardUsd} - $${totalCostUsd})`),
     );
 
     if (
@@ -704,13 +708,13 @@ const getClaimInfo = async (
     ) {
       tierRemainingPrizeCounts[tier.toString()]--;
 
-      const claimFeesUnpacked = claimFees[0] ? claimFees[0] : claimFees;
-      minVrgdaFeePerClaim = nextClaimFees[0].sub(claimFeesUnpacked);
+      const claimRewardUnpacked = claimReward[0] ? claimReward[0] : claimReward;
+      minVrgdaFeePerClaim = nextClaimReward[0].sub(claimRewardUnpacked);
 
       previousNetProfitUsd = netProfitUsd;
       claimCount = numClaims;
-      claimFees = nextClaimFees;
-      claimFeesUsd = nextClaimFeesUsd;
+      claimReward = nextClaimReward;
+      claimRewardUsd = nextClaimRewardUsd;
 
       printSpacer();
     } else {
@@ -720,7 +724,7 @@ const getClaimInfo = async (
 
   return {
     claimCount,
-    claimFeesUsd,
+    claimRewardUsd,
     totalCostUsd,
     minVrgdaFeePerClaim: minVrgdaFeePerClaim.toString(),
   };

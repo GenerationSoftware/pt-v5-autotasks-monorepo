@@ -3,10 +3,10 @@ import { PrizeClaimerEnvVars, loadEnvVars } from '@generationsoftware/pt-v5-auto
 export const loadPrizeClaimerEnvVars = (buildVars?, event?): PrizeClaimerEnvVars => {
   const envVars = loadEnvVars(buildVars, event);
 
-  const feeRecipient = buildVars?.feeRecipient || process.env.FEE_RECIPIENT;
+  const rewardRecipient = buildVars?.rewardRecipient || process.env.REWARD_RECIPIENT;
 
   return {
     ...envVars,
-    FEE_RECIPIENT: feeRecipient,
+    REWARD_RECIPIENT: rewardRecipient,
   };
 };
