@@ -346,12 +346,17 @@ export const getRelayMulticall = async (
     // 2. Auction info
     queriesOne[RNG_AUCTION_LAST_SEQUENCE_ID_KEY] =
       rngAuctionContracts.rngAuctionContract.lastSequenceId();
-    queriesOne[RNG_AUCTION_GET_RNG_RESULTS_KEY] =
-      rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
+    console.log('fail here?');
+
+    // queriesOne[RNG_AUCTION_GET_RNG_RESULTS_KEY] =
+    //   rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
     queriesOne[RNG_AUCTION_AUCTION_DURATION_KEY] =
       rngAuctionContracts.rngAuctionContract.auctionDuration();
     queriesOne[RNG_AUCTION_LAST_AUCTION_RESULT_KEY] =
       rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
+
+    console.log('rngAuctionContracts.rngAuctionContract');
+    console.log(rngAuctionContracts.rngAuctionContract);
 
     // 4. Get and process first set of results
     const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
@@ -365,24 +370,43 @@ export const getRelayMulticall = async (
       relay.contracts.prizePoolContract.drawClosesAt(drawId);
 
     // 7. Results One: Auction info
-    const [randomNumber, rngCompletedAt] = resultsOne[RNG_AUCTION_GET_RNG_RESULTS_KEY];
+    let randomNumber, rngCompletedAt;
+    try {
+      const rngResults = await rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
+      randomNumber = rngResults[0];
+      rngCompletedAt = rngResults[1];
+    } catch (e) {
+      console.log('');
+      console.log(chalk.yellow('Caught getRngResults() exception:'));
+      console.log(chalk.yellow(e));
+      console.log('');
+    }
+    // const [randomNumber, rngCompletedAt] =
+    //   await rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
+    // const [randomNumber, rngCompletedAt] = resultsOne[RNG_AUCTION_GET_RNG_RESULTS_KEY];
     const rngResults: RngResults = { randomNumber, rngCompletedAt };
-
     let rngLastAuctionResult: AuctionResult = resultsOne[RNG_AUCTION_LAST_AUCTION_RESULT_KEY];
-
     const auctionDuration = resultsOne[RNG_AUCTION_AUCTION_DURATION_KEY];
 
-    let elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
-    let auctionExpired = false;
-    if (elapsedTime > auctionDuration) {
-      auctionExpired = true;
-      elapsedTime = auctionDuration;
-    }
+    let auctionExpired, auctionClosesSoon;
+    if (rngResults.rngCompletedAt) {
+      let elapsedTime =
+        Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
 
-    // Store if this relay auction is coming to an end
-    const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
-    const auctionClosesSoon =
-      percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
+      if (elapsedTime > auctionDuration) {
+        auctionExpired = true;
+        elapsedTime = auctionDuration;
+      }
+
+      // Store if this relay auction is coming to an end
+      const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
+      auctionClosesSoon =
+        percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
+    }
+    console.log('auctionExpired');
+    console.log(auctionExpired);
+    console.log('auctionClosesSoon');
+    console.log(auctionClosesSoon);
 
     // 8. Results One: Reward Token
     const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];

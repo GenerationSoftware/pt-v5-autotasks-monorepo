@@ -248,17 +248,27 @@ const instantiateRelayAuctionContracts = (relays: Relay[]): Relay[] => {
       relay.contractsBlob,
       version,
     );
-    const remoteOwnerContract = getContract(
-      'RemoteOwner',
-      relay.l2ChainId,
-      relay.l2Provider,
-      relay.contractsBlob,
-      version,
-    );
+
+    let remoteOwnerContract: Contract;
+    try {
+      remoteOwnerContract = getContract(
+        'RemoteOwner',
+        relay.l2ChainId,
+        relay.l2Provider,
+        relay.contractsBlob,
+        version,
+      );
+    } catch (e) {
+      console.log(
+        chalk.dim(
+          'No RemoteOwner contract found on the Relay L2 chain - likely using Direct relay.',
+        ),
+      );
+    }
 
     logTable({
       prizePoolContract: prizePoolContract.address,
-      remoteOwnerContract: remoteOwnerContract.address,
+      remoteOwnerContract: remoteOwnerContract?.address,
       rngRelayAuctionContract: rngRelayAuctionContract.address,
     });
 
