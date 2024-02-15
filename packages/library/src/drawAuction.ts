@@ -52,9 +52,6 @@ const instantiateRngAuctionContracts = (
   printSpacer();
   printSpacer();
   console.log(chalk.dim('Instantiating RNG contracts ...'));
-  printSpacer();
-  console.log(chalk.cyan(`${chainName(chainId)}:`));
-  printSpacer();
 
   const prizePoolContract = getContract('PrizePool', chainId, provider, contracts, version);
   const rngAuctionContract = getContract('RngAuction', chainId, provider, contracts, version);
@@ -132,17 +129,17 @@ export async function runDrawAuction(
   }
 
   // #3. If there is an RNG Fee, figure out if the bot can afford it
-  if (context.drawAuctionState === DrawAuctionState.RngStart) {
-    console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
-    printSpacer();
+  // if (context.drawAuctionState === DrawAuctionState.RngStart) {
+  //   console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
+  //   printSpacer();
 
-    const enoughBalance = checkBalance(context);
-    if (!enoughBalance) {
-      return;
-    }
+  //   const enoughBalance = checkBalance(context);
+  //   if (!enoughBalance) {
+  //     return;
+  //   }
 
-    await increaseRngFeeAllowance(signer, rngRelayerAddress, context, rngAuctionContracts);
-  }
+  //   await increaseRngFeeAllowance(signer, rngRelayerAddress, context, rngAuctionContracts);
+  // }
 
   // #4. Calculate profit and send transactions when profitable
   let rewardUsd = 0;
@@ -173,9 +170,8 @@ export async function runDrawAuction(
       );
     }
   } else if (context.drawAuctionState === DrawAuctionState.Relay) {
-    printSpacer();
-    console.log(chalk.yellow(`Processing relay for ${chainName(chainId)}:`));
     if (context.rngRelayIsAuctionOpen) {
+      console.log(chalk.yellow(`Processing relay for ${chainName(chainId)}:`));
       await processRelayTransaction(
         rngWallet,
         rngOzRelayer,
@@ -185,7 +181,7 @@ export async function runDrawAuction(
         contracts,
       );
     } else {
-      console.log(chalk.dim(`Skipping ${chainName(chainId)} as relay auction is currently closed`));
+      console.log(chalk.yellow(`Skipping relay as relay auction is currently closed`));
       printSpacer();
     }
   }
@@ -202,19 +198,19 @@ const sendStartRngTransaction = async (
   console.log(chalk.yellow(`Start RNG Transaction:`));
 
   let populatedTx: PopulatedTransaction;
-  console.log(chalk.green(`Execute rngAuction#transferFeeAndStartRngRequest`));
+  console.log(chalk.green(`Execute rngAuction#startRngRequest`));
   printSpacer();
 
   const startRngRequestTxParams = buildStartRngRequestTxParams(config.rewardRecipient);
   const contract = rngAuctionContracts.rngAuctionContract;
-  populatedTx = await contract.populateTransaction.transferFeeAndStartRngRequest(
+  populatedTx = await contract.populateTransaction.startRngRequest(
     ...Object.values(startRngRequestTxParams),
   );
 
   const { gasPrice } = await getGasPrice(provider);
   console.log(chalk.greenBright.bold(`Sending ...`));
 
-  const gasLimit = 330000;
+  const gasLimit = 150000;
   const tx = await sendPopulatedTx(
     chainId,
     rngOzRelayer,
@@ -231,19 +227,19 @@ const sendStartRngTransaction = async (
   printNote();
 };
 
-const recentRelayExists = async (
-  rngReadProvider: Provider,
-  contract: Contract,
-): Promise<boolean> => {
-  const latestBlockNumber = await rngReadProvider.getBlockNumber();
+// const recentRelayExists = async (
+//   rngReadProvider: Provider,
+//   contract: Contract,
+// ): Promise<boolean> => {
+//   const latestBlockNumber = await rngReadProvider.getBlockNumber();
 
-  let filter = contract.filters.RelayedToDispatcher();
-  let events = await contract.queryFilter(filter);
-  // 100 blocks is about 25 minutes worth of events
-  events = events.filter((event) => event.blockNumber > latestBlockNumber - 100);
+//   let filter = contract.filters.RelayedToDispatcher();
+//   let events = await contract.queryFilter(filter);
+//   // 100 blocks is about 25 minutes worth of events
+//   events = events.filter((event) => event.blockNumber > latestBlockNumber - 100);
 
-  return events.length > 0;
-};
+//   return events.length > 0;
+// };
 
 const processRelayTransaction = async (
   rngWallet: Wallet,
@@ -258,13 +254,13 @@ const processRelayTransaction = async (
   const contract = rngAuctionContracts.rngAuctionRelayerDirectContract;
 
   // #1. Check to see if a recent relay has been sent
-  const relayExists = await recentRelayExists(provider, contract);
-  if (relayExists) {
-    console.log(chalk.dim(`Found a recent 'RelayedToDispatcher' event, skipping ...`));
-    return;
-  } else {
-    // console.log(`Did not find a recent 'RelayedToDispatcher' event, continuing ...`);
-  }
+  // const relayExists = await recentRelayExists(provider, contract);
+  // if (relayExists) {
+  //   console.log(chalk.dim(`Found a recent 'RelayedToDispatcher' event, skipping ...`));
+  //   return;
+  // } else {
+  //   // console.log(`Did not find a recent 'RelayedToDispatcher' event, continuing ...`);
+  // }
 
   // #2. Collect the transaction parameters
   const txParams = await getRelayTxParams(config, rngAuctionContracts);
@@ -522,7 +518,6 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
     `$${context.nativeTokenMarketRateUsd}`,
   );
 
-  printSpacer();
   logStringValue(
     `1b. RNG Fee Token:`,
     context.rngFeeTokenIsSet ? context.rngFeeToken.symbol : 'n/a',
@@ -547,15 +542,13 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   }
 
   printSpacer();
-  console.log(chalk.yellow(chainName(chainId)));
-
   logStringValue(
-    `1b. Reward Token '${context.rewardToken.symbol}' Market Rate (USD):`,
+    `1c. Reward Token '${context.rewardToken.symbol}' Market Rate (USD):`,
     `$${context.rewardToken.assetRateUsd}`,
   );
 
   logStringValue(
-    `1c. Relay Chain Gas Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    `1d. Relay Chain Gas Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${context.nativeTokenMarketRateUsd}`,
   );
 
@@ -595,10 +588,7 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
 
   printSpacer();
   printSpacer();
-  console.log(chalk.blue.bold(`RngRelay Auction States:`));
-
-  printSpacer();
-  console.log(chalk.grey(`3. ${chainName(chainId)}:`));
+  console.log(chalk.blue.bold(`RngRelay Auction State:`));
 
   logStringValue(`3a. Relay Auction open? `, `${checkOrX(context.rngRelayIsAuctionOpen)}`);
   if (context.rngRelayIsAuctionOpen) {
@@ -613,9 +603,10 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
       chalk.yellow(`$${roundTwoDecimalPlaces(context.rngRelayExpectedRewardUsd)}`),
       chalk.dim(`$${context.rngRelayExpectedRewardUsd}`),
     );
+
+    logStringValue(`3d. Relay Last Seq. ID:`, `${context.rngRelayLastSequenceId}`);
   }
 
-  logStringValue(`3d. Relay Last Seq. ID:`, `${context.rngRelayLastSequenceId}`);
   printSpacer();
 };
 
@@ -699,7 +690,7 @@ const getRelayGasCost = async (
   let populatedTx: PopulatedTransaction;
   if (context.drawAuctionState === DrawAuctionState.Relay) {
     // The relay uses 156,000~ gas, set to 200k just in case
-    estimatedGasLimit = BigNumber.from(200000);
+    estimatedGasLimit = BigNumber.from(400000);
     // estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(txParams, contract);
     populatedTx = await populateRelayTx(txParams, contract);
   } else {
@@ -772,8 +763,6 @@ const sendRelayTransaction = async (
   contract: Contract,
   config: DrawAuctionConfig,
 ) => {
-  console.log(chalk.yellow(`Relay Transaction:`));
-
   const { gasPrice } = await getGasPrice(config.provider);
 
   console.log(chalk.green(`Execute RngAuctionRelayerDirect#relay`));
@@ -782,7 +771,7 @@ const sendRelayTransaction = async (
 
   const populatedTx = await contract.populateTransaction.relay(...Object.values(txParams));
 
-  const gasLimit = 200000;
+  const gasLimit = 400000;
   const tx = await sendPopulatedTx(
     chainId,
     rngOzRelayer,

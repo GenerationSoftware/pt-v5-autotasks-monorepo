@@ -259,12 +259,9 @@ export const getRngMulticall = async (
   }
   // }
 
-  printSpacer();
-
   ///////////////////////////////
   // **********************
   console.log(chalk.dim(`Running get Relay multicall ...`));
-  console.log(chalk.dim(`Getting state context for chain: ${chainName(chainId)}`));
 
   let queriesOne: Record<string, any> = {};
 
@@ -331,10 +328,6 @@ export const getRngMulticall = async (
     auctionClosesSoon =
       percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
   }
-  console.log('auctionExpired');
-  console.log(auctionExpired);
-  console.log('auctionClosesSoon');
-  console.log(auctionClosesSoon);
 
   // 8. Results One: Reward Token
   const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
