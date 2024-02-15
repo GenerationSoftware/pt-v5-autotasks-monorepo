@@ -16,24 +16,23 @@ export async function handler(event) {
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: BUILD_MIN_PROFIT_THRESHOLD_USD,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
-    relayChainIds: BUILD_RELAY_CHAIN_IDS !== 'undefined' ? BUILD_RELAY_CHAIN_IDS : '',
   };
 
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars(buildVars, event);
-  const l1Provider = new ethers.providers.JsonRpcProvider(
+  const provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,
     Number(envVars.CHAIN_ID),
   );
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    l1Provider,
+    provider,
     event,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const drawAuctionConfig: DrawAuctionConfig = {
-    l1ChainId: Number(envVars.CHAIN_ID),
-    l1Provider,
+    chainId: Number(envVars.CHAIN_ID),
+    provider,
     contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     useFlashbots: envVars.USE_FLASHBOTS,
@@ -45,7 +44,6 @@ export async function handler(event) {
     relayerApiKey: envVars.RELAYER_API_KEY,
     relayerApiSecret: envVars.RELAYER_API_SECRET,
 
-    relayChainIds: envVars.RELAY_CHAIN_IDS,
     arbitrumRelayJsonRpcUri: envVars.ARBITRUM_JSON_RPC_URI,
     optimismRelayJsonRpcUri: envVars.OPTIMISM_JSON_RPC_URI,
     arbitrumSepoliaRelayJsonRpcUri: envVars.ARBITRUM_SEPOLIA_JSON_RPC_URI,

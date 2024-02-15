@@ -8,14 +8,9 @@ export async function runYieldVaultMintRate(
   contracts: ContractsBlob,
   config: YieldVaultMintRateConfig,
 ): Promise<void> {
-  const { chainId, ozRelayer, wallet, l1Provider } = config;
+  const { chainId, ozRelayer, wallet, provider } = config;
 
-  const yieldVaultContracts: Contract[] = getContracts(
-    'YieldVault',
-    chainId,
-    l1Provider,
-    contracts,
-  );
+  const yieldVaultContracts: Contract[] = getContracts('YieldVault', chainId, provider, contracts);
 
   for (const yieldVaultContract of yieldVaultContracts) {
     if (!yieldVaultContract) {
@@ -26,7 +21,7 @@ export async function runYieldVaultMintRate(
 
     try {
       const gasLimit = 200000;
-      const { gasPrice } = await getGasPrice(l1Provider);
+      const { gasPrice } = await getGasPrice(provider);
       console.log(`YieldVault: mintRate() ${yieldVaultContract.address}`);
       const tx = await sendPopulatedTx(chainId, ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
       console.log('TransactionHash:', tx.hash);

@@ -15,7 +15,6 @@ export default defineConfig((opt) => {
         BUILD_USE_FLASHBOTS: `'${process.env.USE_FLASHBOTS}'`,
         BUILD_REWARD_RECIPIENT: `'${process.env.REWARD_RECIPIENT}'`,
         BUILD_MIN_PROFIT_THRESHOLD_USD: `'${process.env.MIN_PROFIT_THRESHOLD_USD}'`,
-        BUILD_RELAY_CHAIN_IDS: `'${process.env.RELAY_CHAIN_IDS}'`,
       };
     },
     noExternal: [

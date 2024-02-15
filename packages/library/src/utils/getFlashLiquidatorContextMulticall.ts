@@ -20,17 +20,17 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * or a straight up ERC20 token (ie. DAI, USDC)
  *
  * @param liquidationPairContract ethers contract instance of the LiquidationPair contract
- * @param l1Provider provider for the chain that will be queried
+ * @param provider provider for the chain that will be queried
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns
  */
 export const getFlashLiquidatorContextMulticall = async (
   liquidationPairContract: Contract,
-  l1Provider: Provider,
+  provider: Provider,
   covalentApiKey?: string,
 ): Promise<FlashLiquidatorContext> => {
   // @ts-ignore Provider == BaseProvider
-  const multicallProvider = MulticallWrapper.wrap(l1Provider);
+  const multicallProvider = MulticallWrapper.wrap(provider);
 
   let queries: Record<string, any> = {};
 

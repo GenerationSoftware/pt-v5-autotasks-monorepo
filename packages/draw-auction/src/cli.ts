@@ -18,7 +18,7 @@ console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
 if (esMain(import.meta)) {
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars();
 
-  const l1Provider = new ethers.providers.JsonRpcProvider(
+  const provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI, // is RNG chain RPC URI
     Number(envVars.CHAIN_ID), // is RNG chain ID
   );
@@ -29,14 +29,14 @@ if (esMain(import.meta)) {
   };
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    l1Provider,
+    provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const drawAuctionConfig: DrawAuctionConfig = {
-    l1ChainId: Number(envVars.CHAIN_ID),
-    l1Provider: l1Provider,
+    chainId: Number(envVars.CHAIN_ID),
+    provider,
     contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     useFlashbots: envVars.USE_FLASHBOTS,
@@ -48,7 +48,6 @@ if (esMain(import.meta)) {
     relayerApiKey: process.env.RELAYER_API_KEY,
     relayerApiSecret: process.env.RELAYER_API_SECRET,
 
-    relayChainIds: process.env.RELAY_CHAIN_IDS?.split(',').map((chainId) => Number(chainId)),
     arbitrumRelayJsonRpcUri: process.env.ARBITRUM_JSON_RPC_URI,
     optimismRelayJsonRpcUri: process.env.OPTIMISM_JSON_RPC_URI,
     arbitrumSepoliaRelayJsonRpcUri: process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI,

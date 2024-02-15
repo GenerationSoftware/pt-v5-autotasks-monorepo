@@ -5,19 +5,16 @@ import {
   Relay,
   DrawAuctionConfig,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import { getRelays } from './getRelays';
 
 export const executeTransactions = async (config: DrawAuctionConfig): Promise<void> => {
   try {
     const rngContracts = await downloadContractsBlob(
-      config.l1ChainId,
+      config.chainId,
       config.contractVersion,
       nodeFetch,
     );
 
-    const relays: Relay[] = await getRelays(config);
-
-    await runDrawAuction(rngContracts, config, relays);
+    await runDrawAuction(rngContracts, config);
   } catch (e) {
     console.error(e);
   }

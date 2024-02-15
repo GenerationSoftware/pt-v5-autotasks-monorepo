@@ -47,9 +47,10 @@ export interface ClaimPrizeContext {
   };
 }
 
+// TODO: Inherit from AutotaskConfig
 export interface PrizeClaimerConfig {
   chainId: number;
-  l1Provider: BaseProvider;
+  provider: BaseProvider;
   contractVersion: ContractVersion;
   wallet: Wallet;
   ozRelayer: Relayer;
@@ -61,9 +62,10 @@ export interface PrizeClaimerConfig {
   covalentApiKey?: string;
 }
 
+// TODO: Inherit from AutotaskConfig
 export interface LiquidatorConfig {
   chainId: number;
-  l1Provider: BaseProvider;
+  provider: BaseProvider;
   contractVersion: ContractVersion;
   wallet: Wallet;
   ozRelayer: Relayer;
@@ -107,7 +109,6 @@ export interface AutotaskEnvVars {
 
 export interface DrawAuctionEnvVars extends AutotaskEnvVars {
   REWARD_RECIPIENT: string;
-  RELAY_CHAIN_IDS: Array<number>;
 }
 
 export interface LiquidatorEnvVars extends AutotaskEnvVars {
@@ -121,8 +122,8 @@ export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
 }
 
 export interface AutotaskConfig {
-  l1ChainId: number;
-  l1Provider: BaseProvider;
+  chainId: number;
+  provider: BaseProvider;
   contractVersion: ContractVersion;
   useFlashbots: boolean;
   rewardRecipient: string;
@@ -143,11 +144,9 @@ export interface AutotaskConfig {
   optimismSepoliaRelayJsonRpcUri?: string;
 }
 
-export interface DrawAuctionConfig extends AutotaskConfig {
-  relayChainIds: Array<number>;
-}
+export interface DrawAuctionConfig extends AutotaskConfig {}
 
-export interface RngDrawAuctionContext {
+export interface DrawAuctionContext {
   rngFeeTokenIsSet: boolean;
   rngFeeToken: TokenWithRate;
   rngFeeAmount: BigNumber;
@@ -156,11 +155,20 @@ export interface RngDrawAuctionContext {
   rngIsRngComplete: boolean;
   rngCurrentFractionalRewardString: string;
   rngRelayer: DrawAuctionRelayerContext;
-}
 
-export interface DrawAuctionContext extends RngDrawAuctionContext {
-  rngNativeTokenMarketRateUsd: number;
-  relays: Relay[];
+  prizePoolDrawClosesAt: number;
+  auctionClosesSoon: boolean;
+  rngResults: RngResults;
+  rngLastAuctionResult: AuctionResult;
+  rngExpectedReward: number; // why is this a number and not a BigNumber like `rngRelayExpectedReward` or `rngExpectedReward`?
+  rngExpectedRewardUsd: number;
+  rewardToken: TokenWithRate;
+  rngRelayIsAuctionOpen: boolean;
+  rngRelayExpectedReward: BigNumber;
+  rngRelayExpectedRewardUsd: number;
+  rngRelayLastSequenceId: number;
+  nativeTokenMarketRateUsd?: number;
+
   drawAuctionState?: DrawAuctionState;
   rngExpectedRewardTotal?: BigNumber; // sum of all rewards from all prize pools
   rngExpectedRewardTotalUsd?: number; // sum of all rewards from all prize pools in USD
@@ -176,30 +184,6 @@ export interface AuctionResult {
   rewardFraction: number;
 }
 
-export interface RelayDrawAuctionContext {
-  prizePoolDrawClosesAt: number;
-  auctionClosesSoon: boolean;
-  rngResults: RngResults;
-  rngLastAuctionResult: AuctionResult;
-  rngExpectedReward: number; // why is this a number and not a BigNumber like `rngRelayExpectedReward` or `rngExpectedReward`?
-  rngExpectedRewardUsd: number;
-  rewardToken: TokenWithRate;
-  rngRelayIsAuctionOpen: boolean;
-  rngRelayExpectedReward: BigNumber;
-  rngRelayExpectedRewardUsd: number;
-  rngRelayLastSequenceId: number;
-  nativeTokenMarketRateUsd?: number;
-}
-
-export interface Relay {
-  l2ChainId: number;
-  l2Provider: BaseProvider;
-  // relayerAddress: string;
-  contractsBlob: ContractsBlob;
-  contracts?: RelayAuctionContracts;
-  context?: RelayDrawAuctionContext;
-}
-
 export interface RelayerAccount {
   signer: DefenderRelaySigner | Signer;
   relayerAddress: string;
@@ -208,10 +192,10 @@ export interface RelayerAccount {
 }
 
 export interface RngAuctionContracts {
-  chainlinkVRFV2DirectRngAuctionHelperContract: Contract;
+  prizePoolContract: Contract;
   rngAuctionContract: Contract;
-  rngAuctionRelayerRemoteOwnerContracts: Contract[];
-  rngAuctionRelayerDirect?: Contract;
+  rngRelayAuctionContract: Contract;
+  rngAuctionRelayerDirectContract: Contract;
 }
 
 export interface RelayAuctionContracts {
@@ -227,11 +211,12 @@ export interface VaultWithContext {
   asset?: string;
 }
 
+// TODO: Inherit from AutotaskConfig
 export interface YieldVaultMintRateConfig {
   chainId: number;
   wallet: Wallet;
   ozRelayer: Relayer;
-  l1Provider: BaseProvider;
+  provider: BaseProvider;
   relayerAddress: string;
   signer: DefenderRelaySigner | Signer;
 }

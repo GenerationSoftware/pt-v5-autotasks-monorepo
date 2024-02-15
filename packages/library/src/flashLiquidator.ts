@@ -52,7 +52,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     ozRelayer,
     wallet,
     signer,
-    l1Provider,
+    provider,
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
@@ -89,12 +89,12 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     const liquidationPairContract = new ethers.Contract(
       flashLiquidationPair.address,
       LiquidationPairAbi,
-      l1Provider,
+      provider,
     );
 
     const context: FlashLiquidatorContext = await getFlashLiquidatorContextMulticall(
       liquidationPairContract,
-      l1Provider,
+      provider,
       covalentApiKey,
     );
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
@@ -164,7 +164,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
         chainId,
         flashLiquidationContract,
         flashLiquidateParams,
-        l1Provider,
+        provider,
       );
     } catch (e) {
       console.error(chalk.red(e));
@@ -207,7 +207,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
       );
 
       const gasLimit = 1050000;
-      const { gasPrice } = await getGasPrice(l1Provider);
+      const { gasPrice } = await getGasPrice(provider);
       const tx = await sendPopulatedTx(
         chainId,
         ozRelayer,
@@ -318,7 +318,7 @@ const getGasCost = async (
   chainId: number,
   flashLiquidationContract: Contract,
   flashLiquidateParams: FlashLiquidateParams,
-  l1Provider: Provider,
+  provider: Provider,
 ): Promise<number> => {
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
@@ -340,7 +340,7 @@ const getGasCost = async (
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
-    l1Provider,
+    provider,
     populatedTx.data,
   );
 

@@ -56,8 +56,7 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, l1Provider } =
-    prizeClaimerConfig;
+  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, provider } = prizeClaimerConfig;
 
   const contractsVersion = {
     major: 1,
@@ -67,11 +66,11 @@ export async function runPrizeClaimer(
   const prizePoolContract = getContract(
     'PrizePool',
     chainId,
-    l1Provider,
+    provider,
     contracts,
     contractsVersion,
   );
-  const claimerContract = getContract('Claimer', chainId, l1Provider, contracts, contractsVersion);
+  const claimerContract = getContract('Claimer', chainId, provider, contracts, contractsVersion);
 
   if (!claimerContract) {
     throw new Error('Contract Unavailable');
@@ -83,7 +82,7 @@ export async function runPrizeClaimer(
   const context: ClaimPrizeContext = await getContext(
     contracts,
     prizePoolContract,
-    l1Provider,
+    provider,
     covalentApiKey,
   );
   printContext(context);
@@ -102,7 +101,7 @@ export async function runPrizeClaimer(
   let claims = await fetchClaims(chainId, prizePoolContract.address, context.drawId);
 
   // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
-  claims = await flagClaimedRpc(l1Provider, contracts, claims);
+  claims = await flagClaimedRpc(provider, contracts, claims);
 
   let unclaimedClaims = claims.filter((claim) => !claim.claimed);
   const claimedClaims = claims.filter((claim) => claim.claimed);
@@ -173,7 +172,7 @@ export async function runPrizeClaimer(
     console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
 
     const claimPrizesParams = await calculateProfit(
-      l1Provider,
+      provider,
       vault,
       Number(tier),
       claimerContract,
@@ -199,7 +198,7 @@ export async function runPrizeClaimer(
       );
 
       const gasLimit = 20000000;
-      const { gasPrice } = await getGasPrice(l1Provider);
+      const { gasPrice } = await getGasPrice(provider);
       const tx = await sendPopulatedTx(
         chainId,
         ozRelayer,
@@ -220,7 +219,7 @@ export async function runPrizeClaimer(
       //       See querying here:
       //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
       console.log('Waiting on transaction to be confirmed ...');
-      await l1Provider.waitForTransaction(tx.hash);
+      await provider.waitForTransaction(tx.hash);
       console.log('Tx confirmed !');
     } else {
       console.log(
@@ -276,7 +275,7 @@ const getEstimatedGasLimit = async (
  * @returns {Promise} Promise of a boolean for profitability
  */
 const calculateProfit = async (
-  l1Provider: Provider,
+  provider: Provider,
   vault: string,
   tier: number,
   claimerContract: Contract,
@@ -296,7 +295,7 @@ const calculateProfit = async (
 
   printSpacer();
   const gasCost = await getGasCost(
-    l1Provider,
+    provider,
     chainId,
     vault,
     tier,
@@ -388,18 +387,18 @@ const logClaims = (claims: Claim[]) => {
 const getContext = async (
   contracts: ContractsBlob,
   prizePool: Contract,
-  l1Provider: Provider,
+  provider: Provider,
   covalentApiKey?: string,
 ): Promise<ClaimPrizeContext> => {
   const prizeTokenAddress = await prizePool.prizeToken();
 
   console.log(chalk.dim('Getting prize pool info ...'));
 
-  const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(l1Provider, contracts);
+  const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(provider, contracts);
   const { drawId, isDrawFinalized, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
 
-  const prizeTokenContract = new ethers.Contract(prizeTokenAddress, ERC20Abi, l1Provider);
+  const prizeTokenContract = new ethers.Contract(prizeTokenAddress, ERC20Abi, provider);
 
   console.log(chalk.dim('Getting prize context ...'));
 
@@ -468,7 +467,7 @@ const buildParams = (
 };
 
 const getGasCost = async (
-  l1Provider: Provider,
+  provider: Provider,
   chainId: number,
   vault: string,
   tier: number,
@@ -506,7 +505,7 @@ const getGasCost = async (
     chainId,
     estimatedGasLimitForOne,
     gasTokenMarketRateUsd,
-    l1Provider,
+    provider,
     populatedTx.data,
   );
 
@@ -567,7 +566,7 @@ const getGasCost = async (
     chainId,
     gasCostEachFollowingClaim,
     gasTokenMarketRateUsd,
-    l1Provider,
+    provider,
     populatedTx.data,
   );
   console.log(

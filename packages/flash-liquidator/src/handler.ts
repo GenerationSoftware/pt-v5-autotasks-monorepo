@@ -25,20 +25,20 @@ export async function handler(event) {
     apiSecret: envVars.RELAYER_API_SECRET,
   };
 
-  const l1Provider = new ethers.providers.JsonRpcProvider(
+  const provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,
     Number(envVars.CHAIN_ID),
   );
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    l1Provider,
+    provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const config: LiquidatorConfig = {
     ...relayerAccount,
-    l1Provider,
+    provider,
     contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,

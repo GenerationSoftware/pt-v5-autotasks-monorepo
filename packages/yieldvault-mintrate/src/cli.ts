@@ -19,7 +19,7 @@ console.log(chalk.blue(figlet.textSync('YieldVault MintRate Bot')));
 if (esMain(import.meta)) {
   const envVars: AutotaskEnvVars = loadEnvVars();
 
-  const l1Provider = new ethers.providers.JsonRpcProvider(
+  const provider = new ethers.providers.JsonRpcProvider(
     envVars.JSON_RPC_URI,
     Number(envVars.CHAIN_ID),
   );
@@ -30,14 +30,14 @@ if (esMain(import.meta)) {
   };
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
-    l1Provider,
+    provider,
     mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
   const config: YieldVaultMintRateConfig = {
     ...relayerAccount,
-    l1Provider,
+    provider,
     relayerAddress: relayerAccount.relayerAddress,
     chainId: envVars.CHAIN_ID,
   };

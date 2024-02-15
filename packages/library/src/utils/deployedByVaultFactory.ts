@@ -12,17 +12,17 @@ const VAULT_FACTORY_V2_ADDRESSES = {
 };
 
 export const deployedByVaultFactory = async (
-  l1Provider: Provider,
+  provider: Provider,
   chainId: number,
   address: string,
 ): Promise<boolean> => {
   let vaultFactoryContracts = [];
 
   for (let vaultFactoryAddress of VAULT_FACTORY_V1_ADDRESSES[chainId]) {
-    vaultFactoryContracts.push(new Contract(vaultFactoryAddress, VaultFactoryAbi, l1Provider));
+    vaultFactoryContracts.push(new Contract(vaultFactoryAddress, VaultFactoryAbi, provider));
   }
   for (let vaultFactoryAddress of VAULT_FACTORY_V2_ADDRESSES[chainId]) {
-    vaultFactoryContracts.push(new Contract(vaultFactoryAddress, VaultFactoryAbi, l1Provider));
+    vaultFactoryContracts.push(new Contract(vaultFactoryAddress, VaultFactoryAbi, provider));
   }
 
   for (let vaultFactoryContract of vaultFactoryContracts) {

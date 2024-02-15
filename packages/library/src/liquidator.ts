@@ -53,11 +53,11 @@ export async function runLiquidator(
 ): Promise<void> {
   const {
     chainId,
+    provider,
     ozRelayer,
     wallet,
     signer,
     relayerAddress,
-    l1Provider,
     swapRecipient,
     useFlashbots,
     minProfitThresholdUsd,
@@ -99,13 +99,13 @@ export async function runLiquidator(
     const liquidationPairContract = new ethers.Contract(
       liquidationPair.address,
       liquidationPairData.abi,
-      l1Provider,
+      provider,
     );
 
     const context: LiquidatorContext = await getLiquidatorContextMulticall(
       liquidationRouterContract,
       liquidationPairContract,
-      l1Provider,
+      provider,
       relayerAddress,
       covalentApiKey,
     );
@@ -161,7 +161,7 @@ export async function runLiquidator(
     const getAmountInValues = async () => {
       try {
         return calculateAmountIn(
-          l1Provider,
+          provider,
           liquidationPairContract,
           context,
           originalMaxAmountOut,
@@ -236,7 +236,7 @@ export async function runLiquidator(
         chainId,
         liquidationRouterContract,
         swapExactAmountOutParams,
-        l1Provider,
+        provider,
       );
     } catch (e) {
       console.error(chalk.red(e));
@@ -301,7 +301,7 @@ export async function runLiquidator(
       );
 
       const gasLimit = 750000;
-      const { gasPrice } = await getGasPrice(l1Provider);
+      const { gasPrice } = await getGasPrice(provider);
       const tx = await sendPopulatedTx(
         chainId,
         ozRelayer,
@@ -432,7 +432,7 @@ const getLiquidationContracts = async (
   liquidationRouterContract: Contract;
   liquidationPairContracts: Contract[];
 }> => {
-  const { chainId, l1Provider, signer } = config;
+  const { chainId, provider, signer } = config;
 
   const contractsVersion = {
     major: 1,
@@ -449,7 +449,7 @@ const getLiquidationContracts = async (
   );
   const liquidationPairContracts = await getLiquidationPairsMulticall(
     liquidationPairFactoryContract,
-    l1Provider,
+    provider,
   );
   const liquidationRouterContract = getContract(
     'LiquidationRouter',
@@ -592,7 +592,7 @@ const getGasCost = async (
   chainId: number,
   liquidationRouter: Contract,
   swapExactAmountOutParams: SwapExactAmountOutParams,
-  l1Provider: Provider,
+  provider: Provider,
 ): Promise<number> => {
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
@@ -614,7 +614,7 @@ const getGasCost = async (
     chainId,
     estimatedGasLimit,
     nativeTokenMarketRateUsd,
-    l1Provider,
+    provider,
     populatedTx.data,
   );
 
@@ -690,7 +690,7 @@ const calculateAmountOut = async (
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
 const calculateAmountIn = async (
-  l1Provider: Provider,
+  provider: Provider,
   liquidationPairContract: Contract,
   context: LiquidatorContext,
   originalMaxAmountOut: BigNumber,
@@ -722,7 +722,7 @@ const calculateAmountIn = async (
   wantedAmountsIn = await getLiquidationPairComputeExactAmountInMulticall(
     liquidationPairContract,
     wantedAmountsOut,
-    l1Provider,
+    provider,
   );
 
   return {
