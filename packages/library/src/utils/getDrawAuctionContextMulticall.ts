@@ -119,6 +119,7 @@ const getContext = async (
     chainId,
     rngAuctionContracts,
     rngRelayerAddress,
+    rewardRecipient,
     covalentApiKey,
   );
 
@@ -152,6 +153,7 @@ export const getRngMulticall = async (
   chainId: number,
   rngAuctionContracts: RngAuctionContracts,
   rngRelayerAddress: string,
+  rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   // @ts-ignore Provider == BaseProvider
@@ -165,19 +167,7 @@ export const getRngMulticall = async (
   const rngServiceRequestFee = await rngServiceContract.getRequestFee();
   const rngFeeTokenAddress = rngServiceRequestFee[0];
 
-  // 2. RNG Estimated Fee from VrfHelper
-  const { gasPrice } = await getGasPrice(provider);
-  const requestGasPriceWei = gasPrice;
-
-  const chainlinkVRFV2DirectRngAuctionHelperContract =
-    rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract;
-  if (chainlinkVRFV2DirectRngAuctionHelperContract) {
-    queries[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE] =
-      chainlinkVRFV2DirectRngAuctionHelperContract.callStatic.estimateRequestFee(
-        requestGasPriceWei,
-      );
-  }
-
+  // 2. RNG Estimated Fee
   const rngFeeTokenIsSet = rngFeeTokenAddress !== ZERO_ADDRESS;
   if (rngFeeTokenIsSet) {
     const rngFeeTokenContract = new ethers.Contract(rngFeeTokenAddress, ERC20Abi, provider);
@@ -189,12 +179,11 @@ export const getRngMulticall = async (
 
     queries[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY] = rngFeeTokenContract.allowance(
       rngRelayerAddress,
-      rngAuctionContracts.chainlinkVRFV2DirectRngAuctionHelperContract.address,
+      rngAuctionContracts.rngRelayAuctionContract.address, // might need to be RngRelayDirect contract!
     );
   }
 
   // 3. RNG Auction
-
   queries[RNG_AUCTION_IS_AUCTION_OPEN_KEY] = rngAuctionContracts.rngAuctionContract.isAuctionOpen();
   queries[RNG_AUCTION_CURRENT_FRACTIONAL_REWARD_KEY] =
     rngAuctionContracts.rngAuctionContract.currentFractionalReward();
@@ -244,53 +233,52 @@ export const getRngMulticall = async (
   let rngFeeAmount;
   let rngRelayer: DrawAuctionRelayerContext;
   let rngFeeUsd = 0;
-  if (chainlinkVRFV2DirectRngAuctionHelperContract) {
-    const vrfHelperRequestFee = results[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE];
-    rngFeeAmount = vrfHelperRequestFee._requestFee;
-    console.log('rngFeeAmount');
-    console.log(rngFeeAmount);
+  // if (chainlinkVRFV2DirectRngAuctionHelperContract) {
+  //   const vrfHelperRequestFee = results[RNG_AUCTION_HELPER_ESTIMATE_REQUEST_FEE];
+  //   rngFeeAmount = vrfHelperRequestFee._requestFee;
+  //   console.log('rngFeeAmount');
+  //   console.log(rngFeeAmount);
 
-    if (rngFeeTokenIsSet) {
-      rngRelayer = {
-        rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
-        rngFeeTokenAllowance: BigNumber.from(
-          results[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY],
-        ),
-      };
+  if (rngFeeTokenIsSet) {
+    rngRelayer = {
+      rngFeeTokenBalance: BigNumber.from(results[RNG_FEE_TOKEN_BALANCE_OF_BOT_KEY]),
+      rngFeeTokenAllowance: BigNumber.from(
+        results[RNG_AUCTION_HELPER_ALLOWANCE_BOT_RNG_FEE_TOKEN_KEY],
+      ),
+    };
 
-      let chainGasPriceMultiplier = 1;
-      if (CHAIN_GAS_PRICE_MULTIPLIERS[chainId]) {
-        chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
-      }
-
-      rngFeeUsd =
-        parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) *
-        rngFeeToken.assetRateUsd *
-        chainGasPriceMultiplier;
+    let chainGasPriceMultiplier = 1;
+    if (CHAIN_GAS_PRICE_MULTIPLIERS[chainId]) {
+      chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
     }
+
+    rngFeeUsd =
+      parseFloat(formatUnits(rngFeeAmount, rngFeeToken.decimals)) *
+      rngFeeToken.assetRateUsd *
+      chainGasPriceMultiplier;
   }
+  // }
 
   printSpacer();
 
+  ///////////////////////////////
+  // **********************
   console.log(chalk.dim(`Running get Relay multicall ...`));
   console.log(chalk.dim(`Getting state context for chain: ${chainName(chainId)}`));
-
-  // @ts-ignore Provider == BaseProvider
-  const multicallProvider = MulticallWrapper.wrap(provider);
 
   let queriesOne: Record<string, any> = {};
 
   // 1. Prize Pool Info
-  queriesOne[PRIZE_POOL_OPEN_DRAW_ID_KEY] = relay.contracts.prizePoolContract.getOpenDrawId();
-  queriesOne[PRIZE_POOL_RESERVE_KEY] = relay.contracts.prizePoolContract.reserve();
+  queriesOne[PRIZE_POOL_OPEN_DRAW_ID_KEY] = rngAuctionContracts.prizePoolContract.getOpenDrawId();
+  queriesOne[PRIZE_POOL_RESERVE_KEY] = rngAuctionContracts.prizePoolContract.reserve();
   queriesOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
-    relay.contracts.prizePoolContract.pendingReserveContributions();
-  queriesOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] = relay.contracts.prizePoolContract.prizeToken();
+    rngAuctionContracts.prizePoolContract.pendingReserveContributions();
+  queriesOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] =
+    rngAuctionContracts.prizePoolContract.prizeToken();
 
   // 2. Auction info
   queriesOne[RNG_AUCTION_LAST_SEQUENCE_ID_KEY] =
     rngAuctionContracts.rngAuctionContract.lastSequenceId();
-  console.log('fail here?');
 
   // queriesOne[RNG_AUCTION_GET_RNG_RESULTS_KEY] =
   //   rngAuctionContracts.rngAuctionContract.callStatic.getRngResults();
@@ -298,9 +286,6 @@ export const getRngMulticall = async (
     rngAuctionContracts.rngAuctionContract.auctionDuration();
   queriesOne[RNG_AUCTION_LAST_AUCTION_RESULT_KEY] =
     rngAuctionContracts.rngAuctionContract.getLastAuctionResult();
-
-  console.log('rngAuctionContracts.rngAuctionContract');
-  console.log(rngAuctionContracts.rngAuctionContract);
 
   // 4. Get and process first set of results
   const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
@@ -311,7 +296,7 @@ export const getRngMulticall = async (
   // 6. Results One: Prize Pool
   const drawId = resultsOne[PRIZE_POOL_OPEN_DRAW_ID_KEY];
   queriesTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY] =
-    relay.contracts.prizePoolContract.drawClosesAt(drawId);
+    rngAuctionContracts.prizePoolContract.drawClosesAt(drawId);
 
   // 7. Results One: Auction info
   let randomNumber, rngCompletedAt;
@@ -353,7 +338,7 @@ export const getRngMulticall = async (
 
   // 8. Results One: Reward Token
   const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
-  const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, relay.l2Provider);
+  const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, provider);
 
   queriesTwo[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
   queriesTwo[REWARD_NAME_KEY] = rewardTokenContract.name();
@@ -368,7 +353,7 @@ export const getRngMulticall = async (
   const reserveTotal = prizePoolReserve.add(prizePoolPendingReserveContributions);
 
   queriesTwo[RNG_RELAY_IS_SEQUENCE_COMPLETED_KEY] =
-    relay.contracts.rngRelayAuctionContract.isSequenceCompleted(rngRelayLastSequenceId);
+    rngAuctionContracts.rngRelayAuctionContract.isSequenceCompleted(rngRelayLastSequenceId);
 
   // 10. Get second set of multicall results
   const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
@@ -377,10 +362,7 @@ export const getRngMulticall = async (
   const lastSequenceCompleted = resultsTwo[RNG_RELAY_IS_SEQUENCE_COMPLETED_KEY];
 
   const rngRelayIsAuctionOpen =
-    rngRelayLastSequenceId > 0 &&
-    rngContext.rngIsRngComplete &&
-    !lastSequenceCompleted &&
-    !auctionExpired;
+    rngRelayLastSequenceId > 0 && rngIsRngComplete && !lastSequenceCompleted && !auctionExpired;
 
   // 12. Results two: Reward token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -398,8 +380,7 @@ export const getRngMulticall = async (
 
   // 13. Results two: Auction info
   const reserveTotalStr = ethers.utils.formatUnits(reserveTotal, rewardToken.decimals);
-  const rngExpectedReward =
-    Number(reserveTotalStr) * Number(rngContext.rngCurrentFractionalRewardString);
+  const rngExpectedReward = Number(reserveTotalStr) * Number(rngCurrentFractionalRewardString);
   const rngExpectedRewardUsd = rngExpectedReward * rewardToken.assetRateUsd;
 
   const prizePoolDrawClosesAt = Number(resultsTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
@@ -408,7 +389,7 @@ export const getRngMulticall = async (
   let rngRelayExpectedReward, rngRelayExpectedRewardUsd;
   if (rngRelayIsAuctionOpen) {
     const rngRelayRewardFraction =
-      await relay.contracts.rngRelayAuctionContract.computeRewardFraction(elapsedTime);
+      await rngAuctionContracts.rngRelayAuctionContract.computeRewardFraction(elapsedTime);
 
     // Make a new AuctionResult based off the data we currently know (we assume
     // we will be the recipient, and we have the estimated RelayRewardFraction)
@@ -422,7 +403,7 @@ export const getRngMulticall = async (
     auctionResults[1] = auctionResult;
 
     const rngRelayExpectedRewardResult =
-      await relay.contracts.rngRelayAuctionContract.callStatic.computeRewards(auctionResults);
+      await rngAuctionContracts.rngRelayAuctionContract.callStatic.computeRewards(auctionResults);
     rngRelayExpectedReward = rngRelayExpectedRewardResult[1];
 
     rngRelayExpectedRewardUsd =
