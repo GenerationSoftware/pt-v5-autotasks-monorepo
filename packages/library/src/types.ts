@@ -2,7 +2,7 @@ import { Contract, BigNumber, Wallet, Signer } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { ContractVersion, ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
+import { ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
@@ -51,7 +51,6 @@ export interface ClaimPrizeContext {
 export interface PrizeClaimerConfig {
   chainId: number;
   provider: BaseProvider;
-  contractVersion: ContractVersion;
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
@@ -66,7 +65,6 @@ export interface PrizeClaimerConfig {
 export interface LiquidatorConfig {
   chainId: number;
   provider: BaseProvider;
-  contractVersion: ContractVersion;
   wallet: Wallet;
   ozRelayer: Relayer;
   relayerAddress: string;
@@ -94,7 +92,6 @@ export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
   JSON_RPC_URI: string;
-  CONTRACT_VERSION: ContractVersion;
   USE_FLASHBOTS: boolean;
   MIN_PROFIT_THRESHOLD_USD: string;
   COVALENT_API_KEY?: string;
@@ -124,7 +121,6 @@ export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
 export interface AutotaskConfig {
   chainId: number;
   provider: BaseProvider;
-  contractVersion: ContractVersion;
   useFlashbots: boolean;
   rewardRecipient: string;
   minProfitThresholdUsd: number;
@@ -202,13 +198,6 @@ export interface RelayAuctionContracts {
   prizePoolContract: Contract;
   remoteOwnerContract: Contract;
   rngRelayAuctionContract: Contract;
-}
-
-export interface VaultWithContext {
-  id: string;
-  vaultContract: Contract;
-  liquidationPair?: string;
-  asset?: string;
 }
 
 // TODO: Inherit from AutotaskConfig

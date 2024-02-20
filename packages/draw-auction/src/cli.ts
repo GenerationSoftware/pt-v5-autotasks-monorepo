@@ -37,7 +37,6 @@ if (esMain(import.meta)) {
   const drawAuctionConfig: DrawAuctionConfig = {
     chainId: Number(envVars.CHAIN_ID),
     provider,
-    contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     useFlashbots: envVars.USE_FLASHBOTS,
     rewardRecipient: envVars.REWARD_RECIPIENT,

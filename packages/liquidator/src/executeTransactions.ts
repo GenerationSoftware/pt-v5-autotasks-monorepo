@@ -4,11 +4,7 @@ import { runLiquidator, LiquidatorConfig } from '@generationsoftware/pt-v5-autot
 
 export const executeTransactions = async (config: LiquidatorConfig): Promise<void> => {
   try {
-    const contracts: ContractsBlob = await downloadContractsBlob(
-      config.chainId,
-      config.contractVersion,
-      nodeFetch,
-    );
+    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
     await runLiquidator(contracts, config);
   } catch (error) {
     throw new Error(error);

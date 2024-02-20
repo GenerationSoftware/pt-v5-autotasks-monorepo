@@ -12,7 +12,6 @@ import { executeTransactions } from './executeTransactions';
 export async function handler(event) {
   const buildVars = {
     chainId: BUILD_CHAIN_ID,
-    contractVersion: BUILD_CONTRACT_VERSION,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: BUILD_MIN_PROFIT_THRESHOLD_USD,
     swapRecipient: BUILD_SWAP_RECIPIENT,
@@ -39,7 +38,6 @@ export async function handler(event) {
   const config: LiquidatorConfig = {
     ...relayerAccount,
     provider,
-    contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,
     swapRecipient: envVars.SWAP_RECIPIENT,

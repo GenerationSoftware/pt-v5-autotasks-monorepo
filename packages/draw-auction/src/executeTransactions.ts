@@ -4,11 +4,7 @@ import { runDrawAuction, DrawAuctionConfig } from '@generationsoftware/pt-v5-aut
 
 export const executeTransactions = async (config: DrawAuctionConfig): Promise<void> => {
   try {
-    const rngContracts = await downloadContractsBlob(
-      config.chainId,
-      config.contractVersion,
-      nodeFetch,
-    );
+    const rngContracts = await downloadContractsBlob(config.chainId, nodeFetch);
 
     await runDrawAuction(rngContracts, config);
   } catch (e) {

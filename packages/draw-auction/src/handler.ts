@@ -12,7 +12,6 @@ import { loadDrawAuctionEnvVars } from './loadDrawAuctionEnvVars';
 export async function handler(event) {
   const buildVars = {
     chainId: BUILD_CHAIN_ID,
-    contractVersion: BUILD_CONTRACT_VERSION,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: BUILD_MIN_PROFIT_THRESHOLD_USD,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
@@ -33,7 +32,6 @@ export async function handler(event) {
   const drawAuctionConfig: DrawAuctionConfig = {
     chainId: Number(envVars.CHAIN_ID),
     provider,
-    contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     useFlashbots: envVars.USE_FLASHBOTS,
     rewardRecipient: envVars.REWARD_RECIPIENT,

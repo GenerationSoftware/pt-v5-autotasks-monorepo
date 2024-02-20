@@ -13,7 +13,6 @@ import { executeTransactions } from './executeTransactions';
 export async function handler(event: RelayerParams) {
   const buildVars = {
     chainId: BUILD_CHAIN_ID,
-    contractVersion: BUILD_CONTRACT_VERSION,
     useFlashbots: BUILD_USE_FLASHBOTS,
     minProfitThresholdUsd: BUILD_MIN_PROFIT_THRESHOLD_USD,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
@@ -42,7 +41,6 @@ export async function handler(event: RelayerParams) {
     ...relayerAccount,
     chainId: envVars.CHAIN_ID,
     provider,
-    contractVersion: envVars.CONTRACT_VERSION,
     covalentApiKey: envVars.COVALENT_API_KEY,
     rewardRecipient: BUILD_REWARD_RECIPIENT,
     useFlashbots: BUILD_USE_FLASHBOTS,

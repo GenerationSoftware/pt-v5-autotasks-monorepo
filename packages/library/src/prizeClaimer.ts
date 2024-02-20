@@ -293,7 +293,18 @@ const calculateProfit = async (
     `$${nativeTokenMarketRateUsd}`,
   );
 
+  console.log('getting gas cost');
   printSpacer();
+  console.log(
+    provider,
+    chainId,
+    vault,
+    tier,
+    claimerContract,
+    groupedClaims,
+    rewardRecipient,
+    nativeTokenMarketRateUsd,
+  );
   const gasCost = await getGasCost(
     provider,
     chainId,
@@ -305,6 +316,7 @@ const calculateProfit = async (
     nativeTokenMarketRateUsd,
     '100',
   );
+  console.log('getting claimin finfo');
 
   const { claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
     context,
@@ -315,6 +327,7 @@ const calculateProfit = async (
     gasCost,
     minProfitThresholdUsd,
   );
+  console.log(claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim);
 
   const claimsSlice = groupedClaims.slice(0, claimCount);
   const claimPrizesParams = buildParams(
