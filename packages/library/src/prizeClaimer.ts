@@ -292,19 +292,8 @@ const calculateProfit = async (
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${nativeTokenMarketRateUsd}`,
   );
-
-  console.log('getting gas cost');
   printSpacer();
-  console.log(
-    provider,
-    chainId,
-    vault,
-    tier,
-    claimerContract,
-    groupedClaims,
-    rewardRecipient,
-    nativeTokenMarketRateUsd,
-  );
+
   const gasCost = await getGasCost(
     provider,
     chainId,
