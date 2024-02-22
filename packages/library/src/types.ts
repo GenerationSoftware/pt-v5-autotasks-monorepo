@@ -102,6 +102,7 @@ export interface AutotaskEnvVars {
   OPTIMISM_JSON_RPC_URI?: string;
   ARBITRUM_SEPOLIA_JSON_RPC_URI?: string;
   OPTIMISM_SEPOLIA_JSON_RPC_URI?: string;
+  OPTIMISM_GOERLI_JSON_RPC_URI?: string;
 }
 
 export interface DrawAuctionEnvVars extends AutotaskEnvVars {

@@ -64,8 +64,9 @@ REWARD_RECIPIENT: Address of the contract/EOA account that will receive the prof
 ARBITRUM_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
 OPTIMISM_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
 
-ARBITRUM_SEPOLIA_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum
-OPTIMISM_SEPOLIA_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism
+ARBITRUM_SEPOLIA_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Arbitrum Sepolia
+OPTIMISM_SEPOLIA_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism Sepolia
+OPTIMISM_GOERLI_JSON_RPC_URI: Infura/Alchemy/etc JSON RPC URI for the relay chain on Optimism Goerli
 
 ```
 

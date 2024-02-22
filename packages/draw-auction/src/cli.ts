@@ -51,6 +51,7 @@ if (esMain(import.meta)) {
     optimismRelayJsonRpcUri: process.env.OPTIMISM_JSON_RPC_URI,
     arbitrumSepoliaRelayJsonRpcUri: process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI,
     optimismSepoliaRelayJsonRpcUri: process.env.OPTIMISM_SEPOLIA_JSON_RPC_URI,
+    optimismGoerliRelayJsonRpcUri: process.env.OPTIMISM_GOERLI_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
     rngWallet: relayerAccount.wallet,

@@ -13,6 +13,7 @@ const JSON_RPC_URI_KEYS = {
   [CHAIN_IDS.optimism]: 'OPTIMISM_JSON_RPC_URI',
   [CHAIN_IDS.arbitrum]: 'ARBITRUM_JSON_RPC_URI',
   [CHAIN_IDS.optimismSepolia]: 'OPTIMISM_SEPOLIA_JSON_RPC_URI',
+  [CHAIN_IDS.optimismGoerli]: 'OPTIMISM_GOERLI_JSON_RPC_URI',
   [CHAIN_IDS.arbitrumSepolia]: 'ARBITRUM_SEPOLIA_JSON_RPC_URI',
 };
 
@@ -22,6 +23,7 @@ const CHAIN_RELAYER_API_KEY_KEYS = {
   [CHAIN_IDS.optimism]: 'OPTIMISM_RELAYER_API_KEY',
   [CHAIN_IDS.arbitrum]: 'ARBITRUM_RELAYER_API_KEY',
   [CHAIN_IDS.optimismSepolia]: 'OPTIMISM_SEPOLIA_RELAYER_API_KEY',
+  [CHAIN_IDS.optimismGoerli]: 'OPTIMISM_GOERLI_RELAYER_API_KEY',
   [CHAIN_IDS.arbitrumSepolia]: 'ARBITRUM_SEPOLIA_RELAYER_API_KEY',
 };
 
@@ -31,6 +33,7 @@ const CHAIN_RELAYER_API_SECRET_KEYS = {
   [CHAIN_IDS.optimism]: 'OPTIMISM_RELAYER_API_SECRET',
   [CHAIN_IDS.arbitrum]: 'ARBITRUM_RELAYER_API_SECRET',
   [CHAIN_IDS.optimismSepolia]: 'OPTIMISM_SEPOLIA_RELAYER_API_SECRET',
+  [CHAIN_IDS.optimismGoerli]: 'OPTIMISM_GOERLI_RELAYER_API_SECRET',
   [CHAIN_IDS.arbitrumSepolia]: 'ARBITRUM_SEPOLIA_RELAYER_API_SECRET',
 };
 
@@ -49,6 +52,7 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
   let optimismJsonRpcUri = process.env.OPTIMISM_JSON_RPC_URI;
   let arbitrumSepoliaJsonRpcUri = process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI;
   let optimismSepoliaJsonRpcUri = process.env.OPTIMISM_SEPOLIA_JSON_RPC_URI;
+  let optimismGoerliJsonRpcUri = process.env.OPTIMISM_GOERLI_JSON_RPC_URI;
   let jsonRpcUri = process.env.JSON_RPC_URI;
   let relayerApiKey = process.env.RELAYER_API_KEY;
   let relayerApiSecret = process.env.RELAYER_API_SECRET;
@@ -79,6 +83,9 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
 
     const optimismSepoliaJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.optimismSepolia];
     optimismSepoliaJsonRpcUri = event.secrets[optimismSepoliaJsonRpcUriKey];
+
+    const optimismGoerliJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.optimismGoerli];
+    optimismGoerliJsonRpcUri = event.secrets[optimismGoerliJsonRpcUriKey];
   }
 
   return {
@@ -94,5 +101,6 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
     OPTIMISM_JSON_RPC_URI: optimismJsonRpcUri,
     ARBITRUM_SEPOLIA_JSON_RPC_URI: arbitrumSepoliaJsonRpcUri,
     OPTIMISM_SEPOLIA_JSON_RPC_URI: optimismSepoliaJsonRpcUri,
+    OPTIMISM_GOERLI_JSON_RPC_URI: optimismGoerliJsonRpcUri,
   };
 };

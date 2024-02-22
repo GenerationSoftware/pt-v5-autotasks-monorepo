@@ -46,6 +46,7 @@ export async function handler(event) {
     optimismRelayJsonRpcUri: envVars.OPTIMISM_JSON_RPC_URI,
     arbitrumSepoliaRelayJsonRpcUri: envVars.ARBITRUM_SEPOLIA_JSON_RPC_URI,
     optimismSepoliaRelayJsonRpcUri: envVars.OPTIMISM_SEPOLIA_JSON_RPC_URI,
+    optimismGoerliRelayJsonRpcUri: envVars.OPTIMISM_GOERLI_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
     rngOzRelayer: relayerAccount.ozRelayer,
