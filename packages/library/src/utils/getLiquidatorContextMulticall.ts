@@ -73,7 +73,7 @@ export const getLiquidatorContextMulticall = async (
     // console.log(chalk.dim(underlyingAssetAddress));
   } catch (e) {
     console.log(
-      chalk.yellow('liquidationPairTokenOutAsVault.asset() test failed, likely and ERC20 token'),
+      chalk.yellow('liquidationPairTokenOutAsVault.asset() test failed, likely an ERC20 token'),
     );
     underlyingAssetAddress = tokenOutAddress;
     // console.log('underlyingAssetAddress 2');
