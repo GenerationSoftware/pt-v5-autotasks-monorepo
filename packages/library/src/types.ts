@@ -2,18 +2,13 @@ import { Contract, BigNumber, Wallet, Signer } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
 import { Relayer } from 'defender-relay-client';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
-import { ContractsBlob, TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
+import { TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall';
 
 export interface LiquidatorRelayerContext {
   tokenInAllowance: BigNumber;
   tokenInBalance: BigNumber;
-}
-
-export interface DrawAuctionRelayerContext {
-  rngFeeTokenAllowance: BigNumber;
-  rngFeeTokenBalance: BigNumber;
 }
 
 export interface ProviderOptions {
@@ -144,31 +139,20 @@ export interface AutotaskConfig {
 export interface DrawAuctionConfig extends AutotaskConfig {}
 
 export interface DrawAuctionContext {
-  rngFeeTokenIsSet: boolean;
-  rngFeeToken: TokenWithRate;
-  rngFeeAmount: BigNumber;
-  rngFeeUsd: number;
-  rngIsAuctionOpen: boolean;
-  rngIsRngComplete: boolean;
-  rngCurrentFractionalRewardString: string;
-  rngRelayer: DrawAuctionRelayerContext;
+  canStartDraw: boolean;
+  startDrawFee: BigNumber;
+  startDrawFeeUsd: number;
+
+  canAwardDraw: boolean;
+  awardDrawFee: BigNumber;
+  awardDrawFeeUsd: number;
 
   prizePoolDrawClosesAt: number;
-  auctionClosesSoon: boolean;
-  rngResults: RngResults;
-  rngLastAuctionResult: AuctionResult;
-  rngExpectedReward: number; // why is this a number and not a BigNumber like `rngRelayExpectedReward` or `rngExpectedReward`?
-  rngExpectedRewardUsd: number;
   rewardToken: TokenWithRate;
-  rngRelayIsAuctionOpen: boolean;
-  rngRelayExpectedReward: BigNumber;
-  rngRelayExpectedRewardUsd: number;
-  rngRelayLastSequenceId: number;
+
   nativeTokenMarketRateUsd?: number;
 
   drawAuctionState?: DrawAuctionState;
-  rngExpectedRewardTotal?: BigNumber; // sum of all rewards from all prize pools
-  rngExpectedRewardTotalUsd?: number; // sum of all rewards from all prize pools in USD
 }
 
 export interface RngResults {
@@ -190,15 +174,8 @@ export interface RelayerAccount {
 
 export interface RngAuctionContracts {
   prizePoolContract: Contract;
-  rngAuctionContract: Contract;
-  rngRelayAuctionContract: Contract;
-  rngAuctionRelayerDirectContract: Contract;
-}
-
-export interface RelayAuctionContracts {
-  prizePoolContract: Contract;
-  remoteOwnerContract: Contract;
-  rngRelayAuctionContract: Contract;
+  drawManagerContract: Contract;
+  rngWitnetContract: Contract;
 }
 
 // TODO: Inherit from AutotaskConfig

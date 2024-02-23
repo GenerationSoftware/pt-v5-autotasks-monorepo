@@ -129,7 +129,7 @@ export async function runDrawAuction(
   }
 
   // #3. If there is an RNG Fee, figure out if the bot can afford it
-  // if (context.drawAuctionState === DrawAuctionState.RngStart) {
+  // if (context.drawAuctionState === DrawAuctionState.Start) {
   //   console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
   //   printSpacer();
 
@@ -143,7 +143,7 @@ export async function runDrawAuction(
 
   // #4. Calculate profit and send transactions when profitable
   let rewardUsd = 0;
-  if (context.drawAuctionState === DrawAuctionState.RngStart) {
+  if (context.drawAuctionState === DrawAuctionState.Start) {
     rewardUsd = context.rngExpectedRewardTotalUsd;
 
     const gasCostUsd = await getRngGasCost(provider, rngAuctionContracts, config, context);
@@ -169,21 +169,16 @@ export async function runDrawAuction(
         chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
       );
     }
-  } else if (context.drawAuctionState === DrawAuctionState.Relay) {
-    if (context.rngRelayIsAuctionOpen) {
-      console.log(chalk.yellow(`Processing relay for ${chainName(chainId)}:`));
-      await processRelayTransaction(
-        rngWallet,
-        rngOzRelayer,
-        rngAuctionContracts,
-        config,
-        context,
-        contracts,
-      );
-    } else {
-      console.log(chalk.yellow(`Skipping relay as relay auction is currently closed`));
-      printSpacer();
-    }
+  } else if (context.drawAuctionState === DrawAuctionState.Award) {
+    console.log(chalk.yellow(`Processing 'award' for ${chainName(chainId)}:`));
+    await processRelayTransaction(
+      rngWallet,
+      rngOzRelayer,
+      rngAuctionContracts,
+      config,
+      context,
+      contracts,
+    );
   }
 }
 
