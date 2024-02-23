@@ -134,6 +134,7 @@ export interface AutotaskConfig {
   optimismRelayJsonRpcUri?: string;
   arbitrumSepoliaRelayJsonRpcUri?: string;
   optimismSepoliaRelayJsonRpcUri?: string;
+  optimismGoerliRelayJsonRpcUri?: string;
 }
 
 export interface DrawAuctionConfig extends AutotaskConfig {}
