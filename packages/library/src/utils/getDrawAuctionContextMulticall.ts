@@ -149,7 +149,14 @@ export const getRngMulticall = async (
   queries[DRAW_MANAGER_CAN_AWARD_DRAW_KEY] = rngAuctionContracts.drawManagerContract.canAwardDraw();
   queries[DRAW_MANAGER_AWARD_DRAW_FEE_KEY] = rngAuctionContracts.drawManagerContract.awardDrawFee();
 
-  // 2. Get and process results
+  // 2. Prize Pool Info
+  // queries[PRIZE_POOL_OPEN_DRAW_ID_KEY] = rngAuctionContracts.prizePoolContract.getOpenDrawId();
+  queries[PRIZE_POOL_RESERVE_KEY] = rngAuctionContracts.prizePoolContract.reserve();
+  queries[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
+    rngAuctionContracts.prizePoolContract.pendingReserveContributions();
+  queries[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] = rngAuctionContracts.prizePoolContract.prizeToken();
+
+  // 3. Get and process results
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   console.log('results');
@@ -160,28 +167,11 @@ export const getRngMulticall = async (
   const canAwardDraw = results[DRAW_MANAGER_CAN_AWARD_DRAW_KEY];
   const awardDrawFee = results[DRAW_MANAGER_AWARD_DRAW_FEE_KEY];
 
-  let queriesTwo: Record<string, any> = {};
+  // const drawId = results[PRIZE_POOL_OPEN_DRAW_ID_KEY];
+  // queries[PRIZE_POOL_DRAW_CLOSES_AT_KEY] =
+  //   rngAuctionContracts.prizePoolContract.drawClosesAt(drawId);
 
-  // 1. Prize Pool Info
-  queriesTwo[PRIZE_POOL_OPEN_DRAW_ID_KEY] = rngAuctionContracts.prizePoolContract.getOpenDrawId();
-  queriesTwo[PRIZE_POOL_RESERVE_KEY] = rngAuctionContracts.prizePoolContract.reserve();
-  queriesTwo[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
-    rngAuctionContracts.prizePoolContract.pendingReserveContributions();
-  queriesTwo[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] =
-    rngAuctionContracts.prizePoolContract.prizeToken();
-
-  // 4. Get and process first set of results
-  const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
-
-  // 5. Start second set of multicalls
-  let queriesThree: Record<string, any> = {};
-
-  // 6. Results One: Prize Pool
-  const drawId = resultsOne[PRIZE_POOL_OPEN_DRAW_ID_KEY];
-  queriesThree[PRIZE_POOL_DRAW_CLOSES_AT_KEY] =
-    rngAuctionContracts.prizePoolContract.drawClosesAt(drawId);
-
-  // const auctionDuration = resultsOne[RNG_AUCTION_AUCTION_DURATION_KEY];
+  // const auctionDuration = resultsTwo[RNG_AUCTION_AUCTION_DURATION_KEY];
 
   // let auctionExpired, auctionClosesSoon, elapsedTime;
   // if (rngResults.rngCompletedAt) {
@@ -198,24 +188,28 @@ export const getRngMulticall = async (
   //     percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
   // }
 
+  let queriesTwo: Record<string, any> = {};
+
   // 8. Results One: Reward Token
-  const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
+  const rewardTokenAddress = results[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, provider);
 
-  queriesThree[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
-  queriesThree[REWARD_NAME_KEY] = rewardTokenContract.name();
-  queriesThree[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
+  queriesTwo[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
+  queriesTwo[REWARD_NAME_KEY] = rewardTokenContract.name();
+  queriesTwo[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
 
   // 9. Results: Rng Reward
-  // const rngRelayLastSequenceId = resultsOne[RNG_AUCTION_LAST_SEQUENCE_ID_KEY];
+  // const rngRelayLastSequenceId = resultsTwo[RNG_AUCTION_LAST_SEQUENCE_ID_KEY];
 
-  // const prizePoolReserve = resultsOne[PRIZE_POOL_RESERVE_KEY];
+  // const prizePoolReserve = resultsTwo[PRIZE_POOL_RESERVE_KEY];
   // const prizePoolPendingReserveContributions =
-  //   resultsOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY];
+  //   resultsTwo[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY];
   // const reserveTotal = prizePoolReserve.add(prizePoolPendingReserveContributions);
 
   // 10. Get second set of multicall results
   const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
+  console.log('resultsTwo');
+  console.log(resultsTwo);
 
   // 12. Results two: Reward token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -230,6 +224,8 @@ export const getRngMulticall = async (
     symbol: resultsTwo[REWARD_SYMBOL_KEY],
     assetRateUsd: rewardTokenMarketRateUsd,
   };
+  console.log('rewardToken');
+  console.log(rewardToken);
 
   // 13. Results two: Auction info
   const startDrawFeeStr = ethers.utils.formatUnits(startDrawFee, rewardToken.decimals);
