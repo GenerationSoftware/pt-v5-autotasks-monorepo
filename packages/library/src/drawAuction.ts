@@ -26,7 +26,7 @@ import { ERC20Abi } from './abis/ERC20Abi';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
-interface StartDrawRequestTxParams {
+interface StartDrawTxParams {
   drawManagerAddress: string;
   rewardRecipient: string;
 }
@@ -330,19 +330,17 @@ const sendAwardDrawTransaction = async (
 // };
 
 /**
- * Figures out how much gas is required to run the RngAuction startRngRequest contract function
+ * Figures out how much gas is required to run the RngAuction startDraw contract function
  *
  * @returns {Promise} Promise of a BigNumber with the gas limit
  */
 const getStartDrawRequestEstimatedGasLimit = async (
   contract: Contract,
-  startRngRequestTxParams: StartDrawRequestTxParams,
+  startDrawTxParams: StartDrawTxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await contract.estimateGas.startRngRequest(
-      ...Object.values(startRngRequestTxParams),
-    );
+    estimatedGasLimit = await contract.estimateGas.startDraw(...Object.values(startDrawTxParams));
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -530,17 +528,17 @@ const getRngGasCost = async (
 
   let estimatedGasLimit, populatedTx;
 
-  const startRngRequestTxParams = buildStartDrawTxParams(
+  const startDrawTxParams = buildStartDrawTxParams(
     rngAuctionContracts.drawManagerContract.address,
     config.rewardRecipient,
   );
   estimatedGasLimit = await getStartDrawRequestEstimatedGasLimit(
     rngAuctionContracts.drawManagerContract,
-    startRngRequestTxParams,
+    startDrawTxParams,
   );
 
-  populatedTx = await rngAuctionContracts.drawManagerContract.populateTransaction.startRngRequest(
-    ...Object.values(startRngRequestTxParams),
+  populatedTx = await rngAuctionContracts.drawManagerContract.populateTransaction.startDraw(
+    ...Object.values(startDrawTxParams),
   );
 
   // This was a previous tx gas usage on Goerli + buffer room
@@ -560,7 +558,7 @@ const getRngGasCost = async (
 const buildStartDrawTxParams = (
   drawManagerAddress: string,
   rewardRecipient: string,
-): StartDrawRequestTxParams => {
+): StartDrawTxParams => {
   return {
     drawManagerAddress,
     rewardRecipient,
