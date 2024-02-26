@@ -201,7 +201,7 @@ export interface WalletSendTransactionArgs extends SendTransactionArgs {
 }
 
 export interface OzSendTransactionArgs extends SendTransactionArgs {
-  gasPrice?: string;
+  gasPrice?: BigNumber;
   isPrivate?: boolean;
   value?: BigNumber;
 }

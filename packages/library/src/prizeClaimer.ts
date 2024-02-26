@@ -199,18 +199,18 @@ export async function runPrizeClaimer(
 
       const gasLimit = 20000000;
       const { gasPrice } = await getGasPrice(provider);
-      const tx = await sendPopulatedTx(
-        chainId,
-        ozRelayer,
-        wallet,
-        populatedTx,
-        gasLimit,
-        gasPrice,
-        isPrivate,
-      );
+      // const tx = await sendPopulatedTx(
+      //   chainId,
+      //   ozRelayer,
+      //   wallet,
+      //   populatedTx,
+      //   gasLimit,
+      //   gasPrice,
+      //   isPrivate,
+      // );
 
-      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+      // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
       // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
       //       re-submit transactions, effectively giving them different tx hashes
@@ -219,7 +219,7 @@ export async function runPrizeClaimer(
       //       See querying here:
       //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
       console.log('Waiting on transaction to be confirmed ...');
-      await provider.waitForTransaction(tx.hash);
+      // await provider.waitForTransaction(tx.hash);
       console.log('Tx confirmed !');
     } else {
       console.log(

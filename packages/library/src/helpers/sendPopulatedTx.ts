@@ -1,7 +1,8 @@
-import { ethers, BigNumber, PopulatedTransaction, Wallet } from 'ethers';
+import { ethers, BigNumber, PopulatedTransaction, Wallet, Signer } from 'ethers';
 import { CHAIN_IDS } from '../constants/network';
 import { Relayer, RelayerTransaction } from 'defender-relay-client';
 import chalk from 'chalk';
+import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 import { SendTransactionArgs, OzSendTransactionArgs, WalletSendTransactionArgs } from '../types';
 import { printSpacer } from '../utils';
@@ -10,7 +11,7 @@ const ONE_GWEI = '1000000000';
 
 export const sendPopulatedTx = async (
   chainId: number,
-  relayer: Relayer,
+  signer: DefenderRelaySigner | Signer,
   wallet: Wallet,
   populatedTx: PopulatedTransaction,
   gasLimit: number,
@@ -27,6 +28,8 @@ export const sendPopulatedTx = async (
   // hopes it will get picked up quicker
   const gasPriceStr =
     chainId === CHAIN_IDS.mainnet ? gasPrice.add(ONE_GWEI).toString() : gasPrice.toString();
+  // console.log('gasPrice');
+  // console.log(gasPrice);
 
   const sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
@@ -35,23 +38,36 @@ export const sendPopulatedTx = async (
   };
 
   let tx;
-  if (relayer) {
+  if (signer) {
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
-      gasPrice: gasPriceStr,
+      gasPrice,
+      // gasPrice: `0x${gasPrice.toString()}`,
     };
 
     if (txParams && txParams.value) {
       args.value = txParams.value.toString();
     }
 
+    console.log('signer');
+    console.log(signer);
+
     // @ts-ignore
-    tx = await relayer.sendTransaction(args);
+    // tx = await relayer.sendTransaction(args);
+    console.log(signer.sendTransaction);
+    console.log(args);
+
+    tx = await signer.sendTransaction(args);
+
+    // signer = new DefenderRelaySigner(event, provider, {
+    //   speed: 'fast',
+    // });
+    // relayerAddress = await signer.getAddress();
   } else if (wallet) {
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,
-      gasPrice: BigNumber.from(gasPriceStr),
+      gasPrice,
     };
 
     if (txParams && txParams.value) {
