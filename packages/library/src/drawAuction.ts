@@ -49,9 +49,6 @@ export async function runDrawAuction(
   const { chainId, provider, wallet, ozRelayer, relayerAddress, rewardRecipient, covalentApiKey } =
     config;
 
-  console.log(`ethers.utils.formatEther('1000000000')`);
-  console.log(ethers.utils.formatEther('1000000000'));
-
   const rngAuctionContracts = instantiateRngAuctionContracts(config, contracts);
 
   // #1. Get info about the prize pool prize/reserve token, auction states, etc.
@@ -506,11 +503,13 @@ const buildStartDrawTxParams = (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
 ): StartDrawTxParams => {
+  console.log(`ethers.utils.parseEther('0.0001000000000')`);
+  console.log(ethers.utils.parseEther('0.0001000000000'));
   return {
     drawManagerAddress: rngAuctionContracts.drawManagerContract.address,
     rewardRecipient: config.rewardRecipient,
     // value: '0x1000000000000000', //  '0.0001'
-    value: ethers.utils.formatEther('1000000000'), //  1.152921504606846976 ETH
+    value: ethers.utils.parseEther('0.00001000000000'), //  1.152921504606846976 ETH
     // value: '0x1000000000000000', //  1.152921504606846976 ETH
   };
 };
