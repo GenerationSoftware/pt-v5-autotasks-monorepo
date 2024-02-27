@@ -19,9 +19,8 @@ import {
   getNativeTokenMarketRateUsd,
 } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
-import { VrfRngAbi } from '../abis/VrfRngAbi';
 import { printSpacer } from './logging';
-import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
+// import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -36,6 +35,8 @@ const PRIZE_POOL_DRAW_CLOSES_AT_KEY = 'prizePool-drawClosesAt';
 const PRIZE_POOL_OPEN_DRAW_ID_KEY = 'prizePool-openDrawId';
 const PRIZE_POOL_RESERVE_KEY = 'prizePool-reserve';
 const PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY = 'prizePool-pendingReserveContributions';
+
+const RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY = 'rngWitnet-estimateRandomizeFee';
 
 const DRAW_MANAGER_CAN_START_DRAW_KEY = 'drawManager-canStartDraw';
 const DRAW_MANAGER_START_DRAW_FEE_KEY = 'drawManager-startDrawFee';
@@ -153,7 +154,12 @@ export const getRngMulticall = async (
   queriesOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY] =
     rngAuctionContracts.drawManagerContract.awardDrawFee();
 
-  // 2. Queries One: Prize Pool Info
+  // 2. Queries One: Rng Witnet
+  const { gasPrice } = await getGasPrice(provider);
+  queriesOne[RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
+    rngAuctionContracts.rngWitnetContract.estimateRandomizeFee(gasPrice);
+
+  // 3. Queries One: Prize Pool Info
   queriesOne[PRIZE_POOL_OPEN_DRAW_ID_KEY] = rngAuctionContracts.prizePoolContract.getOpenDrawId();
   queriesOne[PRIZE_POOL_RESERVE_KEY] = rngAuctionContracts.prizePoolContract.reserve();
   queriesOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
@@ -161,19 +167,22 @@ export const getRngMulticall = async (
   queriesOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] =
     rngAuctionContracts.prizePoolContract.prizeToken();
 
-  // 3. Get and process results
+  // 4. Get and process results
   const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
-
   console.log('resultsOne');
   console.log(resultsOne);
-  // 4. Results One: Draw Manager
+
+  // 5. Results One: Draw Manager
   const canStartDraw = resultsOne[DRAW_MANAGER_CAN_START_DRAW_KEY];
   const startDrawFee = resultsOne[DRAW_MANAGER_START_DRAW_FEE_KEY];
 
   const canAwardDraw = resultsOne[DRAW_MANAGER_CAN_AWARD_DRAW_KEY];
   const awardDrawFee = resultsOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY];
 
-  // 5. Results One: Prize Pool
+  // 6. Results One: Rng Witnet
+  const rngFeeEstimate = resultsOne[RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
+
+  // 7. Results One: Prize Pool
   const drawId = resultsOne[PRIZE_POOL_OPEN_DRAW_ID_KEY];
   const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
 
@@ -205,9 +214,6 @@ export const getRngMulticall = async (
   queriesTwo[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
   queriesTwo[REWARD_NAME_KEY] = rewardTokenContract.name();
   queriesTwo[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
-
-  // X. Results: Rng Reward
-  // const rngRelayLastSequenceId = resultsTwo[RNG_AUCTION_LAST_SEQUENCE_ID_KEY];
 
   // const prizePoolReserve = resultsTwo[PRIZE_POOL_RESERVE_KEY];
   // const prizePoolPendingReserveContributions =
@@ -267,6 +273,8 @@ export const getRngMulticall = async (
     canAwardDraw,
     awardDrawFee,
     awardDrawFeeUsd,
+
+    rngFeeEstimate,
 
     rewardToken,
     prizePoolDrawClosesAt,

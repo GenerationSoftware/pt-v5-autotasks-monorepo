@@ -148,6 +148,8 @@ export interface DrawAuctionContext {
   awardDrawFee: BigNumber;
   awardDrawFeeUsd: number;
 
+  rngFeeEstimate: BigNumber;
+
   prizePoolDrawClosesAt: number;
   rewardToken: TokenWithRate;
 

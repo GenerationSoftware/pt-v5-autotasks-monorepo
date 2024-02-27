@@ -503,13 +503,16 @@ const buildStartDrawTxParams = (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
 ): StartDrawTxParams => {
-  console.log(`ethers.utils.parseEther('0.0001000000000')`);
-  console.log(ethers.utils.parseEther('0.0001000000000'));
+  console.log(`context.rngFeeEstimate`);
+  console.log(context.rngFeeEstimate.toString());
+  console.log(`context.rngFeeEstimate.mul(2)`);
+  console.log(context.rngFeeEstimate.mul(2).toString());
   return {
     drawManagerAddress: rngAuctionContracts.drawManagerContract.address,
     rewardRecipient: config.rewardRecipient,
     // value: '0x1000000000000000', //  '0.0001'
-    value: ethers.utils.parseEther('0.00001000000000'), //  1.152921504606846976 ETH
+    // 0.000003
+    value: context.rngFeeEstimate.mul(2), //  1.152921504606846976 ETH
     // value: '0x1000000000000000', //  1.152921504606846976 ETH
   };
 };
