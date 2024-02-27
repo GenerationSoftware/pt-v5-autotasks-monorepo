@@ -27,7 +27,7 @@ import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 interface StartDrawTxParams {
   drawManagerAddress: string;
   rewardRecipient: string;
-  value: string;
+  value: BigNumber;
 }
 
 interface AwardDrawTxParams {
