@@ -1,7 +1,6 @@
 import { ethers, BigNumber, Contract, PopulatedTransaction, Wallet, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
-import { formatUnits } from '@ethersproject/units';
 import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
 
@@ -17,12 +16,11 @@ import {
   getGasPrice,
 } from './utils';
 import { chainName } from './utils/network';
-import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,
 } from './utils/getDrawAuctionContextMulticall';
-import { ERC20Abi } from './abis/ERC20Abi';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
@@ -36,7 +34,90 @@ interface AwardDrawTxParams {
   rewardRecipient: string;
 }
 
-const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
+// const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
+
+/**
+ * Figures out the current state of the Rng / RngRelay Auction and if it's profitable
+ * to run any of the transactions, populates and returns the tx object
+ *
+ * @returns {undefined} void function
+ */
+export async function runDrawAuction(
+  contracts: ContractsBlob,
+  config: DrawAuctionConfig,
+): Promise<void> {
+  const { chainId, provider, wallet, ozRelayer, relayerAddress, rewardRecipient, covalentApiKey } =
+    config;
+
+  console.log(`ethers.utils.formatEther('1000000000')`);
+  console.log(ethers.utils.formatEther('1000000000'));
+
+  const rngAuctionContracts = instantiateRngAuctionContracts(config, contracts);
+
+  // #1. Get info about the prize pool prize/reserve token, auction states, etc.
+  const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
+    chainId,
+    provider,
+    rngAuctionContracts,
+    relayerAddress,
+    rewardRecipient,
+    covalentApiKey,
+  );
+
+  printContext(chainId, context);
+
+  if (!context.drawAuctionState) {
+    printAsterisks();
+    console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
+    printSpacer();
+
+    return;
+  }
+
+  // #4. Calculate profit and send transactions when profitable
+  let rewardUsd = 0;
+  if (context.drawAuctionState === DrawAuctionState.Start) {
+    rewardUsd = context.startDrawFeeUsd;
+
+    // const gasCostUsd = -0.01;
+    const gasCostUsd = await getRngGasCost(provider, rngAuctionContracts, config, context);
+    console.log('gasCostUsd');
+    console.log(gasCostUsd);
+    if (gasCostUsd === 0) {
+      printAsterisks();
+      console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
+      return;
+    }
+
+    const profitable = await calculateStartDrawProfit(config, rewardUsd, gasCostUsd, context);
+
+    if (profitable) {
+      await sendStartDrawTransaction(
+        chainId,
+        wallet,
+        ozRelayer,
+        provider,
+        rngAuctionContracts,
+        config,
+        context,
+      );
+    } else {
+      console.log(
+        chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
+      );
+    }
+  } else if (context.drawAuctionState === DrawAuctionState.Award) {
+    console.log(chalk.yellow(`Processing 'award' for ${chainName(chainId)}:`));
+    await sendAwardDrawTransaction(
+      wallet,
+      ozRelayer,
+      rngAuctionContracts,
+      config,
+      context,
+      contracts,
+    );
+  }
+}
 
 const instantiateRngAuctionContracts = (
   config: DrawAuctionConfig,
@@ -71,111 +152,19 @@ const instantiateRngAuctionContracts = (
   };
 };
 
-/**
- * Figures out the current state of the Rng / RngRelay Auction and if it's profitable
- * to run any of the transactions, populates and returns the tx object
- *
- * @returns {undefined} void function
- */
-export async function runDrawAuction(
-  contracts: ContractsBlob,
-  config: DrawAuctionConfig,
-): Promise<void> {
-  const {
-    chainId,
-    provider,
-    rngWallet,
-    rngOzRelayer,
-    rngRelayerAddress,
-    signer,
-    rewardRecipient,
-    covalentApiKey,
-  } = config;
+const transformTxParams = (txParams): { value: number; transformedTxParams: object } => {
+  const transformedTxParams = { ...txParams };
 
-  const rngAuctionContracts = instantiateRngAuctionContracts(config, contracts);
+  const value = transformedTxParams.value;
+  delete transformedTxParams.value;
 
-  // #1. Get info about the prize pool prize/reserve token, auction states, etc.
-  const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
-    chainId,
-    provider,
-    rngAuctionContracts,
-    rngRelayerAddress,
-    rewardRecipient,
-    covalentApiKey,
-  );
-
-  printContext(chainId, context);
-
-  if (!context.drawAuctionState) {
-    printAsterisks();
-    console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
-    printSpacer();
-
-    return;
-  }
-
-  // #3. If there is an RNG Fee, figure out if the bot can afford it
-  // if (context.drawAuctionState === DrawAuctionState.Start) {
-  //   console.log(chalk.blue(`Checking Relayer's RNG Fee token balance ...`));
-  //   printSpacer();
-
-  //   const enoughBalance = checkBalance(context);
-  //   if (!enoughBalance) {
-  //     return;
-  //   }
-
-  //   await increaseRngFeeAllowance(signer, rngRelayerAddress, context, rngAuctionContracts);
-  // }
-
-  // #4. Calculate profit and send transactions when profitable
-  let rewardUsd = 0;
-  if (context.drawAuctionState === DrawAuctionState.Start) {
-    rewardUsd = context.startDrawFeeUsd;
-
-    // const gasCostUsd = -0.01;
-    const gasCostUsd = await getRngGasCost(provider, rngAuctionContracts, config, context);
-    console.log('gasCostUsd');
-    console.log(gasCostUsd);
-    if (gasCostUsd === 0) {
-      printAsterisks();
-      console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
-      return;
-    }
-
-    const profitable = await calculateStartDrawProfit(config, rewardUsd, gasCostUsd, context);
-
-    if (profitable) {
-      await sendStartDrawTransaction(
-        chainId,
-        rngWallet,
-        signer,
-        provider,
-        rngAuctionContracts,
-        config,
-        context,
-      );
-    } else {
-      console.log(
-        chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
-      );
-    }
-  } else if (context.drawAuctionState === DrawAuctionState.Award) {
-    console.log(chalk.yellow(`Processing 'award' for ${chainName(chainId)}:`));
-    await sendAwardDrawTransaction(
-      rngWallet,
-      rngOzRelayer,
-      rngAuctionContracts,
-      config,
-      context,
-      contracts,
-    );
-  }
-}
+  return { value, transformedTxParams };
+};
 
 const sendStartDrawTransaction = async (
   chainId: number,
-  rngWallet: Wallet,
-  signer: DefenderRelaySigner | Signer,
+  wallet: Wallet,
+  ozRelayer: Relayer,
   provider: Provider,
   rngAuctionContracts: RngAuctionContracts,
   config: DrawAuctionConfig,
@@ -187,34 +176,29 @@ const sendStartDrawTransaction = async (
   const contract = rngAuctionContracts.rngWitnetContract;
 
   const txParams = buildStartDrawTxParams(rngAuctionContracts, config, context);
-  // console.log('txParams');
-  // console.log(txParams);
+  console.log('txParams');
+  console.log(txParams);
 
-  const cloneTxParams = { ...txParams };
-
-  const value = cloneTxParams.value;
-  delete cloneTxParams.value;
-
-  // console.log(...Object.values(cloneTxParams), { value });
+  const { value, transformedTxParams } = transformTxParams(txParams);
 
   const populatedTx: PopulatedTransaction = await contract.populateTransaction.startDraw(
-    ...Object.values(cloneTxParams),
+    ...Object.values(transformedTxParams),
     { value },
   );
   console.log('populatedTx');
   console.log(populatedTx);
 
-  // const { gasPrice } = await getGasPrice(provider);
+  const { gasPrice } = await getGasPrice(provider);
   console.log(chalk.greenBright.bold(`Sending ...`));
-  // console.log('gasPrice');
-  // console.log(gasPrice);
-  const gasPrice = BigNumber.from(100000000);
+  console.log('gasPrice');
+  console.log(gasPrice);
+  // const gasPrice = BigNumber.from(100000000);
 
   const gasLimit = 850000;
   const tx = await sendPopulatedTx(
     chainId,
-    signer,
-    rngWallet,
+    ozRelayer,
+    wallet,
     populatedTx,
     gasLimit,
     gasPrice,
@@ -225,12 +209,12 @@ const sendStartDrawTransaction = async (
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
-  // printNote();
+  printNote();
 };
 
 const sendAwardDrawTransaction = async (
-  rngWallet: Wallet,
-  rngOzRelayer: Relayer,
+  wallet: Wallet,
+  ozRelayer: Relayer,
   rngAuctionContracts: RngAuctionContracts,
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
@@ -238,7 +222,7 @@ const sendAwardDrawTransaction = async (
 ) => {
   const { chainId, provider } = config;
 
-  const contract = rngAuctionContracts.rngWitnetContract;
+  const contract = rngAuctionContracts.drawManagerContract;
 
   const txParams = buildAwardDrawTxParams(config.rewardRecipient);
 
@@ -263,14 +247,7 @@ const sendAwardDrawTransaction = async (
   // #5. Send transaction
   // if (profitable || forceRelay) {
   if (profitable) {
-    await sendPopulatedAwardDrawTransaction(
-      chainId,
-      rngWallet,
-      rngOzRelayer,
-      txParams,
-      contract,
-      config,
-    );
+    await sendPopulatedAwardDrawTransaction(chainId, wallet, ozRelayer, txParams, contract, config);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -278,76 +255,14 @@ const sendAwardDrawTransaction = async (
   }
 };
 
-// If we already submitted the StartRNG request - and therefore paid the LINK/RNG fee
-// and gas fee for it - we should make sure the relay goes through, assuming
-// it was us who won the StartRNG auction, that the amount of loss we'll take is within
-// acceptable range
-// const calculateForceRelay = (
-//   config: DrawAuctionConfig,
-//   context: DrawAuctionContext,
-//   netProfitUsd: number,
-// ) => {
-//   // Is recipient for the StartRNG auction same as the upcoming Relay?
-//   // (this is a bit naïve as the RNG reward recipient could differ from the relay reward recipient,
-//   //   but it's likely this will be the same address)
-//   const sameRecipient = context.rngLastAuctionResult.recipient === config.rewardRecipient;
-//   console.log('sameRecipient');
-//   console.log(sameRecipient);
-
-//   console.log('netProfitUsd');
-//   console.log(netProfitUsd);
-
-//   console.log('MAX_FORCE_RELAY_LOSS_THRESHOLD_USD');
-//   console.log(MAX_FORCE_RELAY_LOSS_THRESHOLD_USD);
-
-//   const lossOkay = netProfitUsd > MAX_FORCE_RELAY_LOSS_THRESHOLD_USD;
-//   console.log('lossOkay');
-//   console.log(lossOkay);
-
-//   return context.auctionClosesSoon && sameRecipient && lossOkay;
-// };
-
-// const checkBalance = (context: DrawAuctionContext): boolean => {
-//   logBigNumber(
-//     `Relayer RNG Fee Token Balance:`,
-//     context.rngRelayer.rngFeeTokenBalance,
-//     context.rngFeeToken.decimals,
-//     context.rngFeeToken.symbol,
-//   );
-
-//   // Bot/Relayer can't afford RNG fee
-//   if (context.rngRelayer.rngFeeTokenBalance.lt(context.rngFeeAmount)) {
-//     const diff = context.rngFeeAmount.sub(context.rngRelayer.rngFeeTokenBalance);
-//     const diffStr = parseFloat(formatUnits(diff, context.rngFeeToken.decimals));
-
-//     console.warn(
-//       chalk.yellow(
-//         `Need to increase RNG L1 relayer/bot's balance of '${context.rngFeeToken.symbol}' token by ${diffStr} to pay RNG fee.`,
-//       ),
-//     );
-
-//     return false;
-//   } else {
-//     console.log(chalk.green('Sufficient balance ✔'));
-
-//     printSpacer();
-//     const estimateCount = context.rngRelayer.rngFeeTokenBalance.div(context.rngFeeAmount);
-//     logStringValue(
-//       `Estimate DrawAuction RNG requests left at current balance:`,
-//       estimateCount.toString(),
-//     );
-//     return true;
-//   }
-// };
-
-// const printNote = () => {
-//   console.log(chalk.yellow('|*******************************************************|'));
-//   console.log(chalk.yellow('|                                                       |'));
-//   console.log(chalk.yellow('|   Rewards accumulate post-relay() on the PrizePool!   |'));
-//   console.log(chalk.yellow('|       Withdraw your rewards from the PrizePool        |'));
-//   console.log(chalk.yellow('|                                                       |'));
-//   console.log(chalk.yellow('|*******************************************************|'));
-// };
+const printNote = () => {
+  console.log(chalk.yellow('|*******************************************************|'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|  Rewards accumulate post-awarding on the PrizePool!   |'));
+  console.log(chalk.yellow('|  Withdraw your rewards manually from that contract.   |'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|*******************************************************|'));
+};
 
 /**
  * Figures out how much gas is required to run the RngWitnet startDraw contract function
@@ -360,14 +275,14 @@ const getStartDrawEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    const cloneTxParams = { ...startDrawTxParams };
+    const { value, transformedTxParams } = transformTxParams(startDrawTxParams);
 
-    const value = cloneTxParams.value;
-    delete cloneTxParams.value;
-
-    estimatedGasLimit = await contract.estimateGas.startDraw(...Object.values(cloneTxParams), {
-      value,
-    });
+    estimatedGasLimit = await contract.estimateGas.startDraw(
+      ...Object.values(transformedTxParams),
+      {
+        value,
+      },
+    );
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -565,13 +480,10 @@ const getRngGasCost = async (
   console.log('estimatedGasLimit');
   console.log(estimatedGasLimit);
 
-  const cloneTxParams = { ...startDrawTxParams };
-
-  const value = cloneTxParams.value;
-  delete cloneTxParams.value;
+  const { value, transformedTxParams } = transformTxParams(startDrawTxParams);
 
   populatedTx = await rngAuctionContracts.rngWitnetContract.populateTransaction.startDraw(
-    ...Object.values(cloneTxParams),
+    ...Object.values(transformedTxParams),
     { value },
   );
 
@@ -597,8 +509,9 @@ const buildStartDrawTxParams = (
   return {
     drawManagerAddress: rngAuctionContracts.drawManagerContract.address,
     rewardRecipient: config.rewardRecipient,
-    // value: BigNumber.from('0.0001'),
-    value: '0x1000000000000000',
+    // value: '0x1000000000000000', //  '0.0001'
+    value: ethers.utils.formatEther('1000000000'), //  1.152921504606846976 ETH
+    // value: '0x1000000000000000', //  1.152921504606846976 ETH
   };
 };
 
@@ -620,17 +533,11 @@ const getAwardDrawGasCost = async (
   const { chainId, provider } = config;
   const { nativeTokenMarketRateUsd } = context;
 
-  let estimatedGasLimit: BigNumber;
-  let populatedTx: PopulatedTransaction;
-  if (context.drawAuctionState === DrawAuctionState.Award) {
-    // The relay uses 156,000~ gas, set to 200k just in case
-    estimatedGasLimit = BigNumber.from(400000);
-    // estimatedGasLimit = await getEstimatedGasLimitOptimismRelayTx(txParams, contract);
-    populatedTx = await populateAwardDrawTx(txParams, contract);
-  } else {
-    // TODO: Fill this in if/when we have a need for RelayerDirect (where the PrizePool
-    // exists on same chain as RNG service)
-  }
+  // The relay uses 156,000~ gas, set to 200k just in case
+  const estimatedGasLimit: BigNumber = BigNumber.from(400000);
+  const populatedTx: PopulatedTransaction = await contract.populateTransaction.awardDraw(
+    ...Object.values(txParams),
+  );
 
   const gasCostUsd = await getGasCostUsd(
     estimatedGasLimit,
@@ -691,13 +598,14 @@ const getGasCostUsd = async (
 
 const sendPopulatedAwardDrawTransaction = async (
   chainId: number,
-  rngWallet: Wallet,
-  rngOzRelayer: Relayer,
+  wallet: Wallet,
+  ozRelayer: Relayer,
   txParams: AwardDrawTxParams,
   contract: Contract,
   config: DrawAuctionConfig,
 ) => {
   const { gasPrice } = await getGasPrice(config.provider);
+  // const gasPrice = BigNumber.from(100000000);
 
   console.log(chalk.green(`Execute DrawManager#awardDraw`));
   console.log(chalk.greenBright.bold(`Sending ...`));
@@ -706,90 +614,25 @@ const sendPopulatedAwardDrawTransaction = async (
   const populatedTx = await contract.populateTransaction.awardDraw(...Object.values(txParams));
 
   const gasLimit = 800000;
-  // const tx = await sendPopulatedTx(
-  //   chainId,
-  //   rngOzRelayer,
-  //   rngWallet,
-  //   populatedTx,
-  //   gasLimit,
-  //   gasPrice,
-  //   false,
-  //   txParams,
-  // );
+  const tx = await sendPopulatedTx(
+    chainId,
+    ozRelayer,
+    wallet,
+    populatedTx,
+    gasLimit,
+    gasPrice,
+    false,
+    txParams,
+  );
 
-  // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
-  // printNote();
+  printNote();
 
-  // return tx;
+  return tx;
 };
-
-// const increaseRngFeeAllowance = async (
-//   signer: DefenderRelaySigner | Signer,
-//   rngRelayerAddress: string,
-//   context: DrawAuctionContext,
-//   rngAuctionContracts: RngAuctionContracts,
-// ) => {
-//   printSpacer();
-//   printSpacer();
-//   console.log(chalk.blue(`Checking allowance ...`));
-
-//   // Increase allowance if necessary - so the RNG Auction contract can spend the bot's RNG Fee Token
-//   await approve(signer, rngRelayerAddress, rngAuctionContracts, context);
-// };
-
-/**
- * Allowance - Give permission to the RngAuctionHelper contract to spend our Relayer/Bot's
- * RNG Fee Token (likely LINK). We will set allowance to max as we trust the security of the
- * RngAuctionHelper contract (you may want to change this!)
- * @returns {undefined} - void function
- */
-// const approve = async (
-//   signer: DefenderRelaySigner | Signer,
-//   rngRelayerAddress: string,
-//   rngAuctionContracts: RngAuctionContracts,
-//   context: DrawAuctionContext,
-// ) => {
-//   try {
-//     const rngFeeTokenContract = new ethers.Contract(context.rngFeeToken.address, ERC20Abi, signer);
-
-//     const allowance = context.rngRelayer.rngFeeTokenAllowance;
-
-//     if (allowance.lt(context.rngFeeAmount)) {
-//       // Use the RngAuctionHelper if this is Chainlink VRFV2
-//       console.log(
-//         chalk.yellowBright(
-//           `Increasing RNG L1 relayer '${rngRelayerAddress}' ${context.rngFeeToken.symbol} allowance for the ChainlinkVRFV2DirectRngAuctionHelper to maximum ...`,
-//         ),
-//       );
-
-//       const tx = await rngFeeTokenContract.approve(
-//         rngAuctionContracts.drawManagerContract.address,
-//         ethers.constants.MaxInt256,
-//       );
-//       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-//       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-//       await tx.wait();
-
-//       const newAllowanceResult = await rngFeeTokenContract.allowance(
-//         rngRelayerAddress,
-//         rngAuctionContracts.drawManagerContract.address,
-//       );
-//       logStringValue('New allowance:', newAllowanceResult.toString());
-//     } else {
-//       console.log(chalk.green('Sufficient allowance ✔'));
-//     }
-//   } catch (error) {
-//     console.log(chalk.red('error: ', error));
-//   }
-//   printSpacer();
-// };
 
 const checkOrX = (bool: boolean): string => {
   return bool ? '✔' : '✗';
-};
-
-const populateAwardDrawTx = async (txParams, contract) => {
-  return await contract.populateTransaction.awardDraw(...Object.values(txParams));
 };

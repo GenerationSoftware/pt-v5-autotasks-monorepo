@@ -49,9 +49,9 @@ export async function handler(event) {
     optimismGoerliRelayJsonRpcUri: envVars.OPTIMISM_GOERLI_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
-    rngOzRelayer: relayerAccount.ozRelayer,
-    rngWallet: relayerAccount.wallet,
-    rngRelayerAddress: relayerAccount.relayerAddress,
+    ozRelayer: relayerAccount.ozRelayer,
+    wallet: relayerAccount.wallet,
+    relayerAddress: relayerAccount.relayerAddress,
   };
 
   await executeTransactions(drawAuctionConfig);

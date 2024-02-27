@@ -54,9 +54,9 @@ if (esMain(import.meta)) {
     optimismGoerliRelayJsonRpcUri: process.env.OPTIMISM_GOERLI_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
-    rngWallet: relayerAccount.wallet,
-    rngOzRelayer: relayerAccount.ozRelayer,
-    rngRelayerAddress: relayerAccount.relayerAddress,
+    wallet: relayerAccount.wallet,
+    ozRelayer: relayerAccount.ozRelayer,
+    relayerAddress: relayerAccount.relayerAddress,
   };
 
   await executeTransactions(drawAuctionConfig);

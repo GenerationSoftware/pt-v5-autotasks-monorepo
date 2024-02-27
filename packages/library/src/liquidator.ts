@@ -302,24 +302,24 @@ export async function runLiquidator(
 
       const gasLimit = 750000;
       const { gasPrice } = await getGasPrice(provider);
-      // const tx = await sendPopulatedTx(
-      //   chainId,
-      //   ozRelayer,
-      //   wallet,
-      //   populatedTx,
-      //   gasLimit,
-      //   gasPrice,
-      //   useFlashbots,
-      // );
+      const tx = await sendPopulatedTx(
+        chainId,
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
 
-      // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
-      // stats.push({
-      //   pair,
-      //   estimatedProfitUsd,
-      //   txHash: tx.hash,
-      // });
+      stats.push({
+        pair,
+        estimatedProfitUsd,
+        txHash: tx.hash,
+      });
     } catch (error) {
       stats.push({
         pair,

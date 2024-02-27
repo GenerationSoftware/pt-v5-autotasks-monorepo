@@ -23,8 +23,8 @@ export async function runYieldVaultMintRate(
       const gasLimit = 200000;
       const { gasPrice } = await getGasPrice(provider);
       console.log(`YieldVault: mintRate() ${yieldVaultContract.address}`);
-      // const tx = await sendPopulatedTx(chainId, ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
-      // console.log('TransactionHash:', tx.hash);
+      const tx = await sendPopulatedTx(chainId, ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
+      console.log('TransactionHash:', tx.hash);
       console.log('');
     } catch (error) {
       throw new Error(error);

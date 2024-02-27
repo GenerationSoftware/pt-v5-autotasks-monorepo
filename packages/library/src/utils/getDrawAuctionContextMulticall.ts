@@ -57,7 +57,7 @@ const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
  * @param chainId chain ID that starts the RNG Request
  * @param provider provider for the RNG chain that will be queried
  * @param rngAuctionContracts RngAuctionContracts, a collection of ethers contracts to use for querying
- * @param rngRelayerAddress the bot's address
+ * @param relayerAddress the bot's address
  * @param rewardRecipient the account which will receive rewards for submitting RNG requests and finishing auctions
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns DrawAuctionContext
@@ -66,7 +66,7 @@ export const getDrawAuctionContextMulticall = async (
   chainId: number,
   provider: Provider,
   rngAuctionContracts: RngAuctionContracts,
-  rngRelayerAddress: string,
+  relayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
@@ -76,7 +76,7 @@ export const getDrawAuctionContextMulticall = async (
     chainId,
     provider,
     rngAuctionContracts,
-    rngRelayerAddress,
+    relayerAddress,
     rewardRecipient,
     covalentApiKey,
   );
@@ -94,7 +94,7 @@ const getContext = async (
   chainId: number,
   provider: Provider,
   rngAuctionContracts: RngAuctionContracts,
-  rngRelayerAddress: string,
+  relayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
@@ -106,7 +106,7 @@ const getContext = async (
     provider,
     chainId,
     rngAuctionContracts,
-    rngRelayerAddress,
+    relayerAddress,
     rewardRecipient,
     covalentApiKey,
   );
@@ -133,7 +133,7 @@ export const getRngMulticall = async (
   provider: Provider,
   chainId: number,
   rngAuctionContracts: RngAuctionContracts,
-  rngRelayerAddress: string,
+  relayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {

@@ -11,7 +11,7 @@ const ONE_GWEI = '1000000000';
 
 export const sendPopulatedTx = async (
   chainId: number,
-  signer: DefenderRelaySigner | Signer,
+  relayer: Relayer,
   wallet: Wallet,
   populatedTx: PopulatedTransaction,
   gasLimit: number,
@@ -38,11 +38,11 @@ export const sendPopulatedTx = async (
   };
 
   let tx;
-  if (signer) {
+  if (relayer) {
     const args: OzSendTransactionArgs = {
       ...sendTransactionArgs,
       isPrivate,
-      gasPrice,
+      gasPrice: gasPriceStr,
       // gasPrice: `0x${gasPrice.toString()}`,
     };
 
@@ -50,20 +50,8 @@ export const sendPopulatedTx = async (
       args.value = txParams.value.toString();
     }
 
-    console.log('signer');
-    console.log(signer);
-
     // @ts-ignore
-    // tx = await relayer.sendTransaction(args);
-    console.log(signer.sendTransaction);
-    console.log(args);
-
-    tx = await signer.sendTransaction(args);
-
-    // signer = new DefenderRelaySigner(event, provider, {
-    //   speed: 'fast',
-    // });
-    // relayerAddress = await signer.getAddress();
+    tx = await relayer.sendTransaction(args);
   } else if (wallet) {
     const args: WalletSendTransactionArgs = {
       ...sendTransactionArgs,

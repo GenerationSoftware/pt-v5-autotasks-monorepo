@@ -125,9 +125,9 @@ export interface AutotaskConfig {
   relayerApiKey?: string;
   relayerApiSecret?: string;
   covalentApiKey?: string;
-  rngWallet: Wallet;
-  rngOzRelayer: Relayer;
-  rngRelayerAddress: string;
+  wallet: Wallet;
+  ozRelayer: Relayer;
+  relayerAddress: string;
   signer: DefenderRelaySigner | Signer;
 
   arbitrumRelayJsonRpcUri?: string;
@@ -201,7 +201,7 @@ export interface WalletSendTransactionArgs extends SendTransactionArgs {
 }
 
 export interface OzSendTransactionArgs extends SendTransactionArgs {
-  gasPrice?: BigNumber;
+  gasPrice?: string;
   isPrivate?: boolean;
   value?: BigNumber;
 }
