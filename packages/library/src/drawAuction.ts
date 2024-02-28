@@ -22,15 +22,20 @@ import {
 } from './utils/getDrawAuctionContextMulticall';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
-interface StartDrawTxParams {
+type StartDrawTxParams = {
   drawManagerAddress: string;
   rewardRecipient: string;
   value: BigNumber;
-}
+};
 
-interface AwardDrawTxParams {
+type AwardDrawTxParams = {
   rewardRecipient: string;
-}
+};
+
+type StartDrawTransformedTxParams = {
+  transformedTxParams: object;
+  value: BigNumber;
+};
 
 // const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
 
@@ -133,7 +138,7 @@ const checkStartDraw = async (
   const profitable = await calculateStartDrawProfit(config, context, rewardUsd, gasCostUsd);
 
   if (profitable) {
-    await sendStartDrawTransaction(config, context, drawAuctionContracts);
+    await sendPopulatedStartDrawTransaction(config, context, drawAuctionContracts);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -144,9 +149,13 @@ const checkStartDraw = async (
 /**
  * Begins sending the RngWitnet#startDraw() payable function.
  *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
+ *
  * @returns {undefined} void function
  */
-const sendStartDrawTransaction = async (
+const sendPopulatedStartDrawTransaction = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
@@ -234,21 +243,12 @@ const checkAwardDraw = async (
   // #5. Send transaction
   // if (profitable || forceRelay) {
   if (profitable) {
-    await sendPopulatedAwardDrawTransaction(chainId, wallet, ozRelayer, txParams, contract, config);
+    await sendPopulatedAwardDrawTransaction(config, txParams, contract);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
-};
-
-const printNote = () => {
-  console.log(chalk.yellow('|*******************************************************|'));
-  console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|  Rewards accumulate post-awarding on the PrizePool!   |'));
-  console.log(chalk.yellow('|  Withdraw your rewards manually from that contract.   |'));
-  console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|*******************************************************|'));
 };
 
 /**
@@ -329,9 +329,9 @@ const calculateStartDrawProfit = async (
 };
 
 /**
- * Determines if a Award Draw transaction will be profitable.
+ * Determines if the DrawManager#awardDraw() transaction will be profitable.
  *
- * Takes into account the cost of gas for the DrawManager awardDraw(),
+ * Takes into account the cost of gas for the DrawManager#awardDraw(),
  * and the rewards earned.
  *
  * @returns {Promise} Promise of a boolean for profitability
@@ -377,7 +377,8 @@ const calculateAwardDrawProfit = async (
 };
 
 /**
- * Logs the context to the console
+ * Logs the context to the console.
+ *
  * @returns {undefined} void function
  */
 const printContext = (chainId: number, context: DrawAuctionContext) => {
@@ -447,6 +448,12 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   printSpacer();
 };
 
+/**
+ *
+ *
+ *
+ * @returns {Promise} Promise of a boolean for profitability
+ */
 const getStartDrawGasCost = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
@@ -583,15 +590,21 @@ const getGasCostUsd = async (
   return avgFeeUsd;
 };
 
+/**
+ * Fires off the DrawManager#awardDraw() transaction
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {AwardDrawTxParams} txParams, transaction parameters
+ * @param {Contract} contract, ethers.js Contract instance of the DrawManager contract
+ *
+ * @returns {StartDrawTransformedTxParams}
+ */
 const sendPopulatedAwardDrawTransaction = async (
-  chainId: number,
-  wallet: Wallet,
-  ozRelayer: Relayer,
+  config: DrawAuctionConfig,
   txParams: AwardDrawTxParams,
   contract: Contract,
-  config: DrawAuctionConfig,
 ) => {
-  const { provider } = config;
+  const { chainId, wallet, ozRelayer, provider } = config;
   const gasPrice = await provider.getGasPrice();
 
   console.log(chalk.green(`Execute DrawManager#awardDraw`));
@@ -624,14 +637,11 @@ const checkOrX = (bool: boolean): string => {
   return bool ? '✔' : '✗';
 };
 
-type StartDrawTransformedTxParams = {
-  transformedTxParams: object;
-  value: BigNumber;
-};
-
 /**
  * Takes the current StartDrawTxParams transaction params and breaks off the 'value' param into it's own variable,
  * then returns a modified version of the original transaction params without the 'value' param.
+ *
+ * @param {StartDrawTxParams} txParams
  *
  * @returns {StartDrawTransformedTxParams}
  */
@@ -642,4 +652,16 @@ const transformStartDrawTxParams = (txParams: StartDrawTxParams): StartDrawTrans
   delete transformedTxParams.value;
 
   return { value, transformedTxParams };
+};
+
+/**
+ * A note telling the bot maintainer where they can claim the rewards they earn.
+ */
+const printNote = () => {
+  console.log(chalk.yellow('|*******************************************************|'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|  Rewards accumulate post-awarding on the PrizePool!   |'));
+  console.log(chalk.yellow('|  Withdraw your rewards manually from that contract.   |'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|*******************************************************|'));
 };

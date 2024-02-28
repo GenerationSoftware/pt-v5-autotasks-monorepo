@@ -52,32 +52,18 @@ const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
 /**
  * Combines the two DrawAuction Multicalls, one for the RNG Chain and one for the Relay/PrizePool chain
  *
- * @param chainId chain ID that starts the RNG Request
- * @param provider provider for the RNG chain that will be queried
- * @param drawAuctionContracts DrawAuctionContracts, a collection of ethers contracts to use for querying
- * @param relayerAddress the bot's address
- * @param rewardRecipient the account which will receive rewards for submitting RNG requests and finishing auctions
- * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
- * @returns DrawAuctionContext
+ * @param {DrawAuctionConfig} config
+ * @param {DrawAuctionContracts} drawAuctionContracts, a collection of ethers contracts to use for querying
+ * @returns {Promise<DrawAuctionContext>}
  */
 export const getDrawAuctionContextMulticall = async (
   config: DrawAuctionConfig,
   drawAuctionContracts: DrawAuctionContracts,
 ): Promise<DrawAuctionContext> => {
-  const { chainId, provider, relayerAddress, rewardRecipient, covalentApiKey } = config;
-
   printSpacer();
   console.log(chalk.dim(`Gathering info on state of auctions ...`));
-  const context: DrawAuctionContext = await getContext(
-    chainId,
-    provider,
-    drawAuctionContracts,
-    relayerAddress,
-    rewardRecipient,
-    covalentApiKey,
-  );
 
-  // 5. State enum
+  const context: DrawAuctionContext = await getContext(config, drawAuctionContracts);
   const drawAuctionState: DrawAuctionState = getDrawAuctionState(context);
 
   return {
@@ -87,28 +73,18 @@ export const getDrawAuctionContextMulticall = async (
 };
 
 const getContext = async (
-  chainId: number,
-  provider: Provider,
+  config: DrawAuctionConfig,
   drawAuctionContracts: DrawAuctionContracts,
-  relayerAddress: string,
-  rewardRecipient: string,
-  covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
   printSpacer();
   console.log(chalk.dim(`Running get RNG multicall ...`));
 
+  const { chainId } = config;
+
   // 2. Rng Info
-  const rngContext = await getRngMulticall(
-    provider,
-    chainId,
-    drawAuctionContracts,
-    relayerAddress,
-    rewardRecipient,
-    covalentApiKey,
-  );
+  const rngContext = await getRngMulticall(config, drawAuctionContracts);
 
   console.log(chalk.dim(`Getting RNG token and native (gas) token market rates ...`));
-
   // 3. Native tokens (gas tokens) market rates in USD
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
@@ -126,13 +102,11 @@ const getContext = async (
  * @returns DrawAuctionContext
  */
 export const getRngMulticall = async (
-  provider: Provider,
-  chainId: number,
+  config: DrawAuctionConfig,
   drawAuctionContracts: DrawAuctionContracts,
-  relayerAddress: string,
-  rewardRecipient: string,
-  covalentApiKey?: string,
 ): Promise<DrawAuctionContext> => {
+  const { provider, covalentApiKey } = config;
+
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
 
