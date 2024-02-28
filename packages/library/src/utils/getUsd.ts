@@ -27,18 +27,6 @@ const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 const marketRates = {};
 
 /**
- * Get the current eth_gasPrice from chain provider
- *
- * @param {Provider} provider, any ethers provider
- * @returns {Promise} Promise object with gasPrice in wei
- **/
-export const getGasPrice = async (provider: Provider): Promise<{ gasPrice?: BigNumber }> => {
-  const gasPrice = await provider.getGasPrice();
-
-  return { gasPrice };
-};
-
-/**
  * Get the current feeData from chain (currently unused as it was less accurate than getGasPrice)
  *
  * @param {Provider} provider, any ethers provider
@@ -80,7 +68,7 @@ export const getFeesUsd = async (
 ): Promise<{ avgFeeUsd: number }> => {
   const fees = { avgFeeUsd: null };
 
-  const { gasPrice } = await getGasPrice(provider);
+  const gasPrice = await provider.getGasPrice();
 
   if (!gasPrice || !estimatedGasLimit || estimatedGasLimit.eq(0)) {
     return fees;

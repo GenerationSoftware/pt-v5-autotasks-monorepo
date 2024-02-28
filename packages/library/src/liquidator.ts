@@ -18,7 +18,6 @@ import {
   getLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
   getLiquidationPairComputeExactAmountInMulticall,
-  getGasPrice,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
@@ -301,7 +300,7 @@ export async function runLiquidator(
       );
 
       const gasLimit = 750000;
-      const { gasPrice } = await getGasPrice(provider);
+      const gasPrice = await provider.getGasPrice();
       const tx = await sendPopulatedTx(
         chainId,
         ozRelayer,

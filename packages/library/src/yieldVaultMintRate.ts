@@ -1,7 +1,6 @@
 import { Contract, PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, getContracts } from '@generationsoftware/pt-v5-utils-js';
 import { YieldVaultMintRateConfig } from './types';
-import { getGasPrice } from './utils';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 export async function runYieldVaultMintRate(
@@ -21,7 +20,7 @@ export async function runYieldVaultMintRate(
 
     try {
       const gasLimit = 200000;
-      const { gasPrice } = await getGasPrice(provider);
+      const gasPrice = await provider.getGasPrice();
       console.log(`YieldVault: mintRate() ${yieldVaultContract.address}`);
       const tx = await sendPopulatedTx(chainId, ozRelayer, wallet, populatedTx, gasLimit, gasPrice);
       console.log('TransactionHash:', tx.hash);

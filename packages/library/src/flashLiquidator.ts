@@ -14,7 +14,6 @@ import {
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   getFlashLiquidatorContextMulticall,
-  getGasPrice,
 } from './utils';
 import { FlashLiquidatorAbi } from './abis/FlashLiquidatorAbi';
 import { LiquidationPairAbi } from './abis/LiquidationPairAbi';
@@ -207,25 +206,25 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
       );
 
       const gasLimit = 1050000;
-      const { gasPrice } = await getGasPrice(provider);
-      // const tx = await sendPopulatedTx(
-      //   chainId,
-      //   ozRelayer,
-      //   wallet,
-      //   populatedTx,
-      //   gasLimit,
-      //   gasPrice,
-      //   useFlashbots,
-      // );
+      const gasPrice = await provider.getGasPrice();
+      const tx = await sendPopulatedTx(
+        chainId,
+        ozRelayer,
+        wallet,
+        populatedTx,
+        gasLimit,
+        gasPrice,
+        useFlashbots,
+      );
 
-      // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
-      // stats.push({
-      //   pair,
-      //   estimatedProfitUsd,
-      //   txHash: tx.hash,
-      // });
+      stats.push({
+        pair,
+        estimatedProfitUsd,
+        txHash: tx.hash,
+      });
     } catch (error) {
       stats.push({
         pair,

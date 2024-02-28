@@ -175,7 +175,7 @@ export interface RelayerAccount {
   wallet: Wallet;
 }
 
-export interface RngAuctionContracts {
+export interface DrawAuctionContracts {
   prizePoolContract: Contract;
   drawManagerContract: Contract;
   rngWitnetContract: Contract;

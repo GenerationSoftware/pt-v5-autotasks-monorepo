@@ -6,18 +6,15 @@ import chalk from 'chalk';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 
 import {
-  RngAuctionContracts,
+  DrawAuctionContracts,
   DrawAuctionContext,
   TokenWithRate,
   RngResults,
   AuctionResult,
+  DrawAuctionConfig,
 } from '../types';
 import { chainName } from './network';
-import {
-  getGasPrice,
-  getEthMainnetTokenMarketRateUsd,
-  getNativeTokenMarketRateUsd,
-} from './getUsd';
+import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { printSpacer } from './logging';
 // import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
@@ -57,26 +54,24 @@ const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
  *
  * @param chainId chain ID that starts the RNG Request
  * @param provider provider for the RNG chain that will be queried
- * @param rngAuctionContracts RngAuctionContracts, a collection of ethers contracts to use for querying
+ * @param drawAuctionContracts DrawAuctionContracts, a collection of ethers contracts to use for querying
  * @param relayerAddress the bot's address
  * @param rewardRecipient the account which will receive rewards for submitting RNG requests and finishing auctions
  * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
  * @returns DrawAuctionContext
  */
 export const getDrawAuctionContextMulticall = async (
-  chainId: number,
-  provider: Provider,
-  rngAuctionContracts: RngAuctionContracts,
-  relayerAddress: string,
-  rewardRecipient: string,
-  covalentApiKey?: string,
+  config: DrawAuctionConfig,
+  drawAuctionContracts: DrawAuctionContracts,
 ): Promise<DrawAuctionContext> => {
+  const { chainId, provider, relayerAddress, rewardRecipient, covalentApiKey } = config;
+
   printSpacer();
   console.log(chalk.dim(`Gathering info on state of auctions ...`));
   const context: DrawAuctionContext = await getContext(
     chainId,
     provider,
-    rngAuctionContracts,
+    drawAuctionContracts,
     relayerAddress,
     rewardRecipient,
     covalentApiKey,
@@ -94,7 +89,7 @@ export const getDrawAuctionContextMulticall = async (
 const getContext = async (
   chainId: number,
   provider: Provider,
-  rngAuctionContracts: RngAuctionContracts,
+  drawAuctionContracts: DrawAuctionContracts,
   relayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
@@ -106,7 +101,7 @@ const getContext = async (
   const rngContext = await getRngMulticall(
     provider,
     chainId,
-    rngAuctionContracts,
+    drawAuctionContracts,
     relayerAddress,
     rewardRecipient,
     covalentApiKey,
@@ -127,13 +122,13 @@ const getContext = async (
  * Gather information about the RNG Start Contracts
  *
  * @param provider provider for the chain that will be queried
- * @param rngAuctionContracts rngAuctionContracts, a collection of ethers contracts to use for querying
+ * @param drawAuctionContracts drawAuctionContracts, a collection of ethers contracts to use for querying
  * @returns DrawAuctionContext
  */
 export const getRngMulticall = async (
   provider: Provider,
   chainId: number,
-  rngAuctionContracts: RngAuctionContracts,
+  drawAuctionContracts: DrawAuctionContracts,
   relayerAddress: string,
   rewardRecipient: string,
   covalentApiKey?: string,
@@ -145,27 +140,27 @@ export const getRngMulticall = async (
 
   // 1. Queries One: Draw Manager
   queriesOne[DRAW_MANAGER_CAN_START_DRAW_KEY] =
-    rngAuctionContracts.drawManagerContract.canStartDraw();
+    drawAuctionContracts.drawManagerContract.canStartDraw();
   queriesOne[DRAW_MANAGER_START_DRAW_FEE_KEY] =
-    rngAuctionContracts.drawManagerContract.startDrawFee();
+    drawAuctionContracts.drawManagerContract.startDrawFee();
 
   queriesOne[DRAW_MANAGER_CAN_AWARD_DRAW_KEY] =
-    rngAuctionContracts.drawManagerContract.canAwardDraw();
+    drawAuctionContracts.drawManagerContract.canAwardDraw();
   queriesOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY] =
-    rngAuctionContracts.drawManagerContract.awardDrawFee();
+    drawAuctionContracts.drawManagerContract.awardDrawFee();
 
   // 2. Queries One: Rng Witnet
-  const { gasPrice } = await getGasPrice(provider);
+  const gasPrice = await provider.getGasPrice();
   queriesOne[RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
-    rngAuctionContracts.rngWitnetContract.estimateRandomizeFee(gasPrice);
+    drawAuctionContracts.rngWitnetContract.estimateRandomizeFee(gasPrice);
 
   // 3. Queries One: Prize Pool Info
-  queriesOne[PRIZE_POOL_OPEN_DRAW_ID_KEY] = rngAuctionContracts.prizePoolContract.getOpenDrawId();
-  queriesOne[PRIZE_POOL_RESERVE_KEY] = rngAuctionContracts.prizePoolContract.reserve();
+  queriesOne[PRIZE_POOL_OPEN_DRAW_ID_KEY] = drawAuctionContracts.prizePoolContract.getOpenDrawId();
+  queriesOne[PRIZE_POOL_RESERVE_KEY] = drawAuctionContracts.prizePoolContract.reserve();
   queriesOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
-    rngAuctionContracts.prizePoolContract.pendingReserveContributions();
+    drawAuctionContracts.prizePoolContract.pendingReserveContributions();
   queriesOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] =
-    rngAuctionContracts.prizePoolContract.prizeToken();
+    drawAuctionContracts.prizePoolContract.prizeToken();
 
   // 4. Get and process results
   const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
@@ -207,7 +202,7 @@ export const getRngMulticall = async (
 
   // 6. Queries Two: Prize Pool
   queriesTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY] =
-    rngAuctionContracts.prizePoolContract.drawClosesAt(drawId);
+    drawAuctionContracts.prizePoolContract.drawClosesAt(drawId);
 
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, provider);
 

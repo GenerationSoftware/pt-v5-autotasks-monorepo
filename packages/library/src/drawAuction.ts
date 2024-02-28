@@ -4,7 +4,7 @@ import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt
 import { Relayer } from 'defender-relay-client';
 import chalk from 'chalk';
 
-import { RngAuctionContracts, DrawAuctionContext, DrawAuctionConfig } from './types';
+import { DrawAuctionContracts, DrawAuctionContext, DrawAuctionConfig } from './types';
 import {
   logTable,
   logStringValue,
@@ -13,7 +13,6 @@ import {
   printSpacer,
   getFeesUsd,
   roundTwoDecimalPlaces,
-  getGasPrice,
 } from './utils';
 import { chainName } from './utils/network';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
@@ -22,7 +21,6 @@ import {
   DrawAuctionState,
 } from './utils/getDrawAuctionContextMulticall';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
-import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
 
 interface StartDrawTxParams {
   drawManagerAddress: string;
@@ -37,8 +35,8 @@ interface AwardDrawTxParams {
 // const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
 
 /**
- * Figures out the current state of the Rng / RngRelay Auction and if it's profitable
- * to run any of the transactions, populates and returns the tx object
+ * Figures out the current state of the DrawManager/RngWitnet contracts and if it's profitable
+ * to run any of the transactions it will populate and return the tx objects
  *
  * @returns {undefined} void function
  */
@@ -46,80 +44,42 @@ export async function runDrawAuction(
   contracts: ContractsBlob,
   config: DrawAuctionConfig,
 ): Promise<void> {
-  const { chainId, provider, wallet, ozRelayer, relayerAddress, rewardRecipient, covalentApiKey } =
-    config;
+  const { chainId } = config;
 
-  const rngAuctionContracts = instantiateRngAuctionContracts(config, contracts);
+  const drawAuctionContracts = instantiateDrawAuctionContracts(config, contracts);
 
-  // #1. Get info about the prize pool prize/reserve token, auction states, etc.
   const context: DrawAuctionContext = await getDrawAuctionContextMulticall(
-    chainId,
-    provider,
-    rngAuctionContracts,
-    relayerAddress,
-    rewardRecipient,
-    covalentApiKey,
+    config,
+    drawAuctionContracts,
   );
-
   printContext(chainId, context);
 
   if (!context.drawAuctionState) {
     printAsterisks();
     console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
     printSpacer();
-
     return;
   }
 
-  // #4. Calculate profit and send transactions when profitable
-  let rewardUsd = 0;
   if (context.drawAuctionState === DrawAuctionState.Start) {
-    rewardUsd = context.startDrawFeeUsd;
-
-    // const gasCostUsd = -0.01;
-    const gasCostUsd = await getRngGasCost(provider, rngAuctionContracts, config, context);
-    console.log('gasCostUsd');
-    console.log(gasCostUsd);
-    if (gasCostUsd === 0) {
-      printAsterisks();
-      console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
-      return;
-    }
-
-    const profitable = await calculateStartDrawProfit(config, rewardUsd, gasCostUsd, context);
-
-    if (profitable) {
-      await sendStartDrawTransaction(
-        chainId,
-        wallet,
-        ozRelayer,
-        provider,
-        rngAuctionContracts,
-        config,
-        context,
-      );
-    } else {
-      console.log(
-        chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
-      );
-    }
+    console.log(chalk.yellow(`Processing 'start draw' for ${chainName(chainId)}:`));
+    await checkStartDraw(config, context, drawAuctionContracts);
   } else if (context.drawAuctionState === DrawAuctionState.Award) {
-    console.log(chalk.yellow(`Processing 'award' for ${chainName(chainId)}:`));
-    await sendAwardDrawTransaction(
-      wallet,
-      ozRelayer,
-      rngAuctionContracts,
-      config,
-      context,
-      contracts,
-    );
+    console.log(chalk.yellow(`Processing 'award draw' for ${chainName(chainId)}:`));
+    await checkAwardDraw(config, context, drawAuctionContracts);
   }
 }
 
-const instantiateRngAuctionContracts = (
+/**
+ * Pulls the contract data (abi, address, etc.) from the passed in ContractsBlob and instantiates
+ * the contracts using ethers.js.
+ *
+ * @returns {DrawAuctionContracts} object representing the contracts we need to interact with for RNG draw auctions
+ */
+const instantiateDrawAuctionContracts = (
   config: DrawAuctionConfig,
   contracts: ContractsBlob,
-): RngAuctionContracts => {
+): DrawAuctionContracts => {
   const { chainId, provider } = config;
 
   const version = {
@@ -149,34 +109,61 @@ const instantiateRngAuctionContracts = (
   };
 };
 
-const transformTxParams = (txParams): { value: number; transformedTxParams: object } => {
-  const transformedTxParams = { ...txParams };
-
-  const value = transformedTxParams.value;
-  delete transformedTxParams.value;
-
-  return { value, transformedTxParams };
-};
-
-const sendStartDrawTransaction = async (
-  chainId: number,
-  wallet: Wallet,
-  ozRelayer: Relayer,
-  provider: Provider,
-  rngAuctionContracts: RngAuctionContracts,
+/**
+ * Runs the (gas cost + rng fee cost) vs. rewards profit estimation for the RngWitnet#startDraw() function.
+ *
+ * @returns {undefined} void function
+ */
+const checkStartDraw = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
+  drawAuctionContracts: DrawAuctionContracts,
 ) => {
+  const rewardUsd = context.startDrawFeeUsd;
+
+  const gasCostUsd = await getStartDrawGasCost(config, context, drawAuctionContracts);
+  console.log('gasCostUsd');
+  console.log(gasCostUsd);
+  if (gasCostUsd === 0) {
+    printAsterisks();
+    console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
+    return;
+  }
+
+  const profitable = await calculateStartDrawProfit(config, context, rewardUsd, gasCostUsd);
+
+  if (profitable) {
+    await sendStartDrawTransaction(config, context, drawAuctionContracts);
+  } else {
+    console.log(
+      chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
+    );
+  }
+};
+
+/**
+ * Begins sending the RngWitnet#startDraw() payable function.
+ *
+ * @returns {undefined} void function
+ */
+const sendStartDrawTransaction = async (
+  config: DrawAuctionConfig,
+  context: DrawAuctionContext,
+  drawAuctionContracts: DrawAuctionContracts,
+) => {
+  const { chainId, ozRelayer, wallet, provider } = config;
+
   console.log(chalk.yellow(`Start Draw Transaction:`));
   console.log(chalk.green(`Execute rngWitnet#startDraw`));
   printSpacer();
-  const contract = rngAuctionContracts.rngWitnetContract;
 
-  const txParams = buildStartDrawTxParams(rngAuctionContracts, config, context);
+  const contract: Contract = drawAuctionContracts.rngWitnetContract;
+  const txParams: StartDrawTxParams = buildStartDrawTxParams(config, context, drawAuctionContracts);
   console.log('txParams');
   console.log(txParams);
 
-  const { value, transformedTxParams } = transformTxParams(txParams);
+  const { value, transformedTxParams }: StartDrawTransformedTxParams =
+    transformStartDrawTxParams(txParams);
 
   const populatedTx: PopulatedTransaction = await contract.populateTransaction.startDraw(
     ...Object.values(transformedTxParams),
@@ -185,41 +172,43 @@ const sendStartDrawTransaction = async (
   console.log('populatedTx');
   console.log(populatedTx);
 
-  const { gasPrice } = await getGasPrice(provider);
+  const gasPrice = await provider.getGasPrice();
   console.log(chalk.greenBright.bold(`Sending ...`));
   console.log('gasPrice');
   console.log(gasPrice);
   // const gasPrice = BigNumber.from(100000000);
 
   const gasLimit = 850000;
-  const tx = await sendPopulatedTx(
-    chainId,
-    ozRelayer,
-    wallet,
-    populatedTx,
-    gasLimit,
-    gasPrice,
-    config.useFlashbots,
-    txParams,
-  );
+  // const tx = await sendPopulatedTx(
+  //   chainId,
+  //   ozRelayer,
+  //   wallet,
+  //   populatedTx,
+  //   gasLimit,
+  //   gasPrice,
+  //   config.useFlashbots,
+  //   txParams,
+  // );
 
-  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
   printNote();
 };
 
-const sendAwardDrawTransaction = async (
-  wallet: Wallet,
-  ozRelayer: Relayer,
-  rngAuctionContracts: RngAuctionContracts,
+/**
+ * Runs the gas cost vs. rewards profit estimation for the DrawManager#awardDraw() function.
+ *
+ * @returns {undefined} void function
+ */
+const checkAwardDraw = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
-  contracts: ContractsBlob,
+  drawAuctionContracts: DrawAuctionContracts,
 ) => {
-  const { chainId, provider } = config;
+  const { chainId, wallet, ozRelayer } = config;
 
-  const contract = rngAuctionContracts.drawManagerContract;
+  const contract = drawAuctionContracts.drawManagerContract;
 
   const txParams = buildAwardDrawTxParams(config.rewardRecipient);
 
@@ -230,12 +219,13 @@ const sendAwardDrawTransaction = async (
     return;
   }
 
-  // #4. Decide if profitable or not
   const { netProfitUsd, profitable } = await calculateAwardDrawProfit(
     config,
     context.awardDrawFeeUsd,
     gasCostUsd,
   );
+  console.log('profitable');
+  console.log(profitable);
 
   // const forceRelay = calculateForceRelay(config, context, netProfitUsd);
   // console.log('forceRelay');
@@ -262,9 +252,9 @@ const printNote = () => {
 };
 
 /**
- * Figures out how much gas is required to run the RngWitnet startDraw contract function
+ * Figures out how much gas is required to run the RngWitnet#startDraw() payable function
  *
- * @returns {Promise} Promise of a BigNumber with the gas limit
+ * @returns {Promise<BigNumber>} Promise object of the gas limit in wei as a BigNumber
  */
 const getStartDrawEstimatedGasLimit = async (
   contract: Contract,
@@ -272,7 +262,8 @@ const getStartDrawEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    const { value, transformedTxParams } = transformTxParams(startDrawTxParams);
+    const { value, transformedTxParams }: StartDrawTransformedTxParams =
+      transformStartDrawTxParams(startDrawTxParams);
 
     estimatedGasLimit = await contract.estimateGas.startDraw(
       ...Object.values(transformedTxParams),
@@ -288,18 +279,18 @@ const getStartDrawEstimatedGasLimit = async (
 };
 
 /**
- * Determines if the transaction will be profitable.
+ * Determines if the RngWitnet#startDraw() transaction will be profitable.
  *
- * Takes into account the cost of gas, the cost of the reward fee (in the case of an RngAuction start request),
- * and the rewards earned.
+ * Takes into account the cost of gas, the cost of the RNG fee to Witnet,
+ * and the rewards we will earn.
  *
- * @returns {Promise} Promise of a boolean for profitability
+ * @returns {Promise<boolean>} Promise object with boolean of profitable or not
  */
 const calculateStartDrawProfit = async (
   config: DrawAuctionConfig,
+  context: DrawAuctionContext,
   rewardUsd: number,
   gasCostUsd: number,
-  context: DrawAuctionContext,
 ): Promise<boolean> => {
   printSpacer();
   printSpacer();
@@ -456,42 +447,43 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   printSpacer();
 };
 
-const getRngGasCost = async (
-  provider: Provider,
-  rngAuctionContracts: RngAuctionContracts,
+const getStartDrawGasCost = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
+  drawAuctionContracts: DrawAuctionContracts,
 ): Promise<number> => {
-  console.log(chalk.blue(`Estimating RNG gas costs ...`));
+  const { chainId, provider } = config;
+  const { nativeTokenMarketRateUsd } = context;
+
+  console.log(chalk.blue(`Estimating RngWitnet#startDraw() gas costs ...`));
   printSpacer();
 
-  let estimatedGasLimit, populatedTx;
-
-  const startDrawTxParams = buildStartDrawTxParams(rngAuctionContracts, config, context);
+  const startDrawTxParams = buildStartDrawTxParams(config, context, drawAuctionContracts);
   console.log('startDrawTxParams');
   console.log(startDrawTxParams);
-  estimatedGasLimit = await getStartDrawEstimatedGasLimit(
-    rngAuctionContracts.rngWitnetContract,
+
+  const estimatedGasLimit: BigNumber = await getStartDrawEstimatedGasLimit(
+    drawAuctionContracts.rngWitnetContract,
     startDrawTxParams,
   );
   console.log('estimatedGasLimit');
   console.log(estimatedGasLimit);
 
-  const { value, transformedTxParams } = transformTxParams(startDrawTxParams);
+  const { value, transformedTxParams }: StartDrawTransformedTxParams =
+    transformStartDrawTxParams(startDrawTxParams);
+  const populatedTx: PopulatedTransaction =
+    await drawAuctionContracts.rngWitnetContract.populateTransaction.startDraw(
+      ...Object.values(transformedTxParams),
+      { value },
+    );
 
-  populatedTx = await rngAuctionContracts.rngWitnetContract.populateTransaction.startDraw(
-    ...Object.values(transformedTxParams),
-    { value },
-  );
-
-  // This was a previous tx gas usage on Goerli + buffer room
+  // hard-coded gas limit:
   // estimatedGasLimit = BigNumber.from(630000);
-
   const gasCostUsd = await getGasCostUsd(
     estimatedGasLimit,
-    config.chainId,
+    chainId,
     provider,
-    context.nativeTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
     populatedTx,
   );
 
@@ -499,12 +491,12 @@ const getRngGasCost = async (
 };
 
 const buildStartDrawTxParams = (
-  rngAuctionContracts: RngAuctionContracts,
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
+  drawAuctionContracts: DrawAuctionContracts,
 ): StartDrawTxParams => {
   return {
-    drawManagerAddress: rngAuctionContracts.drawManagerContract.address,
+    drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
     rewardRecipient: config.rewardRecipient,
     value: context.rngFeeEstimate.mul(2), //  double this since the estimate always comes back shy of enough
   };
@@ -522,7 +514,7 @@ const getAwardDrawGasCost = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
 ): Promise<number> => {
-  console.log(chalk.blue(`Estimating relay gas costs ...`));
+  console.log(chalk.blue(`Estimating DrawManager#awardDraw() gas costs ...`));
   printSpacer();
 
   const { chainId, provider } = config;
@@ -564,7 +556,7 @@ const getGasCostUsd = async (
     );
   }
 
-  const { gasPrice } = await getGasPrice(provider);
+  const gasPrice = await provider.getGasPrice();
   logBigNumber(
     'Recent Gas Price (wei):',
     gasPrice,
@@ -599,8 +591,8 @@ const sendPopulatedAwardDrawTransaction = async (
   contract: Contract,
   config: DrawAuctionConfig,
 ) => {
-  const { gasPrice } = await getGasPrice(config.provider);
-  // const gasPrice = BigNumber.from(100000000);
+  const { provider } = config;
+  const gasPrice = await provider.getGasPrice();
 
   console.log(chalk.green(`Execute DrawManager#awardDraw`));
   console.log(chalk.greenBright.bold(`Sending ...`));
@@ -609,25 +601,45 @@ const sendPopulatedAwardDrawTransaction = async (
   const populatedTx = await contract.populateTransaction.awardDraw(...Object.values(txParams));
 
   const gasLimit = 800000;
-  const tx = await sendPopulatedTx(
-    chainId,
-    ozRelayer,
-    wallet,
-    populatedTx,
-    gasLimit,
-    gasPrice,
-    false,
-    txParams,
-  );
+  // const tx = await sendPopulatedTx(
+  //   chainId,
+  //   ozRelayer,
+  //   wallet,
+  //   populatedTx,
+  //   gasLimit,
+  //   gasPrice,
+  //   false,
+  //   txParams,
+  // );
 
-  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
   printNote();
 
-  return tx;
+  // return tx;
 };
 
 const checkOrX = (bool: boolean): string => {
   return bool ? '✔' : '✗';
+};
+
+type StartDrawTransformedTxParams = {
+  transformedTxParams: object;
+  value: BigNumber;
+};
+
+/**
+ * Takes the current StartDrawTxParams transaction params and breaks off the 'value' param into it's own variable,
+ * then returns a modified version of the original transaction params without the 'value' param.
+ *
+ * @returns {StartDrawTransformedTxParams}
+ */
+const transformStartDrawTxParams = (txParams: StartDrawTxParams): StartDrawTransformedTxParams => {
+  const transformedTxParams = { ...txParams };
+
+  const value = transformedTxParams.value;
+  delete transformedTxParams.value;
+
+  return { value, transformedTxParams };
 };
