@@ -21,25 +21,28 @@ export enum DrawAuctionState {
   Idle = 'Idle',
 }
 
-const PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY = 'prizePool-prizeTokenAddress';
-const PRIZE_POOL_DRAW_CLOSES_AT_KEY = 'prizePool-drawClosesAt';
-const PRIZE_POOL_OPEN_DRAW_ID_KEY = 'prizePool-openDrawId';
-const PRIZE_POOL_RESERVE_KEY = 'prizePool-reserve';
-const PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY = 'prizePool-pendingReserveContributions';
+const QUERY_KEYS = {
+  PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY: 'prizePool-prizeTokenAddress',
+  PRIZE_POOL_DRAW_CLOSES_AT_KEY: 'prizePool-drawClosesAt',
+  PRIZE_POOL_OPEN_DRAW_ID_KEY: 'prizePool-openDrawId',
+  PRIZE_POOL_RESERVE_KEY: 'prizePool-reserve',
+  PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY: 'prizePool-pendingReserveContributions',
 
-const RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY = 'rngWitnet-estimateRandomizeFee';
+  RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY: 'rngWitnet-estimateRandomizeFee',
 
-const DRAW_MANAGER_CAN_START_DRAW_KEY = 'drawManager-canStartDraw';
-const DRAW_MANAGER_START_DRAW_FEE_KEY = 'drawManager-startDrawFee';
+  DRAW_MANAGER_CAN_START_DRAW_KEY: 'drawManager-canStartDraw',
+  DRAW_MANAGER_START_DRAW_FEE_KEY: 'drawManager-startDrawFee',
+  DRAW_MANAGER_CAN_AWARD_DRAW_KEY: 'drawManager-canAwardDraw',
+  DRAW_MANAGER_AWARD_DRAW_FEE_KEY: 'drawManager-awardDrawFee',
+  DRAW_MANAGER_AUCTION_DURATION_KEY: 'drawManager-auctionDuration',
+  DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED: 'drawManager-elapsedTimeSinceDrawClosed',
 
-const DRAW_MANAGER_CAN_AWARD_DRAW_KEY = 'drawManager-canAwardDraw';
-const DRAW_MANAGER_AWARD_DRAW_FEE_KEY = 'drawManager-awardDrawFee';
+  REWARD_DECIMALS_KEY: 'rewardToken-decimals',
+  REWARD_NAME_KEY: 'rewardToken-name',
+  REWARD_SYMBOL_KEY: 'rewardToken-symbol',
+};
 
-const REWARD_DECIMALS_KEY = 'rewardToken-decimals';
-const REWARD_NAME_KEY = 'rewardToken-name';
-const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
-
-// const RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD = 10; // 10% or less time left on relay auction
+const RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD = 10; // 10% or less time left on relay auction
 
 /**
  * Combines the DrawAuction Multicall data with the , one for the RNG Chain and one for the Relay/PrizePool chain
@@ -77,6 +80,7 @@ const getContext = async (
   nativeTokenMarketRateUsd: number,
 ): Promise<DrawAuctionContext> => {
   const { provider, covalentApiKey } = config;
+  const { drawManagerContract, rngWitnetContract, prizePoolContract } = drawAuctionContracts;
 
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
@@ -84,74 +88,79 @@ const getContext = async (
   let queriesOne: Record<string, any> = {};
 
   // 1. Queries One: Draw Manager
-  queriesOne[DRAW_MANAGER_CAN_START_DRAW_KEY] =
-    drawAuctionContracts.drawManagerContract.canStartDraw();
-  queriesOne[DRAW_MANAGER_START_DRAW_FEE_KEY] =
-    drawAuctionContracts.drawManagerContract.startDrawFee();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY] = drawManagerContract.canStartDraw();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_FEE_KEY] = drawManagerContract.startDrawFee();
 
-  queriesOne[DRAW_MANAGER_CAN_AWARD_DRAW_KEY] =
-    drawAuctionContracts.drawManagerContract.canAwardDraw();
-  queriesOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY] =
-    drawAuctionContracts.drawManagerContract.awardDrawFee();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_AWARD_DRAW_KEY] = drawManagerContract.canAwardDraw();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_AWARD_DRAW_FEE_KEY] = drawManagerContract.awardDrawFee();
+
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_AUCTION_DURATION_KEY] = drawManagerContract.auctionDuration();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED] =
+    drawManagerContract.elapsedTimeSinceDrawClosed();
 
   // 2. Queries One: Rng Witnet
   const gasPrice = await provider.getGasPrice();
-  queriesOne[RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
-    drawAuctionContracts.rngWitnetContract.estimateRandomizeFee(gasPrice);
+  queriesOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
+    rngWitnetContract.estimateRandomizeFee(gasPrice);
 
   // 3. Queries One: Prize Pool Info
-  queriesOne[PRIZE_POOL_OPEN_DRAW_ID_KEY] = drawAuctionContracts.prizePoolContract.getOpenDrawId();
-  queriesOne[PRIZE_POOL_RESERVE_KEY] = drawAuctionContracts.prizePoolContract.reserve();
-  queriesOne[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
-    drawAuctionContracts.prizePoolContract.pendingReserveContributions();
-  queriesOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] =
-    drawAuctionContracts.prizePoolContract.prizeToken();
+  queriesOne[QUERY_KEYS.PRIZE_POOL_OPEN_DRAW_ID_KEY] = prizePoolContract.getOpenDrawId();
+  queriesOne[QUERY_KEYS.PRIZE_POOL_RESERVE_KEY] = prizePoolContract.reserve();
+  queriesOne[QUERY_KEYS.PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY] =
+    prizePoolContract.pendingReserveContributions();
+  queriesOne[QUERY_KEYS.PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY] = prizePoolContract.prizeToken();
 
   // 4. Get and process results
   const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
 
   // 5. Results One: Draw Manager
-  const canStartDraw = resultsOne[DRAW_MANAGER_CAN_START_DRAW_KEY];
-  const startDrawFee = resultsOne[DRAW_MANAGER_START_DRAW_FEE_KEY];
+  const canStartDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY];
+  const startDrawFee = resultsOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_FEE_KEY];
 
-  const canAwardDraw = resultsOne[DRAW_MANAGER_CAN_AWARD_DRAW_KEY];
-  const awardDrawFee = resultsOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY];
+  const canAwardDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_AWARD_DRAW_KEY];
+  const awardDrawFee = resultsOne[QUERY_KEYS.DRAW_MANAGER_AWARD_DRAW_FEE_KEY];
+
+  const auctionDuration = resultsOne[QUERY_KEYS.DRAW_MANAGER_AUCTION_DURATION_KEY];
+  const elapsedTimeSinceDrawClosed =
+    resultsOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED];
+
+  let auctionExpired, auctionClosesSoon, elapsedTime;
+  if (canAwardDraw) {
+    // elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
+    elapsedTime = elapsedTimeSinceDrawClosed;
+
+    if (elapsedTime > auctionDuration) {
+      auctionExpired = true;
+      elapsedTime = auctionDuration;
+    }
+
+    // Store if this relay auction is coming to an end
+    const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
+    auctionClosesSoon =
+      percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
+  }
+  console.log('auctionClosesSoon');
+  console.log(auctionClosesSoon);
+  console.log('auctionExpired');
+  console.log(auctionExpired);
 
   // 6. Results One: Rng Witnet
-  const rngFeeEstimate = resultsOne[RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
+  const rngFeeEstimate = resultsOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
 
   // 7. Results One: Prize Pool
-  const drawId = resultsOne[PRIZE_POOL_OPEN_DRAW_ID_KEY];
-  const rewardTokenAddress = resultsOne[PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
-
-  // const auctionDuration = resultsTwo[RNG_AUCTION_AUCTION_DURATION_KEY];
-
-  // let auctionExpired, auctionClosesSoon, elapsedTime;
-  // if (rngResults.rngCompletedAt) {
-  //   elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
-
-  //   if (elapsedTime > auctionDuration) {
-  //     auctionExpired = true;
-  //     elapsedTime = auctionDuration;
-  //   }
-
-  //   // Store if this relay auction is coming to an end
-  //   const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
-  //   auctionClosesSoon =
-  //     percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
-  // }
+  const drawId = resultsOne[QUERY_KEYS.PRIZE_POOL_OPEN_DRAW_ID_KEY];
+  const rewardTokenAddress = resultsOne[QUERY_KEYS.PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
 
   let queriesTwo: Record<string, any> = {};
 
   // 6. Queries Two: Prize Pool
-  queriesTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY] =
-    drawAuctionContracts.prizePoolContract.drawClosesAt(drawId);
+  queriesTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY] = prizePoolContract.drawClosesAt(drawId);
 
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, provider);
 
-  queriesTwo[REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
-  queriesTwo[REWARD_NAME_KEY] = rewardTokenContract.name();
-  queriesTwo[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
+  queriesTwo[QUERY_KEYS.REWARD_DECIMALS_KEY] = rewardTokenContract.decimals();
+  queriesTwo[QUERY_KEYS.REWARD_NAME_KEY] = rewardTokenContract.name();
+  queriesTwo[QUERY_KEYS.REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
 
   // 7. Results Two: Get second set of multicall results
   const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
@@ -159,19 +168,19 @@ const getContext = async (
   console.log(resultsTwo);
 
   // 8. Results Two: PrizePool
-  const prizePoolDrawClosesAt = Number(resultsTwo[PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
+  const prizePoolDrawClosesAt = Number(resultsTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
 
   // 9. Results Two: Reward token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
-    resultsTwo[REWARD_SYMBOL_KEY],
+    resultsTwo[QUERY_KEYS.REWARD_SYMBOL_KEY],
     rewardTokenAddress,
     covalentApiKey,
   );
   const rewardToken: TokenWithRate = {
     address: rewardTokenAddress,
-    decimals: resultsTwo[REWARD_DECIMALS_KEY],
-    name: resultsTwo[REWARD_NAME_KEY],
-    symbol: resultsTwo[REWARD_SYMBOL_KEY],
+    decimals: resultsTwo[QUERY_KEYS.REWARD_DECIMALS_KEY],
+    name: resultsTwo[QUERY_KEYS.REWARD_NAME_KEY],
+    symbol: resultsTwo[QUERY_KEYS.REWARD_SYMBOL_KEY],
     assetRateUsd: rewardTokenMarketRateUsd,
   };
 
