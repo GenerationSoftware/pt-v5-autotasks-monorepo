@@ -81,12 +81,12 @@ const getContext = async (
 
   const { chainId } = config;
 
-  // 2. Rng Info
-  const rngContext = await getRngMulticall(config, drawAuctionContracts);
-
+  // 2. Native tokens (gas tokens) market rates in USD
   console.log(chalk.dim(`Getting RNG token and native (gas) token market rates ...`));
-  // 3. Native tokens (gas tokens) market rates in USD
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+
+  // 3. Rng Info
+  const rngContext = await getRngMulticall(config, drawAuctionContracts, nativeTokenMarketRateUsd);
 
   return {
     ...rngContext,
@@ -97,13 +97,15 @@ const getContext = async (
 /**
  * Gather information about the RNG Start Contracts
  *
- * @param provider provider for the chain that will be queried
- * @param drawAuctionContracts drawAuctionContracts, a collection of ethers contracts to use for querying
+ * @param {Provider} provider ethers.js provider for the chain that will be queried
+ * @param {DrawAuctionContracts} drawAuctionContracts drawAuctionContracts, a collection of ethers contracts to use for querying
+ * @param {number} nativeTokenMarketRateUsd dollar value of chain's native token (likely ETH)
  * @returns DrawAuctionContext
  */
 export const getRngMulticall = async (
   config: DrawAuctionConfig,
   drawAuctionContracts: DrawAuctionContracts,
+  nativeTokenMarketRateUsd: number,
 ): Promise<DrawAuctionContext> => {
   const { provider, covalentApiKey } = config;
 
@@ -122,6 +124,9 @@ export const getRngMulticall = async (
     drawAuctionContracts.drawManagerContract.canAwardDraw();
   queriesOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY] =
     drawAuctionContracts.drawManagerContract.awardDrawFee();
+  // console.log(drawAuctionContracts);
+  // console.log(drawAuctionContracts.drawManagerContract);
+  console.log(await drawAuctionContracts.drawManagerContract.awardDrawFee());
 
   // 2. Queries One: Rng Witnet
   const gasPrice = await provider.getGasPrice();
@@ -234,6 +239,14 @@ export const getRngMulticall = async (
   console.log('awardDrawFeeUsd');
   console.log(awardDrawFeeUsd);
 
+  // Currently Witnet requires the native token ETH on Optimism for RNG Fee
+  // assume 18 decimals
+  // note: May need to change on different chains that use a unique token for gas (AVAX, etc)
+  const rngFeeEstimateStr = ethers.utils.formatEther(rngFeeEstimate);
+  const rngFeeEstimateUsd = Number(rngFeeEstimateStr) * nativeTokenMarketRateUsd;
+  console.log('rngFeeEstimateUsd');
+  console.log(rngFeeEstimateUsd);
+
   return {
     canStartDraw,
     startDrawFee,
@@ -244,6 +257,7 @@ export const getRngMulticall = async (
     awardDrawFeeUsd,
 
     rngFeeEstimate,
+    rngFeeEstimateUsd,
 
     rewardToken,
     prizePoolDrawClosesAt,

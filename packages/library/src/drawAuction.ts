@@ -188,19 +188,19 @@ const sendPopulatedStartDrawTransaction = async (
   // const gasPrice = BigNumber.from(100000000);
 
   const gasLimit = 850000;
-  // const tx = await sendPopulatedTx(
-  //   chainId,
-  //   ozRelayer,
-  //   wallet,
-  //   populatedTx,
-  //   gasLimit,
-  //   gasPrice,
-  //   config.useFlashbots,
-  //   txParams,
-  // );
+  const tx = await sendPopulatedTx(
+    chainId,
+    ozRelayer,
+    wallet,
+    populatedTx,
+    gasLimit,
+    gasPrice,
+    config.useFlashbots,
+    txParams,
+  );
 
-  // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
   printNote();
 };
@@ -303,17 +303,19 @@ const calculateStartDrawProfit = async (
   const grossProfitUsd = rewardUsd;
   console.log(chalk.magenta('Gross Profit = Reward'));
 
-  const netProfitUsd = grossProfitUsd - gasCostUsd - context.startDrawFeeUsd;
+  const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeEstimateUsd;
   console.log(chalk.magenta('Net profit = (Gross Profit - Gas Fees [Max] - RNG Fee)'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
         rewardUsd,
       )} - $${roundTwoDecimalPlaces(gasCostUsd)} - $${roundTwoDecimalPlaces(
-        context.startDrawFeeUsd,
+        context.rngFeeEstimateUsd,
       )})`,
     ),
-    chalk.dim(`$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${context.startDrawFeeUsd})`),
+    chalk.dim(
+      `$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${context.rngFeeEstimateUsd})`,
+    ),
   );
   printSpacer();
 
@@ -596,8 +598,6 @@ const getGasCostUsd = async (
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {AwardDrawTxParams} txParams, transaction parameters
  * @param {Contract} contract, ethers.js Contract instance of the DrawManager contract
- *
- * @returns {StartDrawTransformedTxParams}
  */
 const sendPopulatedAwardDrawTransaction = async (
   config: DrawAuctionConfig,
@@ -614,23 +614,21 @@ const sendPopulatedAwardDrawTransaction = async (
   const populatedTx = await contract.populateTransaction.awardDraw(...Object.values(txParams));
 
   const gasLimit = 800000;
-  // const tx = await sendPopulatedTx(
-  //   chainId,
-  //   ozRelayer,
-  //   wallet,
-  //   populatedTx,
-  //   gasLimit,
-  //   gasPrice,
-  //   false,
-  //   txParams,
-  // );
+  const tx = await sendPopulatedTx(
+    chainId,
+    ozRelayer,
+    wallet,
+    populatedTx,
+    gasLimit,
+    gasPrice,
+    false,
+    txParams,
+  );
 
-  // console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  // console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
   printNote();
-
-  // return tx;
 };
 
 const checkOrX = (bool: boolean): string => {
