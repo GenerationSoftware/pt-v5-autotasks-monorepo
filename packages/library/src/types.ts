@@ -152,6 +152,7 @@ export interface DrawAuctionContext {
   rngFeeEstimateUsd: number;
 
   prizePoolDrawClosesAt: number;
+  auctionClosesSoon: boolean;
   rewardToken: TokenWithRate;
 
   nativeTokenMarketRateUsd?: number;

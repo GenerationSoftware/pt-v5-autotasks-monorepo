@@ -35,7 +35,7 @@ type StartDrawTransformedTxParams = {
   value: BigNumber;
 };
 
-// const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
+const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -5; // -$5 USD
 
 /**
  * Main entry function - gets the current state of the DrawManager/RngWitnet
@@ -236,19 +236,54 @@ const checkAwardDraw = async (
   console.log('profitable');
   console.log(profitable);
 
-  // const forceRelay = calculateForceRelay(config, context, netProfitUsd);
-  // console.log('forceRelay');
-  // console.log(forceRelay);
+  const forceAwardDraw = checkForceAwardDraw(config, context, netProfitUsd);
+  console.log('forceAwardDraw');
+  console.log(forceAwardDraw);
 
-  // #5. Send transaction
-  // if (profitable || forceRelay) {
-  if (profitable) {
+  if (profitable || forceAwardDraw) {
     await sendPopulatedAwardDrawTransaction(config, txParams, contract);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
+};
+
+/**
+ * If we already submitted the startAward request - and therefore paid the fees for the random number
+ * and gas fee for it - we should make sure the relay goes through - making sure that it was us who won the
+ * initial startAward auction, and that the amount of loss we'll take is within acceptable range
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
+ *
+ * @returns {boolean} if we should attempt to force the awardDraw() transaction or not
+ */
+const checkForceAwardDraw = (
+  config: DrawAuctionConfig,
+  context: DrawAuctionContext,
+  netProfitUsd: number,
+) => {
+  // Is recipient for the StartRNG auction same as the upcoming Relay?
+  // (this is a bit naïve as the RNG reward recipient could differ from the relay reward recipient,
+  //   but it's likely this will be the same address)
+  // const sameRecipient = relay.context.rngLastAuctionResult.recipient === config.rewardRecipient;
+  // console.log('sameRecipient');
+  // console.log(sameRecipient);
+
+  console.log('netProfitUsd');
+  console.log(netProfitUsd);
+
+  console.log('MAX_FORCE_RELAY_LOSS_THRESHOLD_USD');
+  console.log(MAX_FORCE_RELAY_LOSS_THRESHOLD_USD);
+
+  const lossOkay = netProfitUsd > MAX_FORCE_RELAY_LOSS_THRESHOLD_USD;
+  console.log('lossOkay');
+  console.log(lossOkay);
+
+  // return context.auctionClosesSoon && sameRecipient && lossOkay;
+  return context.auctionClosesSoon && lossOkay;
 };
 
 /**

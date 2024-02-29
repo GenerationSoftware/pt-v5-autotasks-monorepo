@@ -191,9 +191,6 @@ const getContext = async (
   const awardDrawFeeStr = ethers.utils.formatUnits(awardDrawFee, rewardToken.decimals);
   console.log('awardDrawFee.toString()');
   console.log(awardDrawFee.toString());
-  console.log('awardDrawFeeStr');
-  console.log(awardDrawFeeStr);
-  // const awardDrawFeeUsd = Number(awardDrawFee.toString()) * rewardToken.assetRateUsd;
   const awardDrawFeeUsd = Number(awardDrawFeeStr) * rewardToken.assetRateUsd;
   console.log('awardDrawFeeUsd');
   console.log(awardDrawFeeUsd);
@@ -218,7 +215,7 @@ const getContext = async (
 
     rewardToken,
     prizePoolDrawClosesAt,
-    // auctionClosesSoon,
+    auctionClosesSoon,
 
     nativeTokenMarketRateUsd,
   };
