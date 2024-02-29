@@ -1,7 +1,5 @@
-import { ethers, BigNumber, Contract, PopulatedTransaction, Wallet, Signer } from 'ethers';
-import { Provider } from '@ethersproject/providers';
-import { ContractsBlob, getContract, getContracts } from '@generationsoftware/pt-v5-utils-js';
-import { Relayer } from 'defender-relay-client';
+import { ethers, BigNumber, Contract, PopulatedTransaction } from 'ethers';
+import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import { DrawAuctionContracts, DrawAuctionContext, DrawAuctionConfig } from './types';
@@ -40,8 +38,8 @@ type StartDrawTransformedTxParams = {
 // const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -25;
 
 /**
- * Figures out the current state of the DrawManager/RngWitnet contracts and if it's profitable
- * to run any of the transactions it will populate and return the tx objects
+ * Main entry function - gets the current state of the DrawManager/RngWitnet
+ * contracts and runs transactions if it's profitable.
  *
  * @returns {undefined} void function
  */
@@ -115,7 +113,11 @@ const instantiateDrawAuctionContracts = (
 };
 
 /**
- * Runs the (gas cost + rng fee cost) vs. rewards profit estimation for the RngWitnet#startDraw() function.
+ * Compares (gas cost + rng fee cost) against rewards profit estimation for the RngWitnet#startDraw() function.
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
  *
  * @returns {undefined} void function
  */
@@ -124,18 +126,14 @@ const checkStartDraw = async (
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
 ) => {
-  const rewardUsd = context.startDrawFeeUsd;
-
-  const gasCostUsd = await getStartDrawGasCost(config, context, drawAuctionContracts);
-  console.log('gasCostUsd');
-  console.log(gasCostUsd);
+  const gasCostUsd = await getStartDrawGasCostUsd(config, context, drawAuctionContracts);
   if (gasCostUsd === 0) {
     printAsterisks();
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
     return;
   }
 
-  const profitable = await calculateStartDrawProfit(config, context, rewardUsd, gasCostUsd);
+  const profitable = await calculateStartDrawProfit(config, context, gasCostUsd);
 
   if (profitable) {
     await sendPopulatedStartDrawTransaction(config, context, drawAuctionContracts);
@@ -208,6 +206,10 @@ const sendPopulatedStartDrawTransaction = async (
 /**
  * Runs the gas cost vs. rewards profit estimation for the DrawManager#awardDraw() function.
  *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
+ *
  * @returns {undefined} void function
  */
 const checkAwardDraw = async (
@@ -215,13 +217,11 @@ const checkAwardDraw = async (
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
 ) => {
-  const { chainId, wallet, ozRelayer } = config;
-
   const contract = drawAuctionContracts.drawManagerContract;
 
-  const txParams = buildAwardDrawTxParams(config.rewardRecipient);
+  const txParams = buildAwardDrawTxParams(config);
 
-  const gasCostUsd = await getAwardDrawGasCost(txParams, contract, config, context);
+  const gasCostUsd = await getAwardDrawGasCostUsd(txParams, contract, config, context);
   if (gasCostUsd === 0) {
     printAsterisks();
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
@@ -284,23 +284,25 @@ const getStartDrawEstimatedGasLimit = async (
  * Takes into account the cost of gas, the cost of the RNG fee to Witnet,
  * and the rewards we will earn.
  *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {number} gasCostUsd USD Value of how much gas it will cost to run startDraw()
+ *
  * @returns {Promise<boolean>} Promise object with boolean of profitable or not
  */
 const calculateStartDrawProfit = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
-  rewardUsd: number,
   gasCostUsd: number,
 ): Promise<boolean> => {
+  printAsterisks();
   printSpacer();
   printSpacer();
   console.log(chalk.blue(`Calculating profit ...`));
-
-  printSpacer();
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
-  const grossProfitUsd = rewardUsd;
+  const grossProfitUsd = context.startDrawFeeUsd;
   console.log(chalk.magenta('Gross Profit = Reward'));
 
   const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeEstimateUsd;
@@ -308,13 +310,13 @@ const calculateStartDrawProfit = async (
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
-        rewardUsd,
+        grossProfitUsd,
       )} - $${roundTwoDecimalPlaces(gasCostUsd)} - $${roundTwoDecimalPlaces(
         context.rngFeeEstimateUsd,
       )})`,
     ),
     chalk.dim(
-      `$${netProfitUsd} = ($${rewardUsd} - $${gasCostUsd} - $${context.rngFeeEstimateUsd})`,
+      `$${netProfitUsd} = ($${grossProfitUsd} - $${gasCostUsd} - $${context.rngFeeEstimateUsd})`,
     ),
   );
   printSpacer();
@@ -335,6 +337,10 @@ const calculateStartDrawProfit = async (
  *
  * Takes into account the cost of gas for the DrawManager#awardDraw(),
  * and the rewards earned.
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {number} gasCostUsd USD Value of how much gas it will cost to run awardDraw()
  *
  * @returns {Promise} Promise of a boolean for profitability
  */
@@ -379,7 +385,10 @@ const calculateAwardDrawProfit = async (
 };
 
 /**
- * Logs the context to the console.
+ * Logs the context (state of the contracts) to the console.
+ *
+ * @param {number} chainId, the chain ID we're operating on
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
  *
  * @returns {undefined} void function
  */
@@ -451,32 +460,31 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
 };
 
 /**
+ * Finds how much the gas will cost (in $ USD) for the RngWitnet#startDraw transaction
  *
+ * @param {StartDrawTxParams} txParams, the startDraw() transaction parameters object
+ * @param {Contract} contract, ethers.js Contract instance of the RngWitnet contract
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
  *
- *
- * @returns {Promise} Promise of a boolean for profitability
+ * @returns {StartDrawTxParams} The startDraw() tx parameters object
  */
-const getStartDrawGasCost = async (
+const getStartDrawGasCostUsd = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
 ): Promise<number> => {
-  const { chainId, provider } = config;
   const { nativeTokenMarketRateUsd } = context;
 
   console.log(chalk.blue(`Estimating RngWitnet#startDraw() gas costs ...`));
   printSpacer();
 
   const startDrawTxParams = buildStartDrawTxParams(config, context, drawAuctionContracts);
-  console.log('startDrawTxParams');
-  console.log(startDrawTxParams);
 
   const estimatedGasLimit: BigNumber = await getStartDrawEstimatedGasLimit(
     drawAuctionContracts.rngWitnetContract,
     startDrawTxParams,
   );
-  console.log('estimatedGasLimit');
-  console.log(estimatedGasLimit);
 
   const { value, transformedTxParams }: StartDrawTransformedTxParams =
     transformStartDrawTxParams(startDrawTxParams);
@@ -489,9 +497,8 @@ const getStartDrawGasCost = async (
   // hard-coded gas limit:
   // estimatedGasLimit = BigNumber.from(630000);
   const gasCostUsd = await getGasCostUsd(
+    config,
     estimatedGasLimit,
-    chainId,
-    provider,
     nativeTokenMarketRateUsd,
     populatedTx,
   );
@@ -499,6 +506,15 @@ const getStartDrawGasCost = async (
   return gasCostUsd;
 };
 
+/**
+ * Creates an object with all the transaction parameters for the RngWitnet#startDraw() transaction.
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
+ *
+ * @returns {StartDrawTxParams} The startDraw() tx parameters object
+ */
 const buildStartDrawTxParams = (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
@@ -511,13 +527,30 @@ const buildStartDrawTxParams = (
   };
 };
 
-const buildAwardDrawTxParams = (rewardRecipient: string): AwardDrawTxParams => {
+/**
+ * Creates an object with all the transaction parameters for the DrawManager#awardDraw() transaction.
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ *
+ * @returns {AwardDrawTxParams} The awardDraw() tx parameters object
+ */
+const buildAwardDrawTxParams = (config: DrawAuctionConfig): AwardDrawTxParams => {
   return {
-    rewardRecipient,
+    rewardRecipient: config.rewardRecipient,
   };
 };
 
-const getAwardDrawGasCost = async (
+/**
+ * Finds how much the gas will cost (in $ USD) for the DrawManager#awardDraw transaction
+ *
+ * @param {AwardDrawTxParams} txParams, the awardDraw() transaction parameters object
+ * @param {Contract} contract, ethers.js Contract instance of the DrawManager contract
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ *
+ * @returns {AwardDrawTxParams} The awardDraw() tx parameters object
+ */
+const getAwardDrawGasCostUsd = async (
   txParams: AwardDrawTxParams,
   contract: Contract,
   config: DrawAuctionConfig,
@@ -536,9 +569,8 @@ const getAwardDrawGasCost = async (
   );
 
   const gasCostUsd = await getGasCostUsd(
+    config,
     estimatedGasLimit,
-    chainId,
-    provider,
     nativeTokenMarketRateUsd,
     populatedTx,
   );
@@ -546,13 +578,24 @@ const getAwardDrawGasCost = async (
   return gasCostUsd;
 };
 
+/**
+ * Finds how much a transaction will cost (gas costs in $ USD) for the a generic contract tx function
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {BigNumber} estimatedGasLimit, BigNumber of a gas limit provided by ether.js estimateGas functions
+ * @param {number} context, the current price (in $ USD) of the native (gas) token for this network
+ * @param {populatedTx} PopulatedTransaction, the already-built object with transaction data, from, to, etc
+ *
+ * @returns {number} Amount gas will cost (in $ USD)
+ */
 const getGasCostUsd = async (
-  estimatedGasLimit,
-  chainId,
-  provider,
-  nativeTokenMarketRateUsd,
-  populatedTx,
+  config: DrawAuctionConfig,
+  estimatedGasLimit: BigNumber,
+  nativeTokenMarketRateUsd: number,
+  populatedTx: PopulatedTransaction,
 ): Promise<number> => {
+  const { chainId, provider } = config;
+
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));
     return 0;
@@ -574,7 +617,6 @@ const getGasCostUsd = async (
   );
   logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
 
-  // 3. Convert gas costs to USD
   printSpacer();
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
@@ -593,7 +635,7 @@ const getGasCostUsd = async (
 };
 
 /**
- * Fires off the DrawManager#awardDraw() transaction
+ * Fires off the DrawManager#awardDraw() transaction.
  *
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {AwardDrawTxParams} txParams, transaction parameters
@@ -631,6 +673,13 @@ const sendPopulatedAwardDrawTransaction = async (
   printNote();
 };
 
+/**
+ * Returns emojis (for pretty console logging).
+ *
+ * @param {boolean} bool
+ *
+ * @returns {string}
+ */
 const checkOrX = (bool: boolean): string => {
   return bool ? '✔' : '✗';
 };

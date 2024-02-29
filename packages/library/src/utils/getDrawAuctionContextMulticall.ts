@@ -1,6 +1,4 @@
-import { BigNumber, ethers } from 'ethers';
-import { formatUnits } from '@ethersproject/units';
-import { Provider } from '@ethersproject/providers';
+import { ethers } from 'ethers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
@@ -9,15 +7,11 @@ import {
   DrawAuctionContracts,
   DrawAuctionContext,
   TokenWithRate,
-  RngResults,
-  AuctionResult,
   DrawAuctionConfig,
 } from '../types';
-import { chainName } from './network';
 import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
 import { ERC20Abi } from '../abis/ERC20Abi';
 import { printSpacer } from './logging';
-// import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -47,10 +41,8 @@ const REWARD_SYMBOL_KEY = 'rewardToken-symbol';
 
 // const RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD = 10; // 10% or less time left on relay auction
 
-// const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-
 /**
- * Combines the two DrawAuction Multicalls, one for the RNG Chain and one for the Relay/PrizePool chain
+ * Combines the DrawAuction Multicall data with the , one for the RNG Chain and one for the Relay/PrizePool chain
  *
  * @param {DrawAuctionConfig} config
  * @param {DrawAuctionContracts} drawAuctionContracts, a collection of ethers contracts to use for querying
@@ -62,47 +54,24 @@ export const getDrawAuctionContextMulticall = async (
 ): Promise<DrawAuctionContext> => {
   printSpacer();
   console.log(chalk.dim(`Gathering info on state of auctions ...`));
-
-  const context: DrawAuctionContext = await getContext(config, drawAuctionContracts);
-  const drawAuctionState: DrawAuctionState = getDrawAuctionState(context);
-
-  return {
-    ...context,
-    drawAuctionState,
-  };
-};
-
-const getContext = async (
-  config: DrawAuctionConfig,
-  drawAuctionContracts: DrawAuctionContracts,
-): Promise<DrawAuctionContext> => {
-  printSpacer();
-  console.log(chalk.dim(`Running get RNG multicall ...`));
-
   const { chainId } = config;
 
-  // 2. Native tokens (gas tokens) market rates in USD
+  // 1. Native tokens (gas tokens) market rates in USD
   console.log(chalk.dim(`Getting RNG token and native (gas) token market rates ...`));
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
-  // 3. Rng Info
-  const rngContext = await getRngMulticall(config, drawAuctionContracts, nativeTokenMarketRateUsd);
+  // 2. Multicall data
+  printSpacer();
+  console.log(chalk.dim(`Running draw auction state context multicalls ...`));
+  const context = await getContext(config, drawAuctionContracts, nativeTokenMarketRateUsd);
 
-  return {
-    ...rngContext,
-    nativeTokenMarketRateUsd,
-  };
+  // 3.
+  const drawAuctionState: DrawAuctionState = getDrawAuctionState(context);
+
+  return { ...context, drawAuctionState };
 };
 
-/**
- * Gather information about the RNG Start Contracts
- *
- * @param {Provider} provider ethers.js provider for the chain that will be queried
- * @param {DrawAuctionContracts} drawAuctionContracts drawAuctionContracts, a collection of ethers contracts to use for querying
- * @param {number} nativeTokenMarketRateUsd dollar value of chain's native token (likely ETH)
- * @returns DrawAuctionContext
- */
-export const getRngMulticall = async (
+const getContext = async (
   config: DrawAuctionConfig,
   drawAuctionContracts: DrawAuctionContracts,
   nativeTokenMarketRateUsd: number,
@@ -124,9 +93,6 @@ export const getRngMulticall = async (
     drawAuctionContracts.drawManagerContract.canAwardDraw();
   queriesOne[DRAW_MANAGER_AWARD_DRAW_FEE_KEY] =
     drawAuctionContracts.drawManagerContract.awardDrawFee();
-  // console.log(drawAuctionContracts);
-  // console.log(drawAuctionContracts.drawManagerContract);
-  console.log(await drawAuctionContracts.drawManagerContract.awardDrawFee());
 
   // 2. Queries One: Rng Witnet
   const gasPrice = await provider.getGasPrice();
@@ -143,8 +109,6 @@ export const getRngMulticall = async (
 
   // 4. Get and process results
   const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
-  console.log('resultsOne');
-  console.log(resultsOne);
 
   // 5. Results One: Draw Manager
   const canStartDraw = resultsOne[DRAW_MANAGER_CAN_START_DRAW_KEY];
@@ -189,11 +153,6 @@ export const getRngMulticall = async (
   queriesTwo[REWARD_NAME_KEY] = rewardTokenContract.name();
   queriesTwo[REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
 
-  // const prizePoolReserve = resultsTwo[PRIZE_POOL_RESERVE_KEY];
-  // const prizePoolPendingReserveContributions =
-  //   resultsTwo[PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY];
-  // const reserveTotal = prizePoolReserve.add(prizePoolPendingReserveContributions);
-
   // 7. Results Two: Get second set of multicall results
   const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
   console.log('resultsTwo');
@@ -215,19 +174,10 @@ export const getRngMulticall = async (
     symbol: resultsTwo[REWARD_SYMBOL_KEY],
     assetRateUsd: rewardTokenMarketRateUsd,
   };
-  console.log('rewardToken');
-  console.log(rewardToken);
 
   // 10. Results Two: Draw Manager
   const startDrawFeeStr = ethers.utils.formatUnits(startDrawFee, rewardToken.decimals);
-  console.log('startDrawFee.toString()');
-  console.log(startDrawFee.toString());
-  console.log('startDrawFeeStr');
-  console.log(startDrawFeeStr);
-  // const startDrawFeeUsd = Number(startDrawFee.toString()) * rewardToken.assetRateUsd;
   const startDrawFeeUsd = Number(startDrawFeeStr) * rewardToken.assetRateUsd;
-  console.log('startDrawFeeUsd');
-  console.log(startDrawFeeUsd);
 
   const awardDrawFeeStr = ethers.utils.formatUnits(awardDrawFee, rewardToken.decimals);
   console.log('awardDrawFee.toString()');
@@ -244,8 +194,6 @@ export const getRngMulticall = async (
   // note: May need to change on different chains that use a unique token for gas (AVAX, etc)
   const rngFeeEstimateStr = ethers.utils.formatEther(rngFeeEstimate);
   const rngFeeEstimateUsd = Number(rngFeeEstimateStr) * nativeTokenMarketRateUsd;
-  console.log('rngFeeEstimateUsd');
-  console.log(rngFeeEstimateUsd);
 
   return {
     canStartDraw,
@@ -262,9 +210,18 @@ export const getRngMulticall = async (
     rewardToken,
     prizePoolDrawClosesAt,
     // auctionClosesSoon,
+
+    nativeTokenMarketRateUsd,
   };
 };
 
+/**
+ * Determines the state the draw auction is in (Idle, Start, or Award)
+ *
+ * @param {DrawAuctionContext} context, current state of the draw auction contracts
+ *
+ * @returns {DrawAuctionState} current state enum
+ */
 const getDrawAuctionState = (context: DrawAuctionContext): DrawAuctionState => {
   if (context.canStartDraw) {
     return DrawAuctionState.Start;
