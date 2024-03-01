@@ -56,6 +56,8 @@ export async function runDrawAuction(
     drawAuctionContracts,
   );
   printContext(chainId, context);
+  printSpacer();
+  printSpacer();
 
   if (!context.drawAuctionState) {
     printAsterisks();
@@ -65,10 +67,10 @@ export async function runDrawAuction(
   }
 
   if (context.drawAuctionState === DrawAuctionState.Start) {
-    console.log(chalk.yellow(`Processing 'start draw' for ${chainName(chainId)}:`));
+    console.log(chalk.green(`Processing 'start draw' for ${chainName(chainId)}:`));
     await checkStartDraw(config, context, drawAuctionContracts);
   } else if (context.drawAuctionState === DrawAuctionState.Award) {
-    console.log(chalk.yellow(`Processing 'award draw' for ${chainName(chainId)}:`));
+    console.log(chalk.green(`Processing 'award draw' for ${chainName(chainId)}:`));
     await checkAwardDraw(config, context, drawAuctionContracts);
   }
 }
@@ -166,8 +168,6 @@ const sendPopulatedStartDrawTransaction = async (
 
   const contract: Contract = drawAuctionContracts.rngWitnetContract;
   const txParams: StartDrawTxParams = buildStartDrawTxParams(config, context, drawAuctionContracts);
-  console.log('txParams');
-  console.log(txParams);
 
   const { value, transformedTxParams }: StartDrawTransformedTxParams =
     transformStartDrawTxParams(txParams);
@@ -176,13 +176,9 @@ const sendPopulatedStartDrawTransaction = async (
     ...Object.values(transformedTxParams),
     { value },
   );
-  console.log('populatedTx');
-  console.log(populatedTx);
 
   const gasPrice = await provider.getGasPrice();
   console.log(chalk.greenBright.bold(`Sending ...`));
-  console.log('gasPrice');
-  console.log(gasPrice);
   // const gasPrice = BigNumber.from(100000000);
 
   const gasLimit = 850000;
