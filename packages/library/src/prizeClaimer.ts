@@ -12,16 +12,7 @@ import {
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 
-import {
-  ClaimPrizeContext,
-  PrizeClaimerConfig,
-  TiersContext,
-  Token,
-  TokenWithRate,
-  SendTransactionArgs,
-  OzSendTransactionArgs,
-  WalletSendTransactionArgs,
-} from './types';
+import { ClaimPrizeContext, PrizeClaimerConfig, TiersContext, Token, TokenWithRate } from './types';
 import {
   logTable,
   logStringValue,
@@ -85,6 +76,8 @@ export async function runPrizeClaimer(
   if (!claimerContract) {
     throw new Error('Contract Unavailable');
   }
+
+  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', prizeClaimerConfig.minProfitThresholdUsd);
 
   // #1. Get context about the prize pool prize token, etc
   printSpacer();

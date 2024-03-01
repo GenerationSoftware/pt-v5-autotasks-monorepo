@@ -59,6 +59,8 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     covalentApiKey,
   } = config;
 
+  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd);
+
   // Get contracts
   //
   printSpacer();
