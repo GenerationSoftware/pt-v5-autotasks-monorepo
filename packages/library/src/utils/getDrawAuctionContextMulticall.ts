@@ -127,6 +127,7 @@ const getContext = async (
   let auctionExpired, auctionClosesSoon, elapsedTime;
   if (canAwardDraw) {
     // elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
+    // this is wrong, should be more like line above:
     elapsedTime = elapsedTimeSinceDrawClosed;
 
     if (elapsedTime > auctionDuration) {
