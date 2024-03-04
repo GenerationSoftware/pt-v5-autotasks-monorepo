@@ -31,9 +31,9 @@ const QUERY_KEYS = {
   RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY: 'rngWitnet-estimateRandomizeFee',
 
   DRAW_MANAGER_CAN_START_DRAW_KEY: 'drawManager-canStartDraw',
-  DRAW_MANAGER_START_DRAW_FEE_KEY: 'drawManager-startDrawFee',
-  DRAW_MANAGER_CAN_AWARD_DRAW_KEY: 'drawManager-canAwardDraw',
-  DRAW_MANAGER_AWARD_DRAW_FEE_KEY: 'drawManager-awardDrawFee',
+  DRAW_MANAGER_START_DRAW_REWARD_KEY: 'drawManager-startDrawReward',
+  DRAW_MANAGER_CAN_FINISH_DRAW_KEY: 'drawManager-canFinishDraw',
+  DRAW_MANAGER_FINISH_DRAW_REWARD_KEY: 'drawManager-finishDrawReward',
   DRAW_MANAGER_AUCTION_DURATION_KEY: 'drawManager-auctionDuration',
   DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED: 'drawManager-elapsedTimeSinceDrawClosed',
 
@@ -89,14 +89,15 @@ const getContext = async (
 
   // 1. Queries One: Draw Manager
   queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY] = drawManagerContract.canStartDraw();
-  queriesOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_FEE_KEY] = drawManagerContract.startDrawFee();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_REWARD_KEY] = drawManagerContract.startDrawReward();
 
-  queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_AWARD_DRAW_KEY] = drawManagerContract.canAwardDraw();
-  queriesOne[QUERY_KEYS.DRAW_MANAGER_AWARD_DRAW_FEE_KEY] = drawManagerContract.awardDrawFee();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_FINISH_DRAW_KEY] = drawManagerContract.canFinishDraw();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_FINISH_DRAW_REWARD_KEY] =
+    drawManagerContract.finishDrawReward();
 
   queriesOne[QUERY_KEYS.DRAW_MANAGER_AUCTION_DURATION_KEY] = drawManagerContract.auctionDuration();
-  queriesOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED] =
-    drawManagerContract.elapsedTimeSinceDrawClosed();
+  // queriesOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED] =
+  //   drawManagerContract.elapsedTimeSinceDrawClosed();
 
   // 2. Queries One: Rng Witnet
   const gasPrice = await provider.getGasPrice();
@@ -115,35 +116,35 @@ const getContext = async (
 
   // 5. Results One: Draw Manager
   const canStartDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY];
-  const startDrawFee = resultsOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_FEE_KEY];
+  const startDrawReward = resultsOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_REWARD_KEY];
 
-  const canAwardDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_AWARD_DRAW_KEY];
-  const awardDrawFee = resultsOne[QUERY_KEYS.DRAW_MANAGER_AWARD_DRAW_FEE_KEY];
+  const canFinishDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_FINISH_DRAW_KEY];
+  const finishDrawReward = resultsOne[QUERY_KEYS.DRAW_MANAGER_FINISH_DRAW_REWARD_KEY];
 
   const auctionDuration = resultsOne[QUERY_KEYS.DRAW_MANAGER_AUCTION_DURATION_KEY];
-  const elapsedTimeSinceDrawClosed =
-    resultsOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED];
+  // const elapsedTimeSinceDrawClosed =
+  //   resultsOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED];
 
-  let auctionExpired, auctionClosesSoon, elapsedTime;
-  if (canAwardDraw) {
-    // elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
-    // this is wrong, should be more like line above:
-    elapsedTime = elapsedTimeSinceDrawClosed;
+  // let auctionExpired, auctionClosesSoon, elapsedTime;
+  // if (canFinishDraw) {
+  //   // elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
+  //   // this is wrong, should be more like line above:
+  //   elapsedTime = elapsedTimeSinceDrawClosed;
 
-    if (elapsedTime > auctionDuration) {
-      auctionExpired = true;
-      elapsedTime = auctionDuration;
-    }
+  //   if (elapsedTime > auctionDuration) {
+  //     auctionExpired = true;
+  //     elapsedTime = auctionDuration;
+  //   }
 
-    // Store if this relay auction is coming to an end
-    const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
-    auctionClosesSoon =
-      percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
-  }
-  console.log('auctionClosesSoon');
-  console.log(auctionClosesSoon);
-  console.log('auctionExpired');
-  console.log(auctionExpired);
+  //   // Store if this relay auction is coming to an end
+  //   const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
+  //   auctionClosesSoon =
+  //     percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
+  // }
+  // console.log('auctionClosesSoon');
+  // console.log(auctionClosesSoon);
+  // console.log('auctionExpired');
+  // console.log(auctionExpired);
 
   // 6. Results One: Rng Witnet
   const rngFeeEstimate = resultsOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
@@ -186,15 +187,15 @@ const getContext = async (
   };
 
   // 10. Results Two: Draw Manager
-  const startDrawFeeStr = ethers.utils.formatUnits(startDrawFee, rewardToken.decimals);
-  const startDrawFeeUsd = Number(startDrawFeeStr) * rewardToken.assetRateUsd;
+  const startDrawRewardStr = ethers.utils.formatUnits(startDrawReward, rewardToken.decimals);
+  const startDrawRewardUsd = Number(startDrawRewardStr) * rewardToken.assetRateUsd;
 
-  const awardDrawFeeStr = ethers.utils.formatUnits(awardDrawFee, rewardToken.decimals);
-  console.log('awardDrawFee.toString()');
-  console.log(awardDrawFee.toString());
-  const awardDrawFeeUsd = Number(awardDrawFeeStr) * rewardToken.assetRateUsd;
-  console.log('awardDrawFeeUsd');
-  console.log(awardDrawFeeUsd);
+  const finishDrawRewardStr = ethers.utils.formatUnits(finishDrawReward, rewardToken.decimals);
+  console.log('finishDrawReward.toString()');
+  console.log(finishDrawReward.toString());
+  const finishDrawRewardUsd = Number(finishDrawRewardStr) * rewardToken.assetRateUsd;
+  console.log('finishDrawRewardUsd');
+  console.log(finishDrawRewardUsd);
 
   // Currently Witnet requires the native token ETH on Optimism for RNG Fee
   // assume 18 decimals
@@ -204,19 +205,19 @@ const getContext = async (
 
   return {
     canStartDraw,
-    startDrawFee,
-    startDrawFeeUsd,
+    startDrawReward,
+    startDrawRewardUsd,
 
-    canAwardDraw,
-    awardDrawFee,
-    awardDrawFeeUsd,
+    canFinishDraw,
+    finishDrawReward,
+    finishDrawRewardUsd,
 
     rngFeeEstimate,
     rngFeeEstimateUsd,
 
     rewardToken,
     prizePoolDrawClosesAt,
-    auctionClosesSoon,
+    // auctionClosesSoon,
 
     nativeTokenMarketRateUsd,
   };
@@ -232,7 +233,7 @@ const getContext = async (
 const getDrawAuctionState = (context: DrawAuctionContext): DrawAuctionState => {
   if (context.canStartDraw) {
     return DrawAuctionState.Start;
-  } else if (context.canAwardDraw) {
+  } else if (context.canFinishDraw) {
     return DrawAuctionState.Award;
   } else {
     return DrawAuctionState.Idle;

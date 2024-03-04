@@ -26,7 +26,7 @@ type StartDrawTxParams = {
   value: BigNumber;
 };
 
-type AwardDrawTxParams = {
+type FinishDrawTxParams = {
   rewardRecipient: string;
 };
 
@@ -67,11 +67,11 @@ export async function runDrawAuction(
   }
 
   if (context.drawAuctionState === DrawAuctionState.Start) {
-    console.log(chalk.green(`Processing 'start draw' for ${chainName(chainId)}:`));
+    console.log(chalk.green(`Processing 'Start Draw' for ${chainName(chainId)}:`));
     await checkStartDraw(config, context, drawAuctionContracts);
-  } else if (context.drawAuctionState === DrawAuctionState.Award) {
-    console.log(chalk.green(`Processing 'award draw' for ${chainName(chainId)}:`));
-    await checkAwardDraw(config, context, drawAuctionContracts);
+  } else if (context.drawAuctionState === DrawAuctionState.Finish) {
+    console.log(chalk.green(`Processing 'Finish Draw' for ${chainName(chainId)}:`));
+    await checkFinishDraw(config, context, drawAuctionContracts);
   }
 }
 
@@ -200,7 +200,7 @@ const sendPopulatedStartDrawTransaction = async (
 };
 
 /**
- * Runs the gas cost vs. rewards profit estimation for the DrawManager#awardDraw() function.
+ * Runs the gas cost vs. rewards profit estimation for the DrawManager#finishDraw() function.
  *
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
@@ -208,36 +208,36 @@ const sendPopulatedStartDrawTransaction = async (
  *
  * @returns {undefined} void function
  */
-const checkAwardDraw = async (
+const checkFinishDraw = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
 ) => {
   const contract = drawAuctionContracts.drawManagerContract;
 
-  const txParams = buildAwardDrawTxParams(config);
+  const txParams = buildFinishDrawTxParams(config);
 
-  const gasCostUsd = await getAwardDrawGasCostUsd(txParams, contract, config, context);
+  const gasCostUsd = await getFinishDrawGasCostUsd(txParams, contract, config, context);
   if (gasCostUsd === 0) {
     printAsterisks();
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
     return;
   }
 
-  const { netProfitUsd, profitable } = await calculateAwardDrawProfit(
+  const { netProfitUsd, profitable } = await calculateFinishDrawProfit(
     config,
-    context.awardDrawFeeUsd,
+    context.finishDrawRewardUsd,
     gasCostUsd,
   );
   console.log('profitable');
   console.log(profitable);
 
-  const forceAwardDraw = checkForceAwardDraw(config, context, netProfitUsd);
-  console.log('forceAwardDraw');
-  console.log(forceAwardDraw);
+  const forceFinishDraw = checkForceFinishDraw(config, context, netProfitUsd);
+  console.log('forceFinishDraw');
+  console.log(forceFinishDraw);
 
-  if (profitable || forceAwardDraw) {
-    await sendPopulatedAwardDrawTransaction(config, txParams, contract);
+  if (profitable || forceFinishDraw) {
+    await sendPopulatedFinishDrawTransaction(config, txParams, contract);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -246,17 +246,17 @@ const checkAwardDraw = async (
 };
 
 /**
- * If we already submitted the startAward request - and therefore paid the fees for the random number
+ * If we already submitted the startDraw request - and therefore paid the fees for the random number
  * and gas fee for it - we should make sure the relay goes through - making sure that it was us who won the
- * initial startAward auction, and that the amount of loss we'll take is within acceptable range
+ * initial startDraw auction, and that the amount of loss we'll take is within acceptable range
  *
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
  * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
  *
- * @returns {boolean} if we should attempt to force the awardDraw() transaction or not
+ * @returns {boolean} if we should attempt to force the finishDraw() transaction or not
  */
-const checkForceAwardDraw = (
+const checkForceFinishDraw = (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   netProfitUsd: number,
@@ -333,7 +333,7 @@ const calculateStartDrawProfit = async (
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
-  const grossProfitUsd = context.startDrawFeeUsd;
+  const grossProfitUsd = context.startDrawReward;
   console.log(chalk.magenta('Gross Profit = Reward'));
 
   const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeEstimateUsd;
@@ -364,18 +364,18 @@ const calculateStartDrawProfit = async (
 };
 
 /**
- * Determines if the DrawManager#awardDraw() transaction will be profitable.
+ * Determines if the DrawManager#finishDraw() transaction will be profitable.
  *
- * Takes into account the cost of gas for the DrawManager#awardDraw(),
+ * Takes into account the cost of gas for the DrawManager#finishDraw(),
  * and the rewards earned.
  *
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
- * @param {number} gasCostUsd USD Value of how much gas it will cost to run awardDraw()
+ * @param {number} gasCostUsd USD Value of how much gas it will cost to run finishDraw()
  *
  * @returns {Promise} Promise of a boolean for profitability
  */
-const calculateAwardDrawProfit = async (
+const calculateFinishDrawProfit = async (
   config: DrawAuctionConfig,
   rewardUsd: number,
   gasCostUsd: number,
@@ -451,12 +451,12 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
     printSpacer();
     logStringValue(
       `2b. Start Draw ${chainName(chainId)} Expected Reward:`,
-      `${context.startDrawFee.toString()} ${context.rewardToken.symbol}`,
+      `${context.startDrawReward.toString()} ${context.rewardToken.symbol}`,
     );
     console.log(
       chalk.grey(`2c. Start Draw ${chainName(chainId)} Expected Reward (USD):`),
-      chalk.yellow(`$${roundTwoDecimalPlaces(context.startDrawFeeUsd)}`),
-      chalk.dim(`$${context.startDrawFeeUsd}`),
+      chalk.yellow(`$${roundTwoDecimalPlaces(context.startDrawRewardUsd)}`),
+      chalk.dim(`$${context.startDrawRewardUsd}`),
     );
   } else {
     printSpacer();
@@ -470,20 +470,20 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
 
   printSpacer();
   printSpacer();
-  console.log(chalk.blue.bold(`Award Draw Auction State:`));
+  console.log(chalk.blue.bold(`Finish Draw Auction State:`));
 
-  logStringValue(`3a. Can Award Draw? `, `${checkOrX(context.canAwardDraw)}`);
-  if (context.canAwardDraw) {
+  logStringValue(`3a. Can Finish Draw? `, `${checkOrX(context.canFinishDraw)}`);
+  if (context.canFinishDraw) {
     logBigNumber(
-      `3b. Award Draw Expected Reward:`,
-      context.awardDrawFee.toString(),
+      `3b. Finish Draw Expected Reward:`,
+      context.finishDrawReward.toString(),
       context.rewardToken.decimals,
       context.rewardToken.symbol,
     );
     console.log(
-      chalk.grey(`3c. Award Draw Expected Reward (USD):`),
-      chalk.yellow(`$${roundTwoDecimalPlaces(context.awardDrawFeeUsd)}`),
-      chalk.dim(`$${context.awardDrawFeeUsd}`),
+      chalk.grey(`3c. Finish Draw Expected Reward (USD):`),
+      chalk.yellow(`$${roundTwoDecimalPlaces(context.finishDrawRewardUsd)}`),
+      chalk.dim(`$${context.finishDrawRewardUsd}`),
     );
   }
 
@@ -559,35 +559,35 @@ const buildStartDrawTxParams = (
 };
 
 /**
- * Creates an object with all the transaction parameters for the DrawManager#awardDraw() transaction.
+ * Creates an object with all the transaction parameters for the DrawManager#finishDraw() transaction.
  *
  * @param {DrawAuctionConfig} config, draw auction config
  *
- * @returns {AwardDrawTxParams} The awardDraw() tx parameters object
+ * @returns {FinishDrawTxParams} The finishDraw() tx parameters object
  */
-const buildAwardDrawTxParams = (config: DrawAuctionConfig): AwardDrawTxParams => {
+const buildFinishDrawTxParams = (config: DrawAuctionConfig): FinishDrawTxParams => {
   return {
     rewardRecipient: config.rewardRecipient,
   };
 };
 
 /**
- * Finds how much the gas will cost (in $ USD) for the DrawManager#awardDraw transaction
+ * Finds how much the gas will cost (in $ USD) for the DrawManager#finishDraw transaction
  *
- * @param {AwardDrawTxParams} txParams, the awardDraw() transaction parameters object
+ * @param {FinishDrawTxParams} txParams, the finishDraw() transaction parameters object
  * @param {Contract} contract, ethers.js Contract instance of the DrawManager contract
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
  *
- * @returns {AwardDrawTxParams} The awardDraw() tx parameters object
+ * @returns {FinishDrawTxParams} The finishDraw() tx parameters object
  */
-const getAwardDrawGasCostUsd = async (
-  txParams: AwardDrawTxParams,
+const getFinishDrawGasCostUsd = async (
+  txParams: FinishDrawTxParams,
   contract: Contract,
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
 ): Promise<number> => {
-  console.log(chalk.blue(`Estimating DrawManager#awardDraw() gas costs ...`));
+  console.log(chalk.blue(`Estimating DrawManager#finishDraw() gas costs ...`));
   printSpacer();
 
   const { chainId, provider } = config;
@@ -595,7 +595,7 @@ const getAwardDrawGasCostUsd = async (
 
   // The relay uses 156,000~ gas, set to 200k just in case
   const estimatedGasLimit: BigNumber = BigNumber.from(400000);
-  const populatedTx: PopulatedTransaction = await contract.populateTransaction.awardDraw(
+  const populatedTx: PopulatedTransaction = await contract.populateTransaction.finishDraw(
     ...Object.values(txParams),
   );
 
@@ -666,25 +666,25 @@ const getGasCostUsd = async (
 };
 
 /**
- * Fires off the DrawManager#awardDraw() transaction.
+ * Fires off the DrawManager#finishDraw() transaction.
  *
  * @param {DrawAuctionConfig} config, draw auction config
- * @param {AwardDrawTxParams} txParams, transaction parameters
+ * @param {FinishDrawTxParams} txParams, transaction parameters
  * @param {Contract} contract, ethers.js Contract instance of the DrawManager contract
  */
-const sendPopulatedAwardDrawTransaction = async (
+const sendPopulatedFinishDrawTransaction = async (
   config: DrawAuctionConfig,
-  txParams: AwardDrawTxParams,
+  txParams: FinishDrawTxParams,
   contract: Contract,
 ) => {
   const { chainId, wallet, ozRelayer, provider } = config;
   const gasPrice = await provider.getGasPrice();
 
-  console.log(chalk.green(`Execute DrawManager#awardDraw`));
+  console.log(chalk.green(`Execute DrawManager#finishDraw`));
   console.log(chalk.greenBright.bold(`Sending ...`));
   printSpacer();
 
-  const populatedTx = await contract.populateTransaction.awardDraw(...Object.values(txParams));
+  const populatedTx = await contract.populateTransaction.finishDraw(...Object.values(txParams));
 
   const gasLimit = 800000;
   const tx = await sendPopulatedTx(
@@ -738,7 +738,7 @@ const transformStartDrawTxParams = (txParams: StartDrawTxParams): StartDrawTrans
 const printNote = () => {
   console.log(chalk.yellow('|*******************************************************|'));
   console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|  Rewards accumulate post-awarding on the PrizePool!   |'));
+  console.log(chalk.yellow('|    Rewards accumulate post-draw on the PrizePool!     |'));
   console.log(chalk.yellow('|  Withdraw your rewards manually from that contract.   |'));
   console.log(chalk.yellow('|                                                       |'));
   console.log(chalk.yellow('|*******************************************************|'));

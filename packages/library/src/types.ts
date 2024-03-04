@@ -141,18 +141,18 @@ export interface DrawAuctionConfig extends AutotaskConfig {}
 
 export interface DrawAuctionContext {
   canStartDraw: boolean;
-  startDrawFee: BigNumber;
-  startDrawFeeUsd: number;
+  startDrawReward: BigNumber;
+  startDrawRewardUsd: number;
 
-  canAwardDraw: boolean;
-  awardDrawFee: BigNumber;
-  awardDrawFeeUsd: number;
+  canFinishDraw: boolean;
+  finishDrawReward: BigNumber;
+  finishDrawRewardUsd: number;
 
   rngFeeEstimate: BigNumber;
   rngFeeEstimateUsd: number;
 
   prizePoolDrawClosesAt: number;
-  auctionClosesSoon: boolean;
+  // auctionClosesSoon: boolean;
   rewardToken: TokenWithRate;
 
   nativeTokenMarketRateUsd?: number;
