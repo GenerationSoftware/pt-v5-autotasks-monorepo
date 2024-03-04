@@ -402,7 +402,8 @@ const sendStartRngTransaction = async (
   const { gasPrice } = await getGasPrice(provider);
   console.log(chalk.greenBright.bold(`Sending ...`));
 
-  const gasLimit = 330000;
+  const gasLimit = 400000;
+
   const tx = await sendPopulatedTx(
     chainId,
     rngOzRelayer,
@@ -933,7 +934,7 @@ const getRngGasCost = async (
       );
 
     // This was a previous tx gas usage on Goerli + buffer room
-    estimatedGasLimit = BigNumber.from(330000);
+    estimatedGasLimit = BigNumber.from(400000);
   } else {
     const startRngRequestTxParams = buildStartRngRequestParams(config.rewardRecipient);
     estimatedGasLimit = await getStartRngRequestEstimatedGasLimit(
