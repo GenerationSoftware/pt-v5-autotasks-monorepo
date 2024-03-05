@@ -17,7 +17,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 
 export enum DrawAuctionState {
   Start = 'Start',
-  Award = 'Award',
+  Finish = 'Finish',
   Idle = 'Idle',
 }
 
@@ -224,7 +224,7 @@ const getContext = async (
 };
 
 /**
- * Determines the state the draw auction is in (Idle, Start, or Award)
+ * Determines the state the draw auction is in (Idle, Start, or Finish)
  *
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
  *
@@ -234,7 +234,7 @@ const getDrawAuctionState = (context: DrawAuctionContext): DrawAuctionState => {
   if (context.canStartDraw) {
     return DrawAuctionState.Start;
   } else if (context.canFinishDraw) {
-    return DrawAuctionState.Award;
+    return DrawAuctionState.Finish;
   } else {
     return DrawAuctionState.Idle;
   }

@@ -21,6 +21,7 @@ import {
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
 type StartDrawTxParams = {
+  rngPaymentAmount: BigNumber;
   drawManagerAddress: string;
   rewardRecipient: string;
   value: BigNumber;
@@ -279,7 +280,8 @@ const checkForceFinishDraw = (
   console.log(lossOkay);
 
   // return context.auctionClosesSoon && sameRecipient && lossOkay;
-  return context.auctionClosesSoon && lossOkay;
+  // return context.auctionClosesSoon && lossOkay;
+  return lossOkay;
 };
 
 /**
@@ -333,7 +335,7 @@ const calculateStartDrawProfit = async (
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
-  const grossProfitUsd = context.startDrawReward;
+  const grossProfitUsd = context.startDrawRewardUsd;
   console.log(chalk.magenta('Gross Profit = Reward'));
 
   const netProfitUsd = grossProfitUsd - gasCostUsd - context.rngFeeEstimateUsd;
@@ -498,7 +500,7 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
  *
- * @returns {StartDrawTxParams} The startDraw() tx parameters object
+ * @returns {number} Gas cost (in $ USD) for the startDraw function
  */
 const getStartDrawGasCostUsd = async (
   config: DrawAuctionConfig,
@@ -552,6 +554,7 @@ const buildStartDrawTxParams = (
   drawAuctionContracts: DrawAuctionContracts,
 ): StartDrawTxParams => {
   return {
+    rngPaymentAmount: context.rngFeeEstimate.mul(2),
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
     rewardRecipient: config.rewardRecipient,
     value: context.rngFeeEstimate.mul(2), //  double this since the estimate always comes back shy of enough
