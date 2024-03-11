@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { RelayerParams } from 'defender-relay-client';
+import { RelayerParams } from '@openzeppelin/defender-relay-client';
 import {
   instantiateRelayerAccount,
   PrizeClaimerEnvVars,

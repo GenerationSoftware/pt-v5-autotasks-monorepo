@@ -1,7 +1,10 @@
 import { Wallet } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { Relayer } from 'defender-relay-client';
-import { DefenderRelayProvider, DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
+import { Relayer } from '@openzeppelin/defender-relay-client';
+import {
+  DefenderRelayProvider,
+  DefenderRelaySigner,
+} from '@openzeppelin/defender-relay-client/lib/ethers';
 
 import { RelayerAccount } from '../types';
 

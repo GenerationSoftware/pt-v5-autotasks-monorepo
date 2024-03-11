@@ -1,8 +1,8 @@
 import { ethers, BigNumber, PopulatedTransaction, Wallet, Signer } from 'ethers';
 import { CHAIN_IDS } from '../constants/network';
-import { Relayer, RelayerTransaction } from 'defender-relay-client';
+import { Relayer, RelayerTransaction } from '@openzeppelin/defender-relay-client';
 import chalk from 'chalk';
-import { DefenderRelaySigner } from 'defender-relay-client/lib/ethers';
+import { DefenderRelaySigner } from '@openzeppelin/defender-relay-client/lib/ethers';
 
 import { SendTransactionArgs, OzSendTransactionArgs, WalletSendTransactionArgs } from '../types';
 import { printSpacer } from '../utils';

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { AutotaskClient } from 'defender-autotask-client';
+import { AutotaskClient } from '@openzeppelin/defender-autotask-client';
 import fs from 'fs';
 
 async function updateAutotask(autotaskId, file) {

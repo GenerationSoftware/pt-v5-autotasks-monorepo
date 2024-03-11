@@ -9,7 +9,7 @@ import {
   loadEnvVars,
   AutotaskEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
-import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
+import { DefenderRelayProvider } from '@openzeppelin/defender-relay-client/lib/ethers';
 
 import { executeTransactions } from './executeTransactions';
 
