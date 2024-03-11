@@ -5230,20 +5230,10 @@ esutils@^2.0.2:
   resolved "https://registry.yarnpkg.com/esutils/-/esutils-2.0.3.tgz#74d2eb4de0b8da1293711910d50775b9b710ef64"
   integrity sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
 
-ethers-multicall-provider@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/ethers-multicall-provider/-/ethers-multicall-provider-3.0.3.tgz#3d37d21713d62313f4d64891c16432cbc6b2455b"
-  integrity sha512-nnpZoGnbjYfMPBTBIEN6XbLXfYYX7kLhYVA6mmT0yREnsKTR+LcsGW34Ua0Gq9K7yusDVio1sNyjJKXx7LslMA==
-  dependencies:
-    "@ethersproject/abi" "^5.7.0"
-    "@ethersproject/providers" "^5.7.2"
-    ethers "^5.0.0"
-    lodash "^4.17.0"
-
-ethers-multicall-provider@^3.0.5:
-  version "3.0.5"
-  resolved "https://registry.yarnpkg.com/ethers-multicall-provider/-/ethers-multicall-provider-3.0.5.tgz#2f2c465cf4603c27b342aecfb38bc55883195f99"
-  integrity sha512-f7Qjl6q6jcgiGdA8B3P0sQar+PdxUxcvikx27F8wZX9O0jFdpTaJ99oKPTYVdWZ39vT13mV+4kQ+i0LiMAuuZA==
+ethers-multicall-provider@3.1.2:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/ethers-multicall-provider/-/ethers-multicall-provider-3.1.2.tgz#3899c6bacf3876e57198763cbb09c3659e7049c6"
+  integrity sha512-jCuvFFpB9Z8BWEornAPHCA5j2NlR8o7YU/VZdqNphHPOCcAMhZ0zvj5VW5i3qn2gtm1NzN2vVYwioMraCCkXEA==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
     "@ethersproject/providers" "^5.7.2"
@@ -8196,7 +8186,7 @@ node-fetch@^2.6.0, node-fetch@^2.6.1:
   dependencies:
     whatwg-url "^5.0.0"
 
-node-fetch@^2.6.11, node-fetch@^2.6.7:
+node-fetch@^2.6.7:
   version "2.6.11"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.11.tgz#cde7fc71deef3131ef80a738919f999e6edfff25"
   integrity sha512-4I6pdBY1EthSqDmJkiNk3JIT8cswwR9nfeW/cPdUagJYEQG7R95WRH74wpz7ma8Gh/9dI9FP+OU+0E4FvtA55w==
@@ -8207,6 +8197,15 @@ node-fetch@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-3.3.1.tgz#b3eea7b54b3a48020e46f4f88b9c5a7430d20b2e"
   integrity sha512-cRVc/kyto/7E5shrWca1Wsea4y6tL9iYJE5FBCius3JQfb/4P4I295PfhgbJQBLTx6lATE4z+wK0rPM4VS2uow==
+  dependencies:
+    data-uri-to-buffer "^4.0.0"
+    fetch-blob "^3.1.4"
+    formdata-polyfill "^4.0.10"
+
+node-fetch@^3.3.2:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-3.3.2.tgz#d1e889bacdf733b4ff3b2b243eb7a12866a0b78b"
+  integrity sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==
   dependencies:
     data-uri-to-buffer "^4.0.0"
     fetch-blob "^3.1.4"

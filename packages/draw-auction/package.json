@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "defender-relay-client": "1.39.0",
+    "ethers-multicall-provider": "3.1.2",
     "figlet": "^1.6.0",
     "graphql-request": "^5.2.0",
     "node-fetch": "^3.3.1",
