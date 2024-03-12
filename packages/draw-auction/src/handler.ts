@@ -1,5 +1,6 @@
-import { ethers } from 'ethers';
+import { BaseProvider } from '@ethersproject/providers';
 import {
+  getProvider,
   instantiateRelayerAccount,
   DrawAuctionConfig,
   RelayerAccount,
@@ -18,10 +19,8 @@ export async function handler(event) {
   };
 
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars(buildVars, event);
-  const provider = new ethers.providers.JsonRpcProvider(
-    envVars.JSON_RPC_URI,
-    Number(envVars.CHAIN_ID),
-  );
+
+  const provider: BaseProvider = getProvider(envVars);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,
@@ -41,12 +40,6 @@ export async function handler(event) {
 
     relayerApiKey: envVars.RELAYER_API_KEY,
     relayerApiSecret: envVars.RELAYER_API_SECRET,
-
-    arbitrumRelayJsonRpcUri: envVars.ARBITRUM_JSON_RPC_URI,
-    optimismRelayJsonRpcUri: envVars.OPTIMISM_JSON_RPC_URI,
-    arbitrumSepoliaRelayJsonRpcUri: envVars.ARBITRUM_SEPOLIA_JSON_RPC_URI,
-    optimismSepoliaRelayJsonRpcUri: envVars.OPTIMISM_SEPOLIA_JSON_RPC_URI,
-    optimismGoerliRelayJsonRpcUri: envVars.OPTIMISM_GOERLI_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
     ozRelayer: relayerAccount.ozRelayer,

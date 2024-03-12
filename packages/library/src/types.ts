@@ -129,12 +129,6 @@ export interface AutotaskConfig {
   ozRelayer: Relayer;
   relayerAddress: string;
   signer: DefenderRelaySigner | Signer;
-
-  arbitrumRelayJsonRpcUri?: string;
-  optimismRelayJsonRpcUri?: string;
-  arbitrumSepoliaRelayJsonRpcUri?: string;
-  optimismSepoliaRelayJsonRpcUri?: string;
-  optimismGoerliRelayJsonRpcUri?: string;
 }
 
 export interface DrawAuctionConfig extends AutotaskConfig {}

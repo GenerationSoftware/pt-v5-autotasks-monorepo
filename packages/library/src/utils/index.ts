@@ -1,4 +1,5 @@
 export * from './math';
+export * from './getProvider';
 export * from './getUsd';
 export * from './getFlashLiquidatorContextMulticall';
 export * from './getLiquidatorContextMulticall';

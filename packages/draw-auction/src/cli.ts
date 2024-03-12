@@ -1,8 +1,9 @@
 import esMain from 'es-main';
 import figlet from 'figlet';
 import chalk from 'chalk';
-import { ethers } from 'ethers';
+import { BaseProvider } from '@ethersproject/providers';
 import {
+  getProvider,
   instantiateRelayerAccount,
   DrawAuctionConfig,
   RelayerAccount,
@@ -18,10 +19,7 @@ console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
 if (esMain(import.meta)) {
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars();
 
-  const provider = new ethers.providers.JsonRpcProvider(
-    envVars.JSON_RPC_URI, // is RNG chain RPC URI
-    Number(envVars.CHAIN_ID), // is RNG chain ID
-  );
+  const provider: BaseProvider = getProvider(envVars);
 
   const mockEvent = {
     apiKey: envVars.RELAYER_API_KEY, // RNG chain OZ relayer API Key
@@ -46,12 +44,6 @@ if (esMain(import.meta)) {
 
     relayerApiKey: process.env.RELAYER_API_KEY,
     relayerApiSecret: process.env.RELAYER_API_SECRET,
-
-    arbitrumRelayJsonRpcUri: process.env.ARBITRUM_JSON_RPC_URI,
-    optimismRelayJsonRpcUri: process.env.OPTIMISM_JSON_RPC_URI,
-    arbitrumSepoliaRelayJsonRpcUri: process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI,
-    optimismSepoliaRelayJsonRpcUri: process.env.OPTIMISM_SEPOLIA_JSON_RPC_URI,
-    optimismGoerliRelayJsonRpcUri: process.env.OPTIMISM_GOERLI_JSON_RPC_URI,
 
     signer: relayerAccount.signer,
     wallet: relayerAccount.wallet,

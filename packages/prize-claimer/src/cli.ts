@@ -1,8 +1,9 @@
 import esMain from 'es-main';
 import figlet from 'figlet';
 import chalk from 'chalk';
-import { ethers } from 'ethers';
+import { BaseProvider } from '@ethersproject/providers';
 import {
+  getProvider,
   instantiateRelayerAccount,
   PrizeClaimerEnvVars,
   PrizeClaimerConfig,
@@ -18,7 +19,7 @@ console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
 if (esMain(import.meta)) {
   const envVars: PrizeClaimerEnvVars = loadPrizeClaimerEnvVars();
 
-  const provider = new ethers.providers.JsonRpcProvider(envVars.JSON_RPC_URI, envVars.CHAIN_ID);
+  const provider: BaseProvider = getProvider(envVars);
 
   const mockEvent = {
     apiKey: envVars.RELAYER_API_KEY,

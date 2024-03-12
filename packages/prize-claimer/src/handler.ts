@@ -1,6 +1,7 @@
-import { ethers } from 'ethers';
 import { RelayerParams } from '@openzeppelin/defender-relay-client';
+import { BaseProvider } from '@ethersproject/providers';
 import {
+  getProvider,
   instantiateRelayerAccount,
   PrizeClaimerEnvVars,
   PrizeClaimerConfig,
@@ -26,10 +27,7 @@ export async function handler(event: RelayerParams) {
     apiSecret: envVars.RELAYER_API_SECRET,
   };
 
-  const provider = new ethers.providers.JsonRpcProvider(
-    envVars.JSON_RPC_URI,
-    Number(envVars.CHAIN_ID),
-  );
+  const provider: BaseProvider = getProvider(envVars);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,

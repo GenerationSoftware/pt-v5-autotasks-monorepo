@@ -1,5 +1,6 @@
-import { ethers } from 'ethers';
+import { BaseProvider } from '@ethersproject/providers';
 import {
+  getProvider,
   instantiateRelayerAccount,
   LiquidatorConfig,
   LiquidatorEnvVars,
@@ -24,10 +25,7 @@ export async function handler(event) {
     apiSecret: envVars.RELAYER_API_SECRET,
   };
 
-  const provider = new ethers.providers.JsonRpcProvider(
-    envVars.JSON_RPC_URI,
-    Number(envVars.CHAIN_ID),
-  );
+  const provider: BaseProvider = getProvider(envVars);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,

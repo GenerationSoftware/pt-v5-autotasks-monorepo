@@ -48,11 +48,6 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
   // Secrets (API keys, etc) not safe for building into a flat file
   let covalentApiKey = process.env.COVALENT_API_KEY;
   let customRelayerPrivateKey = process.env.CUSTOM_RELAYER_PRIVATE_KEY;
-  let arbitrumJsonRpcUri = process.env.ARBITRUM_JSON_RPC_URI;
-  let optimismJsonRpcUri = process.env.OPTIMISM_JSON_RPC_URI;
-  let arbitrumSepoliaJsonRpcUri = process.env.ARBITRUM_SEPOLIA_JSON_RPC_URI;
-  let optimismSepoliaJsonRpcUri = process.env.OPTIMISM_SEPOLIA_JSON_RPC_URI;
-  let optimismGoerliJsonRpcUri = process.env.OPTIMISM_GOERLI_JSON_RPC_URI;
   let jsonRpcUri = process.env.JSON_RPC_URI;
   let relayerApiKey = process.env.RELAYER_API_KEY;
   let relayerApiSecret = process.env.RELAYER_API_SECRET;
@@ -71,21 +66,6 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
     // TODO: Technically this makes no sense, as we don't want a custom privkey when running on OZ Defender
     // (where there is event.secrets)
     customRelayerPrivateKey = event.secrets.CUSTOM_RELAYER_PRIVATE_KEY;
-
-    const arbitrumJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.arbitrum];
-    arbitrumJsonRpcUri = event.secrets[arbitrumJsonRpcUriKey];
-
-    const optimismJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.optimism];
-    optimismJsonRpcUri = event.secrets[optimismJsonRpcUriKey];
-
-    const arbitrumSepoliaJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.arbitrumSepolia];
-    arbitrumSepoliaJsonRpcUri = event.secrets[arbitrumSepoliaJsonRpcUriKey];
-
-    const optimismSepoliaJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.optimismSepolia];
-    optimismSepoliaJsonRpcUri = event.secrets[optimismSepoliaJsonRpcUriKey];
-
-    const optimismGoerliJsonRpcUriKey = JSON_RPC_URI_KEYS[CHAIN_IDS.optimismGoerli];
-    optimismGoerliJsonRpcUri = event.secrets[optimismGoerliJsonRpcUriKey];
   }
 
   return {
@@ -97,10 +77,5 @@ export const loadEnvVars = (buildVars?, event?): AutotaskEnvVars => {
     CUSTOM_RELAYER_PRIVATE_KEY: customRelayerPrivateKey,
     RELAYER_API_KEY: relayerApiKey,
     RELAYER_API_SECRET: relayerApiSecret,
-    ARBITRUM_JSON_RPC_URI: arbitrumJsonRpcUri,
-    OPTIMISM_JSON_RPC_URI: optimismJsonRpcUri,
-    ARBITRUM_SEPOLIA_JSON_RPC_URI: arbitrumSepoliaJsonRpcUri,
-    OPTIMISM_SEPOLIA_JSON_RPC_URI: optimismSepoliaJsonRpcUri,
-    OPTIMISM_GOERLI_JSON_RPC_URI: optimismGoerliJsonRpcUri,
   };
 };
