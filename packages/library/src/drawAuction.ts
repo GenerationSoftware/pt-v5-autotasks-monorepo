@@ -20,7 +20,12 @@ import {
 } from './utils/getDrawAuctionContextMulticall';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
-type StartDrawTxParams = {
+type RngBlockhashStartDrawTxParams = {
+  drawManagerAddress: string;
+  rewardRecipient: string;
+};
+
+type RngWitnetStartDrawTxParams = {
   rngPaymentAmount: BigNumber;
   drawManagerAddress: string;
   rewardRecipient: string;
@@ -180,16 +185,26 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.green(`Execute rngWitnet#startDraw`));
   printSpacer();
 
-  const contract: Contract = drawAuctionContracts.rngWitnetContract;
-  const txParams: StartDrawTxParams = buildStartDrawTxParams(config, context, drawAuctionContracts);
+  let contract: Contract = drawAuctionContracts.rngBlockhashContract;
+  let txParams;
+  let populatedTx: PopulatedTransaction;
+  if (drawAuctionContracts.rngWitnetContract) {
+    contract = drawAuctionContracts.rngWitnetContract;
 
-  const { value, transformedTxParams }: StartDrawTransformedTxParams =
-    transformStartDrawTxParams(txParams);
+    txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
 
-  const populatedTx: PopulatedTransaction = await contract.populateTransaction.startDraw(
-    ...Object.values(transformedTxParams),
-    { value },
-  );
+    const { value, transformedTxParams }: StartDrawTransformedTxParams =
+      transformRngWitnetStartDrawTxParams(txParams);
+
+    populatedTx = await contract.populateTransaction.startDraw(
+      ...Object.values(transformedTxParams),
+      { value },
+    );
+  } else {
+    txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
+
+    populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
+  }
 
   const gasPrice = await provider.getGasPrice();
   console.log(chalk.greenBright.bold(`Sending ...`));
@@ -304,12 +319,12 @@ const checkForceFinishDraw = (
  */
 const getStartDrawEstimatedGasLimit = async (
   contract: Contract,
-  startDrawTxParams: StartDrawTxParams,
+  startDrawTxParams: RngWitnetStartDrawTxParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
-      transformStartDrawTxParams(startDrawTxParams);
+      transformRngWitnetStartDrawTxParams(startDrawTxParams);
 
     estimatedGasLimit = await contract.estimateGas.startDraw(
       ...Object.values(transformedTxParams),
@@ -508,7 +523,7 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
 /**
  * Finds how much the gas will cost (in $ USD) for the RngWitnet#startDraw transaction
  *
- * @param {StartDrawTxParams} txParams, the startDraw() transaction parameters object
+ * @param {RngWitnetStartDrawTxParams} txParams, the startDraw() transaction parameters object
  * @param {Contract} contract, ethers.js Contract instance of the RngWitnet contract
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
@@ -525,20 +540,36 @@ const getStartDrawGasCostUsd = async (
   console.log(chalk.blue(`Estimating RngWitnet#startDraw() gas costs ...`));
   printSpacer();
 
-  const startDrawTxParams = buildStartDrawTxParams(config, context, drawAuctionContracts);
+  let txParams;
+  let estimatedGasLimit: BigNumber = BigNumber.from(0);
+  let populatedTx: PopulatedTransaction;
+  if (drawAuctionContracts.rngWitnetContract) {
+    txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
 
-  const estimatedGasLimit: BigNumber = await getStartDrawEstimatedGasLimit(
-    drawAuctionContracts.rngWitnetContract,
-    startDrawTxParams,
-  );
+    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
+      drawAuctionContracts.rngWitnetContract,
+      txParams,
+    );
 
-  const { value, transformedTxParams }: StartDrawTransformedTxParams =
-    transformStartDrawTxParams(startDrawTxParams);
-  const populatedTx: PopulatedTransaction =
-    await drawAuctionContracts.rngWitnetContract.populateTransaction.startDraw(
+    const { value, transformedTxParams }: StartDrawTransformedTxParams =
+      transformRngWitnetStartDrawTxParams(txParams);
+
+    populatedTx = await drawAuctionContracts.rngWitnetContract.populateTransaction.startDraw(
       ...Object.values(transformedTxParams),
       { value },
     );
+  } else {
+    txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
+
+    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
+      drawAuctionContracts.rngBlockhashContract,
+      txParams,
+    );
+
+    populatedTx = await drawAuctionContracts.rngBlockhashContract.populateTransaction.startDraw(
+      ...Object.values(txParams),
+    );
+  }
 
   // hard-coded gas limit:
   // estimatedGasLimit = BigNumber.from(630000);
@@ -553,19 +584,37 @@ const getStartDrawGasCostUsd = async (
 };
 
 /**
+ * Creates an object with all the transaction parameters for the RngBlockhash#startDraw() transaction.
+ *
+ * @param {DrawAuctionConfig} config, draw auction config
+ * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
+ *
+ * @returns {RngBlockhashStartDrawTxParams} The startDraw() tx parameters object
+ */
+const buildRngBlockhashStartDrawTxParams = (
+  config: DrawAuctionConfig,
+  drawAuctionContracts: DrawAuctionContracts,
+): RngBlockhashStartDrawTxParams => {
+  return {
+    drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
+    rewardRecipient: config.rewardRecipient,
+  };
+};
+
+/**
  * Creates an object with all the transaction parameters for the RngWitnet#startDraw() transaction.
  *
  * @param {DrawAuctionConfig} config, draw auction config
  * @param {DrawAuctionContext} context, current state of the draw auction contracts
  * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
  *
- * @returns {StartDrawTxParams} The startDraw() tx parameters object
+ * @returns {RngWitnetStartDrawTxParams} The startDraw() tx parameters object
  */
-const buildStartDrawTxParams = (
+const buildRngWitnetStartDrawTxParams = (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
-): StartDrawTxParams => {
+): RngWitnetStartDrawTxParams => {
   return {
     rngPaymentAmount: context.rngFeeEstimate.mul(2),
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
@@ -732,14 +781,16 @@ const checkOrX = (bool: boolean): string => {
 };
 
 /**
- * Takes the current StartDrawTxParams transaction params and breaks off the 'value' param into it's own variable,
+ * Takes the current RngWitnetStartDrawTxParams transaction params and breaks off the 'value' param into it's own variable,
  * then returns a modified version of the original transaction params without the 'value' param.
  *
- * @param {StartDrawTxParams} txParams
+ * @param {RngWitnetStartDrawTxParams} txParams
  *
  * @returns {StartDrawTransformedTxParams}
  */
-const transformStartDrawTxParams = (txParams: StartDrawTxParams): StartDrawTransformedTxParams => {
+const transformRngWitnetStartDrawTxParams = (
+  txParams: RngWitnetStartDrawTxParams,
+): StartDrawTransformedTxParams => {
   const transformedTxParams = { ...txParams };
 
   const value = transformedTxParams.value;
