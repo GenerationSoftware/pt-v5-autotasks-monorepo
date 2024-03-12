@@ -100,9 +100,11 @@ const getContext = async (
   //   drawManagerContract.elapsedTimeSinceDrawClosed();
 
   // 2. Queries One: Rng Witnet
-  const gasPrice = await provider.getGasPrice();
-  queriesOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
-    rngWitnetContract.estimateRandomizeFee(gasPrice);
+  if (rngWitnetContract) {
+    const gasPrice = await provider.getGasPrice();
+    queriesOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
+      rngWitnetContract.estimateRandomizeFee(gasPrice);
+  }
 
   // 3. Queries One: Prize Pool Info
   queriesOne[QUERY_KEYS.PRIZE_POOL_OPEN_DRAW_ID_KEY] = prizePoolContract.getOpenDrawId();
@@ -147,7 +149,10 @@ const getContext = async (
   // console.log(auctionExpired);
 
   // 6. Results One: Rng Witnet
-  const rngFeeEstimate = resultsOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
+  let rngFeeEstimate;
+  if (rngWitnetContract) {
+    rngFeeEstimate = resultsOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
+  }
 
   // 7. Results One: Prize Pool
   const drawId = resultsOne[QUERY_KEYS.PRIZE_POOL_OPEN_DRAW_ID_KEY];

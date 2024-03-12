@@ -100,18 +100,31 @@ const instantiateDrawAuctionContracts = (
 
   const prizePoolContract = getContract('PrizePool', chainId, provider, contracts, version);
   const drawManagerContract = getContract('DrawManager', chainId, provider, contracts, version);
-  const rngWitnetContract = getContract('RngWitnet', chainId, provider, contracts, version);
+
+  let rngWitnetContract, rngBlockhashContract;
+  try {
+    rngWitnetContract = getContract('RngWitnet', chainId, provider, contracts, version);
+  } catch (e) {
+    console.warn(chalk.yellow('Unable to find RngWitnet contract. Likely uses RngBlockhash'));
+  }
+  try {
+    rngBlockhashContract = getContract('RngBlockhash', chainId, provider, contracts, version);
+  } catch (e) {
+    console.warn(chalk.yellow('Unable to find RngBlockhash contract. Likely uses RngWitnet'));
+  }
 
   logTable({
     prizePoolContract: prizePoolContract.address,
     drawManagerContract: drawManagerContract.address,
-    rngWitnetContract: rngWitnetContract.address,
+    rngWitnetContract: rngWitnetContract?.address,
+    rngBlockhashContract: rngBlockhashContract?.address,
   });
 
   return {
     prizePoolContract,
     drawManagerContract,
     rngWitnetContract,
+    rngBlockhashContract,
   };
 };
 

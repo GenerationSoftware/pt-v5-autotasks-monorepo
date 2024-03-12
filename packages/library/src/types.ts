@@ -174,7 +174,8 @@ export interface RelayerAccount {
 export interface DrawAuctionContracts {
   prizePoolContract: Contract;
   drawManagerContract: Contract;
-  rngWitnetContract: Contract;
+  rngWitnetContract?: Contract;
+  rngBlockhashContract?: Contract;
 }
 
 // TODO: Inherit from AutotaskConfig
