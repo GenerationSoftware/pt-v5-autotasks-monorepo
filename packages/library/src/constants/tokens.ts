@@ -86,6 +86,8 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   ],
   [CHAIN_IDS.optimismSepolia]: [
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].POOL.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].WBTC.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].WETH.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].USDC.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].DAI.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PDAILYT.toLowerCase(),

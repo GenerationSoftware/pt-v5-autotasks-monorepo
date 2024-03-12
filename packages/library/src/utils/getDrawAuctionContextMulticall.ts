@@ -171,8 +171,6 @@ const getContext = async (
 
   // 7. Results Two: Get second set of multicall results
   const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
-  console.log('resultsTwo');
-  console.log(resultsTwo);
 
   // 8. Results Two: PrizePool
   const prizePoolDrawClosesAt = Number(resultsTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
@@ -196,17 +194,16 @@ const getContext = async (
   const startDrawRewardUsd = Number(startDrawRewardStr) * rewardToken.assetRateUsd;
 
   const finishDrawRewardStr = ethers.utils.formatUnits(finishDrawReward, rewardToken.decimals);
-  console.log('finishDrawReward.toString()');
-  console.log(finishDrawReward.toString());
   const finishDrawRewardUsd = Number(finishDrawRewardStr) * rewardToken.assetRateUsd;
-  console.log('finishDrawRewardUsd');
-  console.log(finishDrawRewardUsd);
 
   // Currently Witnet requires the native token ETH on Optimism for RNG Fee
   // assume 18 decimals
   // note: May need to change on different chains that use a unique token for gas (AVAX, etc)
-  const rngFeeEstimateStr = ethers.utils.formatEther(rngFeeEstimate);
-  const rngFeeEstimateUsd = Number(rngFeeEstimateStr) * nativeTokenMarketRateUsd;
+  let rngFeeEstimateUsd = 0;
+  if (rngWitnetContract) {
+    const rngFeeEstimateStr = ethers.utils.formatEther(rngFeeEstimate);
+    rngFeeEstimateUsd = Number(rngFeeEstimateStr) * nativeTokenMarketRateUsd;
+  }
 
   return {
     canStartDraw,
