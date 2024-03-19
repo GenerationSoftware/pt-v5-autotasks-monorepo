@@ -417,8 +417,6 @@ const getContext = async (
   const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(provider, contracts);
   const { drawId, isDrawFinalized, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
-  console.log(chalk.dim('done ...'));
-  console.log(chalk.dim('more ...'));
 
   const prizeTokenContract = new ethers.Contract(prizeTokenAddress, ERC20Abi, provider);
 
@@ -766,11 +764,14 @@ const fetchClaims = async (
     try {
       const response = await nodeFetch(winnersUri);
       if (!response.ok) {
+        printSpacer();
         console.log(
           chalk.yellow(
-            `Could not find winners for prize vault: ${prizeVault.id} (results not yet computed for new draw?)`,
+            `Could not find winners for prize vault: ${prizeVault.id} (results not yet computed for new draw with id #${drawId}?)`,
           ),
         );
+        console.log(chalk.dim(winnersUri));
+        printSpacer();
         throw new Error(response.statusText);
       }
 
