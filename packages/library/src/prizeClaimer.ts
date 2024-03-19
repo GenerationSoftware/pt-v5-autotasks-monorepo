@@ -4,9 +4,11 @@ import { Provider } from '@ethersproject/providers';
 import {
   ContractsBlob,
   Claim,
+  PrizeVault,
   PrizePoolInfo,
   getPrizePoolInfo,
   getContract,
+  getSubgraphPrizeVaults,
   flagClaimedRpc,
 } from '@generationsoftware/pt-v5-utils-js';
 import groupBy from 'lodash.groupby';
@@ -27,21 +29,28 @@ import {
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
-import { getDrawResultsUri } from './getDrawResultsUri';
+import { getWinnersUri } from './getWinnersUri';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx';
 
-interface ClaimPrizesParams {
+type ClaimPrizesParams = {
   vault: string;
   tier: number;
   winners: string[];
   prizeIndices: number[][];
   rewardRecipient: string;
   minVrgdaFeePerClaim: string;
-}
+};
 
-interface TierRemainingPrizeCounts {
+type TierRemainingPrizeCounts = {
   [tierNum: string]: number;
-}
+};
+
+type PrizeTierIndices = Record<string, number[]>;
+
+type Winner = {
+  user: string;
+  prizes: PrizeTierIndices;
+};
 
 const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 60;
 
@@ -96,8 +105,19 @@ export async function runPrizeClaimer(
     return;
   }
 
-  // #2. Get data from v5-draw-results
-  let claims = await fetchClaims(chainId, prizePoolContract.address, context.drawId);
+  printAsterisks();
+  console.log(chalk.dim(`Getting prize vaults ...`));
+  const prizeVaults = await getSubgraphPrizeVaults(chainId);
+  console.log(chalk.dim(`Found ${prizeVaults.length} prize vaults.`));
+  printSpacer();
+
+  // #2. Get data from pt-v5-winners
+  let claims: Claim[] = await fetchClaims(
+    chainId,
+    prizePoolContract.address,
+    context.drawId,
+    prizeVaults,
+  );
 
   // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
   claims = await flagClaimedRpc(provider, contracts, claims);
@@ -304,7 +324,6 @@ const calculateProfit = async (
     nativeTokenMarketRateUsd,
     '100',
   );
-  console.log('getting claimin finfo');
 
   const { claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
     context,
@@ -398,6 +417,8 @@ const getContext = async (
   const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(provider, contracts);
   const { drawId, isDrawFinalized, numTiers, tiersRangeArray, tierPrizeData } = prizePoolInfo;
   const tiers: TiersContext = { numTiers, tiersRangeArray };
+  console.log(chalk.dim('done ...'));
+  console.log(chalk.dim('more ...'));
 
   const prizeTokenContract = new ethers.Contract(prizeTokenAddress, ERC20Abi, provider);
 
@@ -734,21 +755,45 @@ const fetchClaims = async (
   chainId: number,
   prizePoolAddress: string,
   drawId: number,
+  prizeVaults: PrizeVault[],
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
 
-  const drawResultsUri = getDrawResultsUri(chainId, prizePoolAddress, drawId);
+  for (let prizeVault of prizeVaults) {
+    const winnersUri = getWinnersUri(chainId, prizePoolAddress, drawId, prizeVault.id);
 
-  try {
-    const response = await nodeFetch(drawResultsUri);
-    if (!response.ok) {
-      console.log(chalk.yellow(`Draw results not yet populated for new draw.`));
-      throw new Error(response.statusText);
+    let winners: Winner[] = [];
+    try {
+      const response = await nodeFetch(winnersUri);
+      if (!response.ok) {
+        console.log(
+          chalk.yellow(
+            `Could not find winners for prize vault: ${prizeVault.id} (results not yet computed for new draw?)`,
+          ),
+        );
+        throw new Error(response.statusText);
+      }
+
+      // @ts-ignore
+      winners = (await response.json()).winners;
+
+      for (let winner of winners) {
+        for (let prizeTier of Object.entries(winner.prizes)) {
+          const [tier, prizeIndices] = prizeTier;
+
+          for (let prizeIndex of prizeIndices)
+            claims.push({
+              vault: prizeVault.id,
+              winner: winner.user,
+              tier: Number(tier),
+              prizeIndex,
+              claimed: false,
+            });
+        }
+      }
+    } catch (err) {
+      console.log(err);
     }
-    // @ts-ignore
-    claims = await response.json();
-  } catch (err) {
-    console.log(err);
   }
 
   return claims;
