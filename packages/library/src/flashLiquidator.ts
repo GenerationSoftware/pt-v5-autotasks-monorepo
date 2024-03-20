@@ -66,6 +66,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
   const flashLiquidationContract = new ethers.Contract(
     FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
     FlashLiquidatorAbi,
+    // @ts-ignore signer as Signer | DefenderRElaySigner should be okay here, ethers just doesn't know about DefenderRelaySigner
     signer,
   );
 

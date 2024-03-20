@@ -360,6 +360,7 @@ const approve = async (
     console.log("Checking 'tokenIn' ERC20 allowance...");
 
     const tokenInAddress = context.tokenIn.address;
+    // @ts-ignore signer as Signer | DefenderRElaySigner should be okay here, ethers just doesn't know about DefenderRelaySigner
     const token = new ethers.Contract(tokenInAddress, ERC20Abi, signer);
 
     const allowance = context.relayer.tokenInAllowance;

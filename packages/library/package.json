@@ -29,7 +29,7 @@
   "bugs": {
     "url": "https://github.com/generationsoftware/pt-v5-autotasks/issues"
   },
-  "dependencies": {
+  "devDependencies": {
     "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.4",
     "@openzeppelin/defender-relay-client": "1.54.1",
     "chalk": "^4.1.2",
@@ -37,9 +37,7 @@
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
     "node-fetch": "^3.3.1",
+    "typescript": "5.4.2",
     "tsc-watch": "^6.0.4"
-  },
-  "devDependencies": {
-    "typescript": "4.8.4"
   }
 }

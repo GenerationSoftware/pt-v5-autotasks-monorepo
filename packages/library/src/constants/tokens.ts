@@ -62,6 +62,7 @@ export const KNOWN_TOKENS = {
     PGUSDT: '0xd96702995b2bbd78a9a39ef86f4fa5f9704fdc7d',
     PWBTCT: '0xe77db9f8b68bc47a82d4f47e68fb57535df0086e',
     PWETH: '0x98ced5d595e8981756f063db8d3c44a6be9a8f86',
+    PUSDC: '0x35f65c81b332ed0cdce72e841db4384bc12f8326',
   },
 };
 
@@ -97,6 +98,7 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PGUSDT.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PWBTCT.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PWETH.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PUSDC.toLowerCase(),
   ],
   [CHAIN_IDS.arbitrumSepolia]: [
     KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia].POOL.toLowerCase(),
