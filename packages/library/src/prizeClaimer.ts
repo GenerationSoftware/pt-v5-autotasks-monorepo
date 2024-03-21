@@ -85,6 +85,8 @@ export async function runPrizeClaimer(
     throw new Error('Contract Unavailable');
   }
 
+  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', prizeClaimerConfig.minProfitThresholdUsd);
+
   // #1. Get context about the prize pool prize token, etc
   printSpacer();
   console.log(chalk.dim('Starting ...'));

@@ -63,6 +63,8 @@ export async function runLiquidator(
     covalentApiKey,
   } = config;
 
+  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd);
+
   // #1. Get contracts
   //
   printSpacer();

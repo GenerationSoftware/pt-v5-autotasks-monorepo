@@ -210,7 +210,7 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
   // const gasPrice = BigNumber.from(100000000);
 
-  const gasLimit = 850000;
+  const gasLimit = 400000;
   const tx = await sendPopulatedTx(
     chainId,
     ozRelayer,
@@ -503,19 +503,6 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   console.log(chalk.blue.bold(`Finish Draw Auction State:`));
 
   logStringValue(`3a. Can Finish Draw? `, `${checkOrX(context.canFinishDraw)}`);
-  if (context.canFinishDraw) {
-    logBigNumber(
-      `3b. Finish Draw Expected Reward:`,
-      context.finishDrawReward.toString(),
-      context.rewardToken.decimals,
-      context.rewardToken.symbol,
-    );
-    console.log(
-      chalk.grey(`3c. Finish Draw Expected Reward (USD):`),
-      chalk.yellow(`$${roundTwoDecimalPlaces(context.finishDrawRewardUsd)}`),
-      chalk.dim(`$${context.finishDrawRewardUsd}`),
-    );
-  }
 
   printSpacer();
 };
