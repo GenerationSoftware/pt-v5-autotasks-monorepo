@@ -52,7 +52,8 @@ type Winner = {
   prizes: PrizeTierIndices;
 };
 
-const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 60;
+const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 30 as const; // prevent OZ bot from running over 5-minute limit and from gas being too large
+const NUM_CANARY_TIERS = 2 as const;
 
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
@@ -264,7 +265,8 @@ export async function runPrizeClaimer(
 }
 
 const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {
-  return context.tiers.tiersRangeArray.length - 1 === tier;
+  const tiersLength = context.tiers.tiersRangeArray.length;
+  return tier >= tiersLength - NUM_CANARY_TIERS;
 };
 
 /**
@@ -374,20 +376,18 @@ const calculateProfit = async (
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
     logClaims(claimsSlice);
   } else {
-    // console.log(
-    //   chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
-    // );
+    console.log(
+      chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
+    );
   }
 
   return claimPrizesParams;
 };
 
 const tierWords = (context: ClaimPrizeContext, tier: number) => {
-  const tiersArray = context.tiers.tiersRangeArray;
+  const canaryWords = isCanary(context, tier) ? ' (Canary tier)' : '';
 
-  const canaryWords = tiersArray.length - 1 === tier ? ' (Canary tier)' : '';
-
-  return `${tier + 1}${canaryWords}`;
+  return `${tier}${canaryWords}`;
 };
 
 const logClaims = (claims: Claim[]) => {
