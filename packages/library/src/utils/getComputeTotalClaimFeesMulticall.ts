@@ -25,10 +25,7 @@ export const getComputeTotalClaimFeesMulticall = async (
 
   let queries: Record<string, any> = {};
   for (let x = 1; x <= numClaims; x++) {
-    queries[x.toString()] = await claimerContract.functions['computeTotalFees(uint8,uint256)'](
-      tier,
-      x,
-    );
+    queries[x.toString()] = claimerContract.functions['computeTotalFees(uint8,uint256)'](tier, x);
   }
 
   return await getEthersMulticallProviderResults(multicallProvider, queries);
