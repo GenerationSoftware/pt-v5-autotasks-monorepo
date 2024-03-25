@@ -340,7 +340,6 @@ const calculateProfit = async (
     gasCost,
     minProfitThresholdUsd,
   );
-  console.log(claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim);
 
   const claimsSlice = groupedClaims.slice(0, claimCount);
   const claimPrizesParams = buildParams(
