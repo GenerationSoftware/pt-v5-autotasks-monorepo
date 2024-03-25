@@ -16,6 +16,10 @@ import chalk from 'chalk';
 
 import { ClaimPrizeContext, PrizeClaimerConfig, TiersContext, Token, TokenWithRate } from './types';
 import {
+  getComputeTotalClaimFeesMulticall,
+  getFeesUsd,
+  getEthMainnetTokenMarketRateUsd,
+  getNativeTokenMarketRateUsd,
   logTable,
   logStringValue,
   logBigNumber,
@@ -23,9 +27,6 @@ import {
   printSpacer,
   canUseIsPrivate,
   roundTwoDecimalPlaces,
-  getFeesUsd,
-  getEthMainnetTokenMarketRateUsd,
-  getNativeTokenMarketRateUsd,
 } from './utils';
 import { ERC20Abi } from './abis/ERC20Abi';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
@@ -331,6 +332,7 @@ const calculateProfit = async (
 
   const { claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
     context,
+    provider,
     claimerContract,
     tier,
     groupedClaims,
@@ -619,6 +621,7 @@ interface ClaimInfo {
 
 const getClaimInfo = async (
   context: ClaimPrizeContext,
+  provider: Provider,
   claimerContract: Contract,
   tier: number,
   claims: Claim[],
@@ -632,6 +635,14 @@ const getClaimInfo = async (
   let totalCostUsd = 0;
   let previousNetProfitUsd = 0;
   let minVrgdaFeePerClaim = BigNumber.from(0);
+
+  const computeTotalClaimFeesResults = await getComputeTotalClaimFeesMulticall(
+    tier,
+    claims.length,
+    claimerContract,
+    provider,
+  );
+
   for (let numClaims = 1; numClaims <= claims.length; numClaims++) {
     printSpacer();
     console.log(chalk.cyanBright(`5b. ${numClaims} Claim(s):`));
@@ -649,10 +660,7 @@ const getClaimInfo = async (
       break;
     }
 
-    const nextClaimReward = await claimerContract.functions['computeTotalFees(uint8,uint256)'](
-      tier,
-      numClaims,
-    );
+    const nextClaimReward = computeTotalClaimFeesResults[numClaims.toString()];
 
     // COSTS USD
     totalCostUsd =

@@ -1,6 +1,7 @@
 export * from './math';
 export * from './getProvider';
 export * from './getUsd';
+export * from './getComputeTotalClaimFeesMulticall';
 export * from './getFlashLiquidatorContextMulticall';
 export * from './getLiquidatorContextMulticall';
 export * from './getLiquidationPairsMulticall';
