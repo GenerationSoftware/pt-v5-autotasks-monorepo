@@ -11,7 +11,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 /**
  * Uses multicall to check the exact amount in for multiple amount out values
  *
- * @param liquidationPairFactoryContract ethers contract instance of the LiquidationPairFactory to query
+ * @param liquidationPairFactoryContract ethers contract instance of the TpdaLiquidationPairFactory to query
  * @param provider provider for the chain that will be queried
  * @returns
  */
@@ -37,9 +37,8 @@ export const getLiquidationPairComputeExactAmountInMulticall = async (
   // Queries
   for (let i = 0; i < wantedAmountsOut.length; i++) {
     const amountOut = wantedAmountsOut[i];
-    queries[
-      `computeExactAmountIn-${i}`
-    ] = liquidationPairMulticallContract.callStatic.computeExactAmountIn(amountOut);
+    queries[`computeExactAmountIn-${i}`] =
+      liquidationPairMulticallContract.callStatic.computeExactAmountIn(amountOut);
   }
 
   // Get and process results:

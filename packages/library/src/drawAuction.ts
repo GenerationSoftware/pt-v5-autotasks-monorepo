@@ -210,7 +210,7 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
   // const gasPrice = BigNumber.from(100000000);
 
-  const gasLimit = 400000;
+  const gasLimit = 800000;
   const tx = await sendPopulatedTx(
     chainId,
     ozRelayer,
@@ -642,7 +642,6 @@ const getFinishDrawGasCostUsd = async (
   console.log(chalk.blue(`Estimating DrawManager#finishDraw() gas costs ...`));
   printSpacer();
 
-  const { chainId, provider } = config;
   const { nativeTokenMarketRateUsd } = context;
 
   // The relay uses 156,000~ gas, set to 200k just in case

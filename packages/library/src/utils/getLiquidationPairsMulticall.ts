@@ -1,10 +1,12 @@
 import { ethers } from 'ethers';
 import { Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import {
+  ContractsBlob,
+  getEthersMulticallProviderResults,
+} from '@generationsoftware/pt-v5-utils-js';
 
 import { LiquidationPairAbi } from '../abis/LiquidationPairAbi';
-import { LiquidationPairFactoryAbi } from '../abis/LiquidationPairFactoryAbi';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
@@ -19,6 +21,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  */
 export const getLiquidationPairsMulticall = async (
   liquidationPairFactoryContract: Contract,
+  contracts: ContractsBlob,
   provider: Provider,
 ): Promise<Contract[]> => {
   // @ts-ignore Provider == BaseProvider
@@ -30,9 +33,14 @@ export const getLiquidationPairsMulticall = async (
 
   // Queries:
   const numPairs = await liquidationPairFactoryContract.totalPairs();
+
+  const liquidationPairFactoryContractBlob = contracts.contracts.find(
+    (contract) => contract.type === 'TpdaLiquidationPairFactory',
+  );
+
   const liquidationPairFactoryMulticallContract = new ethers.Contract(
     liquidationPairFactoryContract.address,
-    LiquidationPairFactoryAbi,
+    liquidationPairFactoryContractBlob.abi,
     multicallProvider,
   );
 

@@ -63,12 +63,12 @@ export async function runLiquidator(
     covalentApiKey,
   } = config;
 
-  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd);
+  console.log(chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd));
 
   // #1. Get contracts
   //
   printSpacer();
-  console.log('Starting ...');
+  console.log(chalk.dim('Starting ...'));
 
   const { liquidationRouterContract, liquidationPairContracts } = await getLiquidationContracts(
     contracts,
@@ -94,7 +94,7 @@ export async function runLiquidator(
     console.log(chalk.dim(`LiquidationPair Address: ${liquidationPair.address}`));
 
     const liquidationPairData = contracts.contracts.find(
-      (contract) => contract.type === 'LiquidationPair',
+      (contract) => contract.type === 'TpdaLiquidationPair',
     );
 
     const liquidationPairContract = new ethers.Contract(
@@ -443,7 +443,7 @@ const getLiquidationContracts = async (
   };
 
   const liquidationPairFactoryContract = getContract(
-    'LiquidationPairFactory',
+    'TpdaLiquidationPairFactory',
     chainId,
     signer,
     contracts,
@@ -451,10 +451,11 @@ const getLiquidationContracts = async (
   );
   const liquidationPairContracts = await getLiquidationPairsMulticall(
     liquidationPairFactoryContract,
+    contracts,
     provider,
   );
   const liquidationRouterContract = getContract(
-    'LiquidationRouter',
+    'TpdaLiquidationRouter',
     chainId,
     signer,
     contracts,
