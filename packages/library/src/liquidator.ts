@@ -75,17 +75,15 @@ export async function runLiquidator(
     config,
   );
 
-  printSpacer();
-  console.log('Collecting information about vaults ...');
+  console.log(chalk.dim('Collecting information about vaults ...'));
 
-  // Loop through all liquidation pairs
+  // #2. Loop through all liquidation pairs
   printSpacer();
   console.log(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
   const stats: Stat[] = [];
   for (let i = 0; i < liquidationPairContracts.length; i++) {
-    printSpacer();
     printSpacer();
     printSpacer();
     printAsterisks();
@@ -131,13 +129,10 @@ export async function runLiquidator(
     }
     printSpacer();
 
-    // #2. Calculate amounts
+    // #3. Query for amounts
     console.log(chalk.blue(`1. Amounts:`));
 
-    const { originalMaxAmountOut, wantedAmountsOut } = await calculateAmountOut(
-      liquidationPairContract,
-      context,
-    );
+    const { amountOut } = await getAmountOut(liquidationPairContract, context);
 
     if (!context.underlyingAssetToken.assetRateUsd) {
       stats.push({
@@ -149,7 +144,7 @@ export async function runLiquidator(
       continue;
     }
 
-    if (originalMaxAmountOut.eq(0)) {
+    if (amountOut.eq(0)) {
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -161,13 +156,7 @@ export async function runLiquidator(
 
     const getAmountInValues = async () => {
       try {
-        return calculateAmountIn(
-          provider,
-          liquidationPairContract,
-          context,
-          originalMaxAmountOut,
-          wantedAmountsOut,
-        );
+        return getAmountIn(liquidationPairContract, context, amountOut);
       } catch (e) {
         console.error(chalk.red(e));
 
@@ -177,7 +166,7 @@ export async function runLiquidator(
       }
     };
 
-    const { amountIn, amountInMax, wantedAmountsIn } = await getAmountInValues();
+    const { amountIn, amountInMax } = await getAmountInValues();
 
     if (amountIn.eq(0)) {
       stats.push({
@@ -189,8 +178,7 @@ export async function runLiquidator(
       continue;
     }
 
-    // #3. Print balance of tokenIn for relayer
-    // TODO: Fix this to only use the selectedIndex amountIn
+    // #4. Print balance of tokenIn for relayer
     const sufficientBalance = await checkBalance(context, amountIn);
 
     if (sufficientBalance) {
@@ -218,15 +206,15 @@ export async function runLiquidator(
       continue;
     }
 
-    // #4. Get allowance approval (necessary before upcoming static call)
+    // #5. Get allowance approval (necessary before upcoming static call)
     //
     await approve(amountIn, liquidationRouterContract, signer, relayerAddress, context);
 
-    // #5. Find an estimated amount of gas cost
+    // #6. Find an estimated amount that gas will cost
     const swapExactAmountOutParams: SwapExactAmountOutParams = {
       liquidationPairAddress: liquidationPair.address,
       swapRecipient,
-      amountOut: originalMaxAmountOut,
+      amountOut,
       amountInMax,
       deadline: Math.floor(Date.now() / 1000) + 100,
     };
@@ -246,9 +234,6 @@ export async function runLiquidator(
       console.log(chalk.yellow('Could not estimate gas costs!'));
       console.log(chalk.yellow('---'));
 
-      // TODO: Will need to use `callStatic` on Arbitrum to ensure a tx
-      // will go through prior to sending if gas estimations always fail
-      // on that network
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -258,12 +243,12 @@ export async function runLiquidator(
       continue;
     }
 
-    // #6. Decide if profitable or not
-    const { estimatedProfitUsd, profitable, selectedIndex } = await calculateProfit(
+    // #7. Decide if profitable or not
+    const { estimatedProfitUsd, profitable } = await calculateProfit(
       context,
       minProfitThresholdUsd,
-      wantedAmountsIn,
-      wantedAmountsOut,
+      amountIn,
+      amountOut,
       avgFeeUsd,
     );
     if (!profitable) {
@@ -281,21 +266,10 @@ export async function runLiquidator(
       continue;
     }
 
-    // #7. Finally, populate tx when profitable
+    // #8. Finally, populate tx when profitable
     try {
       let populatedTx: PopulatedTransaction | undefined;
       console.log(chalk.blue('6. Populating swap transaction ...'));
-      printSpacer();
-
-      // Re-create the params for the swap tx, this time using the dynamically chosen amountOut
-      // based on the maximum amount of profit
-      const swapExactAmountOutParams: SwapExactAmountOutParams = {
-        liquidationPairAddress: liquidationPair.address,
-        swapRecipient,
-        amountOut: wantedAmountsOut[selectedIndex],
-        amountInMax,
-        deadline: Math.floor(Date.now() / 1000) + 100,
-      };
 
       populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
         ...Object.values(swapExactAmountOutParams),
@@ -499,6 +473,7 @@ const checkBalance = async (
 ): Promise<boolean> => {
   printAsterisks();
   console.log(chalk.blue('2. Balance & Allowance'));
+  printSpacer();
   console.log("Checking relayer 'tokenIn' balance ...");
 
   const tokenInBalance = context.relayer.tokenInBalance;
@@ -514,61 +489,39 @@ const checkBalance = async (
 const calculateProfit = async (
   context: LiquidatorContext,
   minProfitThresholdUsd: number,
-  wantedAmountsIn: BigNumber[],
-  wantedAmountsOut: BigNumber[],
+  amountIn: BigNumber,
+  amountOut: BigNumber,
   avgFeeUsd: number,
-): Promise<{ estimatedProfitUsd: number; profitable: boolean; selectedIndex: number }> => {
+): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   printAsterisks();
   console.log(chalk.blue('5. Profit/Loss (USD):'));
   printSpacer();
 
   console.log(chalk.blueBright('Gross profit = tokenOut - tokenIn'));
-  const grossProfitsUsd = [];
-  for (let i = 0; i < wantedAmountsIn.length; i++) {
-    const amountOut = wantedAmountsOut[i];
-    const amountIn = wantedAmountsIn[i];
+  const underlyingAssetTokenUsd =
+    parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
+    context.underlyingAssetToken.assetRateUsd;
+  const tokenInUsd =
+    parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
+    context.tokenIn.assetRateUsd;
 
-    const underlyingAssetTokenUsd =
-      parseFloat(ethers.utils.formatUnits(amountOut, context.tokenOut.decimals)) *
-      context.underlyingAssetToken.assetRateUsd;
-    const tokenInUsd =
-      parseFloat(ethers.utils.formatUnits(amountIn, context.tokenIn.decimals)) *
-      context.tokenIn.assetRateUsd;
+  const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
 
-    const grossProfitUsd = underlyingAssetTokenUsd - tokenInUsd;
-
-    console.log(
-      chalk.dim(`Index ${i}:`),
-      chalk.greenBright(
-        `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
-          underlyingAssetTokenUsd,
-        )} - $${roundTwoDecimalPlaces(tokenInUsd)}`,
-      ),
-    );
-
-    grossProfitsUsd.push(grossProfitUsd);
-  }
-  printSpacer();
-
-  const getMaxGrossProfit = (grossProfitsUsd: number[]) => {
-    const max = grossProfitsUsd.reduce((a, b) => Math.max(a, b), -Infinity);
-    return { maxGrossProfit: max, selectedIndex: grossProfitsUsd.indexOf(max) };
-  };
-
-  const { selectedIndex, maxGrossProfit } = getMaxGrossProfit(grossProfitsUsd);
   console.log(
-    chalk.dim(`Selected Index ${selectedIndex} -`),
-    chalk.blueBright(`$${roundTwoDecimalPlaces(maxGrossProfit)}`),
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(grossProfitUsd)} = $${roundTwoDecimalPlaces(
+        underlyingAssetTokenUsd,
+      )} - $${roundTwoDecimalPlaces(tokenInUsd)}`,
+    ),
   );
   printSpacer();
 
-  const netProfitUsd = maxGrossProfit - avgFeeUsd;
-
+  const netProfitUsd = grossProfitUsd - avgFeeUsd;
   console.log(chalk.magenta('Net profit = Gross profit - Gas fee (Average)'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
-        maxGrossProfit,
+        grossProfitUsd,
       )} - $${roundTwoDecimalPlaces(avgFeeUsd)}`,
     ),
   );
@@ -584,7 +537,7 @@ const calculateProfit = async (
 
   const estimatedProfitUsd = roundTwoDecimalPlaces(netProfitUsd);
 
-  return { estimatedProfitUsd, profitable, selectedIndex };
+  return { estimatedProfitUsd, profitable };
 };
 
 /**
@@ -601,13 +554,12 @@ const getGasCost = async (
 
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
+  printSpacer();
 
   // Estimate gas limit from chain:
   const estimatedGasLimit = await liquidationRouter.estimateGas.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
   );
-  printSpacer();
-  printSpacer();
 
   const populatedTx = await liquidationRouter.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
@@ -626,13 +578,13 @@ const getGasCost = async (
     `$${nativeTokenMarketRateUsd}`,
   );
 
-  printSpacer();
   logBigNumber(
     'Estimated gas limit (wei):',
     estimatedGasLimit,
     18,
     NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
   );
+  printSpacer();
 
   logTable({ avgFeeUsd });
 
@@ -640,17 +592,16 @@ const getGasCost = async (
 };
 
 /**
- * Calculates necessary input parameters for the swap call based on current state of the contracts
+ * Queries for available yield that can be liquidated based on current state of the contracts
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
-const calculateAmountOut = async (
+const getAmountOut = async (
   liquidationPair: Contract,
   context: LiquidatorContext,
 ): Promise<{
-  originalMaxAmountOut: BigNumber;
-  wantedAmountsOut: BigNumber[];
+  amountOut: BigNumber;
 }> => {
-  const wantedAmountsOut = [];
+  printSpacer();
 
   const amountOut = await liquidationPair.callStatic.maxAmountOut();
   logBigNumber(
@@ -666,25 +617,10 @@ const calculateAmountOut = async (
         `Max amount out available is 0: (Not enough interest accrued ... Is enough deposited to generate yield?)`,
       ),
     );
-    return {
-      originalMaxAmountOut: BigNumber.from(0),
-      wantedAmountsOut,
-    };
-  }
-
-  // Get multiple points across the auction function to determine the most amount of profitability
-  // most amount out for least amount of token in
-  // (depending on the state of the gradual auction)
-  for (let i = 1; i <= 100; i++) {
-    const amountToSendPercent = i;
-    // const amountToSendPercent = i * 10; when number of divisions is 10, instead of 100
-    const wantedAmountOut = amountOut.mul(ethers.BigNumber.from(amountToSendPercent)).div(100);
-    wantedAmountsOut.push(wantedAmountOut);
   }
 
   return {
-    originalMaxAmountOut: amountOut,
-    wantedAmountsOut,
+    amountOut,
   };
 };
 
@@ -692,46 +628,24 @@ const calculateAmountOut = async (
  * Calculates necessary input parameters for the swap call based on current state of the contracts
  * @returns {Promise} Promise object with the input parameters exactAmountIn and amountOutMin
  */
-const calculateAmountIn = async (
-  provider: Provider,
+const getAmountIn = async (
   liquidationPairContract: Contract,
   context: LiquidatorContext,
-  originalMaxAmountOut: BigNumber,
-  wantedAmountsOut: BigNumber[],
+  amountOut: BigNumber,
 ): Promise<{
   amountIn: BigNumber;
   amountInMax: BigNumber;
-  wantedAmountsIn: BigNumber[];
 }> => {
-  printSpacer();
-
-  let wantedAmountsIn = [];
-
   const amountIn: BigNumber = await liquidationPairContract.callStatic.computeExactAmountIn(
-    originalMaxAmountOut,
+    amountOut,
   );
   logBigNumber('Amount in:', amountIn, context.tokenIn.decimals, context.tokenIn.symbol);
 
   const amountInMax = ethers.constants.MaxInt256;
 
-  if (amountIn.eq(0)) {
-    return {
-      amountIn,
-      amountInMax,
-      wantedAmountsIn,
-    };
-  }
-
-  wantedAmountsIn = await getLiquidationPairComputeExactAmountInMulticall(
-    liquidationPairContract,
-    wantedAmountsOut,
-    provider,
-  );
-
   return {
     amountIn,
     amountInMax,
-    wantedAmountsIn,
   };
 };
 
