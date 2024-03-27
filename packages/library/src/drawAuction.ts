@@ -1,6 +1,6 @@
+import chalk from 'chalk';
 import { ethers, BigNumber, Contract, PopulatedTransaction } from 'ethers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
-import chalk from 'chalk';
 
 import { DrawAuctionContracts, DrawAuctionContext, DrawAuctionConfig } from './types';
 import {
@@ -41,8 +41,6 @@ type StartDrawTransformedTxParams = {
   value: BigNumber;
 };
 
-const MAX_FORCE_RELAY_LOSS_THRESHOLD_USD = -5; // -$5 USD
-
 /**
  * Main entry function - gets the current state of the DrawManager/RngWitnet
  * contracts and runs transactions if it's profitable.
@@ -67,7 +65,7 @@ export async function runDrawAuction(
 
   if (!context.drawAuctionState) {
     printAsterisks();
-    console.log(chalk.yellow(`Currently no Rng or RngRelay auctions to complete. Exiting ...`));
+    console.log(chalk.yellow(`Currently no draw auctions to start or finish. Exiting ...`));
     printSpacer();
     return;
   }
@@ -258,58 +256,14 @@ const checkFinishDraw = async (
     context.finishDrawRewardUsd,
     gasCostUsd,
   );
-  console.log('profitable');
-  console.log(profitable);
 
-  const forceFinishDraw = checkForceFinishDraw(config, context, netProfitUsd);
-  console.log('forceFinishDraw');
-  console.log(forceFinishDraw);
-
-  if (profitable || forceFinishDraw) {
+  if (profitable) {
     await sendPopulatedFinishDrawTransaction(config, txParams, contract);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
-};
-
-/**
- * If we already submitted the startDraw request - and therefore paid the fees for the random number
- * and gas fee for it - we should make sure the relay goes through - making sure that it was us who won the
- * initial startDraw auction, and that the amount of loss we'll take is within acceptable range
- *
- * @param {DrawAuctionConfig} config, draw auction config
- * @param {DrawAuctionContext} context, current state of the draw auction contracts
- * @param {DrawAuctionContracts} drawAuctionContracts, ethers.js Contract instances of all rng auction contracts
- *
- * @returns {boolean} if we should attempt to force the finishDraw() transaction or not
- */
-const checkForceFinishDraw = (
-  config: DrawAuctionConfig,
-  context: DrawAuctionContext,
-  netProfitUsd: number,
-) => {
-  // Is recipient for the StartRNG auction same as the upcoming Relay?
-  // (this is a bit naïve as the RNG reward recipient could differ from the relay reward recipient,
-  //   but it's likely this will be the same address)
-  // const sameRecipient = relay.context.rngLastAuctionResult.recipient === config.rewardRecipient;
-  // console.log('sameRecipient');
-  // console.log(sameRecipient);
-
-  console.log('netProfitUsd');
-  console.log(netProfitUsd);
-
-  console.log('MAX_FORCE_RELAY_LOSS_THRESHOLD_USD');
-  console.log(MAX_FORCE_RELAY_LOSS_THRESHOLD_USD);
-
-  const lossOkay = netProfitUsd > MAX_FORCE_RELAY_LOSS_THRESHOLD_USD;
-  console.log('lossOkay');
-  console.log(lossOkay);
-
-  // return context.auctionClosesSoon && sameRecipient && lossOkay;
-  // return context.auctionClosesSoon && lossOkay;
-  return lossOkay;
 };
 
 /**
@@ -644,7 +598,6 @@ const getFinishDrawGasCostUsd = async (
 
   const { nativeTokenMarketRateUsd } = context;
 
-  // The relay uses 156,000~ gas, set to 200k just in case
   const estimatedGasLimit: BigNumber = BigNumber.from(400000);
   const populatedTx: PopulatedTransaction = await contract.populateTransaction.finishDraw(
     ...Object.values(txParams),
