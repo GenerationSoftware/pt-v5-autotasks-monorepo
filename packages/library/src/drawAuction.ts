@@ -210,7 +210,7 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
   // const gasPrice = BigNumber.from(100000000);
 
-  const gasLimit = 800000;
+  const gasLimit = 600000;
   const tx = await sendPopulatedTx(
     chainId,
     ozRelayer,
@@ -603,10 +603,10 @@ const buildRngWitnetStartDrawTxParams = (
   drawAuctionContracts: DrawAuctionContracts,
 ): RngWitnetStartDrawTxParams => {
   return {
-    rngPaymentAmount: context.rngFeeEstimate.mul(2),
+    rngPaymentAmount: context.rngFeeEstimate,
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
     rewardRecipient: config.rewardRecipient,
-    value: context.rngFeeEstimate.mul(2), //  double this since the estimate always comes back shy of enough
+    value: context.rngFeeEstimate,
   };
 };
 

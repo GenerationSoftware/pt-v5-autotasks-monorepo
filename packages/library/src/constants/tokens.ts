@@ -62,7 +62,7 @@ export const KNOWN_TOKENS = {
     PGUSDT: '0x7eb63f62f2e1e4646793d3da9c1a232a5f5710b5',
     PWBTCT: '0x1b751a1f3b558173df9832d4564e6b38db7552c6',
     PWETH: '0xf04aa80eac0043c8f8328dd35385aaf2c0ed8e9a',
-    PUSDC: '',
+    PUSDC: '0xddc328703869ee895b6ca51bd5ed6228cb08e49c',
   },
 };
 
