@@ -30,7 +30,7 @@
     "url": "https://github.com/generationsoftware/pt-v5-autotasks/issues"
   },
   "devDependencies": {
-    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.4",
+    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.8",
     "@openzeppelin/defender-relay-client": "1.54.1",
     "chalk": "^4.1.2",
     "ethers": "5.7.2",
