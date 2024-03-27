@@ -22,6 +22,7 @@ export default defineConfig((opt) => {
       'ethers-multicall-provider',
       'yn',
       'node-fetch',
+      'lodash.pickby',
       'lodash.groupby',
     ],
     format: 'cjs',

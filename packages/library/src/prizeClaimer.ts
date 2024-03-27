@@ -561,7 +561,7 @@ const getGasCost = async (
   printSpacer();
 
   const gasCostEachFollowingClaim =
-    claims.length > 1
+    claims.length > 1 && estimatedGasLimitForTwo
       ? estimatedGasLimitForTwo.sub(estimatedGasLimitForOne)
       : estimatedGasLimitForOne;
   logBigNumber(
