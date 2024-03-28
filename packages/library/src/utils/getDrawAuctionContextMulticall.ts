@@ -57,11 +57,11 @@ export const getDrawAuctionContextMulticall = async (
 ): Promise<DrawAuctionContext> => {
   printSpacer();
   console.log(chalk.dim(`Gathering info on state of auctions ...`));
-  const { chainId } = config;
+  const { chainId, covalentApiKey } = config;
 
   // 1. Native tokens (gas tokens) market rates in USD
   console.log(chalk.dim(`Getting RNG token and native (gas) token market rates ...`));
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
 
   // 2. Multicall data
   printSpacer();
@@ -190,11 +190,21 @@ const getContext = async (
   };
 
   // 10. Results Two: Draw Manager
+  console.log('rewardToken.assetRateUsd');
+  console.log(rewardToken.assetRateUsd);
   const startDrawRewardStr = ethers.utils.formatUnits(startDrawReward, rewardToken.decimals);
+  console.log('startDrawRewardStr');
+  console.log(startDrawRewardStr);
   const startDrawRewardUsd = Number(startDrawRewardStr) * rewardToken.assetRateUsd;
+  console.log('startDrawRewardUsd');
+  console.log(startDrawRewardUsd);
 
   const finishDrawRewardStr = ethers.utils.formatUnits(finishDrawReward, rewardToken.decimals);
+  console.log('finishDrawRewardStr');
+  console.log(finishDrawRewardStr);
   const finishDrawRewardUsd = Number(finishDrawRewardStr) * rewardToken.assetRateUsd;
+  console.log('finishDrawRewardUsd');
+  console.log(finishDrawRewardUsd);
 
   // Currently Witnet requires the native token ETH on Optimism for RNG Fee
   // assume 18 decimals

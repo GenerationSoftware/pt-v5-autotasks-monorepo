@@ -417,8 +417,6 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
     `1a. Chain Native/Gas Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${context.nativeTokenMarketRateUsd}`,
   );
-
-  printSpacer();
   logStringValue(
     `1b. Reward Token '${context.rewardToken.symbol}' Market Rate (USD):`,
     `$${context.rewardToken.assetRateUsd}`,
@@ -431,32 +429,39 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   printSpacer();
   logStringValue(`2a. Can Start Draw? `, `${checkOrX(context.canStartDraw)}`);
 
-  if (context.canStartDraw) {
-    printSpacer();
-    logStringValue(
-      `2b. Start Draw ${chainName(chainId)} Expected Reward:`,
-      `${context.startDrawReward.toString()} ${context.rewardToken.symbol}`,
-    );
-    console.log(
-      chalk.grey(`2c. Start Draw ${chainName(chainId)} Expected Reward (USD):`),
-      chalk.yellow(`$${roundTwoDecimalPlaces(context.startDrawRewardUsd)}`),
-      chalk.dim(`$${context.startDrawRewardUsd}`),
-    );
-  } else {
-    printSpacer();
-
-    logStringValue(
-      `${chainName(chainId)} PrizePool can start draw in:`,
-      `${(context.prizePoolDrawClosesAt - Math.ceil(Date.now() / 1000)) / 60} minutes`,
-    );
-    printSpacer();
-  }
+  logStringValue(
+    `2b. Start Draw Expected Reward:`,
+    `${ethers.utils.formatUnits(context.startDrawReward, context.rewardToken.decimals)} ${
+      context.rewardToken.symbol
+    }`,
+  );
+  console.log(
+    chalk.grey(`2c. Start Draw Expected Reward (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(context.startDrawRewardUsd)}`),
+    chalk.dim(`$${context.startDrawRewardUsd}`),
+  );
+  logStringValue(
+    `2d. PrizePool (${chainName(chainId)}) can start draw in:`,
+    `${(context.prizePoolDrawClosesAt - Math.ceil(Date.now() / 1000)) / 60} minutes`,
+  );
 
   printSpacer();
   printSpacer();
   console.log(chalk.blue.bold(`Finish Draw Auction State:`));
-
+  printSpacer();
   logStringValue(`3a. Can Finish Draw? `, `${checkOrX(context.canFinishDraw)}`);
+
+  logStringValue(
+    `3b. Finish Draw Expected Reward:`,
+    `${ethers.utils.formatUnits(context.finishDrawReward, context.rewardToken.decimals)} ${
+      context.rewardToken.symbol
+    }`,
+  );
+  console.log(
+    chalk.grey(`3c. Finish Draw Expected Reward (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(context.finishDrawRewardUsd)}`),
+    chalk.dim(`$${context.finishDrawRewardUsd}`),
+  );
 
   printSpacer();
 };

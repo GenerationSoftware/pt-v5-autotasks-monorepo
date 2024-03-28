@@ -96,8 +96,14 @@ export const getFeesUsd = async (
  *
  * @returns {number} The spot price for the Native Gas Token in USD
  **/
-export const getNativeTokenMarketRateUsd = async (chainId: number): Promise<number> => {
-  return await getEthMainnetTokenMarketRateUsd(NETWORK_NATIVE_TOKEN_INFO[chainId].symbol);
+export const getNativeTokenMarketRateUsd = async (
+  chainId: number,
+  covalentApiKey?: string,
+): Promise<number> => {
+  const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[chainId].symbol;
+  const tokenAddress = tokenSymbol === 'ETH' ? '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' : '';
+
+  return await getEthMainnetTokenMarketRateUsd(tokenSymbol, tokenAddress, covalentApiKey);
 };
 
 /**
@@ -116,8 +122,16 @@ export const getEthMainnetTokenMarketRateUsd = async (
 
   let marketRateUsd;
   try {
-    if (Boolean(tokenAddress) && Boolean(covalentApiKey)) {
-      marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
+    if (Boolean(covalentApiKey)) {
+      if (Boolean(tokenAddress)) {
+        marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
+      } else {
+        console.log(
+          chalk.yellow(
+            `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
+          ),
+        );
+      }
     }
   } catch (err) {
     console.log(err);

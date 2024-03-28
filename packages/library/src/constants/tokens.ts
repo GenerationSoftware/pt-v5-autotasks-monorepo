@@ -120,6 +120,7 @@ const sepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.sepolia];
 const arbitrumSepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia];
 
 export const ADDRESS_TO_COVALENT_LOOKUP = {
+  [mainnetTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(), // Ethereum WETH -> Ethereum WETH
   [sepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(), // Sepolia POOL -> Ethereum POOL
   [arbitrumSepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(), // Arb POOL Sepolia -> Ethereum POOL
   [optimismTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(), // Optimism POOL -> Ethereum POOL
