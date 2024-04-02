@@ -208,7 +208,7 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
   // const gasPrice = BigNumber.from(100000000);
 
-  const gasLimit = 600000;
+  const gasLimit = 800000;
   const tx = await sendPopulatedTx(
     chainId,
     ozRelayer,
