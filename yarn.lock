@@ -1608,6 +1608,26 @@
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
+"@generationsoftware/pt-v5-utils-js@1.1.0-beta.8":
+  version "1.1.0-beta.8"
+  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.1.0-beta.8.tgz#2cdeb4e7b9b8995e999b4a54455e9f517793f53a"
+  integrity sha512-KqDvwPiBZntI80CrlbcX5KWJRb4MAK7LOOWj+C2fTtA11tYiAriSBRH9svJSwdW+qi4MFjhjsElgPeB2/ANCVA==
+  dependencies:
+    "@ethersproject/abi" "5.7.0"
+    "@ethersproject/providers" "5.7.2"
+    "@pooltogether/contract-list-schema" "^0.1.4"
+    "@types/lodash" "^4.14.195"
+    ethers "^5.5.1"
+    ethers-multicall-provider "3.1.2"
+    graphql "^16.6.0"
+    graphql-request "^6.0.0"
+    lodash "4.17.0"
+    lodash.pickby "^4.6.0"
+    node-fetch "^3.3.2"
+    tsc "^2.0.4"
+    tsc-watch "^6.0.4"
+    typescript "^5.0.4"
+
 "@graphql-typed-document-node/core@^3.1.1", "@graphql-typed-document-node/core@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@graphql-typed-document-node/core/-/core-3.2.0.tgz#5f3d96ec6b2354ad6d8a28bf216a1d97b5426861"

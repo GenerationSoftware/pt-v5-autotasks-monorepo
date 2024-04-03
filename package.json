@@ -12,13 +12,16 @@
   },
   "packageManager": "yarn@3.5.0",
   "devDependencies": {
+    "@ethersproject/abi": "5.7.0",
+    "@ethersproject/providers": "5.7.2",
+    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.8",
     "@types/node": "20.11.30",
+    "ethers-multicall-provider": "3.1.2",
+    "ethers": "5.7.2",
     "graphql": "16.0.0",
+    "lodash": "4.17.0",
+    "lodash.pickby": "^4.6.0",
     "lerna": "6.0.3",
     "prettier": "2.7.1"
-  },
-  "dependencies": {
-    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.8",
-    "lodash.pickby": "^4.6.0"
   }
 }
