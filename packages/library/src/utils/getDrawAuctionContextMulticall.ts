@@ -34,7 +34,6 @@ const QUERY_KEYS = {
   DRAW_MANAGER_START_DRAW_REWARD_KEY: 'drawManager-startDrawReward',
   DRAW_MANAGER_CAN_FINISH_DRAW_KEY: 'drawManager-canFinishDraw',
   DRAW_MANAGER_FINISH_DRAW_REWARD_KEY: 'drawManager-finishDrawReward',
-  DRAW_MANAGER_AUCTION_DURATION_KEY: 'drawManager-auctionDuration',
   DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED: 'drawManager-elapsedTimeSinceDrawClosed',
 
   REWARD_DECIMALS_KEY: 'rewardToken-decimals',
@@ -95,10 +94,6 @@ const getContext = async (
   queriesOne[QUERY_KEYS.DRAW_MANAGER_FINISH_DRAW_REWARD_KEY] =
     drawManagerContract.finishDrawReward();
 
-  queriesOne[QUERY_KEYS.DRAW_MANAGER_AUCTION_DURATION_KEY] = drawManagerContract.auctionDuration();
-  // queriesOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED] =
-  //   drawManagerContract.elapsedTimeSinceDrawClosed();
-
   // 2. Queries One: Rng Witnet
   if (rngWitnetContract) {
     const gasPrice = await provider.getGasPrice();
@@ -122,31 +117,6 @@ const getContext = async (
 
   const canFinishDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_FINISH_DRAW_KEY];
   const finishDrawReward = resultsOne[QUERY_KEYS.DRAW_MANAGER_FINISH_DRAW_REWARD_KEY];
-
-  const auctionDuration = resultsOne[QUERY_KEYS.DRAW_MANAGER_AUCTION_DURATION_KEY];
-  // const elapsedTimeSinceDrawClosed =
-  //   resultsOne[QUERY_KEYS.DRAW_MANAGER_ELAPSED_TIME_SINCE_DRAW_CLOSED];
-
-  // let auctionExpired, auctionClosesSoon, elapsedTime;
-  // if (canFinishDraw) {
-  //   // elapsedTime = Math.floor(Date.now() / 1000) - Number(rngResults.rngCompletedAt.toString());
-  //   // this is wrong, should be more like line above:
-  //   elapsedTime = elapsedTimeSinceDrawClosed;
-
-  //   if (elapsedTime > auctionDuration) {
-  //     auctionExpired = true;
-  //     elapsedTime = auctionDuration;
-  //   }
-
-  //   // Store if this relay auction is coming to an end
-  //   const percentRemaining = ((auctionDuration - elapsedTime) / auctionDuration) * 100;
-  //   auctionClosesSoon =
-  //     percentRemaining > 0 && percentRemaining < RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD;
-  // }
-  // console.log('auctionClosesSoon');
-  // console.log(auctionClosesSoon);
-  // console.log('auctionExpired');
-  // console.log(auctionExpired);
 
   // 6. Results One: Rng Witnet
   let rngFeeEstimate;
@@ -190,21 +160,11 @@ const getContext = async (
   };
 
   // 10. Results Two: Draw Manager
-  console.log('rewardToken.assetRateUsd');
-  console.log(rewardToken.assetRateUsd);
   const startDrawRewardStr = ethers.utils.formatUnits(startDrawReward, rewardToken.decimals);
-  console.log('startDrawRewardStr');
-  console.log(startDrawRewardStr);
   const startDrawRewardUsd = Number(startDrawRewardStr) * rewardToken.assetRateUsd;
-  console.log('startDrawRewardUsd');
-  console.log(startDrawRewardUsd);
 
   const finishDrawRewardStr = ethers.utils.formatUnits(finishDrawReward, rewardToken.decimals);
-  console.log('finishDrawRewardStr');
-  console.log(finishDrawRewardStr);
   const finishDrawRewardUsd = Number(finishDrawRewardStr) * rewardToken.assetRateUsd;
-  console.log('finishDrawRewardUsd');
-  console.log(finishDrawRewardUsd);
 
   // Currently Witnet requires the native token ETH on Optimism for RNG Fee
   // assume 18 decimals
@@ -229,7 +189,6 @@ const getContext = async (
 
     rewardToken,
     prizePoolDrawClosesAt,
-    // auctionClosesSoon,
 
     nativeTokenMarketRateUsd,
   };
