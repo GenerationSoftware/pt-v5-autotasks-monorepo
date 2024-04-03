@@ -14,7 +14,7 @@
   "devDependencies": {
     "@ethersproject/abi": "5.7.0",
     "@ethersproject/providers": "5.7.2",
-    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.8",
+    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.9",
     "@types/node": "20.11.30",
     "ethers-multicall-provider": "3.1.2",
     "ethers": "5.7.2",
