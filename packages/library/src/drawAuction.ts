@@ -185,19 +185,13 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.green(`Execute rngWitnet#startDraw`));
   printSpacer();
 
-  let contract: Contract = drawAuctionContracts.rngBlockhashContract;
   let txParams;
   let populatedTx: PopulatedTransaction;
   let estimatedGasLimit: BigNumber;
   if (drawAuctionContracts.rngWitnetContract) {
-    contract = drawAuctionContracts.rngWitnetContract;
-
+    const contract: Contract = drawAuctionContracts.rngWitnetContract;
     txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
-
-    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
-      drawAuctionContracts.rngWitnetContract,
-      txParams,
-    );
+    estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -207,26 +201,13 @@ const sendPopulatedStartDrawTransaction = async (
       { value },
     );
   } else {
+    const contract: Contract = drawAuctionContracts.rngBlockhashContract;
     txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
-
-    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
-      drawAuctionContracts.rngBlockhashContract,
-      txParams,
-    );
-
+    estimatedGasLimit = await getRngBlockhashStartDrawEstimatedGasLimit(contract, txParams);
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
   }
 
-  console.log('estimatedGasLimit');
-  console.log(estimatedGasLimit);
-  console.log('estimatedGasLimit.toString()');
-  console.log(estimatedGasLimit.toString());
-
   const estimatedGasLimitWithBufferAsNumber: number = Number(estimatedGasLimit) + 100000;
-
-  console.log('estimatedGasLimitWithBufferAsNumber.toString()');
-  console.log(estimatedGasLimitWithBufferAsNumber.toString());
-
   const gasPrice = await provider.getGasPrice();
   console.log(chalk.greenBright.bold(`Sending ...`));
 
@@ -346,7 +327,7 @@ const getFinishDrawEstimatedGasLimit = async (
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
-    estimatedGasLimit = await contract.estimateGas.startDraw(...Object.values(finishDrawTxParams));
+    estimatedGasLimit = await contract.estimateGas.finishDraw(...Object.values(finishDrawTxParams));
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -551,31 +532,22 @@ const getStartDrawGasCostUsd = async (
   let estimatedGasLimit: BigNumber = BigNumber.from(0);
   let populatedTx: PopulatedTransaction;
   if (drawAuctionContracts.rngWitnetContract) {
+    const contract: Contract = drawAuctionContracts.rngWitnetContract;
     txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
-
-    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
-      drawAuctionContracts.rngWitnetContract,
-      txParams,
-    );
+    estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
 
-    populatedTx = await drawAuctionContracts.rngWitnetContract.populateTransaction.startDraw(
+    populatedTx = await contract.populateTransaction.startDraw(
       ...Object.values(transformedTxParams),
       { value },
     );
   } else {
+    const contract: Contract = drawAuctionContracts.rngBlockhashContract;
     txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
-
-    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
-      drawAuctionContracts.rngBlockhashContract,
-      txParams,
-    );
-
-    populatedTx = await drawAuctionContracts.rngBlockhashContract.populateTransaction.startDraw(
-      ...Object.values(txParams),
-    );
+    estimatedGasLimit = await getRngBlockhashStartDrawEstimatedGasLimit(contract, txParams);
+    populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
   }
 
   // Add extra buffer space on the estimate because estimates are typically too low and cause tx's to fail
@@ -756,14 +728,8 @@ const sendPopulatedFinishDrawTransaction = async (
   const gasPrice = await provider.getGasPrice();
 
   const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
-  console.log('estimatedGasLimit');
-  console.log(estimatedGasLimit);
-  console.log('estimatedGasLimit.toString()');
-  console.log(estimatedGasLimit.toString());
   const estimatedGasLimitWithBufferAsNumber: number =
     Number(estimatedGasLimit) + DRAW_GAS_LIMIT_BUFFER;
-  console.log('estimatedGasLimitWithBufferAsNumber.toString()');
-  console.log(estimatedGasLimitWithBufferAsNumber.toString());
 
   console.log(chalk.green(`Execute DrawManager#finishDraw`));
   console.log(chalk.greenBright.bold(`Sending ...`));
