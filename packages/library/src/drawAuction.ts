@@ -186,10 +186,16 @@ const sendPopulatedStartDrawTransaction = async (
   let contract: Contract = drawAuctionContracts.rngBlockhashContract;
   let txParams;
   let populatedTx: PopulatedTransaction;
+  let estimatedGasLimit: BigNumber;
   if (drawAuctionContracts.rngWitnetContract) {
     contract = drawAuctionContracts.rngWitnetContract;
 
     txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
+
+    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
+      drawAuctionContracts.rngWitnetContract,
+      txParams,
+    );
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -201,20 +207,34 @@ const sendPopulatedStartDrawTransaction = async (
   } else {
     txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
 
+    estimatedGasLimit = await getStartDrawEstimatedGasLimit(
+      drawAuctionContracts.rngBlockhashContract,
+      txParams,
+    );
+
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
   }
 
+  console.log('estimatedGasLimit');
+  console.log(estimatedGasLimit);
+  console.log('estimatedGasLimit.toString()');
+  console.log(estimatedGasLimit.toString());
+
+  const estimatedGasLimitWithBuffer: number = Number(estimatedGasLimit) + 100000;
+
+  console.log('estimatedGasLimit.toString()');
+  console.log(estimatedGasLimit.toString());
+
   const gasPrice = await provider.getGasPrice();
   console.log(chalk.greenBright.bold(`Sending ...`));
-  // const gasPrice = BigNumber.from(100000000);
 
-  const gasLimit = 800000;
+  // const gasLimit = 800000;
   const tx = await sendPopulatedTx(
     chainId,
     ozRelayer,
     wallet,
     populatedTx,
-    gasLimit,
+    estimatedGasLimitWithBuffer,
     gasPrice,
     config.useFlashbots,
     txParams,
@@ -517,8 +537,6 @@ const getStartDrawGasCostUsd = async (
     );
   }
 
-  // hard-coded gas limit:
-  // estimatedGasLimit = BigNumber.from(630000);
   const gasCostUsd = await getGasCostUsd(
     config,
     estimatedGasLimit,
