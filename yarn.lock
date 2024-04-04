@@ -1613,6 +1613,26 @@
   resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-autotasks-library/-/pt-v5-autotasks-library-1.1.0-beta.1.tgz#2e76c224aab179341d72b7f90877795da2c8497a"
   integrity sha512-a7OEVU7kurbVWUKqcsRuD2DarM3kChfepmpsnwRL7lm6jhjKD+6hdK0lZHr+q/izWiEuq4XVymhVJ14PPkPSkQ==
 
+"@generationsoftware/pt-v5-utils-js@1.1.0-beta.10":
+  version "1.1.0-beta.10"
+  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.1.0-beta.10.tgz#4b069fce144d9de4cf2df30e07af2152c20febaf"
+  integrity sha512-YcYD/kYBUlPBGdYN+AEhF9qjcYS70QBFdyXgXm6dybaUnR6w2vB4ajyE96Tf4YaQANhe6pBXcZVPaabiTqdIsQ==
+  dependencies:
+    "@ethersproject/abi" "5.7.0"
+    "@ethersproject/providers" "5.7.2"
+    "@pooltogether/contract-list-schema" "^0.1.4"
+    "@types/lodash" "^4.14.195"
+    ethers "^5.5.1"
+    ethers-multicall-provider "3.1.2"
+    graphql "^16.6.0"
+    graphql-request "^6.0.0"
+    lodash "4.17.0"
+    lodash.pickby "^4.6.0"
+    node-fetch "^3.3.2"
+    tsc "^2.0.4"
+    tsc-watch "^6.0.4"
+    typescript "^5.0.4"
+
 "@graphql-typed-document-node/core@^3.1.1", "@graphql-typed-document-node/core@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@graphql-typed-document-node/core/-/core-3.2.0.tgz#5f3d96ec6b2354ad6d8a28bf216a1d97b5426861"
@@ -8023,7 +8043,7 @@ lodash.debounce@^4.0.8:
   resolved "https://registry.yarnpkg.com/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==
 
-lodash.groupby@^4.6.0:
+lodash.groupby@4.6.0, lodash.groupby@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/lodash.groupby/-/lodash.groupby-4.6.0.tgz#0b08a1dcf68397c397855c3239783832df7403d1"
   integrity sha512-5dcWxm23+VAoz+awKmBaiBvzox8+RqMgFhi7UvX9DHZr2HdxHXM/Wrf8cfKpsW37RNrvtPn6hSwNqurSILbmJw==
