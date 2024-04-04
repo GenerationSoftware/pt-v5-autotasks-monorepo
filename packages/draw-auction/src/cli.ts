@@ -21,14 +21,8 @@ if (esMain(import.meta)) {
 
   const provider: BaseProvider = getProvider(envVars);
 
-  const mockEvent = {
-    apiKey: envVars.RELAYER_API_KEY, // RNG chain OZ relayer API Key
-    apiSecret: envVars.RELAYER_API_SECRET, // RNG chain OZ relayer API secret
-  };
-
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,
-    mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 

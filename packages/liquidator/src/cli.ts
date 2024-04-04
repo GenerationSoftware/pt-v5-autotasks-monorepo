@@ -10,7 +10,7 @@ import {
   LiquidatorEnvVars,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
+import { loadLiquidatorEnvVars } from '../../library/src/utils/loadLiquidatorEnvVars';
 import { executeTransactions } from './executeTransactions';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
@@ -18,16 +18,11 @@ console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
 
 if (esMain(import.meta)) {
   const envVars: LiquidatorEnvVars = loadLiquidatorEnvVars();
-  const mockEvent = {
-    apiKey: envVars.RELAYER_API_KEY,
-    apiSecret: envVars.RELAYER_API_SECRET,
-  };
 
   const provider: BaseProvider = getProvider(envVars);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,
-    mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 

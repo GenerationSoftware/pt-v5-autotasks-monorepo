@@ -18,16 +18,11 @@ console.log(chalk.blue(figlet.textSync('Flash Liquidator Bot')));
 
 if (esMain(import.meta)) {
   const envVars: FlashLiquidatorEnvVars = loadFlashLiquidatorEnvVars();
-  const mockEvent = {
-    apiKey: envVars.RELAYER_API_KEY,
-    apiSecret: envVars.RELAYER_API_SECRET,
-  };
 
   const provider: BaseProvider = getProvider(envVars);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,
-    mockEvent,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 

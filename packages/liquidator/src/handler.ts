@@ -7,7 +7,7 @@ import {
   RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
 
-import { loadLiquidatorEnvVars } from './loadLiquidatorEnvVars';
+import { loadLiquidatorEnvVars } from '../../library/src/utils/loadLiquidatorEnvVars';
 import { executeTransactions } from './executeTransactions';
 
 export async function handler(event) {

@@ -1,8 +1,8 @@
 import { Provider } from '@ethersproject/providers';
 import { Contract } from 'ethers';
 
-import { VaultFactoryAbi } from '../abis/VaultFactoryAbi';
-import { CHAIN_IDS } from '../constants/network';
+import { VaultFactoryAbi } from '../abis/VaultFactoryAbi.js';
+import { CHAIN_IDS } from '../constants/network.js';
 
 const VAULT_FACTORY_V1_ADDRESSES = {
   [CHAIN_IDS.optimism]: ['0xF65FA202907D6046D1eF33C521889B54BdE08081'],
