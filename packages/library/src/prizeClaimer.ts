@@ -14,12 +14,19 @@ import {
 import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 
-import { ClaimPrizeContext, PrizeClaimerConfig, TiersContext, Token, TokenWithRate } from './types';
+import {
+  ClaimPrizeContext,
+  PrizeClaimerConfig,
+  TiersContext,
+  Token,
+  TokenWithRate,
+} from './types.js';
 import {
   getComputeTotalClaimFeesMulticall,
   getFeesUsd,
   getEthMainnetTokenMarketRateUsd,
   getNativeTokenMarketRateUsd,
+  getWinnersUri,
   logTable,
   logStringValue,
   logBigNumber,
@@ -27,11 +34,10 @@ import {
   printSpacer,
   canUseIsPrivate,
   roundTwoDecimalPlaces,
-} from './utils';
-import { ERC20Abi } from './abis/ERC20Abi';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
-import { getWinnersUri } from './getWinnersUri';
-import { sendPopulatedTx } from './helpers/sendPopulatedTx';
+} from './utils/index.js';
+import { ERC20Abi } from './abis/ERC20Abi.js';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
 type ClaimPrizesParams = {
   vault: string;

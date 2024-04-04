@@ -6,7 +6,7 @@ import {
   DefenderRelaySigner,
 } from '@openzeppelin/defender-relay-client/lib/ethers';
 
-import { RelayerAccount } from '../types';
+import { RelayerAccount } from '../types.js';
 
 // Takes a generic set of providers, the lambda event params (in the case of an OZ Defender setup),
 // and an optional EOA private key and creates a RelayerAccount

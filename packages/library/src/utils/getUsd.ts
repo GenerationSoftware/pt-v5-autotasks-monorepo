@@ -2,10 +2,9 @@ import { ethers, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import chalk from 'chalk';
 
-import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from '../constants/network';
-import { CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/multipliers';
-import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi';
-import { ADDRESS_TO_COVALENT_LOOKUP } from '../constants/tokens';
+import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from '../constants/network.js';
+import { ADDRESS_TO_COVALENT_LOOKUP, CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/index.js';
+import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi.js';
 
 export const MARKET_RATE_CONTRACT_DECIMALS = 8;
 

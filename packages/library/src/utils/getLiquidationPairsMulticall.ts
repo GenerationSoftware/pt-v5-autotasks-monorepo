@@ -1,12 +1,11 @@
-import { ethers } from 'ethers';
-import { Contract } from 'ethers';
+import { ethers, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import {
   ContractsBlob,
   getEthersMulticallProviderResults,
 } from '@generationsoftware/pt-v5-utils-js';
 
-import { LiquidationPairAbi } from '../abis/LiquidationPairAbi';
+import { LiquidationPairAbi } from '../abis/LiquidationPairAbi.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;

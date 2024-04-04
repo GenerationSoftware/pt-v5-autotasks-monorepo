@@ -1,14 +1,12 @@
-import { Contract, BigNumber } from 'ethers';
+import chalk from 'chalk';
+import { ethers, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
-import chalk from 'chalk';
 
-import { FlashLiquidatorContext, Token, TokenWithRate } from '../types';
-import { printSpacer, getEthMainnetTokenMarketRateUsd } from '../utils';
-import { ERC20Abi } from '../abis/ERC20Abi';
-import { ERC4626Abi } from '../abis/ERC4626Abi';
-
-import { ethers } from 'ethers';
+import { FlashLiquidatorContext, Token, TokenWithRate } from '../types.js';
+import { printSpacer, getEthMainnetTokenMarketRateUsd } from '../utils/index.js';
+import { ERC20Abi } from '../abis/ERC20Abi.js';
+import { ERC4626Abi } from '../abis/ERC4626Abi.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;

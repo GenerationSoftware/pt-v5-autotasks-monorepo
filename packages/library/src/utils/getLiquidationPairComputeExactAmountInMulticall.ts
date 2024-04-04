@@ -3,7 +3,7 @@ import { Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 
-import { LiquidationPairAbi } from '../abis/LiquidationPairAbi';
+import { LiquidationPairAbi } from '../abis/LiquidationPairAbi.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;

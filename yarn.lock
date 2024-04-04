@@ -1608,6 +1608,11 @@
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
+"@generationsoftware/pt-v5-autotasks-library@1.1.0-beta.1":
+  version "1.1.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-autotasks-library/-/pt-v5-autotasks-library-1.1.0-beta.1.tgz#2e76c224aab179341d72b7f90877795da2c8497a"
+  integrity sha512-a7OEVU7kurbVWUKqcsRuD2DarM3kChfepmpsnwRL7lm6jhjKD+6hdK0lZHr+q/izWiEuq4XVymhVJ14PPkPSkQ==
+
 "@graphql-typed-document-node/core@^3.1.1", "@graphql-typed-document-node/core@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@graphql-typed-document-node/core/-/core-3.2.0.tgz#5f3d96ec6b2354ad6d8a28bf216a1d97b5426861"

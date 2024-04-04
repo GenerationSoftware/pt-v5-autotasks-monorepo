@@ -4,6 +4,7 @@ import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionContracts, DrawAuctionContext, DrawAuctionConfig } from './types';
 import {
+  chainName,
   logTable,
   logStringValue,
   logBigNumber,
@@ -11,14 +12,13 @@ import {
   printSpacer,
   getFeesUsd,
   roundTwoDecimalPlaces,
-} from './utils';
-import { chainName } from './utils/network';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
+} from './utils/index.js';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,
-} from './utils/getDrawAuctionContextMulticall';
-import { sendPopulatedTx } from './helpers/sendPopulatedTx';
+} from './utils/getDrawAuctionContextMulticall.js';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
 type RngBlockhashStartDrawTxParams = {
   drawManagerAddress: string;

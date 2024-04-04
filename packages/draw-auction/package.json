@@ -40,23 +40,24 @@
     "@ethersproject/hash": "5.6.1",
     "@ethersproject/providers": "5.7.2",
     "@ethersproject/transactions": "5.6.2",
+    "@generationsoftware/pt-v5-autotasks-library": "1.1.0-beta.1",
     "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.9",
     "@openzeppelin/defender-autotask-client": "1.54.1",
     "@openzeppelin/defender-relay-client": "1.54.1",
+    "dotenv": "16.0.3",
     "es-main": "^1.3.0",
-    "ethers-multicall-provider": "3.1.2",
     "ethers": "5.7.2",
+    "ethers-multicall-provider": "3.1.2",
     "figlet": "^1.6.0",
     "graphql-request": "^5.2.0",
     "lodash": "4.17.0",
     "lodash.pickby": "4.6.0",
     "node-fetch": "^3.3.1",
-    "dotenv": "16.0.3",
     "tsdx": "^0.14.1",
     "tsup": "^6.7.0",
     "typescript": "4.7.4",
-    "yn": "^5.0.0",
     "web3-core": "1.8.2",
-    "web3-core-helpers": "1.8.2"
+    "web3-core-helpers": "1.8.2",
+    "yn": "^5.0.0"
   }
 }

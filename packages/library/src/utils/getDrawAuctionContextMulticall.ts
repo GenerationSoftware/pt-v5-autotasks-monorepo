@@ -8,10 +8,10 @@ import {
   DrawAuctionContext,
   TokenWithRate,
   DrawAuctionConfig,
-} from '../types';
-import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd';
-import { ERC20Abi } from '../abis/ERC20Abi';
-import { printSpacer } from './logging';
+} from '../types.js';
+import { ERC20Abi } from '../abis/ERC20Abi.js';
+import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd.js';
+import { printSpacer } from './logging.js';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 

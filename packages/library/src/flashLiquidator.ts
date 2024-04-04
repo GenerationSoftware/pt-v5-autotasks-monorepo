@@ -1,4 +1,4 @@
-import { ethers, Contract, BigNumber, Signer } from 'ethers';
+import { ethers, Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import chalk from 'chalk';
@@ -14,12 +14,15 @@ import {
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   getFlashLiquidatorContextMulticall,
-} from './utils';
-import { FlashLiquidatorAbi } from './abis/FlashLiquidatorAbi';
-import { LiquidationPairAbi } from './abis/LiquidationPairAbi';
-import { FLASH_LIQUIDATION_PAIRS, FLASH_LIQUIDATOR_CONTRACT_ADDRESS } from './constants/flash';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
-import { sendPopulatedTx } from './helpers/sendPopulatedTx';
+} from './utils/index.js';
+import { FlashLiquidatorAbi } from './abis/FlashLiquidatorAbi.js';
+import { LiquidationPairAbi } from './abis/LiquidationPairAbi.js';
+import {
+  FLASH_LIQUIDATION_PAIRS,
+  FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
+  NETWORK_NATIVE_TOKEN_INFO,
+} from './constants/index.js';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
 interface FlashLiquidateParams {
   liquidationPairAddress: string;

@@ -17,12 +17,10 @@ import {
   roundTwoDecimalPlaces,
   getLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
-  getLiquidationPairComputeExactAmountInMulticall,
-} from './utils';
-import { ERC20Abi } from './abis/ERC20Abi';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network';
-import { LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/tokens';
-import { sendPopulatedTx } from './helpers/sendPopulatedTx';
+} from './utils/index.js';
+import { ERC20Abi } from './abis/ERC20Abi.js';
+import { NETWORK_NATIVE_TOKEN_INFO, LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/index.js';
+import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
 interface SwapExactAmountOutParams {
   liquidationPairAddress: string;

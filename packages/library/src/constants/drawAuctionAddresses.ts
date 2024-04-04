@@ -1,4 +1,4 @@
-import { CHAIN_IDS } from './network';
+import { CHAIN_IDS } from './network.js';
 
 export const ERC_5164_MESSAGE_DISPATCHER_ADDRESS = {
   [CHAIN_IDS.optimism]: '0x2A34E6cae749876FB8952aD7d2fA486b00F0683F', // mainnet -> optimism

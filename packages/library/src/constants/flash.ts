@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 
-import { SwapPath, LiquidationPair } from '../types';
-import { CHAIN_IDS } from './network';
-import { KNOWN_TOKENS } from './tokens';
+import { SwapPath, LiquidationPair } from '../types.js';
+import { CHAIN_IDS } from './network.js';
+import { KNOWN_TOKENS } from './tokens.js';
 
 export const FLASH_LIQUIDATOR_CONTRACT_ADDRESS = '0x5927b63E88764D6250b7801eBfDEb7B6c1ac35d0';
 
