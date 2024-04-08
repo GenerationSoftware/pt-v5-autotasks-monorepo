@@ -1,4 +1,3 @@
-import yn from 'yn';
 import chalk from 'chalk';
 
 import { chainName } from './network.js';
