@@ -104,7 +104,6 @@ const instantiateDrawAuctionContracts = (
   console.log(chalk.dim('Instantiating RNG contracts ...'));
 
   const prizePoolContract = getContract('PrizePool', chainId, provider, contracts, version);
-  console.log('DrawManager', chainId, provider, contracts, version);
   const drawManagerContract = getContract('DrawManager', chainId, provider, contracts, version);
 
   let rngWitnetContract, rngBlockhashContract;
@@ -191,8 +190,6 @@ const sendPopulatedStartDrawTransaction = async (
   let estimatedGasLimit: BigNumber;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    console.log('contract');
-    console.log(contract);
     txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
@@ -205,8 +202,6 @@ const sendPopulatedStartDrawTransaction = async (
     );
   } else {
     const contract: Contract = drawAuctionContracts.rngBlockhashContract;
-    console.log('contract');
-    console.log(contract);
     txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
     estimatedGasLimit = await getRngBlockhashStartDrawEstimatedGasLimit(contract, txParams);
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
@@ -245,8 +240,6 @@ const checkFinishDraw = async (
   drawAuctionContracts: DrawAuctionContracts,
 ) => {
   const contract: Contract = drawAuctionContracts.drawManagerContract;
-  console.log('contract');
-  console.log(contract);
 
   const txParams = buildFinishDrawTxParams(config);
 
@@ -540,9 +533,6 @@ const getStartDrawGasCostUsd = async (
     txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
-    console.log('contract');
-    console.log(contract);
-
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
 
@@ -552,8 +542,6 @@ const getStartDrawGasCostUsd = async (
     );
   } else {
     const contract: Contract = drawAuctionContracts.rngBlockhashContract;
-    console.log('contract');
-    console.log(contract);
     txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
     estimatedGasLimit = await getRngBlockhashStartDrawEstimatedGasLimit(contract, txParams);
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
