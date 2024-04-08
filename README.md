@@ -25,10 +25,10 @@ Monorepo grouping PoolTogether v5 hyperstructure bots.
 
 ## 🖥️ Development
 
-1. This library uses `yalc` to manage local dependencies. You will need to clone the `pt-v5-utils-js` repo and publish it with `yalc` (you can publish it using `yarn start` after `yarn install` in the `pt-v5-utils-js` directory).
+1. This library uses `yalc` to manage local dependencies. You will need to clone the `pt-v5-utils-js` repo and publish it with `yalc` (you can publish it using `npm run start` after `npm install` in the `pt-v5-utils-js` directory).
 
-2. Following that, make sure to run `yarn yalcadd` before installing to setup local dependencies, and after any recompiles of the `pt-v5-utils-js` package.
+2. Following that, make sure to run `npm run yalcadd` before installing to setup local dependencies, and after any recompiles of the `pt-v5-utils-js` package.
 
-3. Start another terminal instance and run `yarn start` in `/packages/library`, this will compile the `@generationsoftware/pt-v5-autotasks-library` and make it available to the other packages in this repo.
+3. Start another terminal instance and run `npm run start` in `/packages/library`, this will compile the `@generationsoftware/pt-v5-autotasks-library` and make it available to the other packages in this repo.
 
-4. Finally, run `yarn install` in the root of this package - now you should be able to run `yarn start` in any of the subpackages.
+4. Finally, run `npm run install` in the root of this package - now you should be able to run `npm run start` in any of the subpackages.

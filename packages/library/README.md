@@ -13,12 +13,6 @@ PoolTogether hyperstructure (v5) supporting functions for the bots.
 ## Install
 
 ```
-yarn add @generationsoftware/pt-v5-autotasks-library
-```
-
-or
-
-```
 npm install @generationsoftware/pt-v5-autotasks-library
 ```
 

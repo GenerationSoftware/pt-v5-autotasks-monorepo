@@ -54,5 +54,5 @@ SWAP_RECIPIENT: Address of the account that will receive the resulting swap toke
 When everything is set and the env vars have been exported you can run the bot locally:
 
 ```sh
-yarn start
+npm run start
 ```
