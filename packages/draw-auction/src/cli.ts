@@ -22,13 +22,13 @@ if (esMain(import.meta)) {
   // console.log(envVars)
 
   const provider: BaseProvider = getProvider(envVars);
-  console.log(provider)
+  console.log(provider);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
-  console.log(relayerAccount)
+  console.log(relayerAccount);
 
   const drawAuctionConfig: DrawAuctionConfig = {
     chainId: Number(envVars.CHAIN_ID),
@@ -36,8 +36,6 @@ if (esMain(import.meta)) {
     covalentApiKey: envVars.COVALENT_API_KEY,
     rewardRecipient: envVars.REWARD_RECIPIENT,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
-    customRelayerPrivateKey: process.env.CUSTOM_RELAYER_PRIVATE_KEY,
-
     signer: relayerAccount.signer,
     wallet: relayerAccount.wallet,
     relayerAddress: relayerAccount.relayerAddress,

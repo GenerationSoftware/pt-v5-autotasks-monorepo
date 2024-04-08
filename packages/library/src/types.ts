@@ -110,12 +110,9 @@ export interface AutotaskConfig {
   provider: BaseProvider;
   rewardRecipient: string;
   minProfitThresholdUsd: number;
-  customRelayerPrivateKey: string;
-
   wallet: Wallet;
   relayerAddress: string;
   signer: Signer;
-
   covalentApiKey?: string;
 }
 
