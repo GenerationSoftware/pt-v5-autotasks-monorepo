@@ -1,7 +1,6 @@
 import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
-import { DefenderRelaySigner } from '@openzeppelin/defender-relay-client/lib/ethers';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
@@ -51,12 +50,10 @@ export async function runLiquidator(
   const {
     chainId,
     provider,
-    ozRelayer,
     wallet,
     signer,
     relayerAddress,
     swapRecipient,
-    useFlashbots,
     minProfitThresholdUsd,
     covalentApiKey,
   } = config;
@@ -275,15 +272,7 @@ export async function runLiquidator(
 
       const gasLimit = 750000;
       const gasPrice = await provider.getGasPrice();
-      const tx = await sendPopulatedTx(
-        chainId,
-        ozRelayer,
-        wallet,
-        populatedTx,
-        gasLimit,
-        gasPrice,
-        useFlashbots,
-      );
+      const tx = await sendPopulatedTx(wallet, populatedTx, gasLimit, gasPrice);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
@@ -318,14 +307,14 @@ export async function runLiquidator(
 
 /**
  * Allowance - Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's
- * `tokenIn` (likely POOL). We will set allowance to max as we trust the security of the
+ * `tokenIn` (likely WETH). We will set allowance to max as we trust the security of the
  * LiquidationRouter contract (you may want to change this!)
  * @returns {undefined} - void function
  */
 const approve = async (
   amountIn: BigNumber,
   liquidationRouter: Contract,
-  signer: Signer | DefenderRelaySigner,
+  signer: Signer,
   relayerAddress: string,
   context: LiquidatorContext,
 ) => {
@@ -334,7 +323,6 @@ const approve = async (
     console.log("Checking 'tokenIn' ERC20 allowance...");
 
     const tokenInAddress = context.tokenIn.address;
-    // @ts-ignore signer as Signer | DefenderRElaySigner should be okay here, ethers just doesn't know about DefenderRelaySigner
     const token = new ethers.Contract(tokenInAddress, ERC20Abi, signer);
 
     const allowance = context.relayer.tokenInAllowance;

@@ -11,7 +11,6 @@ export default defineConfig((opt) => {
       options.define = {
         ...(options.define ?? {}),
         BUILD_CHAIN_ID: `'${CHAIN_ID}'`,
-        BUILD_USE_FLASHBOTS: `'${process.env.USE_FLASHBOTS}'`,
         BUILD_SWAP_RECIPIENT: `'${process.env.SWAP_RECIPIENT}'`,
         BUILD_MIN_PROFIT_THRESHOLD_USD: `'${process.env.MIN_PROFIT_THRESHOLD_USD}'`,
       };

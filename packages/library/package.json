@@ -1,6 +1,6 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-library",
-  "version": "1.1.0-beta.4",
+  "version": "1.1.0-beta.5",
   "description": "Library of shared utils to run PoolTogether v5 hyperstructure autotasks.",
   "author": {
     "name": "G9 Software Inc.",
@@ -30,13 +30,14 @@
     "url": "https://github.com/generationsoftware/pt-v5-autotasks/issues"
   },
   "peerDependencies": {
+    "chalk": "4.1.2",
     "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.10",
     "lodash.pickby": "4.6.0",
-    "lodash.groupby": "4.6.0"
+    "lodash.groupby": "4.6.0",
+    "yn": "5.0.0"
   },
   "devDependencies": {
     "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.10",
-    "@openzeppelin/defender-relay-client": "1.54.1",
     "chalk": "^4.1.2",
     "ethers": "5.7.2",
     "graphql": "^16.6.0",
@@ -45,6 +46,7 @@
     "lodash.groupby": "4.6.0",
     "node-fetch": "^3.3.1",
     "typescript": "5.4.2",
-    "tsc-watch": "^6.0.4"
+    "tsc-watch": "^6.0.4",
+    "yn": "5.0.0"
   }
 }

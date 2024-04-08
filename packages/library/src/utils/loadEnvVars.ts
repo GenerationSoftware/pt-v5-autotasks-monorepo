@@ -7,7 +7,6 @@ import { AutotaskEnvVars } from '../types.js';
 export const loadEnvVars = (buildVars?): AutotaskEnvVars => {
   const chainId = Number(buildVars?.chainId || process.env.CHAIN_ID);
 
-  const useFlashbots = yn(buildVars?.useFlashbots || process.env.USE_FLASHBOTS);
   const minProfitThresholdUsd =
     buildVars?.minProfitThresholdUsd || process.env.MIN_PROFIT_THRESHOLD_USD;
 
@@ -27,7 +26,6 @@ export const loadEnvVars = (buildVars?): AutotaskEnvVars => {
   return {
     CHAIN_ID: Number(chainId),
     JSON_RPC_URI: jsonRpcUri || process.env.JSON_RPC_URI,
-    USE_FLASHBOTS: useFlashbots,
     MIN_PROFIT_THRESHOLD_USD: minProfitThresholdUsd,
     COVALENT_API_KEY: covalentApiKey,
     CUSTOM_RELAYER_PRIVATE_KEY: customRelayerPrivateKey,

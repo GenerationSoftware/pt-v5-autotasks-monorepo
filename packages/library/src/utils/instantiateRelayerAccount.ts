@@ -8,12 +8,12 @@ export const instantiateRelayerAccount = async (
   provider: Provider,
   customRelayerPrivateKey: string,
 ): Promise<RelayerAccount> => {
-  let wallet, signer, relayerAddress, ozRelayer;
+  let wallet, signer, relayerAddress;
 
   wallet = new Wallet(customRelayerPrivateKey, provider);
 
   relayerAddress = wallet.address;
   signer = wallet;
 
-  return { wallet, signer, ozRelayer, relayerAddress };
+  return { wallet, signer, relayerAddress };
 };

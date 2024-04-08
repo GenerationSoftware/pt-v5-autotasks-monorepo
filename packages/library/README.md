@@ -24,4 +24,4 @@ npm install @generationsoftware/pt-v5-autotasks-library
 
 ## Usage
 
-These bots rely on OpenZeppelin Defender for submitting transactions on a schedule. You can fork this repo to modify the existing bots, for example if you would rather use Gelato or Keeper or some other cronjob/tx submitting platform.
+These bots rely on a cron service for submitting transactions on a schedule. You can fork this repo to modify the existing bots, for example if you would rather use Gelato or Keeper or some other cronjob/tx submitting platform.

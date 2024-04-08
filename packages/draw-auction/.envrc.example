@@ -1,30 +1,9 @@
 export CHAIN_ID='The chain ID of which network to run the autotask on'
 export JSON_RPC_URI='Your Infura/Alchemy/etc JSON RPC URI'
 export COVALENT_API_KEY='(Optional) Your Covalent API key for getting USD values of tokens'
-export USE_FLASHBOTS='true/false, if you would like to keep transactions private from the mempool on chains that support flashbots'
 export MIN_PROFIT_THRESHOLD_USD='The amount of profit you want to make per transaction in USD'
-
-### THIS:
-
 export CUSTOM_RELAYER_PRIVATE_KEY='Your own EOA private key to use to relay transactions'
-
-### OR THIS:
-
-export DEFENDER_TEAM_API_KEY='OZ Defender Team API Key'
-export DEFENDER_TEAM_API_SECRET='OZ Defender Team Secret Key'
-export AUTOTASK_ID='OZ Defender, the ID of the autotask (can get from browser URL bar)'
-export RELAYER_API_KEY='OZ Defender chain Relayer API Key'
-export RELAYER_API_SECRET='OZ Defender chain Relayer API Secret'
 
 ### DRAW AUCTION SPECIFIC:
 
 export REWARD_RECIPIENT='Address of the contract/EOA account that will receive the profit for starting and relaying the RNG'
-
-export MAINNET_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for ETH Mainnet'
-export ARBITRUM_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Arbitrum'
-export OPTIMISM_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Optimism'
-
-export SEPOLIA_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Sepolia'
-export ARBITRUM_SEPOLIA_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Arbitrum Sepolia'
-export OPTIMISM_SEPOLIA_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Optimism Sepolia'
-export OPTIMISM_GOERLI_JSON_RPC_URI='Infura/Alchemy/etc JSON RPC URI for Optimism Goerli'

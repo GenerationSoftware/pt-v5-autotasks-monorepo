@@ -1,17 +1,18 @@
+import nodeFetch from 'node-fetch';
 import esMain from 'es-main';
 import figlet from 'figlet';
 import chalk from 'chalk';
 import { BaseProvider } from '@ethersproject/providers';
+import { ContractsBlob, downloadContractsBlob } from '@generationsoftware/pt-v5-utils-js';
 import {
   getProvider,
   instantiateRelayerAccount,
+  loadLiquidatorEnvVars,
+  runLiquidator,
   LiquidatorConfig,
-  RelayerAccount,
   LiquidatorEnvVars,
+  RelayerAccount,
 } from '@generationsoftware/pt-v5-autotasks-library';
-
-import { loadLiquidatorEnvVars } from '../../library/src/utils/loadLiquidatorEnvVars';
-import { executeTransactions } from './executeTransactions';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
 console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
@@ -32,11 +33,15 @@ if (esMain(import.meta)) {
     covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,
     swapRecipient: envVars.SWAP_RECIPIENT,
-    useFlashbots: envVars.USE_FLASHBOTS,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
   };
 
-  await executeTransactions(config);
+  try {
+    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
+    await runLiquidator(contracts, config);
+  } catch (error) {
+    throw new Error(error);
+  }
 }
 
 export function main() {}

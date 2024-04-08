@@ -16,7 +16,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 
 /**
  * Gather information about this specific liquidation pair
- * `tokenIn` is the token to supply (likely the prize token, which is probably POOL),
+ * `tokenIn` is the token to supply (likely the prize token, which is probably WETH),
  * `tokenOut` is either the Vault (vault shares, ERC4626 with .asset() as the underlying ERC20)
  * or a straight up ERC20 token (ie. DAI, USDC)
  *

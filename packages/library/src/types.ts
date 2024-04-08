@@ -1,7 +1,5 @@
 import { Contract, BigNumber, Wallet, Signer } from 'ethers';
 import { BaseProvider, Provider } from '@ethersproject/providers';
-import { Relayer } from '@openzeppelin/defender-relay-client';
-import { DefenderRelaySigner } from '@openzeppelin/defender-relay-client/lib/ethers';
 import { TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall.js';
@@ -47,11 +45,9 @@ export interface PrizeClaimerConfig {
   chainId: number;
   provider: BaseProvider;
   wallet: Wallet;
-  ozRelayer: Relayer;
   relayerAddress: string;
-  signer: DefenderRelaySigner | Signer;
+  signer: Signer;
   rewardRecipient: string;
-  useFlashbots: boolean;
   minProfitThresholdUsd: number;
   covalentApiKey?: string;
 }
@@ -61,11 +57,9 @@ export interface LiquidatorConfig {
   chainId: number;
   provider: BaseProvider;
   wallet: Wallet;
-  ozRelayer: Relayer;
   relayerAddress: string;
-  signer: DefenderRelaySigner | Signer;
+  signer: Signer;
   swapRecipient: string;
-  useFlashbots: boolean;
   minProfitThresholdUsd: number;
   covalentApiKey?: string;
 }
@@ -87,12 +81,9 @@ export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
   JSON_RPC_URI: string;
-  USE_FLASHBOTS: boolean;
   MIN_PROFIT_THRESHOLD_USD: string;
+  CUSTOM_RELAYER_PRIVATE_KEY: string;
   COVALENT_API_KEY?: string;
-  CUSTOM_RELAYER_PRIVATE_KEY?: string;
-  RELAYER_API_KEY?: string;
-  RELAYER_API_SECRET?: string;
   ARBITRUM_JSON_RPC_URI?: string;
   OPTIMISM_JSON_RPC_URI?: string;
   ARBITRUM_SEPOLIA_JSON_RPC_URI?: string;
@@ -117,18 +108,15 @@ export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
 export interface AutotaskConfig {
   chainId: number;
   provider: BaseProvider;
-  useFlashbots: boolean;
   rewardRecipient: string;
   minProfitThresholdUsd: number;
+  customRelayerPrivateKey: string;
 
-  customRelayerPrivateKey?: string;
-  relayerApiKey?: string;
-  relayerApiSecret?: string;
-  covalentApiKey?: string;
   wallet: Wallet;
-  ozRelayer: Relayer;
   relayerAddress: string;
-  signer: DefenderRelaySigner | Signer;
+  signer: Signer;
+
+  covalentApiKey?: string;
 }
 
 export interface DrawAuctionConfig extends AutotaskConfig {}
@@ -165,9 +153,8 @@ export interface AuctionResult {
 }
 
 export interface RelayerAccount {
-  signer: DefenderRelaySigner | Signer;
+  signer: Signer;
   relayerAddress: string;
-  ozRelayer: Relayer;
   wallet: Wallet;
 }
 
@@ -176,16 +163,6 @@ export interface DrawAuctionContracts {
   drawManagerContract: Contract;
   rngWitnetContract?: Contract;
   rngBlockhashContract?: Contract;
-}
-
-// TODO: Inherit from AutotaskConfig
-export interface YieldVaultMintRateConfig {
-  chainId: number;
-  wallet: Wallet;
-  ozRelayer: Relayer;
-  provider: BaseProvider;
-  relayerAddress: string;
-  signer: DefenderRelaySigner | Signer;
 }
 
 export interface SendTransactionArgs {
@@ -201,7 +178,6 @@ export interface WalletSendTransactionArgs extends SendTransactionArgs {
 
 export interface OzSendTransactionArgs extends SendTransactionArgs {
   gasPrice?: string;
-  isPrivate?: boolean;
   value?: BigNumber;
 }
 

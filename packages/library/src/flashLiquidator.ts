@@ -51,12 +51,10 @@ interface Stat {
 export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise<void> {
   const {
     chainId,
-    ozRelayer,
     wallet,
     signer,
     provider,
     swapRecipient,
-    useFlashbots,
     minProfitThresholdUsd,
     covalentApiKey,
   } = config;
@@ -71,7 +69,6 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
   const flashLiquidationContract = new ethers.Contract(
     FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
     FlashLiquidatorAbi,
-    // @ts-ignore signer as Signer | DefenderRElaySigner should be okay here, ethers just doesn't know about DefenderRelaySigner
     signer,
   );
 
@@ -213,15 +210,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
 
       const gasLimit = 1050000;
       const gasPrice = await provider.getGasPrice();
-      const tx = await sendPopulatedTx(
-        chainId,
-        ozRelayer,
-        wallet,
-        populatedTx,
-        gasLimit,
-        gasPrice,
-        useFlashbots,
-      );
+      const tx = await sendPopulatedTx(wallet, populatedTx, gasLimit, gasPrice);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));

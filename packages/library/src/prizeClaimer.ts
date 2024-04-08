@@ -32,7 +32,6 @@ import {
   logBigNumber,
   printAsterisks,
   printSpacer,
-  canUseIsPrivate,
   roundTwoDecimalPlaces,
 } from './utils/index.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
@@ -72,7 +71,7 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   prizeClaimerConfig: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, useFlashbots, ozRelayer, wallet, provider } = prizeClaimerConfig;
+  const { chainId, covalentApiKey, wallet, provider } = prizeClaimerConfig;
 
   const contractsVersion = {
     major: 1,
@@ -220,33 +219,17 @@ export async function runPrizeClaimer(
       );
       printSpacer();
 
-      const isPrivate = canUseIsPrivate(chainId, useFlashbots);
-
       const populatedTx = await claimerContract.populateTransaction.claimPrizes(
         ...Object.values(claimPrizesParams),
       );
 
       const gasLimit = 20000000;
       const gasPrice = await provider.getGasPrice();
-      const tx = await sendPopulatedTx(
-        chainId,
-        ozRelayer,
-        wallet,
-        populatedTx,
-        gasLimit,
-        gasPrice,
-        isPrivate,
-      );
+      const tx = await sendPopulatedTx(wallet, populatedTx, gasLimit, gasPrice);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
 
-      // NOTE: This uses a naive method of waiting for the tx since OZ Defender can
-      //       re-submit transactions, effectively giving them different tx hashes
-      //       It is likely good enough for these types of transactions but could cause
-      //       issues if there are a lot of failures or gas price issues
-      //       See querying here:
-      //       https://github.com/OpenZeppelin/defender-client/tree/master/packages/relay#querying-transactions
       console.log('Waiting on transaction to be confirmed ...');
       await provider.waitForTransaction(tx.hash);
       console.log('Tx confirmed !');

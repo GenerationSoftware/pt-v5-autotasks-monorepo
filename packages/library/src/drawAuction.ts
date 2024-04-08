@@ -179,7 +179,7 @@ const sendPopulatedStartDrawTransaction = async (
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
 ) => {
-  const { chainId, ozRelayer, wallet, provider } = config;
+  const { wallet, provider } = config;
 
   console.log(chalk.yellow(`Start Draw Transaction:`));
   console.log(chalk.green(`Execute rngWitnet#startDraw`));
@@ -212,13 +212,10 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.greenBright.bold(`Sending ...`));
 
   const tx = await sendPopulatedTx(
-    chainId,
-    ozRelayer,
     wallet,
     populatedTx,
     estimatedGasLimitWithBufferAsNumber,
     gasPrice,
-    config.useFlashbots,
     txParams,
   );
 
@@ -724,7 +721,7 @@ const sendPopulatedFinishDrawTransaction = async (
   txParams: FinishDrawTxParams,
   contract: Contract,
 ) => {
-  const { chainId, wallet, ozRelayer, provider } = config;
+  const { wallet, provider } = config;
   const gasPrice = await provider.getGasPrice();
 
   const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
@@ -738,13 +735,10 @@ const sendPopulatedFinishDrawTransaction = async (
   const populatedTx = await contract.populateTransaction.finishDraw(...Object.values(txParams));
 
   const tx = await sendPopulatedTx(
-    chainId,
-    ozRelayer,
     wallet,
     populatedTx,
     estimatedGasLimitWithBufferAsNumber,
     gasPrice,
-    false,
     txParams,
   );
 
