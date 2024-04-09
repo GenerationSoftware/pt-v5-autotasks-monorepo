@@ -96,12 +96,15 @@ export interface DrawAuctionEnvVars extends AutotaskEnvVars {
   REWARD_RECIPIENT: string;
 }
 
-export interface LiquidatorEnvVars extends AutotaskEnvVars {
+export interface SharedLiquidatorEnvVars extends AutotaskEnvVars {
   SWAP_RECIPIENT: string;
+}
+
+export interface LiquidatorEnvVars extends SharedLiquidatorEnvVars {
   ENV_TOKEN_ALLOW_LIST: string[];
 }
 
-export interface FlashLiquidatorEnvVars extends LiquidatorEnvVars {}
+export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
 
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
   REWARD_RECIPIENT: string;
