@@ -19,16 +19,12 @@ console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
 
 if (esMain(import.meta)) {
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars();
-  // console.log(envVars)
-
   const provider: BaseProvider = getProvider(envVars);
-  console.log(provider);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
     provider,
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
-  console.log(relayerAccount);
 
   const drawAuctionConfig: DrawAuctionConfig = {
     chainId: Number(envVars.CHAIN_ID),
