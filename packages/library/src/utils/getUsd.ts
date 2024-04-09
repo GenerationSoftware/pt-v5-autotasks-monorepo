@@ -68,34 +68,24 @@ export const getFeesUsd = async (
   const fees = { avgFeeUsd: null };
 
   const gasPrice = await provider.getGasPrice();
-  console.log('gasPrice');
-  console.log(gasPrice);
-  console.log(gasPrice.toString());
 
   if (!gasPrice || !estimatedGasLimit || estimatedGasLimit.eq(0)) {
     return fees;
   }
 
-  const baseFeeWei = gasPrice?.mul(estimatedGasLimit);
+  const baseFeeWei = gasPrice.mul(estimatedGasLimit);
   const l1GasFeeWei = await getL1GasFee(chainId, provider, txData);
-  console.log('l1GasFeeWei');
-  console.log(l1GasFeeWei);
-  console.log(l1GasFeeWei.toString());
 
   let chainGasPriceMultiplier = 1;
   if (CHAIN_GAS_PRICE_MULTIPLIERS[chainId]) {
     chainGasPriceMultiplier = CHAIN_GAS_PRICE_MULTIPLIERS[chainId];
   }
-  console.log('chainGasPriceMultiplier');
-  console.log(chainGasPriceMultiplier);
 
   const avgFeeUsd =
     parseFloat(ethers.utils.formatEther(baseFeeWei.add(l1GasFeeWei))) *
     gasTokenMarketRateUsd *
     chainGasPriceMultiplier;
 
-  console.log('avgFeeUsd');
-  console.log(avgFeeUsd);
   return { avgFeeUsd };
 };
 
@@ -247,15 +237,17 @@ const getL1GasFee = async (
   provider: Provider,
   txData: any,
 ): Promise<BigNumber> => {
-  if (chainId === CHAIN_IDS.optimism) {
+  if ([CHAIN_IDS.optimism, CHAIN_IDS.optimismSepolia].includes(chainId)) {
     if (!txData) {
       console.error(chalk.red('txData not provided to `getL1GasFee`, required on Optimism'));
     }
+
     const gasPriceOracleContract = new ethers.Contract(
       GAS_PRICE_ORACLE_ADDRESS,
       GasPriceOracleAbi,
       provider,
     );
+
     return await gasPriceOracleContract.getL1Fee(txData);
   } else {
     return BigNumber.from(0);
