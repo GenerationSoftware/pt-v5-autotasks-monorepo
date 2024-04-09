@@ -52,6 +52,7 @@ CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
 ### LIQUIDATOR SPECIFIC:
 
 SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can set to the relayer address or any other contract/EOA address
+ENV_TOKEN_ALLOW_LIST: Comma-seperated list of addresses that will be added to the token allowlist (if you want to liquidate new exotic tokens or your own prize vault tokens, add them here!)
 
 ```
 

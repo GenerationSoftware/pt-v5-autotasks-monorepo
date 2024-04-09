@@ -3,11 +3,10 @@ import chalk from 'chalk';
 import { chainName } from './network.js';
 import { AutotaskEnvVars } from '../types.js';
 
-export const loadEnvVars = (buildVars?): AutotaskEnvVars => {
-  const chainId = Number(buildVars?.chainId || process.env.CHAIN_ID);
+export const loadEnvVars = (): AutotaskEnvVars => {
+  const chainId = Number(process.env.CHAIN_ID);
 
-  const minProfitThresholdUsd =
-    buildVars?.minProfitThresholdUsd || process.env.MIN_PROFIT_THRESHOLD_USD;
+  const minProfitThresholdUsd = process.env.MIN_PROFIT_THRESHOLD_USD;
 
   console.log(chalk.blue(`Operating on: ${chainName(chainId)}`));
 

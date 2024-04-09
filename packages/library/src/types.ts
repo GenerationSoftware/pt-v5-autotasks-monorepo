@@ -61,6 +61,7 @@ export interface LiquidatorConfig {
   signer: Signer;
   swapRecipient: string;
   minProfitThresholdUsd: number;
+  envTokenAllowList: string[];
   covalentApiKey?: string;
 }
 
@@ -97,6 +98,7 @@ export interface DrawAuctionEnvVars extends AutotaskEnvVars {
 
 export interface LiquidatorEnvVars extends AutotaskEnvVars {
   SWAP_RECIPIENT: string;
+  ENV_TOKEN_ALLOW_LIST: string[];
 }
 
 export interface FlashLiquidatorEnvVars extends LiquidatorEnvVars {}

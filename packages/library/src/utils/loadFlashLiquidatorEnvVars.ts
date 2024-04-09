@@ -1,10 +1,10 @@
 import { loadEnvVars } from './index.js';
 import { FlashLiquidatorEnvVars } from './../types.js';
 
-export const loadFlashLiquidatorEnvVars = (buildVars?): FlashLiquidatorEnvVars => {
-  const envVars = loadEnvVars(buildVars);
+export const loadFlashLiquidatorEnvVars = (): FlashLiquidatorEnvVars => {
+  const envVars = loadEnvVars();
 
-  const swapRecipient = buildVars?.swapRecipient || process.env.SWAP_RECIPIENT;
+  const swapRecipient = process.env.SWAP_RECIPIENT;
 
   return {
     ...envVars,

@@ -109,7 +109,7 @@ export async function runLiquidator(
     printAsterisks();
     printSpacer();
 
-    const tokenOutInAllowList = tokenOutAllowListed(chainId, context);
+    const tokenOutInAllowList = tokenOutAllowListed(chainId, context, config);
     if (!tokenOutInAllowList) {
       stats.push({
         pair,
@@ -352,7 +352,11 @@ const approve = async (
 
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
 // possibility of manually deployed malicious vaults/pairs
-const tokenOutAllowListed = (chainId: number, context: LiquidatorContext) => {
+const tokenOutAllowListed = (
+  chainId: number,
+  context: LiquidatorContext,
+  config: LiquidatorConfig,
+) => {
   console.log(
     chalk.dim(
       `Checking if tokenOut '${
@@ -363,9 +367,9 @@ const tokenOutAllowListed = (chainId: number, context: LiquidatorContext) => {
 
   let tokenOutInAllowList = false;
   try {
-    tokenOutInAllowList = LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(
-      context.tokenOut.address.toLowerCase(),
-    );
+    tokenOutInAllowList =
+      LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(context.tokenOut.address.toLowerCase()) ||
+      config.envTokenAllowList.includes(context.tokenOut.address.toLowerCase());
   } catch (e) {
     console.error(chalk.red(e));
     console.error(

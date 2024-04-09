@@ -1,10 +1,10 @@
 import { loadEnvVars } from './index.js';
 import { DrawAuctionEnvVars } from './../types.js';
 
-export const loadDrawAuctionEnvVars = (buildVars?): DrawAuctionEnvVars => {
-  const envVars = loadEnvVars(buildVars);
+export const loadDrawAuctionEnvVars = (): DrawAuctionEnvVars => {
+  const envVars = loadEnvVars();
 
-  const rewardRecipient = buildVars?.rewardRecipient || process.env.REWARD_RECIPIENT;
+  const rewardRecipient = process.env.REWARD_RECIPIENT;
 
   return {
     ...envVars,

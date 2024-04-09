@@ -19,7 +19,6 @@ console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
 
 if (esMain(import.meta)) {
   const envVars: LiquidatorEnvVars = loadLiquidatorEnvVars();
-
   const provider: BaseProvider = getProvider(envVars);
 
   const relayerAccount: RelayerAccount = await instantiateRelayerAccount(
@@ -33,6 +32,7 @@ if (esMain(import.meta)) {
     covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,
     swapRecipient: envVars.SWAP_RECIPIENT,
+    envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
   };
 
