@@ -29,6 +29,9 @@ const QUERY_KEYS = {
   PRIZE_POOL_PENDING_RESERVE_CONTRIBUTIONS_KEY: 'prizePool-pendingReserveContributions',
 
   RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY: 'rngWitnet-estimateRandomizeFee',
+  RNG_WITNET_LAST_REQUEST_ID: 'rngWitnet-lastRequestId',
+  RNG_WITNET_IS_REQUEST_FAILED: 'rngWitnet-isRequestFailed',
+  RNG_WITNET_IS_REQUEST_COMPLETE: 'rngWitnet-isRequestComplete',
 
   DRAW_MANAGER_CAN_START_DRAW_KEY: 'drawManager-canStartDraw',
   DRAW_MANAGER_START_DRAW_REWARD_KEY: 'drawManager-startDrawReward',
@@ -85,6 +88,7 @@ const getContext = async (
   const multicallProvider = MulticallWrapper.wrap(provider);
 
   let queriesOne: Record<string, any> = {};
+  let queriesTwo: Record<string, any> = {};
 
   // 1. Queries One: Draw Manager
   queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY] = drawManagerContract.canStartDraw();
@@ -99,6 +103,11 @@ const getContext = async (
     const gasPrice = await provider.getGasPrice();
     queriesOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
       rngWitnetContract.estimateRandomizeFee(gasPrice);
+
+    console.log('rngWitnetContract');
+    console.log(rngWitnetContract);
+    console.log(rngWitnetContract.abi);
+    queriesOne[QUERY_KEYS.RNG_WITNET_LAST_REQUEST_ID] = rngWitnetContract.lastRequestId();
   }
 
   // 3. Queries One: Prize Pool Info
@@ -119,16 +128,22 @@ const getContext = async (
   const finishDrawReward = resultsOne[QUERY_KEYS.DRAW_MANAGER_FINISH_DRAW_REWARD_KEY];
 
   // 6. Results One: Rng Witnet
-  let rngFeeEstimate;
+  let rngFeeEstimate, lastRequestId;
   if (rngWitnetContract) {
     rngFeeEstimate = resultsOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
+    lastRequestId = resultsOne[QUERY_KEYS.RNG_WITNET_LAST_REQUEST_ID];
+    console.log('lastRequestId');
+    console.log(lastRequestId);
+
+    queriesTwo[QUERY_KEYS.RNG_WITNET_IS_REQUEST_FAILED] =
+      rngWitnetContract.isRequestFailed(lastRequestId);
+    queriesTwo[QUERY_KEYS.RNG_WITNET_IS_REQUEST_COMPLETE] =
+      rngWitnetContract.isRequestComplete(lastRequestId);
   }
 
   // 7. Results One: Prize Pool
   const drawId = resultsOne[QUERY_KEYS.PRIZE_POOL_OPEN_DRAW_ID_KEY];
   const rewardTokenAddress = resultsOne[QUERY_KEYS.PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
-
-  let queriesTwo: Record<string, any> = {};
 
   // 6. Queries Two: Prize Pool
   queriesTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY] = prizePoolContract.drawClosesAt(drawId);
@@ -159,21 +174,42 @@ const getContext = async (
     assetRateUsd: rewardTokenMarketRateUsd,
   };
 
-  // 10. Results Two: Draw Manager
+  // 10. Results Two: DrawManager
   const startDrawRewardStr = ethers.utils.formatUnits(startDrawReward, rewardToken.decimals);
   const startDrawRewardUsd = Number(startDrawRewardStr) * rewardToken.assetRateUsd;
 
   const finishDrawRewardStr = ethers.utils.formatUnits(finishDrawReward, rewardToken.decimals);
   const finishDrawRewardUsd = Number(finishDrawRewardStr) * rewardToken.assetRateUsd;
 
+  // 11. Results Two: RngWitnet
   // Currently Witnet requires the native token ETH on Optimism for RNG Fee
   // assume 18 decimals
   // note: May need to change on different chains that use a unique token for gas (AVAX, etc)
   let rngFeeEstimateUsd = 0;
+  let isRequestFailed = false;
+  let isRequestComplete = true;
   if (rngWitnetContract) {
     const rngFeeEstimateStr = ethers.utils.formatEther(rngFeeEstimate);
     rngFeeEstimateUsd = Number(rngFeeEstimateStr) * nativeTokenMarketRateUsd;
+
+    isRequestComplete = resultsTwo[QUERY_KEYS.RNG_WITNET_IS_REQUEST_COMPLETE];
+    isRequestFailed = resultsTwo[QUERY_KEYS.RNG_WITNET_IS_REQUEST_FAILED];
   }
+
+  if (isRequestFailed) {
+    // Poke the RngWitnet contract via requestRandomNumber() in the case of a previous failure,
+    // this will help our DrawManager get the random num after a failure and prevent skipped draws
+    console.log(
+      chalk.yellow(
+        'Poking RngWitnet.requestRandomNumber() following previous RNG failure to prevent skipped draw.',
+      ),
+    );
+    await rngWitnetContract.requestRandomNumber(paymentAmount);
+  }
+  console.log('isRequestComplete');
+  console.log(isRequestComplete);
+  console.log('isRequestFailed');
+  console.log(isRequestFailed);
 
   return {
     canStartDraw,
