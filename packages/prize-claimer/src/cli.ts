@@ -15,7 +15,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
-console.log(chalk.blue(figlet.textSync('Prize Claim Bot')));
+console.log(chalk.blue(figlet.textSync('Prize Claimer Bot')));
 
 if (esMain(import.meta)) {
   const envVars: PrizeClaimerEnvVars = loadPrizeClaimerEnvVars();
@@ -29,11 +29,11 @@ if (esMain(import.meta)) {
 
   const config: PrizeClaimerConfig = {
     ...relayerAccount,
-    provider,
     chainId: envVars.CHAIN_ID,
-    rewardRecipient: envVars.REWARD_RECIPIENT,
+    provider,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,
+    rewardRecipient: envVars.REWARD_RECIPIENT,
   };
 
   try {

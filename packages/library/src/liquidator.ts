@@ -53,12 +53,26 @@ export async function runLiquidator(
     wallet,
     signer,
     relayerAddress,
-    swapRecipient,
     minProfitThresholdUsd,
     covalentApiKey,
   } = config;
+  printSpacer();
 
-  console.log(chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd));
+  // TODO: REFACTOR - We see this in every bot:
+  let swapRecipient = config.swapRecipient;
+  if (!swapRecipient) {
+    const message = `Config - SWAP_RECIPIENT not provided, setting swap recipient to relayer address:`;
+    console.log(chalk.dim(message), chalk.yellow(relayerAddress));
+    swapRecipient = relayerAddress;
+  } else {
+    console.log(chalk.dim(`Config - SWAP_RECIPIENT:`), chalk.yellow(swapRecipient));
+  }
+
+  console.log(
+    chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
+    chalk.yellow(config.minProfitThresholdUsd),
+  );
+  // END TODO: REFACTOR
 
   // #1. Get contracts
   //

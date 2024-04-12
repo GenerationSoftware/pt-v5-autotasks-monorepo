@@ -69,9 +69,26 @@ const NUM_CANARY_TIERS = 2 as const;
  */
 export async function runPrizeClaimer(
   contracts: ContractsBlob,
-  prizeClaimerConfig: PrizeClaimerConfig,
+  config: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, wallet, provider } = prizeClaimerConfig;
+  const { chainId, covalentApiKey, wallet, provider, relayerAddress } = config;
+  printSpacer();
+
+  // TODO: REFACTOR - We see this in every bot:
+  let rewardRecipient = config.rewardRecipient;
+  if (!rewardRecipient) {
+    const message = `Config - REWARD_RECIPIENT not provided, setting swap recipient to relayer address:`;
+    console.log(chalk.dim(message), chalk.yellow(relayerAddress));
+    rewardRecipient = relayerAddress;
+  } else {
+    console.log(chalk.dim(`Config - REWARD_RECIPIENT:`), chalk.yellow(rewardRecipient));
+  }
+
+  console.log(
+    chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
+    chalk.yellow(config.minProfitThresholdUsd),
+  );
+  // END TODO: REFACTOR
 
   const contractsVersion = {
     major: 1,
@@ -90,8 +107,6 @@ export async function runPrizeClaimer(
   if (!claimerContract) {
     throw new Error('Contract Unavailable');
   }
-
-  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', prizeClaimerConfig.minProfitThresholdUsd);
 
   // #1. Get context about the prize pool prize token, etc
   printSpacer();
@@ -207,7 +222,7 @@ export async function runPrizeClaimer(
       groupedClaims,
       tierRemainingPrizeCounts,
       context,
-      prizeClaimerConfig,
+      config,
     );
 
     // It's profitable if there is at least 1 claim to claim
@@ -295,9 +310,9 @@ const calculateProfit = async (
   groupedClaims: any,
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   context: ClaimPrizeContext,
-  prizeClaimerConfig: PrizeClaimerConfig,
+  config: PrizeClaimerConfig,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, rewardRecipient } = prizeClaimerConfig;
+  const { chainId, minProfitThresholdUsd, rewardRecipient } = config;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
@@ -357,12 +372,6 @@ const calculateProfit = async (
   printSpacer();
 
   const profitable = claimCount > 1;
-  // logTable({
-  //   MIN_PROFIT_THRESHOLD_USD: `$${minProfitThresholdUsd}`,
-  //   'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
-  //   'Profitable?': profitable ? '✔' : '✗',
-  // });
-  // printSpacer();
 
   if (profitable) {
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));

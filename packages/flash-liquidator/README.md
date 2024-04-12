@@ -45,7 +45,7 @@ CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
 
 ### FLASH LIQUIDATOR SPECIFIC:
 
-SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can set to the relayer address or any other contract/EOA address
+SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can be any other contract/EOA address or if blank sets recipient to be the relayer address
 
 ```
 

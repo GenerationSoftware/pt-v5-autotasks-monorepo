@@ -47,7 +47,7 @@ CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
 
 ### DRAW AUCTION SPECIFIC:
 
-REWARD_RECIPIENT: Address of the contract/EOA account that will receive the profit for starting and relaying the RNG
+REWARD_RECIPIENT: Address of the account that will receive the profit for starting and finishing the RNG auctions, can be any other contract/EOA address or if blank sets recipient to be the relayer address
 
 ```
 

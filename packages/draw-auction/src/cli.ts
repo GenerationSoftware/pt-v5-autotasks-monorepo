@@ -27,14 +27,12 @@ if (esMain(import.meta)) {
   );
 
   const drawAuctionConfig: DrawAuctionConfig = {
+    ...relayerAccount,
     chainId: Number(envVars.CHAIN_ID),
     provider,
+    minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,
     rewardRecipient: envVars.REWARD_RECIPIENT,
-    minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
-    signer: relayerAccount.signer,
-    wallet: relayerAccount.wallet,
-    relayerAddress: relayerAccount.relayerAddress,
   };
 
   try {

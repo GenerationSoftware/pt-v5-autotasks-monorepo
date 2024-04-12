@@ -51,7 +51,7 @@ CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
 
 ### PRIZE CLAIMER SPECIFIC:
 
-REWARD_RECIPIENT: Address of the account that will receive the profit for claiming prizes on other's behalf
+REWARD_RECIPIENT: Address of the account that will receive the profit for claiming prizes on other's behalf, can be any other contract/EOA address or if blank sets recipient to be the relayer address
 
 ```
 

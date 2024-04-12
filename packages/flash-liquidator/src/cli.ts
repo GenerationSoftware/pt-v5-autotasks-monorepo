@@ -27,11 +27,11 @@ if (esMain(import.meta)) {
 
   const config: FlashLiquidatorConfig = {
     ...relayerAccount,
-    provider,
-    covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,
-    swapRecipient: envVars.SWAP_RECIPIENT,
+    provider,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
+    covalentApiKey: envVars.COVALENT_API_KEY,
+    swapRecipient: envVars.SWAP_RECIPIENT,
   };
 
   try {

@@ -15,7 +15,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
-console.log(chalk.blue(figlet.textSync('Arb Liquidator Bot')));
+console.log(chalk.blue(figlet.textSync('Liquidator Bot')));
 
 if (esMain(import.meta)) {
   const envVars: LiquidatorEnvVars = loadLiquidatorEnvVars();
@@ -28,12 +28,12 @@ if (esMain(import.meta)) {
 
   const config: LiquidatorConfig = {
     ...relayerAccount,
-    provider,
-    covalentApiKey: envVars.COVALENT_API_KEY,
     chainId: envVars.CHAIN_ID,
+    provider,
+    minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
+    covalentApiKey: envVars.COVALENT_API_KEY,
     swapRecipient: envVars.SWAP_RECIPIENT,
     envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
-    minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
   };
 
   try {

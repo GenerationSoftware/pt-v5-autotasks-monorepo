@@ -40,32 +40,33 @@ export interface ClaimPrizeContext {
   };
 }
 
-// TODO: Inherit from AutotaskConfig
-export interface PrizeClaimerConfig {
+export interface AutotaskConfig {
   chainId: number;
   provider: BaseProvider;
+  minProfitThresholdUsd: number;
   wallet: Wallet;
   relayerAddress: string;
   signer: Signer;
-  rewardRecipient: string;
-  minProfitThresholdUsd: number;
   covalentApiKey?: string;
 }
 
-// TODO: Inherit from AutotaskConfig
-export interface LiquidatorConfig {
-  chainId: number;
-  provider: BaseProvider;
-  wallet: Wallet;
-  relayerAddress: string;
-  signer: Signer;
-  swapRecipient: string;
-  minProfitThresholdUsd: number;
+export interface PrizeClaimerConfig extends AutotaskConfig {
+  rewardRecipient?: string;
+}
+
+export interface SharedLiquidatorConfig extends AutotaskConfig {
+  swapRecipient?: string;
+}
+
+export interface LiquidatorConfig extends SharedLiquidatorConfig {
   envTokenAllowList: string[];
-  covalentApiKey?: string;
 }
 
-export interface FlashLiquidatorConfig extends LiquidatorConfig {}
+export interface FlashLiquidatorConfig extends SharedLiquidatorConfig {}
+
+export interface DrawAuctionConfig extends AutotaskConfig {
+  rewardRecipient?: string;
+}
 
 export interface BaseLiquidatorContext {
   tokenIn: TokenWithRate;
@@ -109,19 +110,6 @@ export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
   REWARD_RECIPIENT: string;
 }
-
-export interface AutotaskConfig {
-  chainId: number;
-  provider: BaseProvider;
-  rewardRecipient: string;
-  minProfitThresholdUsd: number;
-  wallet: Wallet;
-  relayerAddress: string;
-  signer: Signer;
-  covalentApiKey?: string;
-}
-
-export interface DrawAuctionConfig extends AutotaskConfig {}
 
 export interface DrawAuctionContext {
   canStartDraw: boolean;
