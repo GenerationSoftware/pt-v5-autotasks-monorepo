@@ -91,10 +91,10 @@ export async function runDrawAuction(
 
   if (context.drawAuctionState === DrawAuctionState.Start) {
     console.log(chalk.green(`Processing 'Start Draw' for ${chainName(chainId)}:`));
-    await checkStartDraw(config, context, drawAuctionContracts);
+    await checkStartDraw(config, context, drawAuctionContracts, rewardRecipient);
   } else if (context.drawAuctionState === DrawAuctionState.Finish) {
     console.log(chalk.green(`Processing 'Finish Draw' for ${chainName(chainId)}:`));
-    await checkFinishDraw(config, context, drawAuctionContracts);
+    await checkFinishDraw(config, context, drawAuctionContracts, rewardRecipient);
   }
 }
 
@@ -163,8 +163,14 @@ const checkStartDraw = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
+  rewardRecipient: string,
 ) => {
-  const gasCostUsd = await getStartDrawGasCostUsd(config, context, drawAuctionContracts);
+  const gasCostUsd = await getStartDrawGasCostUsd(
+    config,
+    context,
+    drawAuctionContracts,
+    rewardRecipient,
+  );
   if (gasCostUsd === 0) {
     printAsterisks();
     console.log(chalk.red('Gas cost is $0. Unable to determine profitability. Exiting ...'));
@@ -174,7 +180,7 @@ const checkStartDraw = async (
   const profitable = await calculateStartDrawProfit(config, context, gasCostUsd);
 
   if (profitable) {
-    await sendPopulatedStartDrawTransaction(config, context, drawAuctionContracts);
+    await sendPopulatedStartDrawTransaction(config, context, drawAuctionContracts, rewardRecipient);
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
@@ -195,6 +201,7 @@ const sendPopulatedStartDrawTransaction = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
+  rewardRecipient: string,
 ) => {
   const { wallet, provider } = config;
 
@@ -207,7 +214,7 @@ const sendPopulatedStartDrawTransaction = async (
   let estimatedGasLimit: BigNumber;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
+    txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
@@ -219,7 +226,7 @@ const sendPopulatedStartDrawTransaction = async (
     );
   } else {
     const contract: Contract = drawAuctionContracts.rngBlockhashContract;
-    txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
+    txParams = buildRngBlockhashStartDrawTxParams(drawAuctionContracts, rewardRecipient);
     estimatedGasLimit = await getRngBlockhashStartDrawEstimatedGasLimit(contract, txParams);
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
   }
@@ -255,10 +262,11 @@ const checkFinishDraw = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
+  rewardRecipient: string,
 ) => {
   const contract: Contract = drawAuctionContracts.drawManagerContract;
 
-  const txParams = buildFinishDrawTxParams(config);
+  const txParams = buildFinishDrawTxParams(rewardRecipient);
 
   const gasCostUsd = await getFinishDrawGasCostUsd(txParams, contract, config, context);
   if (gasCostUsd === 0) {
@@ -536,6 +544,7 @@ const getStartDrawGasCostUsd = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
+  rewardRecipient: string,
 ): Promise<number> => {
   const { nativeTokenMarketRateUsd } = context;
 
@@ -547,7 +556,7 @@ const getStartDrawGasCostUsd = async (
   let populatedTx: PopulatedTransaction;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    txParams = buildRngWitnetStartDrawTxParams(config, context, drawAuctionContracts);
+    txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
@@ -559,7 +568,7 @@ const getStartDrawGasCostUsd = async (
     );
   } else {
     const contract: Contract = drawAuctionContracts.rngBlockhashContract;
-    txParams = buildRngBlockhashStartDrawTxParams(config, drawAuctionContracts);
+    txParams = buildRngBlockhashStartDrawTxParams(drawAuctionContracts, rewardRecipient);
     estimatedGasLimit = await getRngBlockhashStartDrawEstimatedGasLimit(contract, txParams);
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
   }
@@ -586,12 +595,12 @@ const getStartDrawGasCostUsd = async (
  * @returns {RngBlockhashStartDrawTxParams} The startDraw() tx parameters object
  */
 const buildRngBlockhashStartDrawTxParams = (
-  config: DrawAuctionConfig,
   drawAuctionContracts: DrawAuctionContracts,
+  rewardRecipient: string,
 ): RngBlockhashStartDrawTxParams => {
   return {
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
-    rewardRecipient: config.rewardRecipient,
+    rewardRecipient,
   };
 };
 
@@ -605,14 +614,14 @@ const buildRngBlockhashStartDrawTxParams = (
  * @returns {RngWitnetStartDrawTxParams} The startDraw() tx parameters object
  */
 const buildRngWitnetStartDrawTxParams = (
-  config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
+  rewardRecipient: string,
 ): RngWitnetStartDrawTxParams => {
   return {
     rngPaymentAmount: context.rngFeeEstimate,
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
-    rewardRecipient: config.rewardRecipient,
+    rewardRecipient,
     value: context.rngFeeEstimate,
   };
 };
@@ -624,9 +633,9 @@ const buildRngWitnetStartDrawTxParams = (
  *
  * @returns {FinishDrawTxParams} The finishDraw() tx parameters object
  */
-const buildFinishDrawTxParams = (config: DrawAuctionConfig): FinishDrawTxParams => {
+const buildFinishDrawTxParams = (rewardRecipient: string): FinishDrawTxParams => {
   return {
-    rewardRecipient: config.rewardRecipient,
+    rewardRecipient,
   };
 };
 

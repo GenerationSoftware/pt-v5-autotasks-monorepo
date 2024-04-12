@@ -223,6 +223,7 @@ export async function runPrizeClaimer(
       tierRemainingPrizeCounts,
       context,
       config,
+      rewardRecipient,
     );
 
     // It's profitable if there is at least 1 claim to claim
@@ -311,8 +312,9 @@ const calculateProfit = async (
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   context: ClaimPrizeContext,
   config: PrizeClaimerConfig,
+  rewardRecipient: string,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd, rewardRecipient } = config;
+  const { chainId, minProfitThresholdUsd } = config;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
