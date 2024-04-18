@@ -18,6 +18,7 @@ import {
   getLiquidationPairsMulticall,
 } from './utils/index.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
+import { TpdaLiquidationPairAbi } from './abis/TpdaLiquidationPairAbi.js';
 import { NETWORK_NATIVE_TOKEN_INFO, LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/index.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
@@ -100,13 +101,9 @@ export async function runLiquidator(
     console.log(`LiquidationPair #${i + 1}`);
     console.log(chalk.dim(`LiquidationPair Address: ${liquidationPair.address}`));
 
-    const liquidationPairData = contracts.contracts.find(
-      (contract) => contract.type === 'TpdaLiquidationPair',
-    );
-
     const liquidationPairContract = new ethers.Contract(
       liquidationPair.address,
-      liquidationPairData.abi,
+      TpdaLiquidationPairAbi,
       provider,
     );
 
@@ -296,6 +293,9 @@ export async function runLiquidator(
         estimatedProfitUsd,
         txHash: tx.hash,
       });
+
+      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+      await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
     } catch (error) {
       stats.push({
         pair,

@@ -1,0 +1,29 @@
+export CHAIN_ID='1'
+export JSON_RPC_URI='https://eth-mainnet.g.alchemy.com/v2/xTTdnnXmI0ufqayh5pA8kFdDdjoncLe2'
+export COVALENT_API_KEY='cqt_rQFBjYK3rbc4fVqDQR7mRPX67cKb'
+export USE_FLASHBOTS='false'
+export MIN_PROFIT_THRESHOLD_USD='0'
+
+### THIS:
+
+export CUSTOM_RELAYER_PRIVATE_KEY=
+
+### OR THIS:
+
+export DEFENDER_TEAM_API_KEY='8CVsVMmjWH9ok17exeURNTibMA62oxNM'
+export DEFENDER_TEAM_API_SECRET='3U3MGfoSnLbNmLSnthCSisfVGjvxNU3HQvzcLsrpkeW85kAgWqWHMFce2Acaj7rv'
+export AUTOTASK_ID='e7b1987a-f0ed-4a19-b65b-8bfabc06c302'
+export RELAYER_API_KEY='FvRpLaCNx2AAVv2ky43WjZ2EZqpTbMav'
+export RELAYER_API_SECRET='4sUHtfH5vCPWb4vDkSPm9gVfByZouj452518GrS51RsnoZLFv8JMxVTifpzFXV5z'
+
+### DRAW AUCTION SPECIFIC:
+
+export REWARD_RECIPIENT='0x1169333d6c2f5BB5E3f8A1C075bc4d068e5ea41e'
+
+export RELAY_CHAIN_IDS='10'
+
+export ARBITRUM_JSON_RPC_URI='https://arb-mainnet.g.alchemy.com/v2/aJwSGGD7cr9iC9IVYxWN85dn_uC-oRtW'
+export OPTIMISM_JSON_RPC_URI='https://opt-mainnet.g.alchemy.com/v2/gP7CWCeaoiU6BN9pTVqIS5n0t88MfJxM'
+
+export ARBITRUM_SEPOLIA_JSON_RPC_URI='https://arb-sepolia.g.alchemy.com/v2/FcAZ5PWxkgHjtvNd8zL0IfZMVFAwQaQ4'
+export OPTIMISM_SEPOLIA_JSON_RPC_URI='https://optimism-sepolia.infura.io/v3/61401d36252f4182864d4b21d98982e5'
