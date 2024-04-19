@@ -76,6 +76,7 @@ export interface BaseLiquidatorContext {
 
 export interface LiquidatorContext extends BaseLiquidatorContext {
   relayer: LiquidatorRelayerContext;
+  tokenOutInAllowList: boolean;
 }
 
 export interface FlashLiquidatorContext extends BaseLiquidatorContext {}

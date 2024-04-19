@@ -19,7 +19,7 @@ import {
 } from './utils/index.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { TpdaLiquidationPairAbi } from './abis/TpdaLiquidationPairAbi.js';
-import { NETWORK_NATIVE_TOKEN_INFO, LIQUIDATION_TOKEN_ALLOW_LIST } from './constants/index.js';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
 interface SwapExactAmountOutParams {
@@ -108,6 +108,7 @@ export async function runLiquidator(
     );
 
     const context: LiquidatorContext = await getLiquidatorContextMulticall(
+      config,
       liquidationRouterContract,
       liquidationPairContract,
       provider,
@@ -120,7 +121,7 @@ export async function runLiquidator(
     printAsterisks();
     printSpacer();
 
-    const tokenOutInAllowList = tokenOutAllowListed(chainId, context, config);
+    const tokenOutInAllowList = context.tokenOutInAllowList;
     if (!tokenOutInAllowList) {
       stats.push({
         pair,
@@ -362,42 +363,6 @@ const approve = async (
   } catch (error) {
     console.log(chalk.red('error: ', error));
   }
-};
-
-// Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
-// possibility of manually deployed malicious vaults/pairs
-const tokenOutAllowListed = (
-  chainId: number,
-  context: LiquidatorContext,
-  config: LiquidatorConfig,
-) => {
-  console.log(
-    chalk.dim(
-      `Checking if tokenOut '${
-        context.tokenOut.symbol
-      }' (CA: ${context.tokenOut.address.toLowerCase()}) is in allow list ...`,
-    ),
-  );
-
-  let tokenOutInAllowList = false;
-  try {
-    tokenOutInAllowList =
-      LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(context.tokenOut.address.toLowerCase()) ||
-      config.envTokenAllowList.includes(context.tokenOut.address.toLowerCase());
-  } catch (e) {
-    console.error(chalk.red(e));
-    console.error(
-      chalk.white(`Perhaps chain has not been added to LIQUIDATION_TOKEN_ALLOW_LIST ?`),
-    );
-  }
-
-  if (tokenOutInAllowList) {
-    console.log(`tokenOut is in the allow list! 👍`);
-  } else {
-    console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
-  }
-
-  return tokenOutInAllowList;
 };
 
 /**

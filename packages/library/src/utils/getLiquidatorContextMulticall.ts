@@ -6,10 +6,17 @@ import {
 } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { LiquidatorContext, LiquidatorRelayerContext, Token, TokenWithRate } from '../types.js';
+import {
+  LiquidatorConfig,
+  LiquidatorContext,
+  LiquidatorRelayerContext,
+  Token,
+  TokenWithRate,
+} from '../types.js';
 import { printSpacer, getEthMainnetTokenMarketRateUsd } from '../utils/index.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
+import { LIQUIDATION_TOKEN_ALLOW_LIST } from '../constants/index.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
@@ -28,6 +35,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * @returns
  */
 export const getLiquidatorContextMulticall = async (
+  config: LiquidatorConfig,
   liquidationRouterContract: Contract,
   liquidationPairContract: Contract,
   provider: Provider,
@@ -82,22 +90,38 @@ export const getLiquidatorContextMulticall = async (
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
-  // 4. RELAYER tokenIn BALANCE
+  // 3. RELAYER tokenIn BALANCE
   queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
   queries[`tokenIn-allowance`] = tokenInContract.allowance(
     relayerAddress,
     liquidationRouterContract.address,
   );
 
-  // 5. Get and process results!
+  // 4. Get and process results!
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
-  // 1. tokenIn results
-  const tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-    results['tokenIn-symbol'],
-    tokenInAddress,
-    covalentApiKey,
-  );
+  printSpacer();
+
+  // 6. tokenOut results (vault token)
+  const tokenOut: Token = {
+    address: tokenOutAddress,
+    decimals: results['tokenOut-decimals'],
+    name: results['tokenOut-name'],
+    symbol: results['tokenOut-symbol'],
+  };
+
+  const tokenOutInAllowList = tokenOutAllowListed(config, tokenOut);
+
+  // 5. tokenIn results
+
+  let tokenInAssetRateUsd;
+  if (tokenOutInAllowList) {
+    tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      results['tokenIn-symbol'],
+      tokenInAddress,
+      covalentApiKey,
+    );
+  }
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
     decimals: results['tokenIn-decimals'],
@@ -106,20 +130,15 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: tokenInAssetRateUsd,
   };
 
-  // 2. tokenOut results (vault token)
-  const tokenOut: Token = {
-    address: tokenOutAddress,
-    decimals: results['tokenOut-decimals'],
-    name: results['tokenOut-name'],
-    symbol: results['tokenOut-symbol'],
-  };
-
-  // 3. vault underlying asset (hard asset such as DAI or USDC) results
-  const underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-    results['underlyingAsset-symbol'],
-    underlyingAssetAddress,
-    covalentApiKey,
-  );
+  // 7. vault underlying asset (hard asset such as DAI or USDC) results
+  let underlyingAssetAssetRateUsd;
+  if (tokenOutInAllowList) {
+    underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      results['underlyingAsset-symbol'],
+      underlyingAssetAddress,
+      covalentApiKey,
+    );
+  }
 
   const underlyingAssetToken: TokenWithRate = {
     address: underlyingAssetAddress,
@@ -139,5 +158,38 @@ export const getLiquidatorContextMulticall = async (
     tokenOut,
     underlyingAssetToken,
     relayer,
+    tokenOutInAllowList,
   };
+};
+
+// Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
+// possibility of manually deployed malicious vaults/pairs
+const tokenOutAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
+  console.log(
+    chalk.dim(
+      `Checking if tokenOut '${
+        tokenOut.symbol
+      }' (CA: ${tokenOut.address.toLowerCase()}) is in allow list ...`,
+    ),
+  );
+
+  let tokenOutInAllowList = false;
+  try {
+    tokenOutInAllowList =
+      LIQUIDATION_TOKEN_ALLOW_LIST[config.chainId].includes(tokenOut.address.toLowerCase()) ||
+      config.envTokenAllowList.includes(tokenOut.address.toLowerCase());
+  } catch (e) {
+    console.error(chalk.red(e));
+    console.error(
+      chalk.white(`Perhaps chain has not been added to LIQUIDATION_TOKEN_ALLOW_LIST ?`),
+    );
+  }
+
+  if (tokenOutInAllowList) {
+    console.log(`tokenOut is in the allow list! 👍`);
+  } else {
+    console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
+  }
+
+  return tokenOutInAllowList;
 };
