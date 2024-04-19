@@ -31,7 +31,7 @@
   },
   "peerDependencies": {
     "chalk": "^5.3.0",
-    "@generationsoftware/pt-v5-utils-js": "1.1.0",
+    "@generationsoftware/pt-v5-utils-js": "1.1.1",
     "lodash.pickby": "4.6.0",
     "lodash.groupby": "4.6.0"
   }
