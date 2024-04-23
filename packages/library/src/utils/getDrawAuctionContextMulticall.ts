@@ -187,6 +187,7 @@ const getContext = async (
     rngFeeEstimate,
     rngFeeEstimateUsd,
 
+    drawId,
     rewardToken,
     prizePoolDrawClosesAt,
 

@@ -473,9 +473,16 @@ const calculateFinishDrawProfit = async (
  */
 const printContext = (chainId: number, context: DrawAuctionContext) => {
   printAsterisks();
+
+  printSpacer();
+  printSpacer();
+  console.log(chalk.blue.bold(`Prize Pool:`));
+  printSpacer();
+  logStringValue('Draw ID:', context.drawId);
+
+  printSpacer();
   printSpacer();
   console.log(chalk.blue.bold(`Tokens:`));
-
   printSpacer();
   logStringValue(
     `1a. Chain Native/Gas Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
