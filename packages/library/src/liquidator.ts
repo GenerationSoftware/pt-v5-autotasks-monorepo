@@ -97,9 +97,11 @@ export async function runLiquidator(
     printSpacer();
     printSpacer();
     printAsterisks();
+    printSpacer();
     const liquidationPair = liquidationPairContracts[i];
     console.log(`LiquidationPair #${i + 1}`);
-    console.log(chalk.dim(`LiquidationPair Address: ${liquidationPair.address}`));
+    printSpacer();
+    console.log(chalk.blue(`Pair Address: ${liquidationPair.address}`));
 
     const liquidationPairContract = new ethers.Contract(
       liquidationPair.address,
@@ -118,11 +120,15 @@ export async function runLiquidator(
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
     printContext(context);
-    printAsterisks();
+    printSpacer();
     printSpacer();
 
     const tokenOutInAllowList = context.tokenOutInAllowList;
-    if (!tokenOutInAllowList) {
+    if (tokenOutInAllowList) {
+      console.log(`tokenOut is in the allow list! 👍`);
+    } else {
+      console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
+
       stats.push({
         pair,
         estimatedProfitUsd: 0,
@@ -309,7 +315,7 @@ export async function runLiquidator(
 
   printSpacer();
   printSpacer();
-  printAsterisks();
+  printSpacer();
   console.log(chalk.greenBright.bold(`SUMMARY`));
   console.table(stats);
   const estimatedProfitUsdTotal = stats.reduce((accumulator, stat) => {
@@ -409,8 +415,7 @@ const getLiquidationContracts = async (
 };
 
 const printContext = (context) => {
-  printAsterisks();
-  console.log(chalk.blue(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
+  console.log(chalk.blue(`Pair Symbol:  ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
   printSpacer();
 
   logTable({
@@ -418,6 +423,7 @@ const printContext = (context) => {
     tokenOut: context.tokenOut,
     underlyingAssetToken: context.underlyingAssetToken,
   });
+  printSpacer();
   logBigNumber(
     `Relayer ${context.tokenIn.symbol} balance:`,
     context.relayer.tokenInBalance,
@@ -440,7 +446,7 @@ const checkBalance = async (
   context: LiquidatorContext,
   exactAmountIn: BigNumber,
 ): Promise<boolean> => {
-  printAsterisks();
+  printSpacer();
   console.log(chalk.blue('2. Balance & Allowance'));
   printSpacer();
   console.log("Checking relayer 'tokenIn' balance ...");
@@ -462,7 +468,7 @@ const calculateProfit = async (
   amountOut: BigNumber,
   avgFeeUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
-  printAsterisks();
+  printSpacer();
   console.log(chalk.blue('5. Profit/Loss (USD):'));
   printSpacer();
 
@@ -521,7 +527,7 @@ const getGasCost = async (
 ): Promise<number> => {
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
 
-  printAsterisks();
+  printSpacer();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
   printSpacer();
 

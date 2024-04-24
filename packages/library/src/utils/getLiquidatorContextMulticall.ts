@@ -1,9 +1,6 @@
 import { ethers, Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
-import {
-  // ContractData,
-  getEthersMulticallProviderResults,
-} from '@generationsoftware/pt-v5-utils-js';
+import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
 import {
@@ -13,7 +10,7 @@ import {
   Token,
   TokenWithRate,
 } from '../types.js';
-import { printSpacer, getEthMainnetTokenMarketRateUsd } from '../utils/index.js';
+import { getEthMainnetTokenMarketRateUsd } from '../utils/index.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
 import { LIQUIDATION_TOKEN_ALLOW_LIST } from '../constants/index.js';
@@ -63,8 +60,6 @@ export const getLiquidatorContextMulticall = async (
   queries[`tokenOut-name`] = tokenOutContract.name();
   queries[`tokenOut-symbol`] = tokenOutContract.symbol();
 
-  printSpacer();
-
   // Find out if this LiquidationPair's tokenOut is an ERC4626 Vault or an ERC20 token
   const liquidationPairTokenOutAsVault = new ethers.Contract(
     tokenOutAddress,
@@ -99,8 +94,6 @@ export const getLiquidatorContextMulticall = async (
 
   // 4. Get and process results!
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
-
-  printSpacer();
 
   // 6. tokenOut results (vault token)
   const tokenOut: Token = {
@@ -165,14 +158,6 @@ export const getLiquidatorContextMulticall = async (
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
 // possibility of manually deployed malicious vaults/pairs
 const tokenOutAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
-  console.log(
-    chalk.dim(
-      `Checking if tokenOut '${
-        tokenOut.symbol
-      }' (CA: ${tokenOut.address.toLowerCase()}) is in allow list ...`,
-    ),
-  );
-
   let tokenOutInAllowList = false;
   try {
     tokenOutInAllowList =
@@ -183,12 +168,6 @@ const tokenOutAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
     console.error(
       chalk.white(`Perhaps chain has not been added to LIQUIDATION_TOKEN_ALLOW_LIST ?`),
     );
-  }
-
-  if (tokenOutInAllowList) {
-    console.log(`tokenOut is in the allow list! 👍`);
-  } else {
-    console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
   }
 
   return tokenOutInAllowList;

@@ -24,6 +24,8 @@ export const KNOWN_TOKENS = {
     PRZWETH: '0x2998c1685e308661123f64b333767266035f5020',
     PRZDAI: '0x3e8dbe51da479f7e8ac46307af99ad5b4b5b41dc',
     PRZLUSD: '0x1f16d3ccf568e96019cedc8a2c79d2ca6257894e',
+    PRZWSTETHETH: '0x9b4c0de59628c64b02d7ce86f21db9a579539d5a',
+    PRZPOOLWETH: '0x9b53ef6f13077727d22cb4acad1119c79a97be17',
   },
   [CHAIN_IDS.sepolia]: {
     POOL: '0x68a100a3729fc04ab26fb4c0862df22ceec2f18b',
@@ -71,6 +73,8 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
     KNOWN_TOKENS[CHAIN_IDS.optimism].PRZWETH.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].PRZDAI.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].PRZLUSD.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZWSTETHETH.toLowerCase(),
+    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZPOOLWETH.toLowerCase(),
   ],
   [CHAIN_IDS.optimismSepolia]: [
     KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].POOL.toLowerCase(),
