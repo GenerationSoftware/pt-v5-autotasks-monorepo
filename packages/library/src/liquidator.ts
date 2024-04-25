@@ -92,13 +92,18 @@ export async function runLiquidator(
   console.log(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
+
+  const truncatedLiquidationPairContracts = [
+    liquidationPairContracts[11],
+    liquidationPairContracts[12],
+  ];
   const stats: Stat[] = [];
-  for (let i = 0; i < liquidationPairContracts.length; i++) {
+  for (let i = 0; i < truncatedLiquidationPairContracts.length; i++) {
     printSpacer();
     printSpacer();
     printAsterisks();
     printSpacer();
-    const liquidationPair = liquidationPairContracts[i];
+    const liquidationPair = truncatedLiquidationPairContracts[i];
     console.log(`LiquidationPair #${i + 1}`);
     printSpacer();
     console.log(chalk.blue(`Pair Address: ${liquidationPair.address}`));
