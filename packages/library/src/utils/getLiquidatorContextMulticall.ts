@@ -13,7 +13,11 @@ import {
 import { getEthMainnetTokenMarketRateUsd } from '../utils/index.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
-import { LIQUIDATION_TOKEN_ALLOW_LIST } from '../constants/index.js';
+import { UniswapV2WethPairFlashLiquidatorAbi } from '../abis/UniswapV2WethPairFlashLiquidatorAbi.js';
+import {
+  LIQUIDATION_TOKEN_ALLOW_LIST,
+  UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
+} from '../constants/index.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
@@ -85,14 +89,33 @@ export const getLiquidatorContextMulticall = async (
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
-  // 3. RELAYER tokenIn BALANCE
+  // 3. Query to see if this LP pair is actually for an underlying LP asset that we can flash liquidate
+  const uniswapV2WethPairFlashLiquidatorContractAddress =
+    UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId];
+
+  let isValidWethFlashLiquidationPair;
+  if (uniswapV2WethPairFlashLiquidatorContractAddress) {
+    const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
+      UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
+      UniswapV2WethPairFlashLiquidatorAbi,
+      provider,
+    );
+    try {
+      isValidWethFlashLiquidationPair =
+        await uniswapV2WethPairFlashLiquidatorContract.isValidLiquidationPair(
+          liquidationPairContract.address,
+        );
+    } catch (e) {}
+  }
+
+  // 4. RELAYER tokenIn BALANCE
   queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
   queries[`tokenIn-allowance`] = tokenInContract.allowance(
     relayerAddress,
     liquidationRouterContract.address,
   );
 
-  // 4. Get and process results!
+  // 5. Get and process results!
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   // 6. tokenOut results (vault token)
@@ -105,7 +128,7 @@ export const getLiquidatorContextMulticall = async (
 
   const tokenOutInAllowList = tokenOutAllowListed(config, tokenOut);
 
-  // 5. tokenIn results
+  // 7. tokenIn results
 
   let tokenInAssetRateUsd;
   if (tokenOutInAllowList) {
@@ -123,7 +146,7 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: tokenInAssetRateUsd,
   };
 
-  // 7. vault underlying asset (hard asset such as DAI or USDC) results
+  // 8. vault underlying asset (hard asset such as DAI or USDC) results
   let underlyingAssetAssetRateUsd;
   if (tokenOutInAllowList) {
     underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -152,6 +175,7 @@ export const getLiquidatorContextMulticall = async (
     underlyingAssetToken,
     relayer,
     tokenOutInAllowList,
+    isValidWethFlashLiquidationPair,
   };
 };
 

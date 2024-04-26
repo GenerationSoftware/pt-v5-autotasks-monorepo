@@ -12,6 +12,7 @@ import {
   printSpacer,
   getFeesUsd,
   roundTwoDecimalPlaces,
+  checkOrX,
 } from './utils/index.js';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
 import {
@@ -304,6 +305,7 @@ const getRngWitnetStartDrawEstimatedGasLimit = async (
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(rngWitnetStartDrawTxParams);
 
+    console.log({ value, transformedTxParams });
     estimatedGasLimit = await contract.estimateGas.startDraw(
       ...Object.values(transformedTxParams),
       {
@@ -565,6 +567,11 @@ const getStartDrawGasCostUsd = async (
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
     txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
+    console.log('txParams');
+    console.log(txParams);
+    console.log('estimatedGasLimit');
+    console.log(estimatedGasLimit);
+    console.log(estimatedGasLimit?.toString());
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -581,7 +588,7 @@ const getStartDrawGasCostUsd = async (
   }
 
   // Add extra buffer space on the estimate because estimates are typically too low and cause tx's to fail
-  const estimatedGasLimitWithBuffer: BigNumber = estimatedGasLimit.add(DRAW_GAS_LIMIT_BUFFER);
+  const estimatedGasLimitWithBuffer: BigNumber = estimatedGasLimit?.add(DRAW_GAS_LIMIT_BUFFER);
 
   const gasCostUsd = await getGasCostUsd(
     config,
@@ -589,6 +596,8 @@ const getStartDrawGasCostUsd = async (
     nativeTokenMarketRateUsd,
     populatedTx,
   );
+  console.log('gasCostUsd');
+  console.log(gasCostUsd);
 
   return gasCostUsd;
 };
@@ -626,10 +635,10 @@ const buildRngWitnetStartDrawTxParams = (
   rewardRecipient: string,
 ): RngWitnetStartDrawTxParams => {
   return {
-    rngPaymentAmount: context.rngFeeEstimate,
+    rngPaymentAmount: context.rngFeeEstimate.div(50),
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
     rewardRecipient,
-    value: context.rngFeeEstimate,
+    value: context.rngFeeEstimate.div(50),
   };
 };
 
@@ -779,17 +788,6 @@ const sendPopulatedFinishDrawTransaction = async (
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
   printNote();
-};
-
-/**
- * Returns emojis (for pretty console logging).
- *
- * @param {boolean} bool
- *
- * @returns {string}
- */
-const checkOrX = (bool: boolean): string => {
-  return bool ? '✔' : '✗';
 };
 
 /**

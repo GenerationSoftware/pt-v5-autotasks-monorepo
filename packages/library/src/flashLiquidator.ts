@@ -19,7 +19,7 @@ import { FlashLiquidatorAbi } from './abis/FlashLiquidatorAbi.js';
 import { LiquidationPairAbi } from './abis/LiquidationPairAbi.js';
 import {
   FLASH_LIQUIDATION_PAIRS,
-  FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
+  UNISWAP_V2_FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
   NETWORK_NATIVE_TOKEN_INFO,
 } from './constants/index.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
@@ -82,7 +82,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
   console.log('Starting ...');
 
   const flashLiquidationContract = new ethers.Contract(
-    FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
+    UNISWAP_V2_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId],
     FlashLiquidatorAbi,
     signer,
   );

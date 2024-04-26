@@ -36,12 +36,12 @@ if (esMain(import.meta)) {
     envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
   };
 
-  try {
-    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
-    await runLiquidator(contracts, config);
-  } catch (error) {
-    throw new Error(error);
-  }
+  // try {
+  const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
+  await runLiquidator(contracts, config);
+  // } catch (error) {
+  //   throw new Error(error);
+  // }
 }
 
 export function main() {}
