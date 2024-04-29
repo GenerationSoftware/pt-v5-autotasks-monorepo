@@ -1,6 +1,6 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-library",
-  "version": "1.1.2",
+  "version": "1.2.0-beta.0",
   "description": "Library of shared utils to run PoolTogether v5 hyperstructure autotasks.",
   "author": {
     "name": "G9 Software Inc.",
@@ -31,7 +31,7 @@
   },
   "peerDependencies": {
     "chalk": "^5.3.0",
-    "@generationsoftware/pt-v5-utils-js": "1.1.8",
+    "@generationsoftware/pt-v5-utils-js": "1.2.0.beta-0",
     "lodash.pickby": "4.6.0",
     "lodash.groupby": "4.6.0"
   }
