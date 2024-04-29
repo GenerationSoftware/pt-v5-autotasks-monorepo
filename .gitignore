@@ -3,8 +3,7 @@ npm-debug.log
 packages/*/dist
 packages/*/lib
 packages/*/.envrc
-packages/*/.envrc.testnet*
-packages/*/.envrc.mainnet*
+packages/*/.envrc*
 .DS_Store
 .yalc
 yalc.lock

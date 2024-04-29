@@ -310,7 +310,6 @@ const getRngWitnetStartDrawEstimatedGasLimit = async (
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(rngWitnetStartDrawTxParams);
 
-    console.log({ value, transformedTxParams });
     estimatedGasLimit = await contract.estimateGas.startDraw(
       ...Object.values(transformedTxParams),
       {
@@ -577,11 +576,6 @@ const getStartDrawGasCostUsd = async (
       rewardRecipient,
     );
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
-    console.log('txParams');
-    console.log(txParams);
-    console.log('estimatedGasLimit');
-    console.log(estimatedGasLimit);
-    console.log(estimatedGasLimit?.toString());
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -606,8 +600,6 @@ const getStartDrawGasCostUsd = async (
     nativeTokenMarketRateUsd,
     populatedTx,
   );
-  console.log('gasCostUsd');
-  console.log(gasCostUsd);
 
   return gasCostUsd;
 };
