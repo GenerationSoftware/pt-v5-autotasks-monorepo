@@ -14,7 +14,7 @@ import {
   roundTwoDecimalPlaces,
   checkOrX,
 } from './utils/index.js';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
+import { CHAIN_RNG_PAYMENT_AMOUNT_DIVISOR, NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,
@@ -215,7 +215,12 @@ const sendPopulatedStartDrawTransaction = async (
   let estimatedGasLimit: BigNumber;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
+    txParams = buildRngWitnetStartDrawTxParams(
+      config,
+      context,
+      drawAuctionContracts,
+      rewardRecipient,
+    );
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
@@ -565,7 +570,12 @@ const getStartDrawGasCostUsd = async (
   let populatedTx: PopulatedTransaction;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
+    txParams = buildRngWitnetStartDrawTxParams(
+      config,
+      context,
+      drawAuctionContracts,
+      rewardRecipient,
+    );
     estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
     console.log('txParams');
     console.log(txParams);
@@ -630,15 +640,17 @@ const buildRngBlockhashStartDrawTxParams = (
  * @returns {RngWitnetStartDrawTxParams} The startDraw() tx parameters object
  */
 const buildRngWitnetStartDrawTxParams = (
+  config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
   rewardRecipient: string,
 ): RngWitnetStartDrawTxParams => {
+  const divisor = CHAIN_RNG_PAYMENT_AMOUNT_DIVISOR[config.chainId];
   return {
-    rngPaymentAmount: context.rngFeeEstimate.div(50),
+    rngPaymentAmount: context.rngFeeEstimate.div(divisor),
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
     rewardRecipient,
-    value: context.rngFeeEstimate.div(50),
+    value: context.rngFeeEstimate.div(divisor),
   };
 };
 

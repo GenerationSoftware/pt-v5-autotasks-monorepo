@@ -97,12 +97,6 @@ const getContext = async (
   // 2. Queries One: Rng Witnet
   if (rngWitnetContract) {
     const gasPrice = await provider.getGasPrice();
-    console.log('');
-    console.log('gasPrice');
-    console.log(gasPrice);
-    console.log('');
-    console.log('gasPrice.toString()');
-    console.log(gasPrice.toString());
     queriesOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY] =
       rngWitnetContract.estimateRandomizeFee(gasPrice);
   }
@@ -128,14 +122,6 @@ const getContext = async (
   let rngFeeEstimate;
   if (rngWitnetContract) {
     rngFeeEstimate = resultsOne[QUERY_KEYS.RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY];
-    console.log('');
-    console.log('');
-    console.log('');
-    console.log('rngFeeEstimate');
-    console.log(rngFeeEstimate);
-    console.log('');
-    console.log('rngFeeEstimate.toString()');
-    console.log(rngFeeEstimate.toString());
   }
 
   // 7. Results One: Prize Pool
@@ -187,15 +173,6 @@ const getContext = async (
   if (rngWitnetContract) {
     const rngFeeEstimateStr = ethers.utils.formatEther(rngFeeEstimate);
     rngFeeEstimateUsd = Number(rngFeeEstimateStr) * nativeTokenMarketRateUsd;
-
-    console.log('');
-    console.log('');
-    console.log('');
-    console.log('rngFeeEstimateStr');
-    console.log(rngFeeEstimateStr);
-    console.log('');
-    console.log('rngFeeEstimateUsd');
-    console.log(rngFeeEstimateUsd);
   }
 
   return {
