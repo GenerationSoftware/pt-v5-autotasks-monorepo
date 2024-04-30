@@ -12,9 +12,9 @@
 
 PoolTogether hyperstructure (v5) bot to find arbitrage opportunities and liquidate the prize token (likely WETH) for yield.
 
-## 📖 Tutorial
+## 📖 Liquidator Example:
 
-### [Creating a PoolTogether Arbitrage Swapping bot](https://mirror.xyz/chuckbergeron-g9.eth/ES-IJduktYPb0X_sBikfqL-PVFRweNpoPrlr01zcVX8)
+### [PoolTogether Liquidator GitHub Action bot](https://github.com/GenerationSoftware/pt-v5-liquidator-gh-action-bot)
 
 ## 🖥️ Usage
 

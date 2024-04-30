@@ -12,9 +12,9 @@
 
 PoolTogether hyperstructure (v5) to claim prizes on behalf of depositors.
 
-## 📖 Tutorial
+## 📖 Prize Claimer Example:
 
-### [Creating a PoolTogether Prize Claiming bot](https://mirror.xyz/chuckbergeron-g9.eth/xPSEh1pfjV2IT1yswcsjN2gBBrVf548V8q9W23xxA8U)
+### [PoolTogether Prize Claimer GitHub Action bot](https://github.com/GenerationSoftware/pt-v5-prize-claimer-gh-action-bot)
 
 This package is helpful for running the Prize Claimer bot locally.
 
