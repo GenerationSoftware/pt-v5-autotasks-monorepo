@@ -97,10 +97,6 @@ export async function runLiquidator(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
 
-  // const truncatedLiquidationPairContracts = [
-  //   liquidationPairContracts[11],
-  //   liquidationPairContracts[12],
-  // ];
   const stats: Stat[] = [];
   for (let i = 0; i < liquidationPairContracts.length; i++) {
     printSpacer();
@@ -157,59 +153,41 @@ export async function runLiquidator(
     console.log(chalk.blue(`1. Amounts:`));
     const { amountOut } = await getAmountOut(liquidationPairContract, context);
 
-    // 4. If this is an LP pair (with WETH on one side) query for the profit we
-    //    could get from liquidating it
-    let profitFromFlashSwap = 0;
-    if (context.isValidWethFlashLiquidationPair && amountOut.gt(0)) {
-      const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
-        UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
-        UniswapV2WethPairFlashLiquidatorAbi,
-        signer,
-      );
+    // // 4. If this is an LP pair (with WETH on one side) query for the profit we
+    // //    could get from liquidating it
+    // let wethFromFlashSwap = BigNumber.from(0);
+    // if (context.isValidWethFlashLiquidationPair && amountOut.gt(0)) {
+    //   const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
+    //     UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
+    //     UniswapV2WethPairFlashLiquidatorAbi,
+    //     signer,
+    //   );
 
-      console.log({
-        liquidationPair: liquidationPair.address,
-        // context.underlyingAssetToken.address,
-        receiver: config.relayerAddress,
-        swapAmountOut: amountOut.toString(),
-        minProfit: BigNumber.from(0),
-      });
+    //   console.log({
+    //     liquidationPair: liquidationPair.address,
+    //     receiver: config.relayerAddress,
+    //     swapAmountOut: amountOut.toString(),
+    //     minProfit: BigNumber.from(0),
+    //   });
 
-      const pop =
-        await uniswapV2WethPairFlashLiquidatorContract.populateTransaction.flashSwapExactAmountOut(
-          liquidationPair.address,
-          config.relayerAddress,
-          amountOut,
-          BigNumber.from(0),
-        );
-      console.log('pop');
-      console.log('pop');
-      console.log('pop');
-      console.log(pop);
-      console.log(pop.data);
-      const to = await uniswapV2WethPairFlashLiquidatorContract.address;
-      const tx = wallet.sendTransaction({
-        to,
-        data: pop.data,
-      });
-      console.log(tx);
-      // console.log(tx.hash);
-
-      // profitFromFlashSwap =
-      //   await uniswapV2WethPairFlashLiquidatorContract.callStatic.flashSwapExactAmountOut(
-      //     liquidationPair.address,
-      //     // context.underlyingAssetToken.address,
-      //     config.relayerAddress,
-      //     amountOut,
-      //     BigNumber.from(0),
-      //   );
-
-      console.log('profitFromFlashSwap');
-      console.log(profitFromFlashSwap);
-    }
+    //   try {
+    //     wethFromFlashSwap =
+    //       await uniswapV2WethPairFlashLiquidatorContract.callStatic.flashSwapExactAmountOut(
+    //         liquidationPair.address,
+    //         config.relayerAddress,
+    //         amountOut,
+    //         BigNumber.from(0),
+    //       );
+    //   } catch (e) {
+    //     console.log(chalk.red(e));
+    //   }
+    //   console.log('wethFromFlashSwap');
+    //   console.log(wethFromFlashSwap);
+    //   console.log(wethFromFlashSwap.toString());
+    // }
 
     if (!context.underlyingAssetToken.assetRateUsd) {
-      const error = `Could not get underlying asset USD value to calculate profit with`;
+      const error = `Could not get received asset value (in $USD) to calculate profit with`;
       console.log(chalk.yellow(error));
 
       stats.push({
