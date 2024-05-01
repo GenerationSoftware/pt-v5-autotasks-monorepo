@@ -148,7 +148,7 @@ export const getLiquidatorContextMulticall = async (
 
   // 8. vault underlying asset (hard asset such as DAI or USDC) results
   let underlyingAssetAssetRateUsd;
-  if (tokenOutInAllowList) {
+  if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
       results['underlyingAsset-symbol'],
       underlyingAssetAddress,

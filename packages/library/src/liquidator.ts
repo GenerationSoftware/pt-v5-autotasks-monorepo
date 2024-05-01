@@ -1,5 +1,5 @@
 import { ethers, Contract, BigNumber, Signer } from 'ethers';
-import { Provider } from '@ethersproject/providers';
+import { Provider, TransactionResponse } from '@ethersproject/providers';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
@@ -35,6 +35,13 @@ interface SwapExactAmountOutParams {
   deadline: number;
 }
 
+interface FlashSwapExactAmountOutParams {
+  pair: string;
+  receiver: string;
+  swapAmountOut: BigNumber;
+  minProfit: BigNumber;
+}
+
 interface Stat {
   pair: string;
   estimatedProfitUsd: number;
@@ -53,15 +60,8 @@ export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {
-  const {
-    chainId,
-    provider,
-    wallet,
-    signer,
-    relayerAddress,
-    minProfitThresholdUsd,
-    covalentApiKey,
-  } = config;
+  const { chainId, provider, signer, relayerAddress, minProfitThresholdUsd, covalentApiKey } =
+    config;
   printSpacer();
 
   // TODO: REFACTOR - We see this in every bot:
@@ -135,7 +135,6 @@ export async function runLiquidator(
         context.tokenOut.symbol
       }' (CA: ${context.tokenOut.address.toLowerCase()}) not in token allow list`;
       console.log(chalk.yellow(error));
-      // console.log(chalk.yellow(`tokenOut is not in the allow list ❌`));
 
       stats.push({
         pair,
@@ -153,52 +152,6 @@ export async function runLiquidator(
     console.log(chalk.blue(`1. Amounts:`));
     const { amountOut } = await getAmountOut(liquidationPairContract, context);
 
-    // // 4. If this is an LP pair (with WETH on one side) query for the profit we
-    // //    could get from liquidating it
-    // let wethFromFlashSwap = BigNumber.from(0);
-    // if (context.isValidWethFlashLiquidationPair && amountOut.gt(0)) {
-    //   const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
-    //     UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
-    //     UniswapV2WethPairFlashLiquidatorAbi,
-    //     signer,
-    //   );
-
-    //   console.log({
-    //     liquidationPair: liquidationPair.address,
-    //     receiver: config.relayerAddress,
-    //     swapAmountOut: amountOut.toString(),
-    //     minProfit: BigNumber.from(0),
-    //   });
-
-    //   try {
-    //     wethFromFlashSwap =
-    //       await uniswapV2WethPairFlashLiquidatorContract.callStatic.flashSwapExactAmountOut(
-    //         liquidationPair.address,
-    //         config.relayerAddress,
-    //         amountOut,
-    //         BigNumber.from(0),
-    //       );
-    //   } catch (e) {
-    //     console.log(chalk.red(e));
-    //   }
-    //   console.log('wethFromFlashSwap');
-    //   console.log(wethFromFlashSwap);
-    //   console.log(wethFromFlashSwap.toString());
-    // }
-
-    if (!context.underlyingAssetToken.assetRateUsd) {
-      const error = `Could not get received asset value (in $USD) to calculate profit with`;
-      console.log(chalk.yellow(error));
-
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
-
     if (amountOut.eq(0)) {
       const error = `amountOut is 0`;
       console.log(chalk.yellow(error));
@@ -212,148 +165,268 @@ export async function runLiquidator(
       continue;
     }
 
-    const getAmountInValues = async () => {
+    // 4. Process if this an LP pair (with WETH on one side) we can
+    // liquidate via 'ETH' (or other native gas token) as input
+    let wethFromFlashSwap = BigNumber.from(0);
+    if (context.isValidWethFlashLiquidationPair) {
+      const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
+        UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
+        UniswapV2WethPairFlashLiquidatorAbi,
+        signer,
+      );
+
       try {
-        return getAmountIn(liquidationPairContract, context, amountOut);
+        wethFromFlashSwap =
+          await uniswapV2WethPairFlashLiquidatorContract.callStatic.flashSwapExactAmountOut(
+            liquidationPair.address,
+            config.relayerAddress,
+            amountOut,
+            BigNumber.from(0),
+          );
+
+        logBigNumber(
+          `WETH received from flash swap:`,
+          wethFromFlashSwap,
+          NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+          NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+        );
+      } catch (e) {
+        const error = `Could not get amount of WETH to calculate profit with.`;
+        console.log(chalk.yellow(error));
+
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
+
+      // 5. Find an estimated amount that gas will cost, and use wethFromFlashSwap as minProfit we expect
+      const flashSwapExactAmountOutParams: FlashSwapExactAmountOutParams = {
+        pair: liquidationPair.address,
+        receiver: swapRecipient,
+        swapAmountOut: amountOut,
+        minProfit: wethFromFlashSwap,
+      };
+
+      let avgFeeUsd = 0;
+      try {
+        avgFeeUsd = await getUniV2WethFlashSwapGasCost(
+          chainId,
+          uniswapV2WethPairFlashLiquidatorContract,
+          flashSwapExactAmountOutParams,
+          provider,
+        );
       } catch (e) {
         console.error(chalk.red(e));
 
-        console.log(chalk.yellow('---'));
-        console.log(chalk.yellow('Failed getting amount in!'));
-        console.log(chalk.yellow('---'));
+        const error = `Could not estimate gas cost`;
+        console.log(chalk.yellow(error));
+
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
       }
-    };
 
-    const { amountIn, amountInMax } = await getAmountInValues();
+      // 8. Decide if profitable or not
+      const { estimatedProfitUsd, profitable } = await calculateUniV2WethFlashSwapProfit(
+        config,
+        minProfitThresholdUsd,
+        wethFromFlashSwap,
+        avgFeeUsd,
+      );
+      if (!profitable) {
+        const error = `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`;
+        console.log(chalk.yellow(error));
 
-    if (amountIn.eq(0)) {
-      const error = `amountIn is 0`;
-      console.log(chalk.yellow(error));
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
 
-    // 5. Print balance of tokenIn for relayer
-    const sufficientBalance = await checkBalance(context, amountIn);
-
-    if (sufficientBalance) {
-      console.log(chalk.green('Sufficient balance ✔'));
+      // 9. Finally, populate tx when profitable
+      try {
+        const tx = await sendPopulatedUniV2WethFlashSwapTransaction(
+          config,
+          provider,
+          uniswapV2WethPairFlashLiquidatorContract,
+          flashSwapExactAmountOutParams,
+        );
+        stats.push({
+          pair,
+          estimatedProfitUsd,
+          txHash: tx.hash,
+        });
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
+        continue;
+      } catch (error) {
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error: error.message,
+        });
+        throw new Error(error);
+      }
     } else {
-      console.log(chalk.red('Insufficient balance ✗'));
+      // 5. Process a regular PT LiquidityPair
+      if (!context.underlyingAssetToken.assetRateUsd) {
+        const error = `Could not get tokenOut asset value (in $USD) to calculate profit with.`;
 
-      const diff = amountIn.sub(context.relayer.tokenInBalance);
-      const increaseAmount = ethers.utils.formatUnits(diff, context.tokenIn.decimals);
-      const error = `Relayer ${
-        context.tokenIn.symbol
-      } balance insufficient by ${roundTwoDecimalPlaces(Number(increaseAmount))}`;
-      console.log(
-        chalk.red(
-          `Increase relayer '${relayerAddress}' ${context.tokenIn.symbol} balance by ${increaseAmount}`,
-        ),
+        console.log(chalk.yellow(error));
+
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
+
+      const getAmountInValues = async () => {
+        try {
+          return getAmountIn(liquidationPairContract, context, amountOut);
+        } catch (e) {
+          console.error(chalk.red(e));
+          console.log(chalk.yellow('Failed getting amount in!'));
+        }
+      };
+      const { amountIn, amountInMax } = await getAmountInValues();
+
+      if (amountIn.eq(0)) {
+        const error = `amountIn is 0`;
+        console.log(chalk.yellow(error));
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
+
+      // 6. Print balance of tokenIn for relayer
+      const sufficientBalance = await checkBalance(context, amountIn);
+
+      if (sufficientBalance) {
+        console.log(chalk.green('Sufficient balance ✔'));
+      } else {
+        console.log(chalk.red('Insufficient balance ✗'));
+
+        const diff = amountIn.sub(context.relayer.tokenInBalance);
+        const increaseAmount = ethers.utils.formatUnits(diff, context.tokenIn.decimals);
+        const error = `Relayer ${
+          context.tokenIn.symbol
+        } balance insufficient by ${roundTwoDecimalPlaces(Number(increaseAmount))}`;
+        console.log(
+          chalk.red(
+            `Increase relayer '${relayerAddress}' ${context.tokenIn.symbol} balance by ${increaseAmount}`,
+          ),
+        );
+
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
+
+      // 7. Get allowance approval (necessary before upcoming static call)
+      //
+      await approve(amountIn, liquidationRouterContract, signer, relayerAddress, context);
+
+      // 8. Find an estimated amount that gas will cost
+      const swapExactAmountOutParams: SwapExactAmountOutParams = {
+        liquidationPairAddress: liquidationPair.address,
+        swapRecipient,
+        amountOut,
+        amountInMax,
+        deadline: Math.floor(Date.now() / 1000) + 100,
+      };
+
+      let avgFeeUsd = 0;
+      try {
+        avgFeeUsd = await getLiquidationRouterSwapExactAmountOutGasCost(
+          chainId,
+          liquidationRouterContract,
+          swapExactAmountOutParams,
+          provider,
+        );
+      } catch (e) {
+        console.error(chalk.red(e));
+
+        const error = `Could not estimate gas cost`;
+        console.log(chalk.yellow(error));
+
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
+
+      // 8. Decide if profitable or not
+      const { estimatedProfitUsd, profitable } = await calculateSwapExactAmountOutProfit(
+        context,
+        minProfitThresholdUsd,
+        amountIn,
+        amountOut,
+        avgFeeUsd,
       );
+      if (!profitable) {
+        const error = `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`;
+        console.log(chalk.yellow(error));
 
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error,
+        });
+        logNextPair(liquidationPair, liquidationPairContracts);
+        continue;
+      }
 
-    // 6. Get allowance approval (necessary before upcoming static call)
-    //
-    await approve(amountIn, liquidationRouterContract, signer, relayerAddress, context);
+      // 9. Finally, populate tx when profitable
+      try {
+        const tx = await sendPopulatedSwapExactAmountOutTransaction(
+          config,
+          provider,
+          liquidationRouterContract,
+          swapExactAmountOutParams,
+        );
 
-    // 7. Find an estimated amount that gas will cost
-    const swapExactAmountOutParams: SwapExactAmountOutParams = {
-      liquidationPairAddress: liquidationPair.address,
-      swapRecipient,
-      amountOut,
-      amountInMax,
-      deadline: Math.floor(Date.now() / 1000) + 100,
-    };
+        stats.push({
+          pair,
+          estimatedProfitUsd,
+          txHash: tx.hash,
+        });
 
-    let avgFeeUsd = 0;
-    try {
-      avgFeeUsd = await getGasCost(
-        chainId,
-        liquidationRouterContract,
-        swapExactAmountOutParams,
-        provider,
-      );
-    } catch (e) {
-      console.error(chalk.red(e));
-
-      const error = `Could not estimate gas cost`;
-      console.log(chalk.yellow(error));
-
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
-
-    // 8. Decide if profitable or not
-    const { estimatedProfitUsd, profitable } = await calculateProfit(
-      context,
-      minProfitThresholdUsd,
-      amountIn,
-      amountOut,
-      avgFeeUsd,
-    );
-    if (!profitable) {
-      const error = `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`;
-      console.log(chalk.yellow(error));
-
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error,
-      });
-      logNextPair(liquidationPair, liquidationPairContracts);
-      continue;
-    }
-
-    // 9. Finally, populate tx when profitable
-    try {
-      let populatedTx: PopulatedTransaction | undefined;
-      console.log(chalk.blue('6. Populating swap transaction ...'));
-
-      populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
-        ...Object.values(swapExactAmountOutParams),
-      );
-
-      const gasLimit = 750000;
-      const gasPrice = await provider.getGasPrice();
-      const tx = await sendPopulatedTx(wallet, populatedTx, gasLimit, gasPrice);
-
-      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-      stats.push({
-        pair,
-        estimatedProfitUsd,
-        txHash: tx.hash,
-      });
-
-      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-      await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
-    } catch (error) {
-      stats.push({
-        pair,
-        estimatedProfitUsd: 0,
-        error: error.message,
-      });
-      throw new Error(error);
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
+        continue;
+      } catch (error) {
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error: error.message,
+        });
+        throw new Error(error);
+      }
     }
   }
 
@@ -369,6 +442,58 @@ export async function runLiquidator(
     chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
   );
 }
+
+const sendPopulatedSwapExactAmountOutTransaction = async (
+  config: LiquidatorConfig,
+  provider: Provider,
+  liquidationRouterContract: Contract,
+  swapExactAmountOutParams: SwapExactAmountOutParams,
+): Promise<TransactionResponse> => {
+  let populatedTx: PopulatedTransaction | undefined;
+  console.log(chalk.blue('6. Populating swap transaction ...'));
+
+  populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
+    ...Object.values(swapExactAmountOutParams),
+  );
+
+  const gasLimit = 750000;
+  const gasPrice = await provider.getGasPrice();
+  const tx = await sendPopulatedTx(config.wallet, populatedTx, gasLimit, gasPrice);
+
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+  return tx;
+};
+
+const sendPopulatedUniV2WethFlashSwapTransaction = async (
+  config: LiquidatorConfig,
+  provider: Provider,
+  uniswapV2WethPairFlashLiquidatorContract: Contract,
+  flashSwapExactAmountOutParams: FlashSwapExactAmountOutParams,
+): Promise<TransactionResponse> => {
+  let populatedTx: PopulatedTransaction | undefined;
+  console.log(chalk.blue('6. Populating swap transaction ...'));
+
+  // Estimate gas limit from chain:
+  const estimatedGasLimit =
+    await uniswapV2WethPairFlashLiquidatorContract.estimateGas.flashSwapExactAmountOut(
+      ...Object.values(flashSwapExactAmountOutParams),
+    );
+
+  populatedTx =
+    await uniswapV2WethPairFlashLiquidatorContract.populateTransaction.flashSwapExactAmountOut(
+      ...Object.values(flashSwapExactAmountOutParams),
+    );
+
+  const gasPrice = await provider.getGasPrice();
+  const tx = await sendPopulatedTx(config.wallet, populatedTx, Number(estimatedGasLimit), gasPrice);
+
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+  return tx;
+};
 
 /**
  * Allowance - Give permission to the LiquidationRouter to spend our Relayer/SwapRecipient's
@@ -517,7 +642,7 @@ const checkBalance = async (
  * Calculates the amount of profit the bot will make on this swap and if it's profitable or not
  * @returns {Promise} Promise boolean of profitability
  */
-const calculateProfit = async (
+const calculateSwapExactAmountOutProfit = async (
   context: LiquidatorContext,
   minProfitThresholdUsd: number,
   amountIn: BigNumber,
@@ -572,10 +697,57 @@ const calculateProfit = async (
 };
 
 /**
+ * Calculates the amount of profit the bot will make on this swap and if it's profitable or not
+ * @returns {Promise} Promise boolean of profitability
+ */
+const calculateUniV2WethFlashSwapProfit = async (
+  config: LiquidatorConfig,
+  minProfitThresholdUsd: number,
+  wethFromFlashSwap: BigNumber,
+  avgFeeUsd: number,
+): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
+  printSpacer();
+  console.log(chalk.blue('3. Profit/Loss (USD):'));
+  printSpacer();
+
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(config.chainId);
+  const wethOutUsd =
+    parseFloat(
+      ethers.utils.formatUnits(
+        wethFromFlashSwap,
+        NETWORK_NATIVE_TOKEN_INFO[config.chainId].decimals,
+      ),
+    ) * nativeTokenMarketRateUsd;
+
+  const netProfitUsd = wethOutUsd - avgFeeUsd;
+  console.log(chalk.magenta('Net profit = Gross profit WETH Out (in $USD) - Gas fee (Average)'));
+  console.log(
+    chalk.greenBright(
+      `$${roundTwoDecimalPlaces(netProfitUsd)} = $${roundTwoDecimalPlaces(
+        wethOutUsd,
+      )} - $${roundTwoDecimalPlaces(avgFeeUsd)}`,
+    ),
+  );
+  printSpacer();
+
+  const profitable = netProfitUsd > minProfitThresholdUsd;
+  logTable({
+    MIN_PROFIT_THRESHOLD_USD: `$${minProfitThresholdUsd}`,
+    'Net profit (USD)': `$${roundTwoDecimalPlaces(netProfitUsd)}`,
+    'Profitable?': profitable ? '✔' : '✗',
+  });
+  printSpacer();
+
+  const estimatedProfitUsd = roundTwoDecimalPlaces(netProfitUsd);
+
+  return { estimatedProfitUsd, profitable };
+};
+
+/**
  * Get the gas cost for the tx
  * @returns {Promise} Promise with the maximum gas fee in USD
  */
-const getGasCost = async (
+const getLiquidationRouterSwapExactAmountOutGasCost = async (
   chainId: number,
   liquidationRouter: Contract,
   swapExactAmountOutParams: SwapExactAmountOutParams,
@@ -596,6 +768,58 @@ const getGasCost = async (
     ...Object.values(swapExactAmountOutParams),
   );
 
+  const { avgFeeUsd } = await getFeesUsd(
+    chainId,
+    estimatedGasLimit,
+    nativeTokenMarketRateUsd,
+    provider,
+    populatedTx.data,
+  );
+
+  logStringValue(
+    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    `$${nativeTokenMarketRateUsd}`,
+  );
+
+  logBigNumber(
+    'Estimated gas limit (wei):',
+    estimatedGasLimit,
+    18,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+  printSpacer();
+
+  logTable({ avgFeeUsd });
+
+  return avgFeeUsd;
+};
+
+/**
+ * Get the gas cost for the tx
+ * @returns {Promise} Promise with the maximum gas fee in USD
+ */
+const getUniV2WethFlashSwapGasCost = async (
+  chainId: number,
+  uniswapV2WethPairFlashLiquidatorContract: Contract,
+  flashSwapExactAmountOutParams: FlashSwapExactAmountOutParams,
+  provider: Provider,
+): Promise<number> => {
+  printSpacer();
+  console.log(chalk.blue('2. Current gas costs for transaction:'));
+  printSpacer();
+
+  // Estimate gas limit from chain:
+  const estimatedGasLimit =
+    await uniswapV2WethPairFlashLiquidatorContract.estimateGas.flashSwapExactAmountOut(
+      ...Object.values(flashSwapExactAmountOutParams),
+    );
+
+  const populatedTx =
+    await uniswapV2WethPairFlashLiquidatorContract.populateTransaction.flashSwapExactAmountOut(
+      ...Object.values(flashSwapExactAmountOutParams),
+    );
+
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,
