@@ -14,7 +14,7 @@ import {
   roundTwoDecimalPlaces,
   checkOrX,
 } from './utils/index.js';
-import { CHAIN_RNG_PAYMENT_AMOUNT_DIVISOR, NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
+import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,
@@ -215,13 +215,11 @@ const sendPopulatedStartDrawTransaction = async (
   let estimatedGasLimit: BigNumber;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    txParams = buildRngWitnetStartDrawTxParams(
-      config,
-      context,
-      drawAuctionContracts,
-      rewardRecipient,
-    );
-    estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
+    txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
+
+    // Witnet contracts on Optimism Mainnet do not work if you attempt to use estimate gas - You will
+    // get back 'too much reward' revert errors from the WitnetOracleV2 contract
+    estimatedGasLimit = BigNumber.from(700000);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -569,13 +567,11 @@ const getStartDrawGasCostUsd = async (
   let populatedTx: PopulatedTransaction;
   if (drawAuctionContracts.rngWitnetContract) {
     const contract: Contract = drawAuctionContracts.rngWitnetContract;
-    txParams = buildRngWitnetStartDrawTxParams(
-      config,
-      context,
-      drawAuctionContracts,
-      rewardRecipient,
-    );
-    estimatedGasLimit = await getRngWitnetStartDrawEstimatedGasLimit(contract, txParams);
+    txParams = buildRngWitnetStartDrawTxParams(context, drawAuctionContracts, rewardRecipient);
+
+    // Witnet contracts on Optimism Mainnet do not work if you attempt to use estimate gas - You will
+    // get back 'too much reward' revert errors from the WitnetOracleV2 contract
+    estimatedGasLimit = BigNumber.from(700000);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -632,17 +628,15 @@ const buildRngBlockhashStartDrawTxParams = (
  * @returns {RngWitnetStartDrawTxParams} The startDraw() tx parameters object
  */
 const buildRngWitnetStartDrawTxParams = (
-  config: DrawAuctionConfig,
   context: DrawAuctionContext,
   drawAuctionContracts: DrawAuctionContracts,
   rewardRecipient: string,
 ): RngWitnetStartDrawTxParams => {
-  const divisor = CHAIN_RNG_PAYMENT_AMOUNT_DIVISOR[config.chainId];
   return {
-    rngPaymentAmount: context.rngFeeEstimate.div(divisor),
+    rngPaymentAmount: context.rngFeeEstimate,
     drawManagerAddress: drawAuctionContracts.drawManagerContract.address,
     rewardRecipient,
-    value: context.rngFeeEstimate.div(divisor),
+    value: context.rngFeeEstimate,
   };
 };
 
