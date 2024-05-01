@@ -2,8 +2,8 @@ node_modules/
 npm-debug.log
 packages/*/dist
 packages/*/lib
-packages/*/.envrc
 packages/*/.envrc*
+packages/*/!.envrc.example
 .DS_Store
 .yalc
 yalc.lock
