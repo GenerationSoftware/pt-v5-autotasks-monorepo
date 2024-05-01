@@ -164,7 +164,9 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: underlyingAssetAssetRateUsd,
   };
 
+  const relayerNativeTokenBalance = await provider.getBalance(relayerAddress);
   const relayer: LiquidatorRelayerContext = {
+    nativeTokenBalance: relayerNativeTokenBalance,
     tokenInBalance: BigNumber.from(results['tokenIn-balanceOf']),
     tokenInAllowance: BigNumber.from(results['tokenIn-allowance']),
   };

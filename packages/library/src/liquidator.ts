@@ -124,7 +124,7 @@ export async function runLiquidator(
     );
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
-    printContext(context);
+    printContext(config, context);
     printSpacer();
 
     const tokenOutInAllowList = context.tokenOutInAllowList;
@@ -458,7 +458,7 @@ const getLiquidationContracts = async (
   return { liquidationRouterContract, liquidationPairContracts };
 };
 
-const printContext = (context) => {
+const printContext = (config: LiquidatorConfig, context: LiquidatorContext) => {
   console.log(chalk.blue(`Pair Symbol:  ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
   printSpacer();
 
@@ -474,6 +474,12 @@ const printContext = (context) => {
     printSpacer();
   }
 
+  logBigNumber(
+    `Relayer ${NETWORK_NATIVE_TOKEN_INFO[config.chainId].symbol} balance:`,
+    context.relayer.nativeTokenBalance,
+    NETWORK_NATIVE_TOKEN_INFO[config.chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[config.chainId].symbol,
+  );
   logBigNumber(
     `Relayer ${context.tokenIn.symbol} balance:`,
     context.relayer.tokenInBalance,

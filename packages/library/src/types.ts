@@ -5,6 +5,7 @@ import { TierPrizeData } from '@generationsoftware/pt-v5-utils-js';
 import { DrawAuctionState } from './utils/getDrawAuctionContextMulticall.js';
 
 export interface LiquidatorRelayerContext {
+  nativeTokenBalance: BigNumber;
   tokenInAllowance: BigNumber;
   tokenInBalance: BigNumber;
 }
