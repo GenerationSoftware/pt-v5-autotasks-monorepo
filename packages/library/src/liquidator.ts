@@ -389,41 +389,43 @@ const processUniV2WethLPPair = async (
     // continue;
   }
 
-  // 8. Decide if profitable or not
-  const { estimatedProfitUsd, profitable } = await calculateUniV2WethFlashSwapProfit(
-    config,
-    minProfitThresholdUsd,
-    wethFromFlashSwap,
-    avgFeeUsd,
-  );
-  if (!profitable) {
-    logNotProfitableTrade(context, liquidationPairContract, liquidationPairContracts);
-    // continue;
-  }
-
-  // 9. Finally, populate tx when profitable
-  try {
-    const tx = await sendPopulatedUniV2WethFlashSwapTransaction(
+  if (avgFeeUsd > 0) {
+    // 8. Decide if profitable or not
+    const { estimatedProfitUsd, profitable } = await calculateUniV2WethFlashSwapProfit(
       config,
-      provider,
-      uniswapV2WethPairFlashLiquidatorContract,
-      flashSwapExactAmountOutParams,
+      minProfitThresholdUsd,
+      wethFromFlashSwap,
+      avgFeeUsd,
     );
-    stats.push({
-      pair,
-      estimatedProfitUsd,
-      txHash: tx.hash,
-    });
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
-    // continue;
-  } catch (error) {
-    stats.push({
-      pair,
-      estimatedProfitUsd: 0,
-      error: error.message,
-    });
-    throw new Error(error);
+    if (!profitable) {
+      logNotProfitableTrade(context, liquidationPairContract, liquidationPairContracts);
+      // continue;
+    } else {
+      // 9. Finally, populate tx when profitable
+      try {
+        const tx = await sendPopulatedUniV2WethFlashSwapTransaction(
+          config,
+          provider,
+          uniswapV2WethPairFlashLiquidatorContract,
+          flashSwapExactAmountOutParams,
+        );
+        stats.push({
+          pair,
+          estimatedProfitUsd,
+          txHash: tx.hash,
+        });
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
+        // continue;
+      } catch (error) {
+        stats.push({
+          pair,
+          estimatedProfitUsd: 0,
+          error: error.message,
+        });
+        throw new Error(error);
+      }
+    }
   }
 };
 
@@ -558,32 +560,32 @@ const processSingleTokenPair = async (
         if (!profitable) {
           logNotProfitableTrade(context, liquidationPairContract, liquidationPairContracts);
           // continue;
-        }
+        } else {
+          // 9. Finally, populate tx when profitable
+          try {
+            const tx = await sendPopulatedSwapExactAmountOutTransaction(
+              config,
+              provider,
+              liquidationRouterContract,
+              swapExactAmountOutParams,
+            );
 
-        // 9. Finally, populate tx when profitable
-        try {
-          const tx = await sendPopulatedSwapExactAmountOutTransaction(
-            config,
-            provider,
-            liquidationRouterContract,
-            swapExactAmountOutParams,
-          );
+            stats.push({
+              pair,
+              estimatedProfitUsd,
+              txHash: tx.hash,
+            });
 
-          stats.push({
-            pair,
-            estimatedProfitUsd,
-            txHash: tx.hash,
-          });
-
-          const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-          await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
-        } catch (error) {
-          stats.push({
-            pair,
-            estimatedProfitUsd: 0,
-            error: error.message,
-          });
-          throw new Error(error);
+            const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+            await delay(3000); // sleep due to nonce re-use issues (ie. too many tx's sent at once)
+          } catch (error) {
+            stats.push({
+              pair,
+              estimatedProfitUsd: 0,
+              error: error.message,
+            });
+            throw new Error(error);
+          }
         }
       }
     }
