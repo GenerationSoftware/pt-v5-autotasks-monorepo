@@ -6,7 +6,6 @@ import {
 } from '@generationsoftware/pt-v5-utils-js';
 
 import { TpdaLiquidationPairAbi } from '../abis/TpdaLiquidationPairAbi.js';
-// import { LiquidationPairAbi } from '../abis/LiquidationPairAbi.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
