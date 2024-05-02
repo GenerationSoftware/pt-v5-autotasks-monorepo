@@ -5,7 +5,8 @@ import {
   getEthersMulticallProviderResults,
 } from '@generationsoftware/pt-v5-utils-js';
 
-import { LiquidationPairAbi } from '../abis/LiquidationPairAbi.js';
+import { TpdaLiquidationPairAbi } from '../abis/TpdaLiquidationPairAbi.js';
+// import { LiquidationPairAbi } from '../abis/LiquidationPairAbi.js';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
@@ -54,7 +55,7 @@ export const getLiquidationPairsMulticall = async (
     const liquidationPair = results[`allPairs-${i}`];
     const liquidationPairContract = new ethers.Contract(
       liquidationPair,
-      LiquidationPairAbi,
+      TpdaLiquidationPairAbi,
       multicallProvider,
     );
     liquidationPairContracts.push(liquidationPairContract);
