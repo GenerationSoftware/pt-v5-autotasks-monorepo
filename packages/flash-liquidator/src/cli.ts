@@ -25,20 +25,17 @@ if (esMain(import.meta)) {
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const config: FlashLiquidatorConfig = {
+  const flashLiquidatorConfig: FlashLiquidatorConfig = {
     ...relayerAccount,
     chainId: envVars.CHAIN_ID,
     provider,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,
     swapRecipient: envVars.SWAP_RECIPIENT,
+    contractJsonUrl: envVars.CONTRACT_JSON_URL,
   };
 
-  try {
-    await runFlashLiquidator(config);
-  } catch (error) {
-    throw new Error(error);
-  }
+  await runFlashLiquidator(flashLiquidatorConfig);
 }
 
 export function main() {}

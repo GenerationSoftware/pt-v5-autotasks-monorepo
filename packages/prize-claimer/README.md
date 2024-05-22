@@ -44,13 +44,15 @@ direnv allow
 
 ```sh
 CHAIN_ID: The chain ID of which network to run the autotask on
-JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+JSON_RPC_URL: Your Infura/Alchemy/etc JSON RPC URL
 COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
 MIN_PROFIT_THRESHOLD_USD: the minimum (in USD) you want to profit from each swap (ie. 1 is $1.00)
 CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
+CONTRACT_JSON_URL: the URL of the JSON file where the contract addresses and ABIs live (typically a commit on GitHub)
 
 ### PRIZE CLAIMER SPECIFIC:
 
+SUBGRAPH_URL: the Subgraph API URL to use for gathering prize vaults and depositors data
 REWARD_RECIPIENT: Address of the account that will receive the profit for claiming prizes on other's behalf, can be any other contract/EOA address or if blank sets recipient to be the relayer address
 
 ```

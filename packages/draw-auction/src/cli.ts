@@ -33,15 +33,11 @@ if (esMain(import.meta)) {
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,
     rewardRecipient: envVars.REWARD_RECIPIENT,
+    contractJsonUrl: envVars.CONTRACT_JSON_URL,
   };
 
-  try {
-    const rngContracts = await downloadContractsBlob(drawAuctionConfig.chainId, nodeFetch);
-
-    await runDrawAuction(rngContracts, drawAuctionConfig);
-  } catch (e) {
-    console.error(e);
-  }
+  const contracts = await downloadContractsBlob(drawAuctionConfig.contractJsonUrl, nodeFetch);
+  await runDrawAuction(contracts, drawAuctionConfig);
 }
 
 export function main() {}

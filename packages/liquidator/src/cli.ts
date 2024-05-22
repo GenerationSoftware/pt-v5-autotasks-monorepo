@@ -26,7 +26,7 @@ if (esMain(import.meta)) {
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const config: LiquidatorConfig = {
+  const liquidatorConfig: LiquidatorConfig = {
     ...relayerAccount,
     chainId: envVars.CHAIN_ID,
     provider,
@@ -34,14 +34,14 @@ if (esMain(import.meta)) {
     covalentApiKey: envVars.COVALENT_API_KEY,
     swapRecipient: envVars.SWAP_RECIPIENT,
     envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
+    contractJsonUrl: envVars.CONTRACT_JSON_URL,
   };
 
-  // try {
-  const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
-  await runLiquidator(contracts, config);
-  // } catch (error) {
-  //   throw new Error(error);
-  // }
+  const contracts: ContractsBlob = await downloadContractsBlob(
+    liquidatorConfig.contractJsonUrl,
+    nodeFetch,
+  );
+  await runLiquidator(contracts, liquidatorConfig);
 }
 
 export function main() {}

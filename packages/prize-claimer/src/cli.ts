@@ -27,21 +27,22 @@ if (esMain(import.meta)) {
     envVars.CUSTOM_RELAYER_PRIVATE_KEY,
   );
 
-  const config: PrizeClaimerConfig = {
+  const prizeClaimerConfig: PrizeClaimerConfig = {
     ...relayerAccount,
     chainId: envVars.CHAIN_ID,
     provider,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,
     rewardRecipient: envVars.REWARD_RECIPIENT,
+    subgraphUrl: envVars.SUBGRAPH_URL,
+    contractJsonUrl: envVars.CONTRACT_JSON_URL,
   };
 
-  try {
-    const contracts: ContractsBlob = await downloadContractsBlob(config.chainId, nodeFetch);
-    await runPrizeClaimer(contracts, config);
-  } catch (e) {
-    console.error(e);
-  }
+  const contracts: ContractsBlob = await downloadContractsBlob(
+    prizeClaimerConfig.contractJsonUrl,
+    nodeFetch,
+  );
+  await runPrizeClaimer(contracts, prizeClaimerConfig);
 }
 
 export function main() {}

@@ -1,9 +1,10 @@
-export CHAIN_ID='The chain ID of which network to run the autotask on'
-export JSON_RPC_URI='Your Infura/Alchemy/etc JSON RPC URI'
-export COVALENT_API_KEY='(Optional) Your Covalent API key for getting USD values of tokens'
-export MIN_PROFIT_THRESHOLD_USD='The amount of profit you want to make per transaction in USD'
-export CUSTOM_RELAYER_PRIVATE_KEY='Your own EOA private key to use to relay transactions'
+export CHAIN_ID=''
+export JSON_RPC_URL=''
+export COVALENT_API_KEY=''
+export MIN_PROFIT_THRESHOLD_USD=''
+export CUSTOM_RELAYER_PRIVATE_KEY=''
+export CONTRACT_JSON_URL=''
 
 ### DRAW AUCTION SPECIFIC:
 
-export REWARD_RECIPIENT='Address of the contract/EOA account that will receive the profit for starting and relaying the RNG'
+export REWARD_RECIPIENT=''

@@ -71,7 +71,7 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   config: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, wallet, provider, relayerAddress } = config;
+  const { chainId, covalentApiKey, wallet, provider, relayerAddress, subgraphUrl } = config;
   printSpacer();
 
   // TODO: REFACTOR - We see this in every bot:
@@ -131,7 +131,7 @@ export async function runPrizeClaimer(
 
   printAsterisks();
   console.log(chalk.dim(`Getting prize vaults ...`));
-  const prizeVaults = await getSubgraphPrizeVaults(chainId);
+  const prizeVaults = await getSubgraphPrizeVaults(subgraphUrl);
   console.log(chalk.dim(`Found ${prizeVaults.length} prize vaults.`));
   printSpacer();
 

@@ -48,10 +48,12 @@ export interface AutotaskConfig {
   wallet: Wallet;
   relayerAddress: string;
   signer: Signer;
+  contractJsonUrl: string;
   covalentApiKey?: string;
 }
 
 export interface PrizeClaimerConfig extends AutotaskConfig {
+  subgraphUrl: string;
   rewardRecipient?: string;
 }
 
@@ -85,15 +87,11 @@ export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
-  JSON_RPC_URI: string;
+  JSON_RPC_URL: string;
   MIN_PROFIT_THRESHOLD_USD: string;
   CUSTOM_RELAYER_PRIVATE_KEY: string;
+  CONTRACT_JSON_URL: string;
   COVALENT_API_KEY?: string;
-  ARBITRUM_JSON_RPC_URI?: string;
-  OPTIMISM_JSON_RPC_URI?: string;
-  ARBITRUM_SEPOLIA_JSON_RPC_URI?: string;
-  OPTIMISM_SEPOLIA_JSON_RPC_URI?: string;
-  OPTIMISM_GOERLI_JSON_RPC_URI?: string;
 }
 
 export interface DrawAuctionEnvVars extends AutotaskEnvVars {
@@ -111,6 +109,7 @@ export interface LiquidatorEnvVars extends SharedLiquidatorEnvVars {
 export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
 
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
+  SUBGRAPH_URL: string;
   REWARD_RECIPIENT: string;
 }
 

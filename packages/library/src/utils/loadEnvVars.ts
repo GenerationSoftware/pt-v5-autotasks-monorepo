@@ -11,22 +11,30 @@ export const loadEnvVars = (): AutotaskEnvVars => {
   console.log('');
   console.log(chalk.blue(`Operating on: ${chainName(chainId)}`));
 
-  let covalentApiKey = process.env.COVALENT_API_KEY;
-  let customRelayerPrivateKey = process.env.CUSTOM_RELAYER_PRIVATE_KEY;
-  let jsonRpcUri = process.env.JSON_RPC_URI;
+  const covalentApiKey = process.env.COVALENT_API_KEY;
+  const customRelayerPrivateKey = process.env.CUSTOM_RELAYER_PRIVATE_KEY;
+  const jsonRpcUrl = process.env.JSON_RPC_URL;
+  const contractJsonUrl = process.env.CONTRACT_JSON_URL;
 
-  if (!chainId || !minProfitThresholdUsd || !customRelayerPrivateKey || !jsonRpcUri) {
+  if (
+    !chainId ||
+    !minProfitThresholdUsd ||
+    !customRelayerPrivateKey ||
+    !jsonRpcUrl ||
+    !contractJsonUrl
+  ) {
     const message =
-      'Error: Unable to find necessary environment variables, please ensure your environment is set up correctly with COVALENT_API_KEY, JSON_RPC_URI and CUSTOM_RELAYER_PRIVATE_KEY variables. Refer to the README for more info.';
+      'Error: Unable to find necessary environment variables, please ensure your environment is set up correctly with COVALENT_API_KEY, JSON_RPC_URL, CUSTOM_RELAYER_PRIVATE_KEY, and CONTRACT_JSON_URL variables. Refer to the README for more info.';
     console.log(chalk.red(message));
     throw new Error(message);
   }
 
   return {
     CHAIN_ID: Number(chainId),
-    JSON_RPC_URI: jsonRpcUri || process.env.JSON_RPC_URI,
+    JSON_RPC_URL: jsonRpcUrl || process.env.JSON_RPC_URL,
     MIN_PROFIT_THRESHOLD_USD: minProfitThresholdUsd,
     COVALENT_API_KEY: covalentApiKey,
     CUSTOM_RELAYER_PRIVATE_KEY: customRelayerPrivateKey,
+    CONTRACT_JSON_URL: contractJsonUrl,
   };
 };
