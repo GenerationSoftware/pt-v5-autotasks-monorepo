@@ -724,11 +724,14 @@ const getLiquidationContracts = async (
     contractsVersion,
   );
 
-  const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
-    UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
-    UniswapV2WethPairFlashLiquidatorAbi,
-    signer,
-  );
+  let uniswapV2WethPairFlashLiquidatorContract;
+  if (UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId]) {
+    uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
+      UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
+      UniswapV2WethPairFlashLiquidatorAbi,
+      signer,
+    );
+  }
 
   return {
     uniswapV2WethPairFlashLiquidatorContract,

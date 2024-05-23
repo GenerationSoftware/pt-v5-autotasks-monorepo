@@ -33,10 +33,14 @@ export const KNOWN_TOKENS = {
     USDC: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
     DAI: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb',
     LUSD: '0x368181499736d0c0cc614dbb145e2ec1ac86b8c6',
-    PRZUSDC: '',
-    PRZWETH: '',
-    PRZDAI: '',
-    PRZLUSD: '',
+    WELL: '0xa88594d404727625a9437c3f886c7643872296ae',
+    USDA: '0x0000206329b97DB379d5E1Bf586BbDB969C63274',
+    PRZUSDC: '0x7f5c2b379b88499ac2b997db583f8079503f25b9',
+    PRZAERO: '0x940181a94a35a4569e4529a3cdfb74e38fd98631',
+    PRZCBETH: '0x5b623c127254c6fec04b492ecdf4b11c45fbb9d5',
+    PRZWSTETH: '0x75d700f4c21528a2bb603b6ed899acfde5c4b086',
+    PRZPOOLLUSD: '0x850ec48d2605aad9c3de345a6a357a9a14b8cf1b',
+    PRZUSDA: '0x6bb041d7e70b7040611ef688b5e707a799ade60a',
   },
   [CHAIN_IDS.arbitrum]: {
     POOL: '0xcf934e2402a5e072928a39a956964eb8f2b5b79c',
@@ -110,7 +114,11 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
     KNOWN_TOKENS[CHAIN_IDS.optimism].PRZWSTETHETH.toLowerCase(),
     KNOWN_TOKENS[CHAIN_IDS.optimism].PRZPOOLWETH.toLowerCase(),
   ],
-  [CHAIN_IDS.base]: [],
+  [CHAIN_IDS.base]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.base]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
   [CHAIN_IDS.arbitrum]: [],
   [CHAIN_IDS.baseSepolia]: [
     KNOWN_TOKENS[CHAIN_IDS.baseSepolia].POOL.toLowerCase(),
@@ -125,9 +133,9 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
     KNOWN_TOKENS[CHAIN_IDS.baseSepolia].PWETH.toLowerCase(),
   ],
   [CHAIN_IDS.arbitrumSepolia]: [
-    ...Object.values(
-      KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia]
-    ).map(tokenAddress => tokenAddress.toLowerCase())
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
   ],
   [CHAIN_IDS.sepolia]: [],
   [CHAIN_IDS.optimismSepolia]: [
