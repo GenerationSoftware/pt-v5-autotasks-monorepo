@@ -10,6 +10,18 @@ export const MARKET_RATE_CONTRACT_DECIMALS = 8;
 
 const GAS_PRICE_ORACLE_ADDRESS = '0x420000000000000000000000000000000000000F';
 
+const CHAIN_IDS_TO_COVALENT_LOOKUP = {
+  [CHAIN_IDS.mainnet]: 'eth-mainnet',
+  [CHAIN_IDS.arbitrum]: 'arbitrum-mainnet',
+  [CHAIN_IDS.optimism]: 'optimism-mainnet',
+  [CHAIN_IDS.base]: 'base-mainnet',
+  [CHAIN_IDS.arbitrumSepolia]: 'arbitrum-sepolia',
+  [CHAIN_IDS.sepolia]: 'eth-sepolia',
+  [CHAIN_IDS.optimismSepolia]: 'optimism-sepolia',
+  [CHAIN_IDS.baseSepolia]: 'base-sepolia-testnet',
+};
+
+// TODO: Find a way to remove this:
 const SYMBOL_TO_COINGECKO_LOOKUP = {
   POOL: 'pooltogether',
   LINK: 'chainlink',
@@ -19,11 +31,14 @@ const SYMBOL_TO_COINGECKO_LOOKUP = {
   DAI: 'dai',
   GUSD: 'gemini-dollar',
   OP: 'optimism',
+  USDA: 'angle-usd',
+  wstETH: 'wrapped-steth',
 };
 
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 
 const marketRates = {};
+const nativeTokenRates = {};
 
 /**
  * Get the current feeData from chain (currently unused as it was less accurate than getGasPrice)
@@ -89,6 +104,17 @@ export const getFeesUsd = async (
   return { avgFeeUsd };
 };
 
+const NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP = {
+  [CHAIN_IDS.mainnet]: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+  [CHAIN_IDS.arbitrum]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+  [CHAIN_IDS.optimism]: '0x4200000000000000000000000000000000000006',
+  [CHAIN_IDS.base]: '0x4200000000000000000000000000000000000006',
+  [CHAIN_IDS.sepolia]: '',
+  [CHAIN_IDS.arbitrumSepolia]: '',
+  [CHAIN_IDS.optimismSepolia]: '',
+  [CHAIN_IDS.baseSepolia]: '',
+};
+
 /**
  * Gets the current USD value of Native Gas Token for Current Chain
  *
@@ -99,9 +125,13 @@ export const getNativeTokenMarketRateUsd = async (
   covalentApiKey?: string,
 ): Promise<number> => {
   const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[chainId].symbol;
-  const tokenAddress = tokenSymbol === 'ETH' ? '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' : '';
+  const tokenAddress =
+    tokenSymbol === 'ETH' ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId] : '';
 
-  return await getEthMainnetTokenMarketRateUsd(tokenSymbol, tokenAddress, covalentApiKey);
+  console.log('NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId]');
+  console.log(NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId]);
+
+  return await getEthMainnetTokenMarketRateUsd(chainId, tokenSymbol, tokenAddress, covalentApiKey);
 };
 
 /**
@@ -109,6 +139,7 @@ export const getNativeTokenMarketRateUsd = async (
  * @returns {number} tokenRateUsd
  */
 export const getEthMainnetTokenMarketRateUsd = async (
+  chainId: number,
   symbol: string,
   tokenAddress?: string,
   covalentApiKey?: string,
@@ -122,7 +153,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
   try {
     if (Boolean(covalentApiKey)) {
       if (Boolean(tokenAddress)) {
-        marketRateUsd = await getCovalentMarketRateUsd(tokenAddress, covalentApiKey);
+        marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
       } else {
         console.log(
           chalk.yellow(
@@ -137,6 +168,10 @@ export const getEthMainnetTokenMarketRateUsd = async (
 
   try {
     if (!marketRateUsd) {
+      console.log(chalk.red('Could not get from Covalent,'));
+      console.log(chalk.red('falling back to coingecko,'));
+      console.log(chalk.red(','));
+      console.log(chalk.white(symbol));
       marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
     }
   } catch (err) {
@@ -148,10 +183,77 @@ export const getEthMainnetTokenMarketRateUsd = async (
   return marketRateUsd;
 };
 
+/**
+ * Finds the spot price of the native (gas) token in USD
+ * @returns {number} marketRateUsd
+ */
+// export const getNativeTokenMarketRateUsd = async (
+//   chainId: number,
+//   covalentApiKey?: string,
+// ): Promise<number> => {
+//   // memoization
+//   if (nativeTokenRates[chainId]) {
+//     console.log('memoization hit@');
+//     console.log('memoization hit@');
+//     console.log('memoization hit@');
+//     console.log('memoization hit@');
+//     return nativeTokenRates[chainId];
+//   }
+
+//   let marketRateUsd;
+//   try {
+//     marketRateUsd = await getCovalentGasPriceUsd(chainId, covalentApiKey);
+//     // https://api.covalenthq.com/v1/{chainName}/event/nativetokens/gas_prices/
+//   } catch (err) {
+//     console.log(err);
+//   }
+
+//   nativeTokenRates[chainId] = marketRateUsd;
+
+//   return marketRateUsd;
+// };
+
+// export const getCovalentGasPriceUsd = async (
+//   chainId: number,
+//   covalentApiKey: string,
+// ): Promise<number> => {
+//   let rateUsd;
+
+//   try {
+//     const url = new URL(
+//       `${COVALENT_API_URL}/pricing/historical_by_addresses_v2/${CHAIN_IDS_TO_COVALENT_LOOKUP[chainId]}/usd/${address}/`,
+//     );
+//     url.searchParams.set('key', covalentApiKey);
+//     url.searchParams.set('from', getDateXDaysAgo(3));
+//     const response = await fetch(url.toString());
+
+//     if (!response.ok) {
+//       console.log(
+//         chalk.yellow(
+//           chalk.yellow(`Unable to fetch gas prices for native token USD value from Covalent.`),
+//         ),
+//       );
+//       throw new Error(response.statusText);
+//     }
+
+//     const data = (await response.json()).data;
+
+//     rateUsd = data.gas_quote_rate;
+//   } catch (err) {
+//     console.log(err);
+//     console.log(
+//       chalk.yellow(`Unable to fetch gas prices for native token USD value from Covalent.`),
+//     );
+//   }
+
+//   return rateUsd;
+// };
+
 export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number> => {
   const coingeckoTicker = SYMBOL_TO_COINGECKO_LOOKUP[symbol];
   const uri = `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoTicker}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=false`;
 
+  console.log(uri);
   let marketRate;
   try {
     const response = await fetch(uri);
@@ -171,16 +273,21 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
 };
 
 export const getCovalentMarketRateUsd = async (
+  chainId: number,
   tokenAddress: string,
   covalentApiKey: string,
 ): Promise<number> => {
-  const address = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress.toLowerCase()];
+  // const lookupAddress = ADDRESS_TO_COVALENT_LOOKUP[tokenAddress.toLowerCase()];
+  // console.log('lookupAddress');
+  // console.log(lookupAddress);
+  const address = tokenAddress.toLowerCase();
+  // const address = lookupAddress ? lookupAddress : tokenAddress.toLowerCase();
 
   let rateUsd;
   if (address) {
     try {
       const url = new URL(
-        `${COVALENT_API_URL}/pricing/historical_by_addresses_v2/eth-mainnet/usd/${address}/`,
+        `${COVALENT_API_URL}/pricing/historical_by_addresses_v2/${CHAIN_IDS_TO_COVALENT_LOOKUP[chainId]}/usd/${address}/`,
       );
       url.searchParams.set('key', covalentApiKey);
       url.searchParams.set('from', getDateXDaysAgo(3));

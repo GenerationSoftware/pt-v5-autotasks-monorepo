@@ -110,6 +110,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     );
 
     const context: FlashLiquidatorContext = await getFlashLiquidatorContextMulticall(
+      chainId,
       liquidationPairContract,
       provider,
       covalentApiKey,

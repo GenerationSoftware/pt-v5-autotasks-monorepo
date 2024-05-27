@@ -254,7 +254,7 @@ export async function runLiquidator(
     printAsterisks();
     printSpacer();
     const liquidationPairContract = liquidationPairContracts[i];
-    console.log(`LiquidationPair #${i + 1}`);
+    console.log(`LiquidationPair ${i}`);
     printSpacer();
     console.log(chalk.blue(`Pair Address: ${liquidationPairContract.address}`));
 
@@ -271,12 +271,16 @@ export async function runLiquidator(
     printSpacer();
 
     const tokenOutInAllowList = context.tokenOutInAllowList;
-    if (!tokenOutInAllowList) {
-      logAllowList(context, liquidationPairContract, liquidationPairContracts);
-      continue;
-    }
+    const isValidWethFlashLiquidationPair = context.isValidWethFlashLiquidationPair;
 
-    console.log(`tokenOut is in the allow list! 👍`);
+    if (!isValidWethFlashLiquidationPair) {
+      if (!tokenOutInAllowList) {
+        logAllowList(context, liquidationPairContract, liquidationPairContracts);
+        continue;
+      }
+
+      console.log(`tokenOut is in the allow list! 👍`);
+    }
     printSpacer();
     printSpacer();
 
@@ -290,7 +294,7 @@ export async function runLiquidator(
     }
 
     // 4. Continue for each type to see if a transaction should be sent
-    if (context.isValidWethFlashLiquidationPair) {
+    if (isValidWethFlashLiquidationPair) {
       await processUniV2WethLPPair(
         config,
         context,

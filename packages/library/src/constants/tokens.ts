@@ -26,6 +26,7 @@ export const KNOWN_TOKENS = {
     PRZLUSD: '0x1f16d3ccf568e96019cedc8a2c79d2ca6257894e',
     PRZWSTETHETH: '0x9b4c0de59628c64b02d7ce86f21db9a579539d5a',
     PRZPOOLWETH: '0x9b53ef6f13077727d22cb4acad1119c79a97be17',
+    PRZVAMMV2USDCOP: '0x182d3050f7261494757638ff3345c7163e5990f3',
   },
   [CHAIN_IDS.base]: {
     POOL: '0xd652c5425aea2afd5fb142e120fecf79e18fafc3',
@@ -33,10 +34,11 @@ export const KNOWN_TOKENS = {
     USDC: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
     DAI: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb',
     LUSD: '0x368181499736d0c0cc614dbb145e2ec1ac86b8c6',
+    AERO: '0x940181a94a35a4569e4529a3cdfb74e38fd98631',
     WELL: '0xa88594d404727625a9437c3f886c7643872296ae',
     USDA: '0x0000206329b97DB379d5E1Bf586BbDB969C63274',
     PRZUSDC: '0x7f5c2b379b88499ac2b997db583f8079503f25b9',
-    PRZAERO: '0x940181a94a35a4569e4529a3cdfb74e38fd98631',
+    PRZAERO: '0x8d1322CaBe5Ef2949f6bf4941Cc7765187C1091A',
     PRZCBETH: '0x5b623c127254c6fec04b492ecdf4b11c45fbb9d5',
     PRZWSTETH: '0x75d700f4c21528a2bb603b6ed899acfde5c4b086',
     PRZPOOLLUSD: '0x850ec48d2605aad9c3de345a6a357a9a14b8cf1b',
@@ -100,19 +102,9 @@ export const KNOWN_TOKENS = {
 export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   [CHAIN_IDS.mainnet]: [],
   [CHAIN_IDS.optimism]: [
-    KNOWN_TOKENS[CHAIN_IDS.optimism].POOL.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].WETH.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].USDC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].USDCE.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].DAI.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].LUSD.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].OP.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZUSDC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZWETH.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZDAI.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZLUSD.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZWSTETHETH.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimism].PRZPOOLWETH.toLowerCase(),
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.optimism]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
   ],
   [CHAIN_IDS.base]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.base]).map((tokenAddress) =>
@@ -121,16 +113,9 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   ],
   [CHAIN_IDS.arbitrum]: [],
   [CHAIN_IDS.baseSepolia]: [
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].POOL.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].WBTC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].WETH.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].USDC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].DAI.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].PDAI.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].PUSDC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].PGUSD.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].PWBTC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.baseSepolia].PWETH.toLowerCase(),
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.baseSepolia]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
   ],
   [CHAIN_IDS.arbitrumSepolia]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia]).map((tokenAddress) =>
@@ -139,16 +124,9 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   ],
   [CHAIN_IDS.sepolia]: [],
   [CHAIN_IDS.optimismSepolia]: [
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].POOL.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].WBTC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].WETH.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].USDC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].DAI.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PDAI.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PUSDC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PGUSD.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PWBTC.toLowerCase(),
-    KNOWN_TOKENS[CHAIN_IDS.optimismSepolia].PWETH.toLowerCase(),
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.optimismSepolia]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
   ],
 };
 
@@ -161,6 +139,7 @@ const arbitrumSepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia];
 const sepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.sepolia];
 const optimismSepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.optimismSepolia];
 
+// TODO: Find a way to remove this:
 export const ADDRESS_TO_COVALENT_LOOKUP = {
   [mainnetTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [optimismTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),

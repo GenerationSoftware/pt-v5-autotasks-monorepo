@@ -112,6 +112,7 @@ export async function runPrizeClaimer(
   printSpacer();
   console.log(chalk.dim('Starting ...'));
   const context: ClaimPrizeContext = await getContext(
+    chainId,
     contracts,
     prizePoolContract,
     provider,
@@ -408,6 +409,7 @@ const logClaims = (claims: Claim[]) => {
  * @returns {Promise} Promise of a ClaimPrizeContext object
  */
 const getContext = async (
+  chainId: number,
   contracts: ContractsBlob,
   prizePool: Contract,
   provider: Provider,
@@ -435,6 +437,7 @@ const getContext = async (
   const prizeToken: TokenWithRate = {
     ...prizeTokenBasic,
     assetRateUsd: await getEthMainnetTokenMarketRateUsd(
+      chainId,
       prizeTokenBasic.symbol,
       prizeTokenBasic.address,
       covalentApiKey,

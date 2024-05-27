@@ -43,6 +43,8 @@ export const getLiquidatorContextMulticall = async (
   relayerAddress: string,
   covalentApiKey?: string,
 ): Promise<LiquidatorContext> => {
+  const { chainId } = config;
+
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
 
@@ -89,14 +91,21 @@ export const getLiquidatorContextMulticall = async (
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
-  // 3. Query to see if this LP pair is actually for an underlying LP asset that we can flash liquidate
+  // 3. RELAYER tokenIn BALANCE
+  queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
+  queries[`tokenIn-allowance`] = tokenInContract.allowance(
+    relayerAddress,
+    liquidationRouterContract.address,
+  );
+
+  // 4. Query to see if this LP pair is actually for an underlying LP asset that we can flash liquidate
   const uniswapV2WethPairFlashLiquidatorContractAddress =
-    UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId];
+    UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId];
 
   let isValidWethFlashLiquidationPair;
   if (uniswapV2WethPairFlashLiquidatorContractAddress) {
     const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
-      UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[config.chainId],
+      UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId],
       UniswapV2WethPairFlashLiquidatorAbi,
       provider,
     );
@@ -107,13 +116,6 @@ export const getLiquidatorContextMulticall = async (
         );
     } catch (e) {}
   }
-
-  // 4. RELAYER tokenIn BALANCE
-  queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
-  queries[`tokenIn-allowance`] = tokenInContract.allowance(
-    relayerAddress,
-    liquidationRouterContract.address,
-  );
 
   // 5. Get and process results!
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
@@ -129,10 +131,10 @@ export const getLiquidatorContextMulticall = async (
   const tokenOutInAllowList = tokenOutAllowListed(config, tokenOut);
 
   // 7. tokenIn results
-
   let tokenInAssetRateUsd;
-  if (tokenOutInAllowList) {
+  if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      chainId,
       results['tokenIn-symbol'],
       tokenInAddress,
       covalentApiKey,
@@ -150,6 +152,7 @@ export const getLiquidatorContextMulticall = async (
   let underlyingAssetAssetRateUsd;
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      chainId,
       results['underlyingAsset-symbol'],
       underlyingAssetAddress,
       covalentApiKey,
@@ -184,11 +187,13 @@ export const getLiquidatorContextMulticall = async (
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
 // possibility of manually deployed malicious vaults/pairs
 const tokenOutAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
+  const { envTokenAllowList, chainId } = config;
+
   let tokenOutInAllowList = false;
   try {
     tokenOutInAllowList =
-      LIQUIDATION_TOKEN_ALLOW_LIST[config.chainId].includes(tokenOut.address.toLowerCase()) ||
-      config.envTokenAllowList.includes(tokenOut.address.toLowerCase());
+      LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(tokenOut.address.toLowerCase()) ||
+      envTokenAllowList.includes(tokenOut.address.toLowerCase());
   } catch (e) {
     console.error(chalk.red(e));
     console.error(

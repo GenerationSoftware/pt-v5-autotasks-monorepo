@@ -78,7 +78,7 @@ const getContext = async (
   drawAuctionContracts: DrawAuctionContracts,
   nativeTokenMarketRateUsd: number,
 ): Promise<DrawAuctionContext> => {
-  const { provider, covalentApiKey } = config;
+  const { chainId, provider, covalentApiKey } = config;
   const { drawManagerContract, rngWitnetContract, prizePoolContract } = drawAuctionContracts;
 
   // @ts-ignore Provider == BaseProvider
@@ -147,6 +147,7 @@ const getContext = async (
 
   // 9. Results Two: Reward token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
+    chainId,
     resultsTwo[QUERY_KEYS.REWARD_SYMBOL_KEY],
     rewardTokenAddress,
     covalentApiKey,

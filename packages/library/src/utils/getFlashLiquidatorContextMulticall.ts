@@ -23,6 +23,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * @returns
  */
 export const getFlashLiquidatorContextMulticall = async (
+  chainId: number,
   liquidationPairContract: Contract,
   provider: Provider,
   covalentApiKey?: string,
@@ -90,6 +91,7 @@ export const getFlashLiquidatorContextMulticall = async (
 
   // 1. tokenIn results
   const tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+    chainId,
     results['tokenIn-symbol'],
     tokenInAddress,
     covalentApiKey,
@@ -112,6 +114,7 @@ export const getFlashLiquidatorContextMulticall = async (
 
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
   const underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+    chainId,
     results['underlyingAsset-symbol'],
     underlyingAssetAddress,
     covalentApiKey,
