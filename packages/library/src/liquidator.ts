@@ -254,7 +254,7 @@ export async function runLiquidator(
     printAsterisks();
     printSpacer();
     const liquidationPairContract = liquidationPairContracts[i];
-    console.log(`LiquidationPair ${i}`);
+    console.log(`LiquidationPair ${i}`, chalk.dim(`/ ${liquidationPairContracts.length - 1}`));
     printSpacer();
     console.log(chalk.blue(`Pair Address: ${liquidationPairContract.address}`));
 

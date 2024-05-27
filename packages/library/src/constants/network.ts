@@ -30,3 +30,14 @@ export const NETWORK_NATIVE_TOKEN_INFO = {
   [CHAIN_IDS.sepolia]: { decimals: 18, symbol: 'ETH' },
   [CHAIN_IDS.optimismSepolia]: { decimals: 18, symbol: 'ETH' },
 };
+
+const TESTNET_CHAIN_IDS = [
+  CHAIN_IDS.baseSepolia,
+  CHAIN_IDS.arbitrumSepolia,
+  CHAIN_IDS.sepolia,
+  CHAIN_IDS.optimismSepolia,
+];
+
+export const isTestnet = (chainId: number): boolean => {
+  return TESTNET_CHAIN_IDS.includes(chainId);
+};
