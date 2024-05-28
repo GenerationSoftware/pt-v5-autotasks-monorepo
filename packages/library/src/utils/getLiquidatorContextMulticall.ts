@@ -10,7 +10,7 @@ import {
   Token,
   TokenWithRate,
 } from '../types.js';
-import { getEthMainnetTokenMarketRateUsd } from '../utils/index.js';
+import { getEthMainnetTokenMarketRateUsd, printSpacer } from '../utils/index.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from '../abis/UniswapV2WethPairFlashLiquidatorAbi.js';
@@ -76,10 +76,11 @@ export const getLiquidatorContextMulticall = async (
   try {
     underlyingAssetAddress = await liquidationPairTokenOutAsVault.asset();
   } catch (e) {
-    console.log(
-      chalk.yellow('liquidationPairTokenOutAsVault.asset() test failed, likely an ERC20 token'),
-    );
     underlyingAssetAddress = tokenOutAddress;
+    console.log(
+      chalk.dim('liquidationPairTokenOutAsVault.asset() test failed, likely an ERC20 token'),
+    );
+    printSpacer();
   }
   const underlyingAssetContract = new ethers.Contract(
     underlyingAssetAddress,

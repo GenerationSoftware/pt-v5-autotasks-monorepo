@@ -256,7 +256,6 @@ export async function runLiquidator(
     const liquidationPairContract = liquidationPairContracts[i];
     console.log(`LiquidationPair ${i}`, chalk.dim(`/ ${liquidationPairContracts.length - 1}`));
     printSpacer();
-    console.log(chalk.blue(`Pair Address: ${liquidationPairContract.address}`));
 
     const context: LiquidatorContext = await getLiquidatorContextMulticall(
       config,
@@ -267,6 +266,7 @@ export async function runLiquidator(
       covalentApiKey,
     );
 
+    console.log(chalk.blue(`Pair Address: ${liquidationPairContract.address}`));
     printContext(config, context);
     printSpacer();
 

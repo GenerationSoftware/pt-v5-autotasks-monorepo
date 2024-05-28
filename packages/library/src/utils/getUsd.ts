@@ -10,9 +10,11 @@ import {
   SYMBOL_TO_COINGECKO_LOOKUP,
   NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP,
 } from '../constants/usd.js';
+import { printSpacer } from './logging.js';
 
 const GAS_PRICE_ORACLE_ADDRESS = '0x420000000000000000000000000000000000000F';
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
+const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 
 const marketRates = {};
 
@@ -142,12 +144,18 @@ export const getEthMainnetTokenMarketRateUsd = async (
 };
 
 export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number> => {
-  const coingeckoTicker = SYMBOL_TO_COINGECKO_LOOKUP[symbol];
-  const uri = `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoTicker}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=false`;
-
-  console.log(uri);
   let marketRate;
+
+  const coingeckoTokenApiId = SYMBOL_TO_COINGECKO_LOOKUP[symbol];
+  if (!coingeckoTokenApiId) {
+    printSpacer();
+    console.log(chalk.yellow(`Note: No Coingecko token API ID found for symbol: '${symbol}'`));
+    printSpacer();
+    return;
+  }
+
   try {
+    const uri = `${COINGECKO_API_URL}/simple/price?ids=${coingeckoTokenApiId}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=false`;
     const response = await fetch(uri);
     if (!response.ok) {
       console.log(
@@ -156,7 +164,7 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
       throw new Error(response.statusText);
     }
     marketRate = await response.json();
-    marketRate = marketRate[coingeckoTicker]?.usd;
+    marketRate = marketRate[coingeckoTokenApiId]?.usd;
   } catch (err) {
     console.log(err);
   }
