@@ -56,16 +56,12 @@ export const KNOWN_TOKENS = {
     PRZLUSD: '',
   },
   [CHAIN_IDS.arbitrumSepolia]: {
-    WETH: '0x1a586a874f7c6ca5c3220c434fb5096dde2ec3f0',
-    POOL: '0xe02919b18388c666297d24d56cb794c440d33245',
-    USDC: '0x45b32d0c3cf487e11c3b80af564878bea83cce67',
-    DAI: '0x837f6ec55793c49b2994ba703a3d2331649b09ea',
-    GUSD: '0x24d3a5530c56e68822eab3f209cbe5da5c1322f3',
-    WBTC: '0x22bf4c40389d8daabcdd078512d751dbc0a12b93',
-    RETH: '0xa5145a7b2bfd125046398e98e2fd6e88b36a1c65',
-    PDAI: '0xaa7b1d6a8aaf3ec564c071a9ed9f0d4bcb96a797',
-    PUSDC: '0x748c49421687017b9159e32f14d439cd38a156f7',
-    PWETH: '0x6528c06563fa390ec67ac13973cd10089aa1d58f',
+    WETH: '0x060fad1bca90e5b1efca0d93febec96e638fd8a6',
+    USDC: '0x7b2e0bd66ef04d26db132391b5600af3887e9f9f',
+    DAI: '0xfe045beefda06606fc5f441ccca2fe8c903e9725',
+    PDAI: '0xca45845b69c441a5d319e36c8aacd99df806e95d',
+    PUSDC: '0xba9926560c2161761f1d438b3eb7884df02436bb',
+    PWETH: '0x9b47c08d066184e65efb82828e53c0ad1729f992',
   },
   [CHAIN_IDS.baseSepolia]: {
     POOL: '0x71b271952c3335e7258fbdcae5cd3a57e76b5b51',
@@ -146,7 +142,6 @@ export const ADDRESS_TO_COVALENT_LOOKUP = {
   [baseTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [arbitrumTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [baseSepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
-  [arbitrumSepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [sepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [optimismSepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
 
@@ -160,7 +155,6 @@ export const ADDRESS_TO_COVALENT_LOOKUP = {
 
   [sepoliaTokens.LINK.toLowerCase()]: mainnetTokens.LINK.toLowerCase(),
 
-  [arbitrumSepoliaTokens.WBTC.toLowerCase()]: mainnetTokens.WBTC.toLowerCase(),
   [baseSepoliaTokens.WBTC.toLowerCase()]: mainnetTokens.WBTC.toLowerCase(),
   [optimismSepoliaTokens.WBTC.toLowerCase()]: mainnetTokens.WBTC.toLowerCase(),
 
@@ -184,7 +178,6 @@ export const ADDRESS_TO_COVALENT_LOOKUP = {
 
   [optimismSepoliaTokens.GUSD.toLowerCase()]: mainnetTokens.GUSD.toLowerCase(),
   [baseSepoliaTokens.GUSD.toLowerCase()]: mainnetTokens.GUSD.toLowerCase(),
-  [arbitrumSepoliaTokens.GUSD.toLowerCase()]: mainnetTokens.GUSD.toLowerCase(),
 
   [mainnetTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
   [optimismTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
