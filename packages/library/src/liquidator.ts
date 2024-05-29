@@ -279,7 +279,7 @@ export async function runLiquidator(
         continue;
       }
 
-      console.log(`tokenOut is in the allow list! 👍`);
+      console.log(chalk.green(`tokenOut is in the allow list! 👍`));
     }
     printSpacer();
     printSpacer();
@@ -410,7 +410,6 @@ const processUniV2WethLPPair = async (
   try {
     const tx = await sendPopulatedUniV2WethFlashSwapTransaction(
       config,
-      provider,
       uniswapV2WethPairFlashLiquidatorContract,
       flashSwapExactAmountOutParams,
     );
@@ -567,7 +566,6 @@ const processSingleTokenPair = async (
   try {
     const tx = await sendPopulatedSwapExactAmountOutTransaction(
       config,
-      provider,
       liquidationRouterContract,
       swapExactAmountOutParams,
     );
@@ -592,10 +590,11 @@ const processSingleTokenPair = async (
 
 const sendPopulatedSwapExactAmountOutTransaction = async (
   config: LiquidatorConfig,
-  provider: Provider,
   liquidationRouterContract: Contract,
   swapExactAmountOutParams: SwapExactAmountOutParams,
 ): Promise<TransactionResponse> => {
+  const { provider, wallet } = config;
+
   let populatedTx: PopulatedTransaction | undefined;
   console.log(chalk.blue('5. Populating swap transaction ...'));
 
@@ -605,7 +604,7 @@ const sendPopulatedSwapExactAmountOutTransaction = async (
 
   const gasLimit = 750000;
   const gasPrice = await provider.getGasPrice();
-  const tx = await sendPopulatedTx(config.wallet, populatedTx, gasLimit, gasPrice);
+  const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
@@ -615,10 +614,11 @@ const sendPopulatedSwapExactAmountOutTransaction = async (
 
 const sendPopulatedUniV2WethFlashSwapTransaction = async (
   config: LiquidatorConfig,
-  provider: Provider,
   uniswapV2WethPairFlashLiquidatorContract: Contract,
   flashSwapExactAmountOutParams: FlashSwapExactAmountOutParams,
 ): Promise<TransactionResponse> => {
+  const { provider, wallet } = config;
+
   let populatedTx: PopulatedTransaction | undefined;
   console.log(chalk.blue('6. Populating swap transaction ...'));
 
@@ -634,7 +634,7 @@ const sendPopulatedUniV2WethFlashSwapTransaction = async (
     );
 
   const gasPrice = await provider.getGasPrice();
-  const tx = await sendPopulatedTx(config.wallet, populatedTx, Number(estimatedGasLimit), gasPrice);
+  const tx = await sendPopulatedTx(provider, wallet, populatedTx, Number(estimatedGasLimit));
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));

@@ -241,8 +241,7 @@ export async function runPrizeClaimer(
       );
 
       const gasLimit = 20000000;
-      const gasPrice = await provider.getGasPrice();
-      const tx = await sendPopulatedTx(wallet, populatedTx, gasLimit, gasPrice);
+      const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
       console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));

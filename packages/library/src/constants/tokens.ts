@@ -46,14 +46,13 @@ export const KNOWN_TOKENS = {
   },
   [CHAIN_IDS.arbitrum]: {
     POOL: '0xcf934e2402a5e072928a39a956964eb8f2b5b79c',
-    WETH: '0x4200000000000000000000000000000000000006',
+    WETH: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
     USDC: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
-    DAI: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1',
-    LUSD: '0x93b346b6bc2548da6a1e7d98e9a421b42541425b',
-    PRZUSDC: '',
-    PRZWETH: '',
-    PRZDAI: '',
-    PRZLUSD: '',
+    USDT: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+    ARB: '0x912ce59144191c1204e64559fe8253a0e49e6548',
+    PRZWETH: '0x7b0949204e7da1b0bed6d4ccb68497f51621b574',
+    PRZUSDC: '0x3c72a2a78c29d1f6454caa1bcb17a7792a180a2e',
+    PRZUSDT: '0xcacba8be4bc225fb8d15a9a3b702f84ca3eba991',
   },
   [CHAIN_IDS.arbitrumSepolia]: {
     WETH: '0x060fad1bca90e5b1efca0d93febec96e638fd8a6',
@@ -107,7 +106,11 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
       tokenAddress.toLowerCase(),
     ),
   ],
-  [CHAIN_IDS.arbitrum]: [],
+  [CHAIN_IDS.arbitrum]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.arbitrum]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
   [CHAIN_IDS.baseSepolia]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.baseSepolia]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
@@ -127,9 +130,9 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
 };
 
 const mainnetTokens = KNOWN_TOKENS[CHAIN_IDS.mainnet];
-const optimismTokens = KNOWN_TOKENS[CHAIN_IDS.optimism];
-const baseTokens = KNOWN_TOKENS[CHAIN_IDS.base];
-const arbitrumTokens = KNOWN_TOKENS[CHAIN_IDS.arbitrum];
+// const optimismTokens = KNOWN_TOKENS[CHAIN_IDS.optimism];
+// const baseTokens = KNOWN_TOKENS[CHAIN_IDS.base];
+// const arbitrumTokens = KNOWN_TOKENS[CHAIN_IDS.arbitrum];
 const baseSepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.baseSepolia];
 const arbitrumSepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia];
 const sepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.sepolia];
@@ -137,18 +140,18 @@ const optimismSepoliaTokens = KNOWN_TOKENS[CHAIN_IDS.optimismSepolia];
 
 // TODO: Find a way to remove this:
 export const ADDRESS_TO_COVALENT_LOOKUP = {
-  [mainnetTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
-  [optimismTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
-  [baseTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
-  [arbitrumTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
+  // [mainnetTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
+  // [optimismTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
+  // [baseTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
+  // [arbitrumTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [baseSepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [sepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
   [optimismSepoliaTokens.POOL.toLowerCase()]: mainnetTokens.POOL.toLowerCase(),
 
-  [mainnetTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
-  [optimismTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
-  [baseTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
-  [arbitrumTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
+  // [mainnetTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
+  // [optimismTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
+  // [baseTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
+  // [arbitrumTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
   [arbitrumSepoliaTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
   [baseSepoliaTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
   [optimismSepoliaTokens.WETH.toLowerCase()]: mainnetTokens.WETH.toLowerCase(),
@@ -158,20 +161,19 @@ export const ADDRESS_TO_COVALENT_LOOKUP = {
   [baseSepoliaTokens.WBTC.toLowerCase()]: mainnetTokens.WBTC.toLowerCase(),
   [optimismSepoliaTokens.WBTC.toLowerCase()]: mainnetTokens.WBTC.toLowerCase(),
 
-  [mainnetTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
-  [optimismTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
-  [baseTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
-  [arbitrumTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
+  // [mainnetTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
+  // [optimismTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
+  // [baseTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
+  // [arbitrumTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
   [arbitrumSepoliaTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
   [optimismSepoliaTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
   [baseSepoliaTokens.USDC.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
 
-  [optimismTokens.USDCE.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
+  // [optimismTokens.USDCE.toLowerCase()]: mainnetTokens.USDC.toLowerCase(),
 
-  [mainnetTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
-  [optimismTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
-  [baseTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
-  [arbitrumTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
+  // [mainnetTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
+  // [optimismTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
+  // [baseTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
   [arbitrumSepoliaTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
   [optimismSepoliaTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
   [baseSepoliaTokens.DAI.toLowerCase()]: mainnetTokens.DAI.toLowerCase(),
@@ -179,10 +181,11 @@ export const ADDRESS_TO_COVALENT_LOOKUP = {
   [optimismSepoliaTokens.GUSD.toLowerCase()]: mainnetTokens.GUSD.toLowerCase(),
   [baseSepoliaTokens.GUSD.toLowerCase()]: mainnetTokens.GUSD.toLowerCase(),
 
-  [mainnetTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
-  [optimismTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
-  [baseTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
-  [arbitrumTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
+  // [mainnetTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
+  // [optimismTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
+  // [baseTokens.LUSD.toLowerCase()]: mainnetTokens.LUSD.toLowerCase(),
 
-  [optimismTokens.OP.toLowerCase()]: mainnetTokens.OP.toLowerCase(),
+  // [arbitrumTokens.USDT.toLowerCase()]: mainnetTokens.USDT.toLowerCase(),
+
+  // [optimismTokens.OP.toLowerCase()]: mainnetTokens.OP.toLowerCase(),
 };

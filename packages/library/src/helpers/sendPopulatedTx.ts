@@ -1,23 +1,24 @@
-import { ethers, BigNumber, PopulatedTransaction, Wallet } from 'ethers';
+import { ethers, PopulatedTransaction, Wallet } from 'ethers';
+import { Provider } from '@ethersproject/providers';
 
-import { SendTransactionArgs, OzSendTransactionArgs, WalletSendTransactionArgs } from '../types.js';
+import { SendTransactionArgs, WalletSendTransactionArgs } from '../types.js';
 import { printSpacer } from '../utils/index.js';
 
-// const ONE_GWEI = '1000000000';
-
 export const sendPopulatedTx = async (
+  provider: Provider,
   wallet: Wallet,
   populatedTx: PopulatedTransaction,
   gasLimit: number,
-  gasPrice: BigNumber,
   txParams?: any,
 ): Promise<ethers.providers.TransactionResponse> => {
   printSpacer();
 
-  // If this is mainnet let's get the current base gas price and add 1 Gwei in
-  // hopes it will get picked up quicker
-  // const gasPriceStr =
-  //   chainId === CHAIN_IDS.mainnet ? gasPrice.add(ONE_GWEI).toString() : gasPrice.toString();
+  const feeData = await provider.getFeeData();
+
+  const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+  const maxFeePerGas = feeData.maxFeePerGas;
+
+  // const gasPrice = await provider.getGasPrice();
 
   const sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
@@ -27,7 +28,9 @@ export const sendPopulatedTx = async (
 
   const args: WalletSendTransactionArgs = {
     ...sendTransactionArgs,
-    gasPrice,
+    // gasPrice,
+    maxPriorityFeePerGas,
+    maxFeePerGas,
   };
 
   if (txParams && txParams.value) {

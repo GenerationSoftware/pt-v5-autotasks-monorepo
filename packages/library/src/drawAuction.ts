@@ -236,14 +236,13 @@ const sendPopulatedStartDrawTransaction = async (
   }
 
   const estimatedGasLimitWithBufferAsNumber: number = Number(estimatedGasLimit) + 100000;
-  const gasPrice = await provider.getGasPrice();
   console.log(chalk.greenBright.bold(`Sending ...`));
 
   const tx = await sendPopulatedTx(
+    provider,
     wallet,
     populatedTx,
     estimatedGasLimitWithBufferAsNumber,
-    gasPrice,
     txParams,
   );
 
@@ -762,7 +761,6 @@ const sendPopulatedFinishDrawTransaction = async (
   contract: Contract,
 ) => {
   const { wallet, provider } = config;
-  const gasPrice = await provider.getGasPrice();
 
   const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
   const estimatedGasLimitWithBufferAsNumber: number =
@@ -775,10 +773,10 @@ const sendPopulatedFinishDrawTransaction = async (
   const populatedTx = await contract.populateTransaction.finishDraw(...Object.values(txParams));
 
   const tx = await sendPopulatedTx(
+    provider,
     wallet,
     populatedTx,
     estimatedGasLimitWithBufferAsNumber,
-    gasPrice,
     txParams,
   );
 
