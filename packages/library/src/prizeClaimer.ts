@@ -314,10 +314,10 @@ const calculateProfit = async (
   config: PrizeClaimerConfig,
   rewardRecipient: string,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, minProfitThresholdUsd } = config;
+  const { chainId, covalentApiKey, minProfitThresholdUsd } = config;
 
   printSpacer();
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${nativeTokenMarketRateUsd}`,
@@ -412,7 +412,7 @@ const getContext = async (
   contracts: ContractsBlob,
   prizePool: Contract,
   provider: Provider,
-  covalentApiKey?: string,
+  covalentApiKey: string,
 ): Promise<ClaimPrizeContext> => {
   const prizeTokenAddress = await prizePool.prizeToken();
 
@@ -437,9 +437,9 @@ const getContext = async (
     ...prizeTokenBasic,
     assetRateUsd: await getEthMainnetTokenMarketRateUsd(
       chainId,
+      covalentApiKey,
       prizeTokenBasic.symbol,
       prizeTokenBasic.address,
-      covalentApiKey,
     ),
   };
 

@@ -18,8 +18,6 @@ export const sendPopulatedTx = async (
   const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
   const maxFeePerGas = feeData.maxFeePerGas;
 
-  // const gasPrice = await provider.getGasPrice();
-
   const sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
     to: populatedTx.to,
@@ -28,7 +26,6 @@ export const sendPopulatedTx = async (
 
   const args: WalletSendTransactionArgs = {
     ...sendTransactionArgs,
-    // gasPrice,
     maxPriorityFeePerGas,
     maxFeePerGas,
   };

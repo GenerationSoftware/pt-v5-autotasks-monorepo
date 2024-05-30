@@ -19,14 +19,14 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  *
  * @param liquidationPairContract ethers contract instance of the LiquidationPair contract
  * @param provider provider for the chain that will be queried
- * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
+ * @param covalentApiKey a Covalent API key for getting USD values of tokens
  * @returns
  */
 export const getFlashLiquidatorContextMulticall = async (
   chainId: number,
   liquidationPairContract: Contract,
   provider: Provider,
-  covalentApiKey?: string,
+  covalentApiKey: string,
 ): Promise<FlashLiquidatorContext> => {
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
@@ -92,9 +92,9 @@ export const getFlashLiquidatorContextMulticall = async (
   // 1. tokenIn results
   const tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
     chainId,
+    covalentApiKey,
     results['tokenIn-symbol'],
     tokenInAddress,
-    covalentApiKey,
   );
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
@@ -115,9 +115,9 @@ export const getFlashLiquidatorContextMulticall = async (
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
   const underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
     chainId,
+    covalentApiKey,
     results['underlyingAsset-symbol'],
     underlyingAssetAddress,
-    covalentApiKey,
   );
 
   const underlyingAssetToken: TokenWithRate = {

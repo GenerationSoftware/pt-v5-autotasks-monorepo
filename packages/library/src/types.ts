@@ -49,7 +49,7 @@ export interface AutotaskConfig {
   relayerAddress: string;
   signer: Signer;
   contractJsonUrl: string;
-  covalentApiKey?: string;
+  covalentApiKey: string;
 }
 
 export interface PrizeClaimerConfig extends AutotaskConfig {
@@ -168,11 +168,6 @@ export interface WalletSendTransactionArgs extends SendTransactionArgs {
   gasPrice?: BigNumber;
   maxPriorityFeePerGas?: BigNumber;
   maxFeePerGas?: BigNumber;
-  value?: BigNumber;
-}
-
-export interface OzSendTransactionArgs extends SendTransactionArgs {
-  gasPrice?: string;
   value?: BigNumber;
 }
 

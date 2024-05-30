@@ -379,7 +379,7 @@ const processUniV2WethLPPair = async (
   let avgFeeUsd = 0;
   try {
     avgFeeUsd = await getUniV2WethFlashSwapGasCost(
-      chainId,
+      config,
       uniswapV2WethPairFlashLiquidatorContract,
       flashSwapExactAmountOutParams,
       provider,
@@ -603,7 +603,6 @@ const sendPopulatedSwapExactAmountOutTransaction = async (
   );
 
   const gasLimit = 750000;
-  const gasPrice = await provider.getGasPrice();
   const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
@@ -633,7 +632,6 @@ const sendPopulatedUniV2WethFlashSwapTransaction = async (
       ...Object.values(flashSwapExactAmountOutParams),
     );
 
-  const gasPrice = await provider.getGasPrice();
   const tx = await sendPopulatedTx(provider, wallet, populatedTx, Number(estimatedGasLimit));
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
@@ -867,17 +865,16 @@ const calculateUniV2WethFlashSwapProfit = async (
   wethFromFlashSwap: BigNumber,
   avgFeeUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
+  const { chainId, covalentApiKey } = config;
+
   printSpacer();
   console.log(chalk.blue('3. Profit/Loss (USD):'));
   printSpacer();
 
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(config.chainId);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
   const wethOutUsd =
     parseFloat(
-      ethers.utils.formatUnits(
-        wethFromFlashSwap,
-        NETWORK_NATIVE_TOKEN_INFO[config.chainId].decimals,
-      ),
+      ethers.utils.formatUnits(wethFromFlashSwap, NETWORK_NATIVE_TOKEN_INFO[chainId].decimals),
     ) * nativeTokenMarketRateUsd;
 
   const netProfitUsd = wethOutUsd - avgFeeUsd;
@@ -913,9 +910,9 @@ const getLiquidationRouterSwapExactAmountOutGasCost = async (
   liquidationRouter: Contract,
   swapExactAmountOutParams: SwapExactAmountOutParams,
 ): Promise<number> => {
-  const { chainId, provider } = config;
+  const { chainId, provider, covalentApiKey } = config;
 
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
 
   printSpacer();
   console.log(chalk.blue('3. Current gas costs for transaction:'));
@@ -961,11 +958,13 @@ const getLiquidationRouterSwapExactAmountOutGasCost = async (
  * @returns {Promise} Promise with the maximum gas fee in USD
  */
 const getUniV2WethFlashSwapGasCost = async (
-  chainId: number,
+  config: LiquidatorConfig,
   uniswapV2WethPairFlashLiquidatorContract: Contract,
   flashSwapExactAmountOutParams: FlashSwapExactAmountOutParams,
   provider: Provider,
 ): Promise<number> => {
+  const { chainId, covalentApiKey } = config;
+
   printSpacer();
   console.log(chalk.blue('2. Current gas costs for transaction:'));
   printSpacer();
@@ -981,7 +980,7 @@ const getUniV2WethFlashSwapGasCost = async (
       ...Object.values(flashSwapExactAmountOutParams),
     );
 
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
   const { avgFeeUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimit,

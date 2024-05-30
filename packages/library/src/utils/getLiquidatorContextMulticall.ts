@@ -32,7 +32,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * @param liquidationPairContract ethers contract instance for the liquidationPair contract
  * @param provider provider for the chain that will be queried
  * @param contracts blob of contracts to pull PrizePool abi/etc from
- * @param covalentApiKey (optional) your Covalent API key for getting USD values of tokens
+ * @param covalentApiKey a Covalent API key for getting USD values of tokens
  * @returns
  */
 export const getLiquidatorContextMulticall = async (
@@ -41,7 +41,7 @@ export const getLiquidatorContextMulticall = async (
   liquidationPairContract: Contract,
   provider: Provider,
   relayerAddress: string,
-  covalentApiKey?: string,
+  covalentApiKey: string,
 ): Promise<LiquidatorContext> => {
   const { chainId } = config;
 
@@ -136,9 +136,9 @@ export const getLiquidatorContextMulticall = async (
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
       chainId,
+      covalentApiKey,
       results['tokenIn-symbol'],
       tokenInAddress,
-      covalentApiKey,
     );
   }
   const tokenIn: TokenWithRate = {
@@ -154,9 +154,9 @@ export const getLiquidatorContextMulticall = async (
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
       chainId,
+      covalentApiKey,
       results['underlyingAsset-symbol'],
       underlyingAssetAddress,
-      covalentApiKey,
     );
   }
 

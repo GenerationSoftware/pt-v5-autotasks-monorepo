@@ -89,13 +89,13 @@ export const getFeesUsd = async (
  **/
 export const getNativeTokenMarketRateUsd = async (
   chainId: number,
-  covalentApiKey?: string,
+  covalentApiKey: string,
 ): Promise<number> => {
   const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[chainId].symbol;
   const tokenAddress =
     tokenSymbol === 'ETH' ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId] : '';
 
-  return await getEthMainnetTokenMarketRateUsd(chainId, tokenSymbol, tokenAddress, covalentApiKey);
+  return await getEthMainnetTokenMarketRateUsd(chainId, covalentApiKey, tokenSymbol, tokenAddress);
 };
 
 /**
@@ -104,9 +104,9 @@ export const getNativeTokenMarketRateUsd = async (
  */
 export const getEthMainnetTokenMarketRateUsd = async (
   chainId: number,
+  covalentApiKey: string,
   symbol: string,
   tokenAddress?: string,
-  covalentApiKey?: string,
 ): Promise<number> => {
   // memoization
   if (marketRates[symbol]) {

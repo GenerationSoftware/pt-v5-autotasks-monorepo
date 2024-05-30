@@ -18,6 +18,7 @@ export const loadEnvVars = (): AutotaskEnvVars => {
 
   if (
     !chainId ||
+    !covalentApiKey ||
     !minProfitThresholdUsd ||
     !customRelayerPrivateKey ||
     !jsonRpcUrl ||

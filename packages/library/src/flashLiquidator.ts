@@ -180,6 +180,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     try {
       avgFeeUsd = await getGasCost(
         chainId,
+        config,
         flashLiquidationContract,
         flashLiquidateParams,
         provider,
@@ -325,11 +326,15 @@ const calculateProfit = async (
  */
 const getGasCost = async (
   chainId: number,
+  config: FlashLiquidatorConfig,
   flashLiquidationContract: Contract,
   flashLiquidateParams: FlashLiquidateParams,
   provider: Provider,
 ): Promise<number> => {
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(
+    chainId,
+    config.covalentApiKey,
+  );
 
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
