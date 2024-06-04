@@ -362,7 +362,7 @@ const calculateProfit = async (
 
   // FEES USD
   const netProfitUsd = claimRewardUsd - totalCostUsd;
-  console.log(chalk.magenta('Net profit = (Gross Profit - Gas Cost [Max])'));
+  console.log(chalk.magenta('Net profit = (Gross Profit - Gas Cost [Average])'));
   console.log(
     chalk.greenBright(
       `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
@@ -731,7 +731,7 @@ const getClaimInfo = async (
 
     const netProfitUsd = nextClaimRewardUsd - totalCostUsd;
 
-    console.log(chalk.dim('Net profit = (Gross Profit - Gas Cost [Avg])'));
+    console.log(chalk.dim('Net profit = (Gross Profit - Gas Cost [Average])'));
     console.log(
       chalk.greenBright(
         `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
@@ -740,6 +740,8 @@ const getClaimInfo = async (
       ),
       chalk.dim(`$${netProfitUsd} = ($${nextClaimRewardUsd} - $${totalCostUsd})`),
     );
+
+    claimRewardUsd = nextClaimRewardUsd;
 
     if (
       netProfitUsd > previousNetProfitUsd &&
@@ -754,7 +756,6 @@ const getClaimInfo = async (
       previousNetProfitUsd = netProfitUsd;
       claimCount = numClaims;
       claimReward = nextClaimReward;
-      claimRewardUsd = nextClaimRewardUsd;
 
       printSpacer();
     } else {

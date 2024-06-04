@@ -43,6 +43,7 @@ type StartDrawTransformedTxParams = {
 };
 
 const DRAW_GAS_LIMIT_BUFFER: number = 100000 as const;
+const DRAW_AUCTION_GAS_LIMIT: number = 1200000 as const;
 
 /**
  * Main entry function - gets the current state of the DrawManager/RngWitnet
@@ -219,7 +220,7 @@ const sendPopulatedStartDrawTransaction = async (
 
     // Witnet contracts on Optimism Mainnet do not work if you attempt to use estimate gas - You will
     // get back 'too much reward' revert errors from the WitnetOracleV2 contract
-    estimatedGasLimit = BigNumber.from(700000);
+    estimatedGasLimit = BigNumber.from(DRAW_AUCTION_GAS_LIMIT);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -570,7 +571,7 @@ const getStartDrawGasCostUsd = async (
 
     // Witnet contracts on Optimism Mainnet do not work if you attempt to use estimate gas - You will
     // get back 'too much reward' revert errors from the WitnetOracleV2 contract
-    estimatedGasLimit = BigNumber.from(700000);
+    estimatedGasLimit = BigNumber.from(DRAW_AUCTION_GAS_LIMIT);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);

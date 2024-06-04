@@ -50,6 +50,8 @@ interface Stat {
 
 const stats: Stat[] = [];
 
+const LIQUIDATOR_GAS_LIMIT: number = 1200000 as const;
+
 const getPairName = (context: LiquidatorContext) => {
   return `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 };
@@ -602,7 +604,7 @@ const sendPopulatedSwapExactAmountOutTransaction = async (
     ...Object.values(swapExactAmountOutParams),
   );
 
-  const gasLimit = 750000;
+  const gasLimit = LIQUIDATOR_GAS_LIMIT;
   const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
