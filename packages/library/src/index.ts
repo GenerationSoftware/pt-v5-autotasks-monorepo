@@ -1,5 +1,4 @@
 export { runPrizeClaimer } from './prizeClaimer.js';
-export { runFlashLiquidator } from './flashLiquidator.js';
 export { runLiquidator } from './liquidator.js';
 export { runDrawAuction } from './drawAuction.js';
 

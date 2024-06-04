@@ -65,8 +65,6 @@ export interface LiquidatorConfig extends SharedLiquidatorConfig {
   envTokenAllowList: string[];
 }
 
-export interface FlashLiquidatorConfig extends SharedLiquidatorConfig {}
-
 export interface DrawAuctionConfig extends AutotaskConfig {
   rewardRecipient?: string;
 }
@@ -82,8 +80,6 @@ export interface LiquidatorContext extends BaseLiquidatorContext {
   tokenOutInAllowList: boolean;
   isValidWethFlashLiquidationPair: boolean;
 }
-
-export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 
 export interface AutotaskEnvVars {
   CHAIN_ID: number;
@@ -105,8 +101,6 @@ export interface SharedLiquidatorEnvVars extends AutotaskEnvVars {
 export interface LiquidatorEnvVars extends SharedLiquidatorEnvVars {
   ENV_TOKEN_ALLOW_LIST: string[];
 }
-
-export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
 
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
   SUBGRAPH_URL: string;
