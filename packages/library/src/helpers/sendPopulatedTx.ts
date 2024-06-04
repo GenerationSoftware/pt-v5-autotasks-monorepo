@@ -1,7 +1,7 @@
 import { ethers, PopulatedTransaction, Wallet } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 
-import { SendTransactionArgs, WalletSendTransactionArgs } from '../types.js';
+import { SendTransactionArgs } from '../types.js';
 import { printSpacer } from '../utils/index.js';
 
 export const sendPopulatedTx = async (
@@ -13,27 +13,19 @@ export const sendPopulatedTx = async (
 ): Promise<ethers.providers.TransactionResponse> => {
   printSpacer();
 
-  const feeData = await provider.getFeeData();
-
-  const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-  const maxFeePerGas = feeData.maxFeePerGas;
+  const gasPrice = await provider.getGasPrice();
 
   const sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
     to: populatedTx.to,
     gasLimit,
-  };
-
-  const args: WalletSendTransactionArgs = {
-    ...sendTransactionArgs,
-    maxPriorityFeePerGas,
-    maxFeePerGas,
+    gasPrice,
   };
 
   if (txParams && txParams.value) {
-    args.value = txParams.value;
+    sendTransactionArgs.value = txParams.value;
   }
-  const tx = await wallet.sendTransaction(args);
+  const tx = await wallet.sendTransaction(sendTransactionArgs);
   printSpacer();
 
   return tx;

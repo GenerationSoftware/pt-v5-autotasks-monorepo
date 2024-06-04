@@ -940,6 +940,15 @@ const getLiquidationRouterSwapExactAmountOutGasCost = async (
     `$${nativeTokenMarketRateUsd}`,
   );
 
+  const gasPrice = await provider.getGasPrice();
+  logBigNumber(
+    'Recent Gas Price (wei):',
+    gasPrice,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
+
   logBigNumber(
     'Estimated gas limit (wei):',
     estimatedGasLimit,
@@ -993,6 +1002,15 @@ const getUniV2WethFlashSwapGasCost = async (
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${nativeTokenMarketRateUsd}`,
   );
+
+  const gasPrice = await provider.getGasPrice();
+  logBigNumber(
+    'Recent Gas Price (wei):',
+    gasPrice,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
 
   logBigNumber(
     'Estimated gas limit (wei):',

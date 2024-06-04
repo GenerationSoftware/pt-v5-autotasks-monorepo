@@ -511,6 +511,16 @@ const getGasCost = async (
     estimateMinVrgdaFeePerClaim,
   );
 
+  const gasPrice = await provider.getGasPrice();
+  logBigNumber(
+    'Recent Gas Price (wei):',
+    gasPrice,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
+  printSpacer();
+
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
     console.error(chalk.yellow('Estimated gas limit is 0 ...'));

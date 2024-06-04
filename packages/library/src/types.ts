@@ -162,12 +162,9 @@ export interface SendTransactionArgs {
   data: string;
   to: string;
   gasLimit: number;
-}
-
-export interface WalletSendTransactionArgs extends SendTransactionArgs {
-  gasPrice?: BigNumber;
   maxPriorityFeePerGas?: BigNumber;
   maxFeePerGas?: BigNumber;
+  gasPrice?: BigNumber;
   value?: BigNumber;
 }
 
