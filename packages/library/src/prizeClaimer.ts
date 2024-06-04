@@ -33,6 +33,7 @@ import {
   printAsterisks,
   printSpacer,
   roundTwoDecimalPlaces,
+  findRecipient,
 } from './utils/index.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
@@ -71,24 +72,15 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   config: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, wallet, provider, relayerAddress, subgraphUrl } = config;
+  const { chainId, covalentApiKey, wallet, provider, subgraphUrl } = config;
   printSpacer();
 
-  // TODO: REFACTOR - We see this in every bot:
-  let rewardRecipient = config.rewardRecipient;
-  if (!rewardRecipient) {
-    const message = `Config - REWARD_RECIPIENT not provided, setting swap recipient to relayer address:`;
-    console.log(chalk.dim(message), chalk.yellow(relayerAddress));
-    rewardRecipient = relayerAddress;
-  } else {
-    console.log(chalk.dim(`Config - REWARD_RECIPIENT:`), chalk.yellow(rewardRecipient));
-  }
+  const rewardRecipient = findRecipient(config);
 
   console.log(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
     chalk.yellow(config.minProfitThresholdUsd),
   );
-  // END TODO: REFACTOR
 
   const contractsVersion = {
     major: 1,

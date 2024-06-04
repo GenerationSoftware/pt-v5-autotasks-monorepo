@@ -13,6 +13,7 @@ import {
   getFeesUsd,
   roundTwoDecimalPlaces,
   checkOrX,
+  findRecipient,
 } from './utils/index.js';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
 import {
@@ -55,24 +56,15 @@ export async function runDrawAuction(
   contracts: ContractsBlob,
   config: DrawAuctionConfig,
 ): Promise<void> {
-  const { chainId, relayerAddress } = config;
+  const { chainId } = config;
   printSpacer();
 
-  // TODO: REFACTOR - We see this in every bot:
-  let rewardRecipient = config.rewardRecipient;
-  if (!rewardRecipient) {
-    const message = `Config - REWARD_RECIPIENT not provided, setting swap recipient to relayer address:`;
-    console.log(chalk.dim(message), chalk.yellow(relayerAddress));
-    rewardRecipient = relayerAddress;
-  } else {
-    console.log(chalk.dim(`Config - REWARD_RECIPIENT:`), chalk.yellow(rewardRecipient));
-  }
+  const rewardRecipient = findRecipient(config);
 
   console.log(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
     chalk.yellow(config.minProfitThresholdUsd),
   );
-  // END TODO: REFACTOR
 
   const drawAuctionContracts = instantiateDrawAuctionContracts(config, contracts);
 

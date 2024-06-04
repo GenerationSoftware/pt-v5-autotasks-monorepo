@@ -1,4 +1,5 @@
 export * from './checkOrX.js';
+export * from './findRecipient.js';
 export * from './math.js';
 export * from './getProvider.js';
 export * from './getUsd.js';

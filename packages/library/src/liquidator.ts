@@ -17,6 +17,7 @@ import {
   getLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
   checkOrX,
+  findRecipient,
 } from './utils/index.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from './abis/UniswapV2WethPairFlashLiquidatorAbi.js';
@@ -216,22 +217,12 @@ export async function runLiquidator(
   const { provider, relayerAddress, covalentApiKey } = config;
   printSpacer();
 
-  // TODO: REFACTOR - We see this in every bot:
-  //     WOULD BE IDEAL TO HAVE THIS IN THE CONFIG! Move it one (or two) level(s) higher
-  let swapRecipient = config.swapRecipient;
-  if (!swapRecipient) {
-    const message = `Config - SWAP_RECIPIENT not provided, setting swap recipient to relayer address:`;
-    console.log(chalk.dim(message), chalk.yellow(relayerAddress));
-    swapRecipient = relayerAddress;
-  } else {
-    console.log(chalk.dim(`Config - SWAP_RECIPIENT:`), chalk.yellow(swapRecipient));
-  }
+  const swapRecipient = findRecipient(config);
 
   console.log(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
     chalk.yellow(config.minProfitThresholdUsd),
   );
-  // END TODO: REFACTOR
 
   // 1. Get contracts
   printSpacer();
@@ -490,7 +481,7 @@ const processSingleTokenPair = async (
   amountOut: BigNumber,
   swapRecipient: string,
 ) => {
-  const { provider, signer, minProfitThresholdUsd, relayerAddress } = config;
+  const { signer, minProfitThresholdUsd, relayerAddress } = config;
 
   const pair = getPairName(context);
 
