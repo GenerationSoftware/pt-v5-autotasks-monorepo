@@ -25,15 +25,13 @@ export const sendPopulatedTx = async (
 ): Promise<ethers.providers.TransactionResponse> => {
   printSpacer();
 
-  gasLimit = await getFixedGasLimit(gasLimit, provider);
-  const gasPrice = await provider.getGasPrice();
-
-  const sendTransactionArgs: SendTransactionArgs = {
+  let sendTransactionArgs: SendTransactionArgs = {
     data: populatedTx.data,
     to: populatedTx.to,
     gasLimit,
-    gasPrice,
   };
+
+  sendTransactionArgs = await fixGasIssues(sendTransactionArgs, gasLimit, provider);
 
   if (txParams && txParams.value) {
     sendTransactionArgs.value = txParams.value;
@@ -44,19 +42,38 @@ export const sendPopulatedTx = async (
 };
 
 /**
- * Provides a fixed, more accurate gasLimit
- * Arbitrum Sepolia has an 'intrinsic gas too low' issue, however if we up the gas limit it works fine
+ * For any network other than Arbitrum Sepolia simply use `gasPrice`
  *
+ * Arbitrum Sepolia has both an 'intrinsic gas too low' issue and an EIP1559 'max fee per gas less
+ * than block base fee' bug when using `gasPrice`:
+ * - To fix the first issue we can up the `gasLimit`
+ * - To fix the second issue we'll use EIP1559 style transactions Arbitrum Sepolia
+ *     and multiply it (since it's testnet gas anyhow)
+ *
+ * @param {SendTransactionArgs} sendTransactionArgs, the args we are going to modify
  * @param {number} gasLimit, the original gasLimit, likely from provider.getEstimatedGasLimit()
  * @param {Provider} provider, ethers.js Provider instance
  *
  * @returns {Promise<number>} the new gasLimit
  */
-const getFixedGasLimit = async (gasLimit: number, provider: Provider): Promise<number> => {
+const fixGasIssues = async (
+  sendTransactionArgs: SendTransactionArgs,
+  gasLimit: number,
+  provider: Provider,
+): Promise<SendTransactionArgs> => {
   // @ts-ignore
   if (CHAIN_IDS.arbitrumSepolia === provider._network.chainId) {
-    gasLimit = gasLimit * 2;
+    const feeData = await provider.getFeeData();
+    const maxFeePerGasMultiplied = feeData.maxFeePerGas.mul(2);
+
+    sendTransactionArgs.maxFeePerGas = maxFeePerGasMultiplied;
+    sendTransactionArgs.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas.mul(2);
+    sendTransactionArgs.gasLimit = gasLimit * 2;
+  } else {
+    const gasPrice = await provider.getGasPrice();
+
+    sendTransactionArgs.gasPrice = gasPrice;
   }
 
-  return gasLimit;
+  return sendTransactionArgs;
 };
