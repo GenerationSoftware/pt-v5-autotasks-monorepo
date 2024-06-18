@@ -65,6 +65,10 @@ export async function runDrawAuction(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
     chalk.yellow(config.minProfitThresholdUsd),
   );
+  console.log(
+    chalk.dim('Config - ERROR_STATE_MAX_GAS_COST_THRESHOLD_USD:'),
+    chalk.yellow(config.errorStateMaxGasCostThresholdUsd),
+  );
 
   const drawAuctionContracts = instantiateDrawAuctionContracts(config, contracts);
 
