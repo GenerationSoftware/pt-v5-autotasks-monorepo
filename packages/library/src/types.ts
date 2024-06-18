@@ -121,11 +121,11 @@ export interface DrawAuctionContext {
 
   drawId: number;
   prizePoolDrawClosesAt: number;
-  // auctionClosesSoon: boolean;
   rewardToken: TokenWithRate;
 
-  nativeTokenMarketRateUsd?: number;
+  startDrawError: boolean;
 
+  nativeTokenMarketRateUsd?: number;
   drawAuctionState?: DrawAuctionState;
 }
 

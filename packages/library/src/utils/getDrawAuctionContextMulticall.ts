@@ -16,6 +16,7 @@ import { printSpacer } from './logging.js';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
 export enum DrawAuctionState {
+  Error = 'Error',
   Start = 'Start',
   Finish = 'Finish',
   Idle = 'Idle',
@@ -30,6 +31,7 @@ const QUERY_KEYS = {
 
   RNG_WITNET_ESTIMATE_RANDOMIZE_FEE_KEY: 'rngWitnet-estimateRandomizeFee',
 
+  DRAW_MANAGER_LAST_START_DRAW_AUCTION: 'drawManager-lastStartDrawAuction',
   DRAW_MANAGER_CAN_START_DRAW_KEY: 'drawManager-canStartDraw',
   DRAW_MANAGER_START_DRAW_REWARD_KEY: 'drawManager-startDrawReward',
   DRAW_MANAGER_CAN_FINISH_DRAW_KEY: 'drawManager-canFinishDraw',
@@ -41,7 +43,12 @@ const QUERY_KEYS = {
   REWARD_SYMBOL_KEY: 'rewardToken-symbol',
 };
 
-const RELAY_AUCTION_CLOSES_SOON_PERCENT_THRESHOLD = 10; // 10% or less time left on relay auction
+export interface StartDrawAuction {
+  recipient: string;
+  closedAt: number;
+  drawId: number;
+  rngRequestId: number;
+}
 
 /**
  * Combines the DrawAuction Multicall data with the , one for the RNG Chain and one for the Relay/PrizePool chain
@@ -89,6 +96,8 @@ const getContext = async (
   // 1. Queries One: Draw Manager
   queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY] = drawManagerContract.canStartDraw();
   queriesOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_REWARD_KEY] = drawManagerContract.startDrawReward();
+  queriesOne[QUERY_KEYS.DRAW_MANAGER_LAST_START_DRAW_AUCTION] =
+    drawManagerContract.getLastStartDrawAuction();
 
   queriesOne[QUERY_KEYS.DRAW_MANAGER_CAN_FINISH_DRAW_KEY] = drawManagerContract.canFinishDraw();
   queriesOne[QUERY_KEYS.DRAW_MANAGER_FINISH_DRAW_REWARD_KEY] =
@@ -112,6 +121,7 @@ const getContext = async (
   const resultsOne = await getEthersMulticallProviderResults(multicallProvider, queriesOne);
 
   // 5. Results One: Draw Manager
+  const lastStartDrawAuction = resultsOne[QUERY_KEYS.DRAW_MANAGER_LAST_START_DRAW_AUCTION];
   const canStartDraw = resultsOne[QUERY_KEYS.DRAW_MANAGER_CAN_START_DRAW_KEY];
   const startDrawReward = resultsOne[QUERY_KEYS.DRAW_MANAGER_START_DRAW_REWARD_KEY];
 
@@ -128,9 +138,14 @@ const getContext = async (
   const drawId = resultsOne[QUERY_KEYS.PRIZE_POOL_OPEN_DRAW_ID_KEY];
   const rewardTokenAddress = resultsOne[QUERY_KEYS.PRIZE_POOL_PRIZE_TOKEN_ADDRESS_KEY];
 
+  // This can happen when Witnet fails to deliver the random number, we'll need to manually request a new
+  // random number to 'unstick' the last rng request and properly start & finish the draw
+  const closedDrawId = drawId - 1;
+  const startDrawError = canStartDraw && closedDrawId === lastStartDrawAuction.rngRequestId;
+
   let queriesTwo: Record<string, any> = {};
 
-  // 6. Queries Two: Prize Pool
+  // 8. Queries Two: Prize Pool
   queriesTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY] = prizePoolContract.drawClosesAt(drawId);
 
   const rewardTokenContract = new ethers.Contract(rewardTokenAddress, ERC20Abi, provider);
@@ -139,13 +154,13 @@ const getContext = async (
   queriesTwo[QUERY_KEYS.REWARD_NAME_KEY] = rewardTokenContract.name();
   queriesTwo[QUERY_KEYS.REWARD_SYMBOL_KEY] = rewardTokenContract.symbol();
 
-  // 7. Results Two: Get second set of multicall results
+  // 9. Results Two: Get second set of multicall results
   const resultsTwo = await getEthersMulticallProviderResults(multicallProvider, queriesTwo);
 
-  // 8. Results Two: PrizePool
+  // 10. Results Two: PrizePool
   const prizePoolDrawClosesAt = Number(resultsTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
 
-  // 9. Results Two: Reward token
+  // 11. Results Two: Reward token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
     chainId,
     covalentApiKey,
@@ -160,7 +175,7 @@ const getContext = async (
     assetRateUsd: rewardTokenMarketRateUsd,
   };
 
-  // 10. Results Two: Draw Manager
+  // 12. Results Two: Draw Manager
   const startDrawRewardStr = ethers.utils.formatUnits(startDrawReward, rewardToken.decimals);
   const startDrawRewardUsd = Number(startDrawRewardStr) * rewardToken.assetRateUsd;
 
@@ -192,6 +207,8 @@ const getContext = async (
     rewardToken,
     prizePoolDrawClosesAt,
 
+    startDrawError,
+
     nativeTokenMarketRateUsd,
   };
 };
@@ -204,7 +221,9 @@ const getContext = async (
  * @returns {DrawAuctionState} current state enum
  */
 const getDrawAuctionState = (context: DrawAuctionContext): DrawAuctionState => {
-  if (context.canStartDraw) {
+  if (context.startDrawError) {
+    return DrawAuctionState.Error;
+  } else if (context.canStartDraw) {
     return DrawAuctionState.Start;
   } else if (context.canFinishDraw) {
     return DrawAuctionState.Finish;
