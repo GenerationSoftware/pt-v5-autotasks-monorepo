@@ -66,6 +66,7 @@ export interface LiquidatorConfig extends SharedLiquidatorConfig {
 }
 
 export interface DrawAuctionConfig extends AutotaskConfig {
+  errorStateMaxGasCostThresholdUsd: number;
   rewardRecipient?: string;
 }
 
@@ -92,6 +93,7 @@ export interface AutotaskEnvVars {
 
 export interface DrawAuctionEnvVars extends AutotaskEnvVars {
   REWARD_RECIPIENT: string;
+  ERROR_STATE_MAX_GAS_COST_THRESHOLD_USD: number;
 }
 
 export interface SharedLiquidatorEnvVars extends AutotaskEnvVars {

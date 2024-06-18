@@ -83,7 +83,10 @@ export async function runDrawAuction(
     return;
   }
 
-  if (context.drawAuctionState === DrawAuctionState.Start) {
+  if (
+    context.drawAuctionState === DrawAuctionState.Start ||
+    context.drawAuctionState === DrawAuctionState.Error
+  ) {
     console.log(chalk.green(`Processing 'Start Draw' for ${chainName(chainId)}:`));
     await checkStartDraw(config, context, drawAuctionContracts, rewardRecipient);
   } else if (context.drawAuctionState === DrawAuctionState.Finish) {
@@ -173,12 +176,27 @@ const checkStartDraw = async (
 
   const profitable = await calculateStartDrawProfit(config, context, gasCostUsd);
 
-  if (profitable) {
-    await sendPopulatedStartDrawTransaction(config, context, drawAuctionContracts, rewardRecipient);
+  let sendTransaction;
+  if (context.drawAuctionState === DrawAuctionState.Error) {
+    printErrorNote();
+
+    // This will submit a transaction for a new random number in the case of Witnet's failed RNG state
+    if (gasCostUsd < config.errorStateMaxGasCostThresholdUsd) {
+      console.log(chalk.yellow('Cost within threshold, sending tx for new random number!'));
+      sendTransaction = true;
+    } else {
+      console.log(chalk.yellow('Cost above error state re-submit threshold, ignoring for now ...'));
+    }
+  } else if (profitable) {
+    sendTransaction = true;
   } else {
     console.log(
       chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
     );
+  }
+
+  if (sendTransaction) {
+    await sendPopulatedStartDrawTransaction(config, context, drawAuctionContracts, rewardRecipient);
   }
 };
 
@@ -242,7 +260,11 @@ const sendPopulatedStartDrawTransaction = async (
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
   console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
   printSpacer();
-  printNote();
+
+  // We don't receive a reward for re-submitting for a new random number in the case of a Witnet failure
+  if (context.drawAuctionState !== DrawAuctionState.Error) {
+    printNote();
+  }
 };
 
 /**
@@ -806,6 +828,17 @@ const printNote = () => {
   console.log(chalk.yellow('|                                                       |'));
   console.log(chalk.yellow('|    Rewards accumulate post-draw on the PrizePool!     |'));
   console.log(chalk.yellow('|  Withdraw your rewards manually from that contract.   |'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|*******************************************************|'));
+};
+
+/**
+ * Logs for the bot maintainer to know we were in the error state
+ */
+const printErrorNote = () => {
+  console.log(chalk.yellow('|*******************************************************|'));
+  console.log(chalk.yellow('|                                                       |'));
+  console.log(chalk.yellow('|    Witnet random number request returned an error!    |'));
   console.log(chalk.yellow('|                                                       |'));
   console.log(chalk.yellow('|*******************************************************|'));
 };

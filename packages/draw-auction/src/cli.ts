@@ -34,6 +34,7 @@ if (esMain(import.meta)) {
     covalentApiKey: envVars.COVALENT_API_KEY,
     rewardRecipient: envVars.REWARD_RECIPIENT,
     contractJsonUrl: envVars.CONTRACT_JSON_URL,
+    errorStateMaxGasCostThresholdUsd: envVars.ERROR_STATE_MAX_GAS_COST_THRESHOLD_USD,
   };
 
   const contracts = await downloadContractsBlob(drawAuctionConfig.contractJsonUrl, nodeFetch);
