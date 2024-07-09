@@ -24,8 +24,7 @@
   "private": true,
   "scripts": {
     "format": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --write \"**/*.{ts,js}\"",
-    "start": "tsx ./src/cli.ts",
-    "update": "npm run build && npm run updatetask"
+    "start": "tsx ./src/cli.ts"
   },
   "bugs": {
     "url": "https://github.com/generationsoftware/pt-v5-autotasks/issues"

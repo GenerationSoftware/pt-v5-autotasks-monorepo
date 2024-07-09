@@ -1,13 +1,13 @@
 {
-  "name": "@generationsoftware/pt-v5-autotasks-draw-auction",
+  "name": "@generationsoftware/pt-v5-autotasks-flash-liquidator",
   "version": "0.0.1",
-  "description": "Autotask to automatically start and complete PoolTogether Hyperstructure v5 prize pool draws.",
+  "description": "PoolTogether v5 Flash Liquidator Autotask - make profit without holding WETH (only ETH for gas).",
   "author": {
     "name": "G9 Software Inc.",
     "url": "https://github.com/generationsoftware"
   },
   "license": "MIT",
-  "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/draw-auction/README.md",
+  "homepage": "https://github.com/generationsoftware/pt-v5-autotasks/packages/liquidator/README.md",
   "type": "module",
   "main": "dist/handler.js",
   "directories": {

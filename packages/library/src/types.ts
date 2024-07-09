@@ -65,6 +65,8 @@ export interface LiquidatorConfig extends SharedLiquidatorConfig {
   envTokenAllowList: string[];
 }
 
+export interface FlashLiquidatorConfig extends SharedLiquidatorConfig {}
+
 export interface DrawAuctionConfig extends AutotaskConfig {
   errorStateMaxGasCostThresholdUsd: number;
   rewardRecipient?: string;
@@ -75,6 +77,8 @@ export interface BaseLiquidatorContext {
   tokenOut: Token;
   underlyingAssetToken: TokenWithRate;
 }
+
+export interface FlashLiquidatorContext extends BaseLiquidatorContext {}
 
 export interface LiquidatorContext extends BaseLiquidatorContext {
   relayer: LiquidatorRelayerContext;
@@ -103,6 +107,8 @@ export interface SharedLiquidatorEnvVars extends AutotaskEnvVars {
 export interface LiquidatorEnvVars extends SharedLiquidatorEnvVars {
   ENV_TOKEN_ALLOW_LIST: string[];
 }
+
+export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
 
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
   SUBGRAPH_URL: string;
