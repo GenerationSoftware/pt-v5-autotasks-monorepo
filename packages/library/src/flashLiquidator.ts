@@ -14,6 +14,7 @@ import {
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
   getFlashLiquidatorContextMulticall,
+  findRecipient,
 } from './utils/index.js';
 import { FlashLiquidatorAbi } from './abis/FlashLiquidatorAbi.js';
 import { LiquidationPairAbi } from './abis/LiquidationPairAbi.js';
@@ -49,15 +50,9 @@ interface Stat {
  * @returns {undefined} - void function
  */
 export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise<void> {
-  const {
-    chainId,
-    wallet,
-    signer,
-    provider,
-    swapRecipient,
-    minProfitThresholdUsd,
-    covalentApiKey,
-  } = config;
+  const { chainId, wallet, signer, provider, minProfitThresholdUsd, covalentApiKey } = config;
+
+  const swapRecipient = findRecipient(config);
 
   console.log('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd);
 

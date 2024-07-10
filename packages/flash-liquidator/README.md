@@ -8,17 +8,17 @@
 
 ### @generationsoftware/pt-v5-autotasks-flash-liquidator
 
-PoolTogether hyperstructure (v5) OpenZeppelin Defender autotask to find arbitrage opportunities and only pay for gas (in ETH) in exchange for yield.
+PoolTogether hyperstructure (v5) bot to find arbitrage opportunities and only pay for gas (in ETH) in exchange for yield.
 
 ## 🖥️ Usage
 
-This package is both a CLI for setting the config parameters of the OpenZeppelin job and a build task for compiling the `handler()` prior to deploy on OZ Defender.
+This package is helpful for working on the bot locally.
 
-The bulk of determining if an arbitrage is profitable is in **[/packages/library/src/liquidator.ts#L44](../library)**.
+The bulk of determining if a flash liqudation is profitable is in **[/packages/library/src/flashLiquidator.ts#L44](../library)**.
 
 ### 1. Setup
 
-To run the OpenZeppelin Defender autotask locally or build for OpenZeppelin Defender, first set up your environment variables using `dotenv`:
+To run this bot locally first set up your environment variables using `dotenv`:
 
 #### ENV
 
@@ -38,26 +38,15 @@ direnv allow
 
 ```sh
 CHAIN_ID: The chain ID of which network to run the autotask on
-JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
-COVALENT_API_KEY: (Optional) Your Covalent API key for getting USD values of tokens
-USE_FLASHBOTS: boolean, if you would like to keep transactions private from the mempool on chains that support flashbots
+JSON_RPC_URL: Your Infura/Alchemy/etc JSON RPC URL
+COVALENT_API_KEY: Your Covalent API key for getting USD values of tokens
 MIN_PROFIT_THRESHOLD_USD: the minimum (in USD) you want to profit from each swap (ie. 1 is $1.00)
+CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
+CONTRACT_JSON_URL: the URL of the JSON file where the contract addresses and ABIs live (typically a commit on GitHub)
 
-### THIS:
+### LIQUIDATOR SPECIFIC:
 
-CUSTOM_RELAYER_PRIVATE_KEY: run liquidations using your own EOA
-
-### OR THIS (recommended):
-
-DEFENDER_TEAM_API_KEY: OZ Defender Team API Key
-DEFENDER_TEAM_API_SECRET: OZ Defender Team Secret Key
-AUTOTASK_ID: OZ Defender, the ID of the autotask (can get from browser URL bar)
-RELAYER_API_KEY: OZ Defender chain Relayer API Key
-RELAYER_API_SECRET: OZ Defender chain Relayer API Secret
-
-### FLASH LIQUIDATOR SPECIFIC:
-
-SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can set to the relayer address or any other contract/EOA address
+SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can be any other contract/EOA address or if blank sets recipient to be the relayer address
 
 ```
 
@@ -66,13 +55,5 @@ SWAP_RECIPIENT: Address of the account that will receive the resulting swap toke
 When everything is set and the env vars have been exported you can run the bot locally:
 
 ```sh
-yarn start
-```
-
-### 3. Update remote autotask
-
-With the config in place from step 1, you can build and update the autotask on OpenZeppelin Defender using:
-
-```sh
-yarn update
+npm run start
 ```

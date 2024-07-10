@@ -10,6 +10,7 @@ export const loadEnvVars = (): AutotaskEnvVars => {
 
   console.log('');
   console.log(chalk.blue(`Operating on: ${chainName(chainId)}`));
+  console.log('');
 
   const covalentApiKey = process.env.COVALENT_API_KEY;
   const customRelayerPrivateKey = process.env.CUSTOM_RELAYER_PRIVATE_KEY;
