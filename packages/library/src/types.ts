@@ -170,12 +170,16 @@ export interface SendTransactionArgs {
   value?: BigNumber;
 }
 
-export interface LiquidationPair {
+export type LiquidationPair = {
   chainId: number;
   address: string;
   swapPath: SwapPath;
   swapPathEncoded: string;
-}
+};
+
+export type LiquidationPairs = {
+  [key: string]: LiquidationPair[];
+};
 
 export type SwapPath =
   | [string, number, string]

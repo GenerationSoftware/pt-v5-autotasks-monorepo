@@ -62,7 +62,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
   console.log('Starting ...');
 
   const flashLiquidationContract = new ethers.Contract(
-    FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
+    FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId],
     FlashLiquidatorAbi,
     // @ts-ignore signer as Signer | DefenderRElaySigner should be okay here, ethers just doesn't know about DefenderRelaySigner
     signer,
@@ -73,11 +73,13 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
   // Loop through flash liquidation pairs
   printSpacer();
   console.log(
-    chalk.white.bgBlack(` # of Flash Liquidation Pairs: ${FLASH_LIQUIDATION_PAIRS.length} `),
+    chalk.white.bgBlack(
+      ` # of Flash Liquidation Pairs: ${FLASH_LIQUIDATION_PAIRS[chainId].length} `,
+    ),
   );
 
   const stats: Stat[] = [];
-  for (let flashLiquidationPair of FLASH_LIQUIDATION_PAIRS) {
+  for (let flashLiquidationPair of FLASH_LIQUIDATION_PAIRS[chainId]) {
     printSpacer();
     printSpacer();
     printSpacer();
@@ -114,6 +116,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
 
     // Get profit quote
     let bestQuote;
+
     try {
       bestQuote = await flashLiquidationContract.callStatic.findBestQuoteStatic(
         flashLiquidationPair.address,
