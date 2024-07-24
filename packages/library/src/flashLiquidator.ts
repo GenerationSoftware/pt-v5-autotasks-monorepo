@@ -123,13 +123,15 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
         flashLiquidationPair.swapPathEncoded,
       );
     } catch (e) {
-      console.error(e);
-      console.error('Cannot flash liquidate this pair at this time.');
+      // console.error(e);
+      console.error(
+        'Error querying findBestQuoteStatic, cannot flash liquidate this pair at this time.',
+      );
       console.error(chalk.red(e.reason));
       stats.push({
         pair,
         estimatedProfitUsd: 0,
-        error: `Error querying findBestQuoteStatic, Cannot flash liquidate this pair at this time`,
+        error: `Error querying findBestQuoteStatic, cannot flash liquidate this pair at this time`,
       });
       continue;
     }

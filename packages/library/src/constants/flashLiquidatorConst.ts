@@ -6,7 +6,7 @@ import { KNOWN_TOKENS } from './tokens.js';
 
 export const FLASH_LIQUIDATOR_CONTRACT_ADDRESS: Record<number, string> = {
   [CHAIN_IDS.optimism]: '0x5927b63E88764D6250b7801eBfDEb7B6c1ac35d0',
-  [CHAIN_IDS.base]: '0xface',
+  [CHAIN_IDS.base]: '0xe2368df1f78bc5b714b7f502de8e2b545c6fe7ec',
 };
 
 const OPTIMISM_OP_ETH_SWAP_PATH: SwapPath = [
