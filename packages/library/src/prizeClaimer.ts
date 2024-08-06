@@ -36,6 +36,8 @@ import {
   findRecipient,
 } from './utils/index.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
+import { VaultAbi } from './abis/VaultAbi.js';
+import { ClaimerAbi } from './abis/ClaimerAbi.js';
 import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
@@ -94,11 +96,6 @@ export async function runPrizeClaimer(
     contracts,
     contractsVersion,
   );
-  const claimerContract = getContract('Claimer', chainId, provider, contracts, contractsVersion);
-
-  if (!claimerContract) {
-    throw new Error('Contract Unavailable');
-  }
 
   // #1. Get context about the prize pool prize token, etc
   printSpacer();
@@ -202,6 +199,9 @@ export async function runPrizeClaimer(
       printSpacer();
       continue;
     }
+
+    // #5. Dynamically find the claimer for this vault
+    const claimerContract: Contract = await getClaimerContract(vault, provider);
 
     // #6. Decide if profitable or not
     printSpacer();
@@ -834,4 +834,15 @@ const getLiquidityInfo = (
   const enoughLiquidity = maxPrizesForRemainingLiquidity > 0;
 
   return { enoughLiquidity };
+};
+
+const getClaimerContract = async (vaultAddress: string, provider: Provider): Promise<Contract> => {
+  const vaultContract = new ethers.Contract(vaultAddress, VaultAbi, provider);
+  const claimerAddress = await vaultContract.claimer();
+
+  if (!claimerAddress) {
+    throw new Error('Contract Unavailable');
+  }
+
+  return new Contract(claimerAddress, ClaimerAbi, provider);
 };
