@@ -214,7 +214,8 @@ export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {
-  const { provider, relayerAddress, covalentApiKey } = config;
+  const { provider, relayerAddress, covalentApiKey, pairsToLiquidate } = config;
+  printDateTimeStr();
   printSpacer();
 
   const swapRecipient = findRecipient(config);
@@ -223,6 +224,16 @@ export async function runLiquidator(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
     chalk.yellow(config.minProfitThresholdUsd),
   );
+
+  if (config.pairsToLiquidate.length > 0) {
+    console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellow(config.pairsToLiquidate));
+  }
+  if (config.envTokenAllowList.length > 0) {
+    console.log(
+      chalk.dim('Config - ENV_TOKEN_ALLOW_LIST:'),
+      chalk.yellow(config.envTokenAllowList),
+    );
+  }
 
   // 1. Get contracts
   printSpacer();
@@ -242,11 +253,20 @@ export async function runLiquidator(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
   for (let i = 0; i < liquidationPairContracts.length; i++) {
+    const liquidationPairContract = liquidationPairContracts[i];
+    if (
+      pairsToLiquidate.length > 0 &&
+      !pairsToLiquidate
+        .map((address) => address.toLowerCase())
+        .includes(liquidationPairContract.address.toLowerCase())
+    ) {
+      continue;
+    }
+
     printSpacer();
     printSpacer();
     printAsterisks();
     printSpacer();
-    const liquidationPairContract = liquidationPairContracts[i];
     console.log(`LiquidationPair ${i}`, chalk.dim(`/ ${liquidationPairContracts.length - 1}`));
     printSpacer();
 
@@ -321,8 +341,18 @@ export async function runLiquidator(
   console.log(
     chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
   );
+
+  printSpacer();
+  printDateTimeStr();
   printSpacer();
 }
+
+const printDateTimeStr = () => {
+  const datetime = new Date();
+  console.log(
+    chalk.greenBright.bold(datetime.toISOString().slice(0, 19).replace('T', ' ').concat(' UTC')),
+  );
+};
 
 const processUniV2WethLPPair = async (
   config: LiquidatorConfig,

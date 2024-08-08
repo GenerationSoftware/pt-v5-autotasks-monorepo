@@ -52,8 +52,14 @@ CONTRACT_JSON_URL: the URL of the JSON file where the contract addresses and ABI
 
 ### LIQUIDATOR SPECIFIC:
 
+# OPTIONAL
 SWAP_RECIPIENT: Address of the account that will receive the resulting swap tokens, can be any other contract/EOA address or if blank sets recipient to be the relayer address
-ENV_TOKEN_ALLOW_LIST: Comma-seperated list of addresses that will be added to the token allowlist (if you want to liquidate new exotic tokens or your own prize vault tokens, add them here!)
+
+# OPTIONAL, comma-seperated:
+ENV_TOKEN_ALLOW_LIST: List of addresses that will be added to the token allowlist (if you want to liquidate new exotic tokens or your own prize vault tokens, add them here!)
+
+# OPTIONAL, comma-seperated:
+PAIRS_TO_LIQUIDATE: List of LiquidationPair addresses to filter by
 
 ```
 

@@ -7,5 +7,9 @@ export CONTRACT_JSON_URL=''
 
 ### LIQUIDATOR SPECIFIC:
 
+# OPTIONAL:
 export SWAP_RECIPIENT=''
+# OPTIONAL, comma-seperated:
 export ENV_TOKEN_ALLOW_LIST=''
+# OPTIONAL, comma-seperated:
+export PAIRS_TO_LIQUIDATE=''

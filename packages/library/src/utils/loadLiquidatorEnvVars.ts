@@ -8,6 +8,9 @@ export const loadLiquidatorEnvVars = (): LiquidatorEnvVars => {
   const envTokenAllowList = !!process.env.ENV_TOKEN_ALLOW_LIST
     ? process.env.ENV_TOKEN_ALLOW_LIST.toLowerCase().split(',')
     : [];
+  const pairsToLiquidate = !!process.env.PAIRS_TO_LIQUIDATE
+    ? process.env.PAIRS_TO_LIQUIDATE.toLowerCase().split(',')
+    : [];
 
   if (envTokenAllowList.length > 0) {
     console.log('');
@@ -20,5 +23,6 @@ export const loadLiquidatorEnvVars = (): LiquidatorEnvVars => {
     ...envVars,
     SWAP_RECIPIENT: swapRecipient,
     ENV_TOKEN_ALLOW_LIST: envTokenAllowList,
+    PAIRS_TO_LIQUIDATE: pairsToLiquidate,
   };
 };

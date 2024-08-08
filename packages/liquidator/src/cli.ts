@@ -34,6 +34,7 @@ if (esMain(import.meta)) {
     covalentApiKey: envVars.COVALENT_API_KEY,
     swapRecipient: envVars.SWAP_RECIPIENT,
     envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
+    pairsToLiquidate: envVars.PAIRS_TO_LIQUIDATE,
     contractJsonUrl: envVars.CONTRACT_JSON_URL,
   };
 
