@@ -252,14 +252,10 @@ export async function runLiquidator(
   console.log(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
+
   for (let i = 0; i < liquidationPairContracts.length; i++) {
     const liquidationPairContract = liquidationPairContracts[i];
-    if (
-      pairsToLiquidate.length > 0 &&
-      !pairsToLiquidate
-        .map((address) => address.toLowerCase())
-        .includes(liquidationPairContract.address.toLowerCase())
-    ) {
+    if (ignorePair(pairsToLiquidate, liquidationPairContract.address)) {
       continue;
     }
 
@@ -1110,4 +1106,15 @@ const logNextPair = (liquidationPair, liquidationPairContracts) => {
   if (liquidationPair !== liquidationPairContracts[liquidationPairContracts.length - 1]) {
     console.warn(chalk.yellow(`Moving to next pair ...`));
   }
+};
+
+/**
+ * Determines if the passed in `pairAddress` is in the provided list of pairs (`pairsToLiquidate`) to filter by
+ * @returns {boolean}
+ */
+const ignorePair = (pairsToLiquidate: string[], pairAddress: string): boolean => {
+  return (
+    pairsToLiquidate.length > 0 &&
+    !pairsToLiquidate.map((address) => address.toLowerCase()).includes(pairAddress.toLowerCase())
+  );
 };
