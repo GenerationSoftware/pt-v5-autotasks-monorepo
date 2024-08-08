@@ -5,6 +5,7 @@ import chalk from 'chalk';
 
 import { FlashLiquidatorConfig, FlashLiquidatorContext } from './types';
 import {
+  printDateTimeStr,
   logTable,
   logStringValue,
   logBigNumber,
@@ -52,14 +53,17 @@ interface Stat {
 export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise<void> {
   const { chainId, wallet, signer, provider, minProfitThresholdUsd, covalentApiKey } = config;
 
+  printDateTimeStr('START');
+  printSpacer();
+
   const swapRecipient = findRecipient(config);
 
-  console.log('Config - MIN_PROFIT_THRESHOLD_USD:', config.minProfitThresholdUsd);
+  console.log(chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'), config.minProfitThresholdUsd);
 
   // Get contracts
   //
   printSpacer();
-  console.log('Starting ...');
+  console.log(chalk.dim('Starting ...'));
 
   const flashLiquidationContract = new ethers.Contract(
     FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId],
@@ -243,6 +247,10 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
   console.log(
     chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
   );
+
+  printSpacer();
+  printDateTimeStr('END');
+  printSpacer();
 }
 
 const printContext = (context) => {

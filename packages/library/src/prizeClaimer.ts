@@ -27,6 +27,7 @@ import {
   getEthMainnetTokenMarketRateUsd,
   getNativeTokenMarketRateUsd,
   getWinnersUri,
+  printDateTimeStr,
   logTable,
   logStringValue,
   logBigNumber,
@@ -76,6 +77,8 @@ export async function runPrizeClaimer(
 ): Promise<undefined> {
   const { chainId, covalentApiKey, wallet, provider, subgraphUrl } = config;
   printSpacer();
+  printDateTimeStr('START');
+  printSpacer();
 
   const rewardRecipient = findRecipient(config);
 
@@ -116,6 +119,10 @@ export async function runPrizeClaimer(
         `Draw is finalized. Cannot claim prizes anymore for finalized draw. Exiting ...`,
       ),
     );
+
+    printSpacer();
+    printDateTimeStr('END');
+    printSpacer();
     return;
   }
 
@@ -150,6 +157,9 @@ export async function runPrizeClaimer(
   if (unclaimedClaims.length === 0) {
     printAsterisks();
     console.log(chalk.yellow(`No prizes left to claim. Exiting ...`));
+    printSpacer();
+    printDateTimeStr('END');
+    printSpacer();
     return;
   }
 
@@ -262,6 +272,10 @@ export async function runPrizeClaimer(
       }
     }
   }
+
+  printSpacer();
+  printDateTimeStr('END');
+  printSpacer();
 }
 
 const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {

@@ -6,6 +6,7 @@ import chalk from 'chalk';
 
 import { LiquidatorConfig, LiquidatorContext } from './types';
 import {
+  printDateTimeStr,
   logTable,
   logStringValue,
   logBigNumber,
@@ -215,7 +216,7 @@ export async function runLiquidator(
   config: LiquidatorConfig,
 ): Promise<void> {
   const { provider, relayerAddress, covalentApiKey, pairsToLiquidate } = config;
-  printDateTimeStr();
+  printDateTimeStr('START');
   printSpacer();
 
   const swapRecipient = findRecipient(config);
@@ -339,16 +340,9 @@ export async function runLiquidator(
   );
 
   printSpacer();
-  printDateTimeStr();
+  printDateTimeStr('END');
   printSpacer();
 }
-
-const printDateTimeStr = () => {
-  const datetime = new Date();
-  console.log(
-    chalk.greenBright.bold(datetime.toISOString().slice(0, 19).replace('T', ' ').concat(' UTC')),
-  );
-};
 
 const processUniV2WethLPPair = async (
   config: LiquidatorConfig,

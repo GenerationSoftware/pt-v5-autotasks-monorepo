@@ -32,3 +32,13 @@ export const printAsterisks = () => {
 };
 
 export const printSpacer = () => console.log('');
+
+export const printDateTimeStr = (indicatorString: string) => {
+  const datetime = new Date();
+  console.log(
+    chalk.greenBright.bold(
+      indicatorString,
+      datetime.toISOString().slice(0, 19).replace('T', ' ').concat(' UTC'),
+    ),
+  );
+};

@@ -5,6 +5,7 @@ import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import { DrawAuctionContracts, DrawAuctionContext, DrawAuctionConfig } from './types';
 import {
   chainName,
+  printDateTimeStr,
   logTable,
   logStringValue,
   logBigNumber,
@@ -58,6 +59,8 @@ export async function runDrawAuction(
 ): Promise<void> {
   const { chainId } = config;
   printSpacer();
+  printDateTimeStr('START');
+  printSpacer();
 
   const rewardRecipient = findRecipient(config);
 
@@ -97,6 +100,10 @@ export async function runDrawAuction(
     console.log(chalk.green(`Processing 'Finish Draw' for ${chainName(chainId)}:`));
     await checkFinishDraw(config, context, drawAuctionContracts, rewardRecipient);
   }
+
+  printSpacer();
+  printDateTimeStr('END');
+  printSpacer();
 }
 
 /**
