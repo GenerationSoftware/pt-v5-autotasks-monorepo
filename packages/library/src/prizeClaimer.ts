@@ -379,7 +379,7 @@ const calculateProfit = async (
   );
   printSpacer();
 
-  const profitable = claimCount > 1;
+  const profitable = claimCount >= 1;
 
   if (profitable) {
     console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
