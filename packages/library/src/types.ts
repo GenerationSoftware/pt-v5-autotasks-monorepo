@@ -26,6 +26,10 @@ export interface TokenWithRate extends Token {
   assetRateUsd: number;
 }
 
+export interface TokenWithRateAndTotalSupply extends TokenWithRate {
+  totalSupply: BigNumber;
+}
+
 export interface TiersContext {
   numTiers: number;
   tiersRangeArray: number[];

@@ -9,6 +9,7 @@ import {
   LiquidatorRelayerContext,
   Token,
   TokenWithRate,
+  TokenWithRateAndTotalSupply,
 } from '../types.js';
 import { getEthMainnetTokenMarketRateUsd, printSpacer } from '../utils/index.js';
 import { LPTokenAbi } from '../abis/LPTokenAbi.js';
@@ -80,6 +81,8 @@ export const getLiquidatorContextMulticall = async (
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
   if (underlyingAssetIsLpToken(underlyingAsset)) {
+    queries[`underlyingAsset-totalSupply`] = underlyingAssetContract.totalSupply();
+
     const token0Contract = new ethers.Contract(
       underlyingAsset.lpTokenAddresses.token0,
       ERC20Abi,
@@ -88,6 +91,7 @@ export const getLiquidatorContextMulticall = async (
     queries[`token0-decimals`] = token0Contract.decimals();
     queries[`token0-name`] = token0Contract.name();
     queries[`token0-symbol`] = token0Contract.symbol();
+    queries[`token0-totalSupply`] = token0Contract.totalSupply();
 
     const token1Contract = new ethers.Contract(
       underlyingAsset.lpTokenAddresses.token1,
@@ -97,6 +101,7 @@ export const getLiquidatorContextMulticall = async (
     queries[`token1-decimals`] = token1Contract.decimals();
     queries[`token1-name`] = token1Contract.name();
     queries[`token1-symbol`] = token1Contract.symbol();
+    queries[`token1-totalSupply`] = token1Contract.totalSupply();
   }
 
   // 3. RELAYER tokenIn BALANCE
@@ -167,7 +172,7 @@ export const getLiquidatorContextMulticall = async (
     );
   }
 
-  const underlyingAssetToken: TokenWithRate = {
+  let underlyingAssetToken: TokenWithRate | TokenWithRateAndTotalSupply = {
     address: underlyingAssetAddress,
     decimals: results['underlyingAsset-decimals'],
     name: results['underlyingAsset-name'],
@@ -179,6 +184,11 @@ export const getLiquidatorContextMulticall = async (
   let token1: TokenWithRate;
   let token1AssetRateUsd, token0AssetRateUsd;
   if (underlyingAssetIsLpToken(underlyingAsset)) {
+    underlyingAssetToken = {
+      ...underlyingAssetToken,
+      totalSupply: results['underlyingAsset-totalSupply'],
+    };
+
     const token0Address = underlyingAsset.lpTokenAddresses.token0;
     // token0 results
     token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -211,6 +221,10 @@ export const getLiquidatorContextMulticall = async (
       assetRateUsd: token1AssetRateUsd,
     };
   }
+  console.log('token0');
+  console.log(token0);
+  console.log('token1');
+  console.log(token1);
 
   // 9. Relayer's balances
   const relayerNativeTokenBalance = await provider.getBalance(relayerAddress);
