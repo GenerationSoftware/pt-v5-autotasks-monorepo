@@ -85,6 +85,8 @@ export interface LiquidatorContext extends BaseLiquidatorContext {
   relayer: LiquidatorRelayerContext;
   tokenOutInAllowList: boolean;
   isValidWethFlashLiquidationPair: boolean;
+  token0?: TokenWithRate;
+  token1?: TokenWithRate;
 }
 
 export interface AutotaskEnvVars {

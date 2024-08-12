@@ -23,6 +23,7 @@ export const SYMBOL_TO_COINGECKO_LOOKUP = {
   OP: 'optimism',
   USDA: 'angle-usd',
   wstETH: 'wrapped-steth',
+  LUSD: 'liquity-usd',
 };
 
 export const NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP = {

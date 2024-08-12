@@ -73,9 +73,8 @@ export const getFlashLiquidatorContextMulticall = async (
 
   if (!underlyingAssetAddress) {
     underlyingAssetAddress = tokenOutAddress;
-
-    console.log('underlyingAssetAddress 2');
-    console.log(underlyingAssetAddress);
+    console.log(chalk.dim('underlyingAssetAddress 2'));
+    console.log(chalk.dim(underlyingAssetAddress));
   }
 
   const underlyingAssetContract = new ethers.Contract(

@@ -11,6 +11,7 @@ import {
   TokenWithRate,
 } from '../types.js';
 import { getEthMainnetTokenMarketRateUsd, printSpacer } from '../utils/index.js';
+import { LPTokenAbi } from '../abis/LPTokenAbi.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from '../abis/UniswapV2WethPairFlashLiquidatorAbi.js';
@@ -21,6 +22,11 @@ import {
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
+
+type LpTokenAddresses = {
+  token0: string;
+  token1: string;
+};
 
 /**
  * Gather information about this specific liquidation pair
@@ -45,7 +51,6 @@ export const getLiquidatorContextMulticall = async (
 ): Promise<LiquidatorContext> => {
   const { chainId } = config;
 
-  // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
 
   let queries: Record<string, any> = {};
@@ -66,31 +71,33 @@ export const getLiquidatorContextMulticall = async (
   queries[`tokenOut-name`] = tokenOutContract.name();
   queries[`tokenOut-symbol`] = tokenOutContract.symbol();
 
-  // Find out if this LiquidationPair's tokenOut is an ERC4626 Vault or an ERC20 token
-  const liquidationPairTokenOutAsVault = new ethers.Contract(
-    tokenOutAddress,
-    ERC4626Abi,
-    multicallProvider,
-  );
-  let underlyingAssetAddress;
-  try {
-    underlyingAssetAddress = await liquidationPairTokenOutAsVault.asset();
-  } catch (e) {
-    underlyingAssetAddress = tokenOutAddress;
-    console.log(
-      chalk.dim('liquidationPairTokenOutAsVault.asset() test failed, likely an ERC20 token'),
-    );
-    printSpacer();
-  }
-  const underlyingAssetContract = new ethers.Contract(
-    underlyingAssetAddress,
-    ERC20Abi,
-    multicallProvider,
-  );
+  const underlyingAsset = await getUnderlyingAsset(multicallProvider, tokenOutAddress);
+  const underlyingAssetContract = underlyingAsset.contract;
+  const underlyingAssetAddress = underlyingAssetContract.address;
 
   queries[`underlyingAsset-decimals`] = underlyingAssetContract.decimals();
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
+
+  if (underlyingAssetIsLpToken(underlyingAsset)) {
+    const token0Contract = new ethers.Contract(
+      underlyingAsset.lpTokenAddresses.token0,
+      ERC20Abi,
+      multicallProvider,
+    );
+    queries[`token0-decimals`] = token0Contract.decimals();
+    queries[`token0-name`] = token0Contract.name();
+    queries[`token0-symbol`] = token0Contract.symbol();
+
+    const token1Contract = new ethers.Contract(
+      underlyingAsset.lpTokenAddresses.token1,
+      ERC20Abi,
+      multicallProvider,
+    );
+    queries[`token1-decimals`] = token1Contract.decimals();
+    queries[`token1-name`] = token1Contract.name();
+    queries[`token1-symbol`] = token1Contract.symbol();
+  }
 
   // 3. RELAYER tokenIn BALANCE
   queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
@@ -129,7 +136,7 @@ export const getLiquidatorContextMulticall = async (
     symbol: results['tokenOut-symbol'],
   };
 
-  const tokenOutInAllowList = tokenOutAllowListed(config, tokenOut);
+  const tokenOutInAllowList = tokenAllowListed(config, tokenOut);
 
   // 7. tokenIn results
   let tokenInAssetRateUsd;
@@ -149,7 +156,7 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: tokenInAssetRateUsd,
   };
 
-  // 8. vault underlying asset (hard asset such as DAI or USDC) results
+  // 8. vault underlying asset (hard asset such as DAI or USDC) results, LP token results, etc.
   let underlyingAssetAssetRateUsd;
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -168,6 +175,44 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: underlyingAssetAssetRateUsd,
   };
 
+  let token0: TokenWithRate;
+  let token1: TokenWithRate;
+  let token1AssetRateUsd, token0AssetRateUsd;
+  if (underlyingAssetIsLpToken(underlyingAsset)) {
+    const token0Address = underlyingAsset.lpTokenAddresses.token0;
+    // token0 results
+    token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      chainId,
+      covalentApiKey,
+      results['token0-symbol'],
+      token0Address,
+    );
+    token0 = {
+      address: token0Address,
+      decimals: results['token0-decimals'],
+      name: results['token0-name'],
+      symbol: results['token0-symbol'],
+      assetRateUsd: token0AssetRateUsd,
+    };
+
+    const token1Address = underlyingAsset.lpTokenAddresses.token1;
+    // token1 results
+    token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      chainId,
+      covalentApiKey,
+      results['token1-symbol'],
+      token1Address,
+    );
+    token1 = {
+      address: token1Address,
+      decimals: results['token1-decimals'],
+      name: results['token1-name'],
+      symbol: results['token1-symbol'],
+      assetRateUsd: token1AssetRateUsd,
+    };
+  }
+
+  // 9. Relayer's balances
   const relayerNativeTokenBalance = await provider.getBalance(relayerAddress);
   const relayer: LiquidatorRelayerContext = {
     nativeTokenBalance: relayerNativeTokenBalance,
@@ -182,17 +227,19 @@ export const getLiquidatorContextMulticall = async (
     relayer,
     tokenOutInAllowList,
     isValidWethFlashLiquidationPair,
+    token0,
+    token1,
   };
 };
 
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
 // possibility of manually deployed malicious vaults/pairs
-const tokenOutAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
+const tokenAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
   const { envTokenAllowList, chainId } = config;
 
-  let tokenOutInAllowList = false;
+  let tokenInAllowList = false;
   try {
-    tokenOutInAllowList =
+    tokenInAllowList =
       LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(tokenOut.address.toLowerCase()) ||
       envTokenAllowList.includes(tokenOut.address.toLowerCase());
   } catch (e) {
@@ -202,5 +249,58 @@ const tokenOutAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
     );
   }
 
-  return tokenOutInAllowList;
+  return tokenInAllowList;
 };
+
+// Runs .asset() on the LiquidationPair's tokenOut address as an ERC4626 Vault to test if it is one, or if it is a simple ERC20 token
+// Then initializes the underlying asset as an LP Token Contract or an ERC20 Token Contract
+const getUnderlyingAsset = async (
+  multicallProvider: Provider,
+  tokenOutAddress: string,
+): Promise<{ contract: Contract; lpTokenAddresses: LpTokenAddresses }> => {
+  const liquidationPairTokenOutAsVaultContract = new ethers.Contract(
+    tokenOutAddress,
+    ERC4626Abi,
+    multicallProvider,
+  );
+
+  let contract;
+  let lpTokenAddresses: LpTokenAddresses;
+  try {
+    const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
+
+    contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
+
+    lpTokenAddresses = await getLpTokenAddresses(multicallProvider, contract);
+  } catch (e) {
+    const underlyingAssetAddress = tokenOutAddress;
+
+    contract = new ethers.Contract(underlyingAssetAddress, ERC20Abi, multicallProvider);
+
+    console.log(
+      chalk.dim(
+        'liquidationPairTokenOutAsVaultContract.asset() test failed, likely an ERC20 token',
+      ),
+    );
+    printSpacer();
+  }
+
+  return { contract, lpTokenAddresses };
+};
+
+const getLpTokenAddresses = async (
+  multicallProvider: Provider,
+  underlyingAssetContract: Contract,
+): Promise<{ token0: string; token1: string }> => {
+  let queries: Record<string, any> = {};
+  queries[`token0`] = underlyingAssetContract.token0();
+  queries[`token1`] = underlyingAssetContract.token1();
+
+  // @ts-ignore
+  const results = await getEthersMulticallProviderResults(multicallProvider, queries);
+  const { token0, token1 } = results;
+
+  return { token0, token1 };
+};
+
+const underlyingAssetIsLpToken = (asset) => !!asset.lpTokenAddresses;
