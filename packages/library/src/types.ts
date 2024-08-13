@@ -77,6 +77,16 @@ export interface DrawAuctionConfig extends AutotaskConfig {
   rewardRecipient?: string;
 }
 
+type LpToken = {
+  contract: Contract;
+  lpTokenAddresses: {
+    token0Address: string;
+    token1Address: string;
+  };
+  token0: TokenWithRate;
+  token1: TokenWithRate;
+};
+
 export interface BaseLiquidatorContext {
   tokenIn: TokenWithRate;
   tokenOut: Token;
@@ -89,8 +99,7 @@ export interface LiquidatorContext extends BaseLiquidatorContext {
   relayer: LiquidatorRelayerContext;
   tokenOutInAllowList: boolean;
   isValidWethFlashLiquidationPair: boolean;
-  token0?: TokenWithRate;
-  token1?: TokenWithRate;
+  lpToken?: LpToken;
 }
 
 export interface AutotaskEnvVars {

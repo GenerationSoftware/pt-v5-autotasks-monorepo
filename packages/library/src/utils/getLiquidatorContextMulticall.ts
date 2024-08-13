@@ -24,11 +24,6 @@ import {
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
-type LpTokenAddresses = {
-  token0: string;
-  token1: string;
-};
-
 /**
  * Gather information about this specific liquidation pair
  * `tokenIn` is the token to supply (likely the prize token, which is probably WETH),
@@ -72,19 +67,43 @@ export const getLiquidatorContextMulticall = async (
   queries[`tokenOut-name`] = tokenOutContract.name();
   queries[`tokenOut-symbol`] = tokenOutContract.symbol();
 
-  const underlyingAsset = await getUnderlyingAsset(multicallProvider, tokenOutAddress);
-  const underlyingAssetContract = underlyingAsset.contract;
-  const underlyingAssetAddress = underlyingAssetContract.address;
+  const underlyingAssetContract: Contract = await getUnderlyingAssetContract(
+    multicallProvider,
+    tokenOutAddress,
+  );
+
+  const underlyingAssetAddress: string = underlyingAssetContract.address;
+  // if (underlyingAssetIsLpToken(underlyingAssetContract)) {
+  // }
+
+  // const underlyingAssetContract = underlyingAsset.contract;
+  // const underlyingAssetAddress = underlyingAssetContract.address;
 
   queries[`underlyingAsset-decimals`] = underlyingAssetContract.decimals();
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
-  if (underlyingAssetIsLpToken(underlyingAsset)) {
+  console.log('underlyingAssetIsLpToken(underlyingAssetContract)');
+  console.log(underlyingAssetIsLpToken(underlyingAssetContract));
+
+  const initLpToken = (multicallProvider:Provider,lpTokenContract:Contract) {
+
+    if (underlyingAssetIsLpToken(underlyingAssetContract)) {
+      return {
+        contract:lpTokenContract,
+        lpTokenAddresses: await getLpTokenAddresses(multicallProvider, lpTokenContract),
+        token0,
+        token1
+      }
+    }
+  }
+
+  const lpToken: LpToken = initLpToken(multicallProvider, underlyingAssetContract);
+  if (underlyingAssetIsLpToken(underlyingAssetContract)) {
     queries[`underlyingAsset-totalSupply`] = underlyingAssetContract.totalSupply();
 
     const token0Contract = new ethers.Contract(
-      underlyingAsset.lpTokenAddresses.token0,
+      lpToken.lpTokenAddresses.token0Address,
       ERC20Abi,
       multicallProvider,
     );
@@ -94,7 +113,7 @@ export const getLiquidatorContextMulticall = async (
     queries[`token0-totalSupply`] = token0Contract.totalSupply();
 
     const token1Contract = new ethers.Contract(
-      underlyingAsset.lpTokenAddresses.token1,
+      lpToken.lpTokenAddresses.token1Address,
       ERC20Abi,
       multicallProvider,
     );
@@ -180,16 +199,15 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: underlyingAssetAssetRateUsd,
   };
 
-  let token0: TokenWithRate;
-  let token1: TokenWithRate;
   let token1AssetRateUsd, token0AssetRateUsd;
-  if (underlyingAssetIsLpToken(underlyingAsset)) {
+  if (underlyingAssetIsLpToken(underlyingAssetContract)) {
+    const { token0Address, token1Address } = lpToken.lpTokenAddresses;
+
     underlyingAssetToken = {
       ...underlyingAssetToken,
       totalSupply: results['underlyingAsset-totalSupply'],
     };
 
-    const token0Address = underlyingAsset.lpTokenAddresses.token0;
     // token0 results
     token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
       chainId,
@@ -197,7 +215,7 @@ export const getLiquidatorContextMulticall = async (
       results['token0-symbol'],
       token0Address,
     );
-    token0 = {
+    lpToken.token0 = {
       address: token0Address,
       decimals: results['token0-decimals'],
       name: results['token0-name'],
@@ -205,7 +223,6 @@ export const getLiquidatorContextMulticall = async (
       assetRateUsd: token0AssetRateUsd,
     };
 
-    const token1Address = underlyingAsset.lpTokenAddresses.token1;
     // token1 results
     token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
       chainId,
@@ -213,7 +230,7 @@ export const getLiquidatorContextMulticall = async (
       results['token1-symbol'],
       token1Address,
     );
-    token1 = {
+    lpToken.token1 = {
       address: token1Address,
       decimals: results['token1-decimals'],
       name: results['token1-name'],
@@ -222,9 +239,9 @@ export const getLiquidatorContextMulticall = async (
     };
   }
   console.log('token0');
-  console.log(token0);
+  console.log(lpToken.token0);
   console.log('token1');
-  console.log(token1);
+  console.log(lpToken.token1);
 
   // 9. Relayer's balances
   const relayerNativeTokenBalance = await provider.getBalance(relayerAddress);
@@ -241,8 +258,7 @@ export const getLiquidatorContextMulticall = async (
     relayer,
     tokenOutInAllowList,
     isValidWethFlashLiquidationPair,
-    token0,
-    token1,
+    lpToken
   };
 };
 
@@ -268,7 +284,32 @@ const tokenAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
 
 // Runs .asset() on the LiquidationPair's tokenOut address as an ERC4626 Vault to test if it is one, or if it is a simple ERC20 token
 // Then initializes the underlying asset as an LP Token Contract or an ERC20 Token Contract
-const getUnderlyingAsset = async (
+const getUnderlyingAssetContract = async (
+  multicallProvider: Provider,
+  tokenOutAddress: string,
+): Promise<Contract> => {
+  const liquidationPairTokenOutAsVaultContract = new ethers.Contract(
+    tokenOutAddress,
+    ERC4626Abi,
+    multicallProvider,
+  );
+
+  let contract;
+  try {
+    const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
+    contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
+  } catch (e) {
+    const underlyingAssetAddress = tokenOutAddress;
+    contract = new ethers.Contract(underlyingAssetAddress, ERC20Abi, multicallProvider);
+
+    console.log(chalk.dim('tokenOut as ERC4626 (.asset()) test failed, likely an ERC20 token'));
+    printSpacer();
+  }
+
+  return contract;
+};
+
+const getLpToken = async (
   multicallProvider: Provider,
   tokenOutAddress: string,
 ): Promise<{ contract: Contract; lpTokenAddresses: LpTokenAddresses }> => {
@@ -279,13 +320,13 @@ const getUnderlyingAsset = async (
   );
 
   let contract;
-  let lpTokenAddresses: LpTokenAddresses;
   try {
     const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
 
     contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
 
     lpTokenAddresses = await getLpTokenAddresses(multicallProvider, contract);
+    lpTokenAddresses = await getLpTokenReserves(lpToken);
   } catch (e) {
     const underlyingAssetAddress = tokenOutAddress;
 
@@ -305,16 +346,30 @@ const getUnderlyingAsset = async (
 const getLpTokenAddresses = async (
   multicallProvider: Provider,
   underlyingAssetContract: Contract,
-): Promise<{ token0: string; token1: string }> => {
+): Promise<{ token0Address: string; token1Address: string }> => {
   let queries: Record<string, any> = {};
-  queries[`token0`] = underlyingAssetContract.token0();
-  queries[`token1`] = underlyingAssetContract.token1();
+  queries[`token0Address`] = underlyingAssetContract.token0();
+  queries[`token1Address`] = underlyingAssetContract.token1();
 
   // @ts-ignore
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
-  const { token0, token1 } = results;
+  const { token0Address, token1Address } = results;
 
-  return { token0, token1 };
+  return { token0Address, token1Address };
 };
 
-const underlyingAssetIsLpToken = (asset) => !!asset.lpTokenAddresses;
+const underlyingAssetIsLpToken = (underlyingAssetContract: Contract) =>
+  !!underlyingAssetContract.token0;
+
+const getLpTokenReserves = async (lpToken: LpToken) => {
+  try {
+    const LpTokenContract = lpToken.contract(IUniswapV2Pair, LP_TOKEN_ADDRESS);
+    const totalReserves = await LpTokenContract.methods.getReserves().call();
+    // For ETH/DOGE Pool totalReserves[0] = ETH Reserve and totalReserves[1] = DOGE Reserve
+    // For BNB/DOGE Pool totalReserves[0] = BNB Reserve and totalReserves[1] = DOGE Reserve
+    return [totalReserves[0], totalReserves[1]];
+  } catch (e) {
+    console.log(e);
+    return [0, 0];
+  }
+};

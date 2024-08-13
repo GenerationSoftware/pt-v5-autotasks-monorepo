@@ -755,25 +755,25 @@ const getLiquidationContracts = async (
   };
 };
 
-const logLiquidatorContextTable = (context: LiquidatorContext): void => {
-  let objectToLog: any = {
-    tokenIn: context.tokenIn,
-    tokenOut: context.tokenOut,
-    underlyingAssetToken: context.underlyingAssetToken,
-  };
-  if (context.token0) {
-    objectToLog.token0 = context.token0;
-    objectToLog.token1 = context.token1;
+const logLpTokenTable = (context: LiquidatorContext): void => {
+  if (context.lpToken.token0) {
+    logTable(context.lpToken);
+    printSpacer();
   }
-  logTable(objectToLog);
-  printSpacer();
 };
 
 const printContext = (config: LiquidatorConfig, context: LiquidatorContext) => {
   console.log(chalk.blue(`Pair Symbol:  ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
   printSpacer();
 
-  logLiquidatorContextTable(context);
+  logTable({
+    tokenIn: context.tokenIn,
+    tokenOut: context.tokenOut,
+    underlyingAssetToken: context.underlyingAssetToken,
+  });
+  printSpacer();
+
+  logLpTokenTable(context);
 
   if (context.isValidWethFlashLiquidationPair) {
     logStringValue('Underlying asset is UniV2 WETH LP pair?', checkOrX(true));
