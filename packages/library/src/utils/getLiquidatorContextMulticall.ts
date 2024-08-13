@@ -75,11 +75,6 @@ export const getLiquidatorContextMulticall = async (
   );
 
   const underlyingAssetAddress: string = underlyingAssetContract.address;
-  // if (underlyingAssetIsLpToken(underlyingAssetContract)) {
-  // }
-
-  // const underlyingAssetContract = underlyingAsset.contract;
-  // const underlyingAssetAddress = underlyingAssetContract.address;
 
   queries[`underlyingAsset-decimals`] = underlyingAssetContract.decimals();
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
@@ -210,7 +205,9 @@ const tokenAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
   return tokenInAllowList;
 };
 
-// Runs .asset() on the LiquidationPair's tokenOut address as an ERC4626 Vault to test if it is one, or if it is a simple ERC20 token
+// Runs .asset() on the LiquidationPair's tokenOut address as an ERC4626 Vault
+// to test if it is one, or if it is a simple ERC20 token
+//
 // Then initializes the underlying asset as an LP Token Contract or an ERC20 Token Contract
 const getUnderlyingAssetContract = async (
   multicallProvider: Provider,
@@ -222,60 +219,48 @@ const getUnderlyingAssetContract = async (
     multicallProvider,
   );
 
-  let contract;
+  let underlyingAssetAddress, contract;
   try {
-    const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
-    contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
+    underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
+    console.log(chalk.dim('tokenOut as ERC4626 vault (.asset()) test succeeded'));
   } catch (e) {
-    const underlyingAssetAddress = tokenOutAddress;
+    underlyingAssetAddress = tokenOutAddress;
+
+    console.log(chalk.dim('tokenOut as ERC4626 (.asset()) test failed'));
+    printSpacer();
+  }
+
+  // LP token test for underlyingAsset
+  try {
+    contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
+    await contract.token0();
+    console.log(chalk.dim('underlyingAsset as LP Token (.token0()) test succeeded'));
+  } catch (e) {
     contract = new ethers.Contract(underlyingAssetAddress, ERC20Abi, multicallProvider);
 
-    console.log(chalk.dim('tokenOut as ERC4626 (.asset()) test failed, likely an ERC20 token'));
-    printSpacer();
+    console.log(
+      chalk.dim(
+        'underlyingAsset as LP token (.token0()) test failed, initializing as an ERC20 token',
+      ),
+    );
   }
 
   return contract;
 };
 
-// const getLpToken = async (
-//   multicallProvider: Provider,
-//   tokenOutAddress: string,
-// ): Promise<{ contract: Contract; lpTokenAddresses: LpTokenAddresses }> => {
-//   const liquidationPairTokenOutAsVaultContract = new ethers.Contract(
-//     tokenOutAddress,
-//     ERC4626Abi,
-//     multicallProvider,
-//   );
-
-//   let contract;
-//   try {
-//     const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
-
-//     contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
-
-//     lpTokenAddresses = await getLpTokenAddresses(multicallProvider, contract);
-//     lpTokenAddresses = await getLpTokenReserves(lpToken);
-//   } catch (e) {
-//     const underlyingAssetAddress = tokenOutAddress;
-
-//     contract = new ethers.Contract(underlyingAssetAddress, ERC20Abi, multicallProvider);
-
-//     console.log(
-//       chalk.dim(
-//         'liquidationPairTokenOutAsVaultContract.asset() test failed, likely an ERC20 token',
-//       ),
-//     );
-//     printSpacer();
-//   }
-
-//   return { contract, lpTokenAddresses };
-// };
-
 const getLpTokenAddresses = async (
-  underlyingAssetContract: Contract,
+  multicallProvider: Provider,
+  lpTokenContract: Contract,
 ): Promise<{ token0Address: string; token1Address: string }> => {
-  const tokens = await underlyingAssetContract.tokens();
-  return { token0Address: tokens[0], token1Address: tokens[1] };
+  let queries: Record<string, any> = {};
+  queries[`token0Address`] = lpTokenContract.token0();
+  queries[`token1Address`] = lpTokenContract.token1();
+
+  // @ts-ignore
+  const results = await getEthersMulticallProviderResults(multicallProvider, queries);
+  const { token0Address, token1Address } = results;
+
+  return { token0Address, token1Address };
 };
 
 const underlyingAssetIsLpToken = (underlyingAssetContract: Contract): boolean =>
@@ -284,10 +269,6 @@ const underlyingAssetIsLpToken = (underlyingAssetContract: Contract): boolean =>
 const getLpTokenReserves = async (lpToken: LpToken): Promise<[BigNumber, BigNumber]> => {
   try {
     const totalReserves = await lpToken.contract.getReserves();
-    console.log('totalReserves');
-    console.log(totalReserves);
-    // For ETH/DOGE Pool totalReserves[0] = ETH Reserve and totalReserves[1] = DOGE Reserve
-    // For BNB/DOGE Pool totalReserves[0] = BNB Reserve and totalReserves[1] = DOGE Reserve
     return [totalReserves[0], totalReserves[1]];
   } catch (e) {
     console.log(e);
@@ -303,17 +284,10 @@ const initLpToken = async (
 ): Promise<LpToken | undefined> => {
   let queries: Record<string, any> = {};
 
-  // {
-  //   contract: lpTokenContract,
-  //   totalSupply: results['underlyingAsset-totalSupply'],
-  //   reserves: lpTokenReserves,
-  //   token0,
-  //   token1,
-  // };
   if (underlyingAssetIsLpToken(lpTokenContract)) {
     const lpToken: LpToken = {
       contract: lpTokenContract,
-      lpTokenAddresses: await getLpTokenAddresses(lpTokenContract),
+      lpTokenAddresses: await getLpTokenAddresses(multicallProvider, lpTokenContract),
       totalSupply: undefined,
       reserves: undefined,
       token0: undefined,
@@ -331,7 +305,6 @@ const initLpToken = async (
     queries[`token0-decimals`] = token0Contract.decimals();
     queries[`token0-name`] = token0Contract.name();
     queries[`token0-symbol`] = token0Contract.symbol();
-    // queries[`token0-totalSupply`] = token0Contract.totalSupply();
 
     const token1Contract = new ethers.Contract(
       lpToken.lpTokenAddresses.token1Address,
@@ -341,7 +314,6 @@ const initLpToken = async (
     queries[`token1-decimals`] = token1Contract.decimals();
     queries[`token1-name`] = token1Contract.name();
     queries[`token1-symbol`] = token1Contract.symbol();
-    // queries[`token1-totalSupply`] = token1Contract.totalSupply();
 
     // @ts-ignore
     const results = await getEthersMulticallProviderResults(multicallProvider, queries);
@@ -350,10 +322,6 @@ const initLpToken = async (
     const { token0Address, token1Address } = lpToken.lpTokenAddresses;
 
     lpToken.totalSupply = results['totalSupply'];
-    // underlyingAssetToken = {
-    //   ...underlyingAssetToken,
-    //   totalSupply: results['underlyingAsset-totalSupply'],
-    // };
 
     // token0 results
     token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
@@ -384,86 +352,33 @@ const initLpToken = async (
       symbol: results['token1-symbol'],
       assetRateUsd: token1AssetRateUsd,
     };
-    console.log('token0');
-    console.log(lpToken.token0);
-    console.log('token1');
-    console.log(lpToken.token1);
 
     lpToken.reserves = await getLpTokenReserves(lpToken);
-    // console.log('lpTokenReserves');
-    // console.log(lpTokenReserves);
 
     lpToken.assetRateUsd = Number(calculateLpTokenPrice(lpToken));
-    console.log('lpToken.assetRateUsd');
-    console.log(lpToken.assetRateUsd);
 
     return lpToken;
   }
 };
 
-// TODO: handle decimals
-const PRECISION = 8;
+// TODO: This will likely only work for lpTokens where token0 and token1's decimals are
+// equal (ie. 6 and 6, 18 and 18). Otherwise the reserve amounts will need to be normalized
+// to the same precision
+const EXPONENT = 18;
 const calculateLpTokenPrice = (lpToken): number => {
-  const price0 = parseUnits(lpToken.token0.assetRateUsd.toString(), PRECISION);
-  const price1 = parseUnits(lpToken.token1.assetRateUsd.toString(), PRECISION);
+  // Convert USD prices from floats into BigNumber's using EXPONENT
+  const price0 = parseUnits(lpToken.token0.assetRateUsd.toString(), EXPONENT);
+  const price1 = parseUnits(lpToken.token1.assetRateUsd.toString(), EXPONENT);
 
   const tokenPriceCumulative = sqrt(price0.mul(price1));
-
   const tokenReserveCumulative = sqrt(lpToken.reserves[0].mul(lpToken.reserves[1]));
 
   const totalSupply = lpToken.totalSupply;
-
   const lpTokenPriceBN = tokenReserveCumulative.mul(tokenPriceCumulative).mul(2).div(totalSupply);
 
-  const lpTokenPrice = Number(formatUnits(lpTokenPriceBN, PRECISION));
-  console.log('lpTokenPrice');
-  console.log(lpTokenPrice);
-
-  // If lpTokenPrice is a valid number return lpTokenPrice or return 0
-  // return lpTokenPrice.isNaN() || !lpTokenPrice.isFinite() ? 0 : lpTokenPrice.toNumber();
-  return lpTokenPrice;
+  // Convert from BigNumber back to float / decimal
+  return Number(formatUnits(lpTokenPriceBN, EXPONENT));
 };
-
-// $0.95846418
-
-// 89973.24 /
-// 93202.21
-
-// $0.96535482
-
-// export const calcLpTokenPrices = (
-//   lpTokenInfo: Awaited<ReturnType<typeof getLpTokenInfo>>,
-//   underlyingTokenPrices: ChainTokenPrices
-// ) => {
-//   const lpTokenPrices: ChainTokenPrices = {}
-
-//   const date = getCurrentDate()
-
-//   Object.entries(lpTokenInfo).forEach(([_lpTokenAddress, info]) => {
-//     const lpTokenAddress = _lpTokenAddress as Address
-
-//     const tokenAddresses = info.underlyingTokens.map(
-//       (token) => token.address.toLowerCase() as Lowercase<Address>
-//     )
-//     const tokenPrices = tokenAddresses.map(
-//       (address) => underlyingTokenPrices[address]?.[0]?.price ?? 0
-//     )
-
-//     if (tokenPrices.every((price) => !!price)) {
-//       const tokenAmounts = info.underlyingTokens.map((token) =>
-//         parseFloat(formatUnits(token.reserve, token.decimals))
-//       )
-//       const tokenValues = tokenAmounts.map((amount, i) => amount * tokenPrices[i])
-
-//       const lpValue = tokenValues.reduce((a, b) => a + b, 0)
-//       const lpSupply = parseFloat(formatUnits(info.totalSupply, info.decimals))
-
-//       lpTokenPrices[lpTokenAddress] = [{ date, price: lpValue / lpSupply }]
-//     }
-//   })
-
-//   return lpTokenPrices
-// }
 
 const ONE = ethers.BigNumber.from(1);
 const TWO = ethers.BigNumber.from(2);
