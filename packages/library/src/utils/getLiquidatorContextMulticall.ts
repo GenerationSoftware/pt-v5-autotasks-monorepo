@@ -1,4 +1,5 @@
 import { ethers, Contract, BigNumber } from 'ethers';
+import { parseUnits, formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
@@ -271,18 +272,10 @@ const getUnderlyingAssetContract = async (
 // };
 
 const getLpTokenAddresses = async (
-  multicallProvider: Provider,
   underlyingAssetContract: Contract,
 ): Promise<{ token0Address: string; token1Address: string }> => {
-  let queries: Record<string, any> = {};
-  queries[`token0Address`] = underlyingAssetContract.token0();
-  queries[`token1Address`] = underlyingAssetContract.token1();
-
-  // @ts-ignore
-  const results = await getEthersMulticallProviderResults(multicallProvider, queries);
-  const { token0Address, token1Address } = results;
-
-  return { token0Address, token1Address };
+  const tokens = await underlyingAssetContract.tokens();
+  return { token0Address: tokens[0], token1Address: tokens[1] };
 };
 
 const underlyingAssetIsLpToken = (underlyingAssetContract: Contract): boolean =>
@@ -320,11 +313,12 @@ const initLpToken = async (
   if (underlyingAssetIsLpToken(lpTokenContract)) {
     const lpToken: LpToken = {
       contract: lpTokenContract,
-      lpTokenAddresses: await getLpTokenAddresses(multicallProvider, lpTokenContract),
+      lpTokenAddresses: await getLpTokenAddresses(lpTokenContract),
       totalSupply: undefined,
       reserves: undefined,
       token0: undefined,
       token1: undefined,
+      assetRateUsd: undefined,
     };
 
     queries[`totalSupply`] = lpTokenContract.totalSupply();
@@ -399,6 +393,88 @@ const initLpToken = async (
     // console.log('lpTokenReserves');
     // console.log(lpTokenReserves);
 
+    lpToken.assetRateUsd = Number(calculateLpTokenPrice(lpToken));
+    console.log('lpToken.assetRateUsd');
+    console.log(lpToken.assetRateUsd);
+
     return lpToken;
   }
 };
+
+// TODO: handle decimals
+const PRECISION = 8;
+const calculateLpTokenPrice = (lpToken): number => {
+  const price0 = parseUnits(lpToken.token0.assetRateUsd.toString(), PRECISION);
+  const price1 = parseUnits(lpToken.token1.assetRateUsd.toString(), PRECISION);
+
+  const tokenPriceCumulative = sqrt(price0.mul(price1));
+
+  const tokenReserveCumulative = sqrt(lpToken.reserves[0].mul(lpToken.reserves[1]));
+
+  const totalSupply = lpToken.totalSupply;
+
+  const lpTokenPriceBN = tokenReserveCumulative.mul(tokenPriceCumulative).mul(2).div(totalSupply);
+
+  const lpTokenPrice = Number(formatUnits(lpTokenPriceBN, PRECISION));
+  console.log('lpTokenPrice');
+  console.log(lpTokenPrice);
+
+  // If lpTokenPrice is a valid number return lpTokenPrice or return 0
+  // return lpTokenPrice.isNaN() || !lpTokenPrice.isFinite() ? 0 : lpTokenPrice.toNumber();
+  return lpTokenPrice;
+};
+
+// $0.95846418
+
+// 89973.24 /
+// 93202.21
+
+// $0.96535482
+
+// export const calcLpTokenPrices = (
+//   lpTokenInfo: Awaited<ReturnType<typeof getLpTokenInfo>>,
+//   underlyingTokenPrices: ChainTokenPrices
+// ) => {
+//   const lpTokenPrices: ChainTokenPrices = {}
+
+//   const date = getCurrentDate()
+
+//   Object.entries(lpTokenInfo).forEach(([_lpTokenAddress, info]) => {
+//     const lpTokenAddress = _lpTokenAddress as Address
+
+//     const tokenAddresses = info.underlyingTokens.map(
+//       (token) => token.address.toLowerCase() as Lowercase<Address>
+//     )
+//     const tokenPrices = tokenAddresses.map(
+//       (address) => underlyingTokenPrices[address]?.[0]?.price ?? 0
+//     )
+
+//     if (tokenPrices.every((price) => !!price)) {
+//       const tokenAmounts = info.underlyingTokens.map((token) =>
+//         parseFloat(formatUnits(token.reserve, token.decimals))
+//       )
+//       const tokenValues = tokenAmounts.map((amount, i) => amount * tokenPrices[i])
+
+//       const lpValue = tokenValues.reduce((a, b) => a + b, 0)
+//       const lpSupply = parseFloat(formatUnits(info.totalSupply, info.decimals))
+
+//       lpTokenPrices[lpTokenAddress] = [{ date, price: lpValue / lpSupply }]
+//     }
+//   })
+
+//   return lpTokenPrices
+// }
+
+const ONE = ethers.BigNumber.from(1);
+const TWO = ethers.BigNumber.from(2);
+
+function sqrt(value) {
+  const x = ethers.BigNumber.from(value);
+  let z = x.add(ONE).div(TWO);
+  let y = x;
+  while (z.sub(y).isNegative()) {
+    y = z;
+    z = x.div(z).add(z).div(TWO);
+  }
+  return y;
+}

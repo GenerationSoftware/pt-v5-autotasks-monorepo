@@ -87,6 +87,7 @@ export type LpToken = {
     token0Address: string;
     token1Address: string;
   };
+  assetRateUsd: number;
 };
 
 export interface BaseLiquidatorContext {
