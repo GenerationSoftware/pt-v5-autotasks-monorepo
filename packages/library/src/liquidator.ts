@@ -756,8 +756,13 @@ const getLiquidationContracts = async (
 };
 
 const logLpTokenTable = (context: LiquidatorContext): void => {
-  if (context.lpToken.token0) {
-    logTable(context.lpToken);
+  if (context.lpToken?.token0) {
+    logTable({
+      tokenIn: context.lpToken.token0,
+      tokenOut: context.lpToken.token1,
+      totalSupply: context.lpToken.totalSupply,
+      reserves: context.lpToken.reserves,
+    });
     printSpacer();
   }
 };

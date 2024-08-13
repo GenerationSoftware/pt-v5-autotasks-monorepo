@@ -327,7 +327,7 @@ const initLpToken = async (
       token1: undefined,
     };
 
-    queries[`underlyingAsset-totalSupply`] = lpTokenContract.totalSupply();
+    queries[`totalSupply`] = lpTokenContract.totalSupply();
 
     const token0Contract = new ethers.Contract(
       lpToken.lpTokenAddresses.token0Address,
@@ -337,7 +337,7 @@ const initLpToken = async (
     queries[`token0-decimals`] = token0Contract.decimals();
     queries[`token0-name`] = token0Contract.name();
     queries[`token0-symbol`] = token0Contract.symbol();
-    queries[`token0-totalSupply`] = token0Contract.totalSupply();
+    // queries[`token0-totalSupply`] = token0Contract.totalSupply();
 
     const token1Contract = new ethers.Contract(
       lpToken.lpTokenAddresses.token1Address,
@@ -347,7 +347,7 @@ const initLpToken = async (
     queries[`token1-decimals`] = token1Contract.decimals();
     queries[`token1-name`] = token1Contract.name();
     queries[`token1-symbol`] = token1Contract.symbol();
-    queries[`token1-totalSupply`] = token1Contract.totalSupply();
+    // queries[`token1-totalSupply`] = token1Contract.totalSupply();
 
     // @ts-ignore
     const results = await getEthersMulticallProviderResults(multicallProvider, queries);
@@ -355,6 +355,7 @@ const initLpToken = async (
     let token1AssetRateUsd, token0AssetRateUsd;
     const { token0Address, token1Address } = lpToken.lpTokenAddresses;
 
+    lpToken.totalSupply = results['totalSupply'];
     // underlyingAssetToken = {
     //   ...underlyingAssetToken,
     //   totalSupply: results['underlyingAsset-totalSupply'],
@@ -367,7 +368,7 @@ const initLpToken = async (
       results['token0-symbol'],
       token0Address,
     );
-    const token0: TokenWithRate = {
+    lpToken.token0 = {
       address: token0Address,
       decimals: results['token0-decimals'],
       name: results['token0-name'],
@@ -382,7 +383,7 @@ const initLpToken = async (
       results['token1-symbol'],
       token1Address,
     );
-    const token1: TokenWithRate = {
+    lpToken.token1 = {
       address: token1Address,
       decimals: results['token1-decimals'],
       name: results['token1-name'],
@@ -394,9 +395,9 @@ const initLpToken = async (
     console.log('token1');
     console.log(lpToken.token1);
 
-    const lpTokenReserves = await getLpTokenReserves(lpToken);
-    console.log('lpTokenReserves');
-    console.log(lpTokenReserves);
+    lpToken.reserves = await getLpTokenReserves(lpToken);
+    // console.log('lpTokenReserves');
+    // console.log(lpTokenReserves);
 
     return lpToken;
   }
