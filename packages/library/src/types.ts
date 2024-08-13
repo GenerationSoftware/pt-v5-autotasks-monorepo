@@ -77,14 +77,16 @@ export interface DrawAuctionConfig extends AutotaskConfig {
   rewardRecipient?: string;
 }
 
-type LpToken = {
+export type LpToken = {
   contract: Contract;
+  token0: TokenWithRate;
+  token1: TokenWithRate;
+  totalSupply: BigNumber;
+  reserves: [BigNumber, BigNumber];
   lpTokenAddresses: {
     token0Address: string;
     token1Address: string;
   };
-  token0: TokenWithRate;
-  token1: TokenWithRate;
 };
 
 export interface BaseLiquidatorContext {

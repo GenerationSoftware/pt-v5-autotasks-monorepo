@@ -7,6 +7,7 @@ import {
   LiquidatorConfig,
   LiquidatorContext,
   LiquidatorRelayerContext,
+  LpToken,
   Token,
   TokenWithRate,
   TokenWithRateAndTotalSupply,
@@ -86,42 +87,12 @@ export const getLiquidatorContextMulticall = async (
   console.log('underlyingAssetIsLpToken(underlyingAssetContract)');
   console.log(underlyingAssetIsLpToken(underlyingAssetContract));
 
-  const initLpToken = (multicallProvider:Provider,lpTokenContract:Contract) {
-
-    if (underlyingAssetIsLpToken(underlyingAssetContract)) {
-      return {
-        contract:lpTokenContract,
-        lpTokenAddresses: await getLpTokenAddresses(multicallProvider, lpTokenContract),
-        token0,
-        token1
-      }
-    }
-  }
-
-  const lpToken: LpToken = initLpToken(multicallProvider, underlyingAssetContract);
-  if (underlyingAssetIsLpToken(underlyingAssetContract)) {
-    queries[`underlyingAsset-totalSupply`] = underlyingAssetContract.totalSupply();
-
-    const token0Contract = new ethers.Contract(
-      lpToken.lpTokenAddresses.token0Address,
-      ERC20Abi,
-      multicallProvider,
-    );
-    queries[`token0-decimals`] = token0Contract.decimals();
-    queries[`token0-name`] = token0Contract.name();
-    queries[`token0-symbol`] = token0Contract.symbol();
-    queries[`token0-totalSupply`] = token0Contract.totalSupply();
-
-    const token1Contract = new ethers.Contract(
-      lpToken.lpTokenAddresses.token1Address,
-      ERC20Abi,
-      multicallProvider,
-    );
-    queries[`token1-decimals`] = token1Contract.decimals();
-    queries[`token1-name`] = token1Contract.name();
-    queries[`token1-symbol`] = token1Contract.symbol();
-    queries[`token1-totalSupply`] = token1Contract.totalSupply();
-  }
+  const lpToken: LpToken | undefined = await initLpToken(
+    chainId,
+    covalentApiKey,
+    multicallProvider,
+    underlyingAssetContract,
+  );
 
   // 3. RELAYER tokenIn BALANCE
   queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
@@ -199,50 +170,6 @@ export const getLiquidatorContextMulticall = async (
     assetRateUsd: underlyingAssetAssetRateUsd,
   };
 
-  let token1AssetRateUsd, token0AssetRateUsd;
-  if (underlyingAssetIsLpToken(underlyingAssetContract)) {
-    const { token0Address, token1Address } = lpToken.lpTokenAddresses;
-
-    underlyingAssetToken = {
-      ...underlyingAssetToken,
-      totalSupply: results['underlyingAsset-totalSupply'],
-    };
-
-    // token0 results
-    token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      covalentApiKey,
-      results['token0-symbol'],
-      token0Address,
-    );
-    lpToken.token0 = {
-      address: token0Address,
-      decimals: results['token0-decimals'],
-      name: results['token0-name'],
-      symbol: results['token0-symbol'],
-      assetRateUsd: token0AssetRateUsd,
-    };
-
-    // token1 results
-    token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      covalentApiKey,
-      results['token1-symbol'],
-      token1Address,
-    );
-    lpToken.token1 = {
-      address: token1Address,
-      decimals: results['token1-decimals'],
-      name: results['token1-name'],
-      symbol: results['token1-symbol'],
-      assetRateUsd: token1AssetRateUsd,
-    };
-  }
-  console.log('token0');
-  console.log(lpToken.token0);
-  console.log('token1');
-  console.log(lpToken.token1);
-
   // 9. Relayer's balances
   const relayerNativeTokenBalance = await provider.getBalance(relayerAddress);
   const relayer: LiquidatorRelayerContext = {
@@ -258,7 +185,7 @@ export const getLiquidatorContextMulticall = async (
     relayer,
     tokenOutInAllowList,
     isValidWethFlashLiquidationPair,
-    lpToken
+    lpToken,
   };
 };
 
@@ -309,39 +236,39 @@ const getUnderlyingAssetContract = async (
   return contract;
 };
 
-const getLpToken = async (
-  multicallProvider: Provider,
-  tokenOutAddress: string,
-): Promise<{ contract: Contract; lpTokenAddresses: LpTokenAddresses }> => {
-  const liquidationPairTokenOutAsVaultContract = new ethers.Contract(
-    tokenOutAddress,
-    ERC4626Abi,
-    multicallProvider,
-  );
+// const getLpToken = async (
+//   multicallProvider: Provider,
+//   tokenOutAddress: string,
+// ): Promise<{ contract: Contract; lpTokenAddresses: LpTokenAddresses }> => {
+//   const liquidationPairTokenOutAsVaultContract = new ethers.Contract(
+//     tokenOutAddress,
+//     ERC4626Abi,
+//     multicallProvider,
+//   );
 
-  let contract;
-  try {
-    const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
+//   let contract;
+//   try {
+//     const underlyingAssetAddress = await liquidationPairTokenOutAsVaultContract.asset();
 
-    contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
+//     contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
 
-    lpTokenAddresses = await getLpTokenAddresses(multicallProvider, contract);
-    lpTokenAddresses = await getLpTokenReserves(lpToken);
-  } catch (e) {
-    const underlyingAssetAddress = tokenOutAddress;
+//     lpTokenAddresses = await getLpTokenAddresses(multicallProvider, contract);
+//     lpTokenAddresses = await getLpTokenReserves(lpToken);
+//   } catch (e) {
+//     const underlyingAssetAddress = tokenOutAddress;
 
-    contract = new ethers.Contract(underlyingAssetAddress, ERC20Abi, multicallProvider);
+//     contract = new ethers.Contract(underlyingAssetAddress, ERC20Abi, multicallProvider);
 
-    console.log(
-      chalk.dim(
-        'liquidationPairTokenOutAsVaultContract.asset() test failed, likely an ERC20 token',
-      ),
-    );
-    printSpacer();
-  }
+//     console.log(
+//       chalk.dim(
+//         'liquidationPairTokenOutAsVaultContract.asset() test failed, likely an ERC20 token',
+//       ),
+//     );
+//     printSpacer();
+//   }
 
-  return { contract, lpTokenAddresses };
-};
+//   return { contract, lpTokenAddresses };
+// };
 
 const getLpTokenAddresses = async (
   multicallProvider: Provider,
@@ -358,18 +285,119 @@ const getLpTokenAddresses = async (
   return { token0Address, token1Address };
 };
 
-const underlyingAssetIsLpToken = (underlyingAssetContract: Contract) =>
+const underlyingAssetIsLpToken = (underlyingAssetContract: Contract): boolean =>
   !!underlyingAssetContract.token0;
 
-const getLpTokenReserves = async (lpToken: LpToken) => {
+const getLpTokenReserves = async (lpToken: LpToken): Promise<[BigNumber, BigNumber]> => {
   try {
-    const LpTokenContract = lpToken.contract(IUniswapV2Pair, LP_TOKEN_ADDRESS);
-    const totalReserves = await LpTokenContract.methods.getReserves().call();
+    const totalReserves = await lpToken.contract.getReserves();
+    console.log('totalReserves');
+    console.log(totalReserves);
     // For ETH/DOGE Pool totalReserves[0] = ETH Reserve and totalReserves[1] = DOGE Reserve
     // For BNB/DOGE Pool totalReserves[0] = BNB Reserve and totalReserves[1] = DOGE Reserve
     return [totalReserves[0], totalReserves[1]];
   } catch (e) {
     console.log(e);
-    return [0, 0];
+    return [BigNumber.from(0), BigNumber.from(0)];
+  }
+};
+
+const initLpToken = async (
+  chainId: number,
+  covalentApiKey: string,
+  multicallProvider: Provider,
+  lpTokenContract: Contract,
+): Promise<LpToken | undefined> => {
+  let queries: Record<string, any> = {};
+
+  // {
+  //   contract: lpTokenContract,
+  //   totalSupply: results['underlyingAsset-totalSupply'],
+  //   reserves: lpTokenReserves,
+  //   token0,
+  //   token1,
+  // };
+  if (underlyingAssetIsLpToken(lpTokenContract)) {
+    const lpToken: LpToken = {
+      contract: lpTokenContract,
+      lpTokenAddresses: await getLpTokenAddresses(multicallProvider, lpTokenContract),
+      totalSupply: undefined,
+      reserves: undefined,
+      token0: undefined,
+      token1: undefined,
+    };
+
+    queries[`underlyingAsset-totalSupply`] = lpTokenContract.totalSupply();
+
+    const token0Contract = new ethers.Contract(
+      lpToken.lpTokenAddresses.token0Address,
+      ERC20Abi,
+      multicallProvider,
+    );
+    queries[`token0-decimals`] = token0Contract.decimals();
+    queries[`token0-name`] = token0Contract.name();
+    queries[`token0-symbol`] = token0Contract.symbol();
+    queries[`token0-totalSupply`] = token0Contract.totalSupply();
+
+    const token1Contract = new ethers.Contract(
+      lpToken.lpTokenAddresses.token1Address,
+      ERC20Abi,
+      multicallProvider,
+    );
+    queries[`token1-decimals`] = token1Contract.decimals();
+    queries[`token1-name`] = token1Contract.name();
+    queries[`token1-symbol`] = token1Contract.symbol();
+    queries[`token1-totalSupply`] = token1Contract.totalSupply();
+
+    // @ts-ignore
+    const results = await getEthersMulticallProviderResults(multicallProvider, queries);
+
+    let token1AssetRateUsd, token0AssetRateUsd;
+    const { token0Address, token1Address } = lpToken.lpTokenAddresses;
+
+    // underlyingAssetToken = {
+    //   ...underlyingAssetToken,
+    //   totalSupply: results['underlyingAsset-totalSupply'],
+    // };
+
+    // token0 results
+    token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      chainId,
+      covalentApiKey,
+      results['token0-symbol'],
+      token0Address,
+    );
+    const token0: TokenWithRate = {
+      address: token0Address,
+      decimals: results['token0-decimals'],
+      name: results['token0-name'],
+      symbol: results['token0-symbol'],
+      assetRateUsd: token0AssetRateUsd,
+    };
+
+    // token1 results
+    token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+      chainId,
+      covalentApiKey,
+      results['token1-symbol'],
+      token1Address,
+    );
+    const token1: TokenWithRate = {
+      address: token1Address,
+      decimals: results['token1-decimals'],
+      name: results['token1-name'],
+      symbol: results['token1-symbol'],
+      assetRateUsd: token1AssetRateUsd,
+    };
+    console.log('token0');
+    console.log(lpToken.token0);
+    console.log('token1');
+    console.log(lpToken.token1);
+
+    const lpTokenReserves = await getLpTokenReserves(lpToken);
+    console.log('lpTokenReserves');
+    console.log(lpTokenReserves);
+
+    return lpToken;
   }
 };
