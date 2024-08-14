@@ -80,9 +80,6 @@ export const getLiquidatorContextMulticall = async (
   queries[`underlyingAsset-name`] = underlyingAssetContract.name();
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
-  console.log('underlyingAssetIsLpToken(underlyingAssetContract)');
-  console.log(underlyingAssetIsLpToken(underlyingAssetContract));
-
   const lpToken: LpToken | undefined = await initLpToken(
     chainId,
     covalentApiKey,
@@ -150,12 +147,16 @@ export const getLiquidatorContextMulticall = async (
   // 8. vault underlying asset (hard asset such as DAI or USDC) results, LP token results, etc.
   let underlyingAssetAssetRateUsd;
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
-    underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      covalentApiKey,
-      results['underlyingAsset-symbol'],
-      underlyingAssetAddress,
-    );
+    if (lpToken?.assetRateUsd) {
+      underlyingAssetAssetRateUsd = lpToken.assetRateUsd;
+    } else {
+      underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+        chainId,
+        covalentApiKey,
+        results['underlyingAsset-symbol'],
+        underlyingAssetAddress,
+      );
+    }
   }
 
   let underlyingAssetToken: TokenWithRate | TokenWithRateAndTotalSupply = {
