@@ -1,4 +1,4 @@
-export const LPTokenAbi = [
+export const LpTokenAbi = [
   { inputs: [], stateMutability: 'nonpayable', type: 'constructor' },
   { inputs: [], name: 'BelowMinimumK', type: 'error' },
   { inputs: [], name: 'DepositsNotEqual', type: 'error' },

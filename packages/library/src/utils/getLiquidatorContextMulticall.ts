@@ -14,7 +14,7 @@ import {
   TokenWithRateAndTotalSupply,
 } from '../types.js';
 import { getEthMainnetTokenMarketRateUsd, printSpacer } from '../utils/index.js';
-import { LPTokenAbi } from '../abis/LPTokenAbi.js';
+import { LpTokenAbi } from '../abis/LpTokenAbi.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from '../abis/UniswapV2WethPairFlashLiquidatorAbi.js';
@@ -233,7 +233,7 @@ const getUnderlyingAssetContract = async (
 
   // LP token test for underlyingAsset
   try {
-    contract = new ethers.Contract(underlyingAssetAddress, LPTokenAbi, multicallProvider);
+    contract = new ethers.Contract(underlyingAssetAddress, LpTokenAbi, multicallProvider);
     await contract.token0();
     console.log(chalk.dim('underlyingAsset as LP Token (.token0()) test succeeded'));
   } catch (e) {
