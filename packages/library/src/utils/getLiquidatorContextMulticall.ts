@@ -81,6 +81,7 @@ export const getLiquidatorContextMulticall = async (
   queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
 
   const lpToken: LpToken | undefined = await initLpToken(
+    config,
     chainId,
     covalentApiKey,
     multicallProvider,
@@ -124,7 +125,7 @@ export const getLiquidatorContextMulticall = async (
     symbol: results['tokenOut-symbol'],
   };
 
-  const tokenOutInAllowList = tokenAllowListed(config, tokenOut);
+  const tokenOutInAllowList = tokenAllowListed(config, tokenOut.address);
 
   // 7. tokenIn results
   let tokenInAssetRateUsd;
@@ -188,14 +189,14 @@ export const getLiquidatorContextMulticall = async (
 
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids
 // possibility of manually deployed malicious vaults/pairs
-const tokenAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
+const tokenAllowListed = (config: LiquidatorConfig, tokenAddress: string): boolean => {
   const { envTokenAllowList, chainId } = config;
 
-  let tokenInAllowList = false;
+  let inAllowList = false;
   try {
-    tokenInAllowList =
-      LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(tokenOut.address.toLowerCase()) ||
-      envTokenAllowList.includes(tokenOut.address.toLowerCase());
+    inAllowList =
+      LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(tokenAddress.toLowerCase()) ||
+      envTokenAllowList.includes(tokenAddress.toLowerCase());
   } catch (e) {
     console.error(chalk.red(e));
     console.error(
@@ -203,7 +204,11 @@ const tokenAllowListed = (config: LiquidatorConfig, tokenOut: Token) => {
     );
   }
 
-  return tokenInAllowList;
+  if (!inAllowList) {
+    console.log(chalk.yellow(`token (CA: ${tokenAddress.toLowerCase()}) not in token allow list`));
+  }
+
+  return inAllowList;
 };
 
 // Runs .asset() on the LiquidationPair's tokenOut address as an ERC4626 Vault
@@ -246,6 +251,8 @@ const getUnderlyingAssetContract = async (
     );
   }
 
+  printSpacer();
+
   return contract;
 };
 
@@ -278,6 +285,7 @@ const getLpTokenReserves = async (lpToken: LpToken): Promise<[BigNumber, BigNumb
 };
 
 const initLpToken = async (
+  config: LiquidatorConfig,
   chainId: number,
   covalentApiKey: string,
   multicallProvider: Provider,
@@ -319,18 +327,21 @@ const initLpToken = async (
     // @ts-ignore
     const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
-    let token1AssetRateUsd, token0AssetRateUsd;
     const { token0Address, token1Address } = lpToken.lpTokenAddresses;
 
     lpToken.totalSupply = results['totalSupply'];
 
     // token0 results
-    token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      covalentApiKey,
-      results['token0-symbol'],
-      token0Address,
-    );
+    let token0AssetRateUsd;
+    const token0InAllowList = tokenAllowListed(config, token0Address);
+    if (token0InAllowList) {
+      token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+        chainId,
+        covalentApiKey,
+        results['token0-symbol'],
+        token0Address,
+      );
+    }
     lpToken.token0 = {
       address: token0Address,
       decimals: results['token0-decimals'],
@@ -340,12 +351,16 @@ const initLpToken = async (
     };
 
     // token1 results
-    token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      covalentApiKey,
-      results['token1-symbol'],
-      token1Address,
-    );
+    let token1AssetRateUsd;
+    const token1InAllowList = tokenAllowListed(config, token1Address);
+    if (token1InAllowList) {
+      token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
+        chainId,
+        covalentApiKey,
+        results['token1-symbol'],
+        token1Address,
+      );
+    }
     lpToken.token1 = {
       address: token1Address,
       decimals: results['token1-decimals'],
@@ -367,6 +382,11 @@ const initLpToken = async (
 // to the same precision
 const EXPONENT = 18;
 const calculateLpTokenPrice = (lpToken): number => {
+  // If we don't have a price for token0 and for token1 we can't calculate LP token price
+  if (!lpToken.token0.assetRateUsd || !lpToken.token1.assetRateUsd) {
+    return 0;
+  }
+
   // Convert USD prices from floats into BigNumber's using EXPONENT
   const price0 = parseUnits(lpToken.token0.assetRateUsd.toString(), EXPONENT);
   const price1 = parseUnits(lpToken.token1.assetRateUsd.toString(), EXPONENT);

@@ -276,6 +276,7 @@ export async function runLiquidator(
       covalentApiKey,
     );
 
+    printSpacer();
     console.log(chalk.blue(`Pair Address: ${liquidationPairContract.address}`));
     printContext(config, context);
     printSpacer();
