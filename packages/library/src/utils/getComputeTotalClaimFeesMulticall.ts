@@ -1,9 +1,12 @@
 import { Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import chunk from 'lodash.chunk';
 
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
+
+const CHUNK_SIZE = 100;
 
 /**
  * Uses multicall to find how much we can earn for claim fees for a range of claims (ie 1, 2, 3 ... 50)
@@ -23,10 +26,27 @@ export const getComputeTotalClaimFeesMulticall = async (
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
 
-  let queries: Record<string, any> = {};
-  for (let x = 1; x <= numClaims; x++) {
-    queries[x.toString()] = claimerContract.functions['computeTotalFees(uint8,uint256)'](tier, x);
-  }
+  const numClaimsRangeArray = Array.from({ length: numClaims }, (value, index) => index);
 
-  return await getEthersMulticallProviderResults(multicallProvider, queries);
+  const numClaimsRangeArrayChunked = chunk(numClaimsRangeArray, CHUNK_SIZE);
+
+  let claimResults = [];
+  for (let numClaimsArray of numClaimsRangeArrayChunked) {
+    let queries: Record<string, any> = {};
+    let results: Record<string, any>;
+
+    for (let num of numClaimsArray) {
+      queries[num.toString()] = claimerContract.functions['computeTotalFees(uint8,uint256)'](
+        tier,
+        num,
+      );
+    }
+    results = await getEthersMulticallProviderResults(multicallProvider, queries);
+
+    claimResults = { ...claimResults, ...results };
+  }
+  console.log('claimResults');
+  console.log(claimResults);
+
+  return claimResults;
 };
