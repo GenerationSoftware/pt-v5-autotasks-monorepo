@@ -45,8 +45,6 @@ export const getComputeTotalClaimFeesMulticall = async (
 
     claimResults = { ...claimResults, ...results };
   }
-  console.log('claimResults');
-  console.log(claimResults);
 
   return claimResults;
 };
