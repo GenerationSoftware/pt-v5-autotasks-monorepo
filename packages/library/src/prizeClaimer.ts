@@ -653,6 +653,8 @@ const getClaimInfo = async (
   let previousNetProfitUsd = 0;
   let minVrgdaFeePerClaim = BigNumber.from(0);
 
+  printSpacer();
+
   const computeTotalClaimFeesResults = await getComputeTotalClaimFeesMulticall(
     tier,
     claims.length,

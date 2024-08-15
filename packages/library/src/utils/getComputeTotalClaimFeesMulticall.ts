@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
@@ -26,12 +27,19 @@ export const getComputeTotalClaimFeesMulticall = async (
   // @ts-ignore Provider == BaseProvider
   const multicallProvider = MulticallWrapper.wrap(provider);
 
-  const numClaimsRangeArray = Array.from({ length: numClaims }, (value, index) => index);
+  const numClaimsRangeArray = Array.from({ length: numClaims }, (value, index) => index + 1);
 
   const numClaimsRangeArrayChunked = chunk(numClaimsRangeArray, CHUNK_SIZE);
 
   let claimResults = [];
   for (let numClaimsArray of numClaimsRangeArrayChunked) {
+    console.log(
+      chalk.dim(
+        `Querying computeTotalFees for claims chunk: [${numClaimsArray[0]}...${
+          numClaimsArray[numClaimsArray.length - 1]
+        }]`,
+      ),
+    );
     let queries: Record<string, any> = {};
     let results: Record<string, any>;
 
