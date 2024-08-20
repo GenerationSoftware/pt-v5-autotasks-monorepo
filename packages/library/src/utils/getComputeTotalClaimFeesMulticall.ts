@@ -7,7 +7,7 @@ import chunk from 'lodash.chunk';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
-const CHUNK_SIZE = 100;
+const CHUNK_SIZE = 50;
 
 /**
  * Uses multicall to find how much we can earn for claim fees for a range of claims (ie 1, 2, 3 ... 50)
