@@ -13,34 +13,11 @@ import {
 import { printSpacer } from './logging.js';
 
 const GAS_PRICE_ORACLE_ADDRESS = '0x420000000000000000000000000000000000000F';
+const DEXSCREENER_API_URL = 'https://api.dexscreener.com/latest/dex/tokens';
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 
 const marketRates = {};
-
-/**
- * Get the current feeData from chain (currently unused as it was less accurate than getGasPrice)
- *
- * @param {Provider} provider, any ethers provider
- * @returns {Promise} Promise object with recent baseFeeUsd & maxFeeUsd from the chain
- *                    while avgFeeUsd is in between the two
- **/
-export const getFees = async (
-  provider: Provider,
-): Promise<{
-  lastBaseFeePerGas?: BigNumber;
-  maxFeePerGas?: BigNumber;
-  avgFeePerGas?: BigNumber;
-}> => {
-  const feeData = await provider.getFeeData();
-
-  const lastBaseFeePerGas = feeData.lastBaseFeePerGas;
-  const maxFeePerGas = feeData.maxFeePerGas;
-
-  const avgFeePerGas = lastBaseFeePerGas.add(maxFeePerGas).div(2);
-
-  return { lastBaseFeePerGas, maxFeePerGas, avgFeePerGas };
-};
 
 /**
  * Get the estimated USD cost of a transaction based on native token market rate and estimated gas limit
@@ -106,41 +83,87 @@ export const getEthMainnetTokenMarketRateUsd = async (
   chainId: number,
   covalentApiKey: string,
   symbol: string,
-  tokenAddress?: string,
+  tokenAddress: string,
 ): Promise<number> => {
   // memoization
-  if (marketRates[symbol]) {
-    return marketRates[symbol];
+  console.log(marketRates);
+  if (marketRates[tokenAddress]) {
+    console.log(chalk.red('cache hit! ', tokenAddress, `is ${marketRates[tokenAddress]}`));
+    return marketRates[tokenAddress];
   }
 
+  // 1. DexScreener
+  // Note: Currently only supports Free API
   let marketRateUsd;
   try {
-    if (Boolean(covalentApiKey)) {
-      if (Boolean(tokenAddress)) {
-        marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
-      } else {
-        console.log(
-          chalk.yellow(
-            `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
-          ),
-        );
+    marketRateUsd = await getDexscreenerMarketRateUsd(tokenAddress);
+    if (!!marketRateUsd) {
+      console.log(chalk.red('found via DexScreener API'));
+    }
+  } catch (err) {
+    // console.log(err);
+  }
+
+  // 2. Covalent
+  // Note: Needs API key
+  try {
+    if (!marketRateUsd) {
+      if (Boolean(covalentApiKey)) {
+        if (Boolean(tokenAddress)) {
+          marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
+          console.log(chalk.red('found via Covalent API'));
+        } else {
+          console.log(
+            chalk.yellow(
+              `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
+            ),
+          );
+        }
       }
     }
   } catch (err) {
-    console.log(err);
+    // console.log(err);
   }
 
+  // 3. Coingecko
+  // Note: Currently only supports rate-limited Free API
   try {
     if (!marketRateUsd) {
       marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
+      console.log(chalk.red('found via Coingecko API'));
     }
+  } catch (err) {
+    // console.log(err);
+  }
+
+  marketRates[tokenAddress] = marketRateUsd;
+  console.log(chalk.red(`cache miss, storing ${marketRateUsd} for  `, tokenAddress));
+
+  return marketRateUsd;
+};
+
+export const getDexscreenerMarketRateUsd = async (symbol: string): Promise<number> => {
+  let marketRate;
+
+  try {
+    const uri = `${DEXSCREENER_API_URL}/${symbol}`;
+    const response = await fetch(uri);
+    if (!response.ok) {
+      console.log(
+        chalk.yellow(`Unable to fetch current USD value from Dexscreener of '${symbol}' token.`),
+      );
+      throw new Error(response.statusText);
+    }
+    const json = await response.json();
+    const pairs = json.pairs;
+
+    const pairsUsd = pairs.map((pair) => Number(pair.priceUsd));
+    marketRate = getAverage(pairsUsd);
   } catch (err) {
     console.log(err);
   }
 
-  marketRates[symbol] = marketRateUsd;
-
-  return marketRateUsd;
+  return marketRate;
 };
 
 export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number> => {
@@ -266,3 +289,6 @@ const getL1GasFee = async (
     return BigNumber.from(0);
   }
 };
+
+const getAverage = (array) =>
+  array.reduce((sum, currentValue) => sum + currentValue, 0) / array.length;

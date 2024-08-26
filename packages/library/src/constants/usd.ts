@@ -5,10 +5,6 @@ export const CHAIN_IDS_TO_COVALENT_LOOKUP = {
   [CHAIN_IDS.arbitrum]: 'arbitrum-mainnet',
   [CHAIN_IDS.optimism]: 'optimism-mainnet',
   [CHAIN_IDS.base]: 'base-mainnet',
-  // [CHAIN_IDS.arbitrumSepolia]: 'arbitrum-sepolia',
-  // [CHAIN_IDS.sepolia]: 'eth-sepolia',
-  // [CHAIN_IDS.optimismSepolia]: 'optimism-sepolia',
-  // [CHAIN_IDS.baseSepolia]: 'base-sepolia-testnet',
 };
 
 // TODO: Would be ideal to find a way to remove this:
