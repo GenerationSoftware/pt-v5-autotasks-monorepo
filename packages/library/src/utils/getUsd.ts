@@ -98,10 +98,11 @@ export const getEthMainnetTokenMarketRateUsd = async (
   covalentApiKey?: string,
 ): Promise<number> => {
   // memoization
-  debugPriceCache(marketRates);
+  // debugPriceCache(marketRates);
+  debugPriceCache('');
   if (marketRates[tokenAddress.toLowerCase()]) {
     debugPriceCache(
-      chalk.red('cache hit! ', tokenAddress, `is ${marketRates[tokenAddress.toLowerCase()]}`),
+      chalk.red('cache hit!', tokenAddress, `= $${marketRates[tokenAddress.toLowerCase()]}`),
     );
     return marketRates[tokenAddress.toLowerCase()];
   }
@@ -112,7 +113,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
   try {
     marketRateUsd = await getDexscreenerMarketRateUsd(tokenAddress);
     if (!!marketRateUsd) {
-      debugPriceCache(chalk.red('found via DexScreener API'));
+      debugPriceCache(chalk.red(tokenAddress, 'found via DexScreener API'));
     }
   } catch (err) {
     // console.log(err);
@@ -125,7 +126,9 @@ export const getEthMainnetTokenMarketRateUsd = async (
       if (Boolean(covalentApiKey)) {
         if (Boolean(tokenAddress)) {
           marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
-          debugPriceCache(chalk.red('found via Covalent API'));
+          if (!!marketRateUsd) {
+            debugPriceCache(chalk.red('found via Covalent API'));
+          }
         } else {
           console.log(
             chalk.yellow(
@@ -144,7 +147,9 @@ export const getEthMainnetTokenMarketRateUsd = async (
   try {
     if (!marketRateUsd) {
       marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
-      debugPriceCache(chalk.red('found via Coingecko API'));
+      if (!!marketRateUsd) {
+        debugPriceCache(chalk.red('found via Coingecko API'));
+      }
     }
   } catch (err) {
     // console.log(err);
@@ -152,7 +157,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
 
   marketRates[tokenAddress.toLowerCase()] = marketRateUsd;
   debugPriceCache(
-    chalk.red(`cache miss, storing ${marketRateUsd} for  `, tokenAddress.toLowerCase()),
+    chalk.red(`cache miss - storing ${marketRateUsd} for`, tokenAddress.toLowerCase()),
   );
 
   return marketRateUsd;

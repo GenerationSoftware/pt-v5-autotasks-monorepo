@@ -20,6 +20,16 @@ export const SYMBOL_TO_COINGECKO_LOOKUP = {
   USDA: 'angle-usd',
   wstETH: 'wrapped-steth',
   LUSD: 'liquity-usd',
+  sUSD: 'susd-optimism',
+  tBTC: 'tbtc',
+  VELO: 'velodrome-finance',
+  SNX: 'synthetix-network-token',
+  ERN: 'ethos-reserve-note',
+  alETH: 'alchemix-eth',
+  WBTC: 'wrapped-bitcoin',
+  WELL: 'moonwell',
+  AERO: 'aerodrome-finance',
+  cbETH: 'coinbase-wrapped-staked-eth',
 };
 
 export const NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP = {

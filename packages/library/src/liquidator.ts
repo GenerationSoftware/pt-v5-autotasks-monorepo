@@ -226,7 +226,7 @@ export async function runLiquidator(
     chalk.yellow(config.minProfitThresholdUsd),
   );
 
-  if (config.pairsToLiquidate.length > 0) {
+  if (config.pairsToLiquidate?.length > 0) {
     console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellow(config.pairsToLiquidate));
   }
   if (config.envTokenAllowList.length > 0) {

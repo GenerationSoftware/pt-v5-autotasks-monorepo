@@ -124,8 +124,8 @@ export interface SharedLiquidatorEnvVars extends AutotaskEnvVars {
 }
 
 export interface LiquidatorEnvVars extends SharedLiquidatorEnvVars {
-  ENV_TOKEN_ALLOW_LIST: string[];
-  PAIRS_TO_LIQUIDATE: string[];
+  ENV_TOKEN_ALLOW_LIST?: string[];
+  PAIRS_TO_LIQUIDATE?: string[];
 }
 
 export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
