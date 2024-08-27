@@ -11,6 +11,9 @@ import {
   NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP,
 } from '../constants/usd.js';
 import { printSpacer } from './logging.js';
+import debug from 'debug';
+
+const debugPriceCache = debug('priceCache');
 
 const GAS_PRICE_ORACLE_ADDRESS = '0x420000000000000000000000000000000000000F';
 const DEXSCREENER_API_URL = 'https://api.dexscreener.com/latest/dex/tokens';
@@ -86,10 +89,12 @@ export const getEthMainnetTokenMarketRateUsd = async (
   tokenAddress: string,
 ): Promise<number> => {
   // memoization
-  console.log(marketRates);
-  if (marketRates[tokenAddress]) {
-    console.log(chalk.red('cache hit! ', tokenAddress, `is ${marketRates[tokenAddress]}`));
-    return marketRates[tokenAddress];
+  debugPriceCache(marketRates);
+  if (marketRates[tokenAddress.toLowerCase()]) {
+    debugPriceCache(
+      chalk.red('cache hit! ', tokenAddress, `is ${marketRates[tokenAddress.toLowerCase()]}`),
+    );
+    return marketRates[tokenAddress.toLowerCase()];
   }
 
   // 1. DexScreener
@@ -98,7 +103,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
   try {
     marketRateUsd = await getDexscreenerMarketRateUsd(tokenAddress);
     if (!!marketRateUsd) {
-      console.log(chalk.red('found via DexScreener API'));
+      debugPriceCache(chalk.red('found via DexScreener API'));
     }
   } catch (err) {
     // console.log(err);
@@ -111,7 +116,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
       if (Boolean(covalentApiKey)) {
         if (Boolean(tokenAddress)) {
           marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
-          console.log(chalk.red('found via Covalent API'));
+          debugPriceCache(chalk.red('found via Covalent API'));
         } else {
           console.log(
             chalk.yellow(
@@ -130,14 +135,16 @@ export const getEthMainnetTokenMarketRateUsd = async (
   try {
     if (!marketRateUsd) {
       marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
-      console.log(chalk.red('found via Coingecko API'));
+      debugPriceCache(chalk.red('found via Coingecko API'));
     }
   } catch (err) {
     // console.log(err);
   }
 
-  marketRates[tokenAddress] = marketRateUsd;
-  console.log(chalk.red(`cache miss, storing ${marketRateUsd} for  `, tokenAddress));
+  marketRates[tokenAddress.toLowerCase()] = marketRateUsd;
+  debugPriceCache(
+    chalk.red(`cache miss, storing ${marketRateUsd} for  `, tokenAddress.toLowerCase()),
+  );
 
   return marketRateUsd;
 };
@@ -155,7 +162,10 @@ export const getDexscreenerMarketRateUsd = async (symbol: string): Promise<numbe
       throw new Error(response.statusText);
     }
     const json = await response.json();
-    const pairs = json.pairs;
+    let pairs = json.pairs;
+
+    // Filter out any 'pulsechain' results as they are not accurate and throw off the average
+    pairs = pairs.filter((pair) => pair.chainId !== 'pulsechain');
 
     const pairsUsd = pairs.map((pair) => Number(pair.priceUsd));
     marketRate = getAverage(pairsUsd);
