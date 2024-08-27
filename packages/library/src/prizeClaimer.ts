@@ -418,7 +418,7 @@ const getContext = async (
   contracts: ContractsBlob,
   prizePool: Contract,
   provider: Provider,
-  covalentApiKey: string,
+  covalentApiKey?: string,
 ): Promise<ClaimPrizeContext> => {
   const prizeTokenAddress = await prizePool.prizeToken();
 
@@ -443,9 +443,9 @@ const getContext = async (
     ...prizeTokenBasic,
     assetRateUsd: await getEthMainnetTokenMarketRateUsd(
       chainId,
-      covalentApiKey,
       prizeTokenBasic.symbol,
       prizeTokenBasic.address,
+      covalentApiKey,
     ),
   };
 

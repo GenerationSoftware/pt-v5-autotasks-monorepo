@@ -163,9 +163,9 @@ const getContext = async (
   // 11. Results Two: Reward token
   const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
     chainId,
-    covalentApiKey,
     resultsTwo[QUERY_KEYS.REWARD_SYMBOL_KEY],
     rewardTokenAddress,
+    covalentApiKey,
   );
   const rewardToken: TokenWithRate = {
     address: rewardTokenAddress,

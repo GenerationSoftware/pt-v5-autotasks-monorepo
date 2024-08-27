@@ -45,7 +45,7 @@ export const getLiquidatorContextMulticall = async (
   liquidationPairContract: Contract,
   provider: Provider,
   relayerAddress: string,
-  covalentApiKey: string,
+  covalentApiKey?: string,
 ): Promise<LiquidatorContext> => {
   const { chainId } = config;
 
@@ -83,9 +83,9 @@ export const getLiquidatorContextMulticall = async (
   const lpToken: LpToken | undefined = await initLpToken(
     config,
     chainId,
-    covalentApiKey,
     multicallProvider,
     underlyingAssetContract,
+    covalentApiKey,
   );
 
   // 3. RELAYER tokenIn BALANCE
@@ -132,9 +132,9 @@ export const getLiquidatorContextMulticall = async (
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
     tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
       chainId,
-      covalentApiKey,
       results['tokenIn-symbol'],
       tokenInAddress,
+      covalentApiKey,
     );
   }
   const tokenIn: TokenWithRate = {
@@ -153,9 +153,9 @@ export const getLiquidatorContextMulticall = async (
     } else {
       underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
         chainId,
-        covalentApiKey,
         results['underlyingAsset-symbol'],
         underlyingAssetAddress,
+        covalentApiKey,
       );
     }
   }
@@ -287,9 +287,9 @@ const getLpTokenReserves = async (lpToken: LpToken): Promise<[BigNumber, BigNumb
 const initLpToken = async (
   config: LiquidatorConfig,
   chainId: number,
-  covalentApiKey: string,
   multicallProvider: Provider,
   lpTokenContract: Contract,
+  covalentApiKey?: string,
 ): Promise<LpToken | undefined> => {
   let queries: Record<string, any> = {};
 
@@ -337,9 +337,9 @@ const initLpToken = async (
     if (token0InAllowList) {
       token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
         chainId,
-        covalentApiKey,
         results['token0-symbol'],
         token0Address,
+        covalentApiKey,
       );
     }
     lpToken.token0 = {
@@ -356,9 +356,9 @@ const initLpToken = async (
     if (token1InAllowList) {
       token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
         chainId,
-        covalentApiKey,
         results['token1-symbol'],
         token1Address,
+        covalentApiKey,
       );
     }
     lpToken.token1 = {

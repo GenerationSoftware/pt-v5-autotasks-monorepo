@@ -93,9 +93,9 @@ export const getFlashLiquidatorContextMulticall = async (
   // 1. tokenIn results
   const tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
     chainId,
-    covalentApiKey,
     results['tokenIn-symbol'],
     tokenInAddress,
+    covalentApiKey,
   );
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
@@ -116,9 +116,9 @@ export const getFlashLiquidatorContextMulticall = async (
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
   const underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
     chainId,
-    covalentApiKey,
     results['underlyingAsset-symbol'],
     underlyingAssetAddress,
+    covalentApiKey,
   );
 
   const underlyingAssetToken: TokenWithRate = {

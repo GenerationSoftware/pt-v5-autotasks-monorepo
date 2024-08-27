@@ -20,6 +20,15 @@ const DEXSCREENER_API_URL = 'https://api.dexscreener.com/latest/dex/tokens';
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 
+const DEXSCREENER_SUPPORTED_CHAIN_NAME_ALLOWLIST = [
+  'ethereum',
+  'arbitrum',
+  'optimism',
+  'base',
+  'scroll',
+  'gnosischain',
+];
+
 const marketRates = {};
 
 /**
@@ -69,13 +78,13 @@ export const getFeesUsd = async (
  **/
 export const getNativeTokenMarketRateUsd = async (
   chainId: number,
-  covalentApiKey: string,
+  covalentApiKey?: string,
 ): Promise<number> => {
   const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[chainId].symbol;
   const tokenAddress =
     tokenSymbol === 'ETH' ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId] : '';
 
-  return await getEthMainnetTokenMarketRateUsd(chainId, covalentApiKey, tokenSymbol, tokenAddress);
+  return await getEthMainnetTokenMarketRateUsd(chainId, tokenSymbol, tokenAddress, covalentApiKey);
 };
 
 /**
@@ -84,9 +93,9 @@ export const getNativeTokenMarketRateUsd = async (
  */
 export const getEthMainnetTokenMarketRateUsd = async (
   chainId: number,
-  covalentApiKey: string,
   symbol: string,
   tokenAddress: string,
+  covalentApiKey?: string,
 ): Promise<number> => {
   // memoization
   debugPriceCache(marketRates);
@@ -149,23 +158,32 @@ export const getEthMainnetTokenMarketRateUsd = async (
   return marketRateUsd;
 };
 
-export const getDexscreenerMarketRateUsd = async (symbol: string): Promise<number> => {
+export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise<number> => {
   let marketRate;
 
   try {
-    const uri = `${DEXSCREENER_API_URL}/${symbol}`;
+    const uri = `${DEXSCREENER_API_URL}/${tokenAddress}`;
     const response = await fetch(uri);
     if (!response.ok) {
       console.log(
-        chalk.yellow(`Unable to fetch current USD value from Dexscreener of '${symbol}' token.`),
+        chalk.yellow(
+          `Unable to fetch current USD value from Dexscreener of '${tokenAddress}' token.`,
+        ),
       );
       throw new Error(response.statusText);
     }
     const json = await response.json();
     let pairs = json.pairs;
 
-    // Filter out any 'pulsechain' results as they are not accurate and throw off the average
-    pairs = pairs.filter((pair) => pair.chainId !== 'pulsechain');
+    // Filter out results that do not match the chains we're interested in as they can easily throw off the average
+    pairs = pairs.filter((pair) =>
+      DEXSCREENER_SUPPORTED_CHAIN_NAME_ALLOWLIST.includes(pair.chainId),
+    );
+
+    // Filter out results where baseToken is not the token we want the price for (ie. if we want DAI, baseToken must be DAI)
+    pairs = pairs.filter(
+      (pair) => pair.baseToken.address.toLowerCase() === tokenAddress.toLowerCase(),
+    );
 
     const pairsUsd = pairs.map((pair) => Number(pair.priceUsd));
     marketRate = getAverage(pairsUsd);
@@ -208,7 +226,7 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
 export const getCovalentMarketRateUsd = async (
   chainId: number,
   tokenAddress: string,
-  covalentApiKey: string,
+  covalentApiKey?: string,
 ): Promise<number> => {
   let address, covalentChainName;
 

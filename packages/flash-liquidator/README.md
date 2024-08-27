@@ -39,10 +39,10 @@ direnv allow
 ```sh
 CHAIN_ID: The chain ID of which network to run the autotask on
 JSON_RPC_URL: Your Infura/Alchemy/etc JSON RPC URL
-COVALENT_API_KEY: Your Covalent API key for getting USD values of tokens
 MIN_PROFIT_THRESHOLD_USD: the minimum (in USD) you want to profit from each swap (ie. 1 is $1.00)
 CUSTOM_RELAYER_PRIVATE_KEY: send transactions using your own EOA
 CONTRACT_JSON_URL: the URL of the JSON file where the contract addresses and ABIs live (typically a commit on GitHub)
+COVALENT_API_KEY: Your Covalent API key for getting USD values of tokens (optional)
 
 ### LIQUIDATOR SPECIFIC:
 

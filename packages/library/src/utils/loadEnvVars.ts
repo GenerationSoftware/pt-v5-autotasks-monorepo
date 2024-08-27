@@ -19,14 +19,13 @@ export const loadEnvVars = (): AutotaskEnvVars => {
 
   if (
     !chainId ||
-    !covalentApiKey ||
     !minProfitThresholdUsd ||
     !customRelayerPrivateKey ||
     !jsonRpcUrl ||
     !contractJsonUrl
   ) {
     const message =
-      'Error: Unable to find necessary environment variables, please ensure your environment is set up correctly with COVALENT_API_KEY, JSON_RPC_URL, CUSTOM_RELAYER_PRIVATE_KEY, and CONTRACT_JSON_URL variables. Refer to the README for more info.';
+      'Error: Unable to find necessary environment variables, please ensure your environment is set up correctly with JSON_RPC_URL, CUSTOM_RELAYER_PRIVATE_KEY, and CONTRACT_JSON_URL variables. Refer to the README for more info.';
     console.log(chalk.red(message));
     throw new Error(message);
   }

@@ -323,7 +323,7 @@ const getGasCost = async (
   flashLiquidationContract: Contract,
   flashLiquidateParams: FlashLiquidateParams,
   provider: Provider,
-  covalentApiKey: string,
+  covalentApiKey?: string,
 ): Promise<number> => {
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
 

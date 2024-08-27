@@ -53,7 +53,7 @@ export interface AutotaskConfig {
   relayerAddress: string;
   signer: Signer;
   contractJsonUrl: string;
-  covalentApiKey: string;
+  covalentApiKey?: string;
 }
 
 export interface PrizeClaimerConfig extends AutotaskConfig {
@@ -111,7 +111,7 @@ export interface AutotaskEnvVars {
   MIN_PROFIT_THRESHOLD_USD: string;
   CUSTOM_RELAYER_PRIVATE_KEY: string;
   CONTRACT_JSON_URL: string;
-  COVALENT_API_KEY: string;
+  COVALENT_API_KEY?: string;
 }
 
 export interface DrawAuctionEnvVars extends AutotaskEnvVars {
