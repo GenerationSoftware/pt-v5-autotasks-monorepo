@@ -127,7 +127,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
         if (Boolean(tokenAddress)) {
           marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
           if (!!marketRateUsd) {
-            debugPriceCache(chalk.red('found via Covalent API'));
+            debugPriceCache(chalk.red(tokenAddress, 'found via Covalent API'));
           }
         } else {
           console.log(
@@ -148,7 +148,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
     if (!marketRateUsd) {
       marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
       if (!!marketRateUsd) {
-        debugPriceCache(chalk.red('found via Coingecko API'));
+        debugPriceCache(chalk.red(tokenAddress, 'found via Coingecko API'));
       }
     }
   } catch (err) {
