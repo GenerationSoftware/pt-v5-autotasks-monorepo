@@ -29,6 +29,18 @@ const DEXSCREENER_SUPPORTED_CHAIN_NAME_ALLOWLIST = [
   'gnosischain',
 ];
 
+const DEXSCREENER_SUPPORTED_DEX_NAME_ALLOWLIST = [
+  'uniswap',
+  'aerodrome',
+  'pancakeswap',
+  'sushiswap',
+  'balancer',
+  'velodrome',
+  'traderjoe',
+  'camelot',
+  'kyberswap',
+];
+
 const marketRates = {};
 
 /**
@@ -184,6 +196,9 @@ export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise
     pairs = pairs.filter((pair) =>
       DEXSCREENER_SUPPORTED_CHAIN_NAME_ALLOWLIST.includes(pair.chainId),
     );
+
+    // Filter out results from DEXes we don't know about and may not be legit
+    pairs = pairs.filter((pair) => DEXSCREENER_SUPPORTED_DEX_NAME_ALLOWLIST.includes(pair.dexId));
 
     // Filter out results where baseToken is not the token we want the price for (ie. if we want DAI, baseToken must be DAI)
     pairs = pairs.filter(
