@@ -205,7 +205,9 @@ export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise
       (pair) => pair.baseToken.address.toLowerCase() === tokenAddress.toLowerCase(),
     );
 
-    const pairsUsd = pairs.map((pair) => Number(pair.priceUsd));
+    let pairsUsd = pairs.map((pair) => Number(pair.priceUsd));
+    pairsUsd = filterOutliers(pairsUsd);
+
     marketRate = getAverage(pairsUsd);
   } catch (err) {
     console.log(err);
@@ -338,5 +340,46 @@ const getL1GasFee = async (
   }
 };
 
+// Sums up all numbers in an array then divides by the length of the array to get the average
 const getAverage = (array) =>
   array.reduce((sum, currentValue) => sum + currentValue, 0) / array.length;
+
+// Removes numbers from an array that are considered outliers.
+// ie. [121, 122, 120, 4, 9660, 120, 122, 121]
+// would remove 4 and 9660, [121, 122, 120, 120, 122, 121] would remain
+//
+// https://stackoverflow.com/questions/20811131/javascript-remove-outlier-from-an-array
+const filterOutliers = (array) => {
+  if (array.length < 4) {
+    return array;
+  }
+
+  let values = array.slice().sort((a, b) => a - b); // copy array fast and sort
+
+  let q1 = getQuantile(values, 25);
+  let q3 = getQuantile(values, 75);
+
+  let iqr, maxValue, minValue;
+  iqr = q3 - q1;
+  maxValue = q3 + iqr * 1.5;
+  minValue = q1 - iqr * 1.5;
+
+  return values.filter((x) => x >= minValue && x <= maxValue);
+};
+
+const getQuantile = (array, quantile) => {
+  // Get the index the quantile is at.
+  let index = (quantile / 100.0) * (array.length - 1);
+
+  // Check if it has decimal places.
+  if (index % 1 === 0) {
+    return array[index];
+  } else {
+    // Get the lower index.
+    let lowerIndex = Math.floor(index);
+    // Get the remaining.
+    let remainder = index - lowerIndex;
+    // Add the remaining to the lowerindex value.
+    return array[lowerIndex] + remainder * (array[lowerIndex + 1] - array[lowerIndex]);
+  }
+};
