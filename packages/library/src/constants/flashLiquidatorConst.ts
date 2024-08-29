@@ -5,6 +5,7 @@ import { CHAIN_IDS } from './network.js';
 import { KNOWN_TOKENS } from './tokens.js';
 
 export const FLASH_LIQUIDATOR_CONTRACT_ADDRESS: Record<number, string> = {
+  [CHAIN_IDS.mainnet]: '0xf22df1eb029126add8fb9b273ff8c8ced8413d04',
   [CHAIN_IDS.optimism]: '0x5927b63E88764D6250b7801eBfDEb7B6c1ac35d0',
   [CHAIN_IDS.base]: '0xe2368df1f78bc5b714b7f502de8e2b545c6fe7ec',
 };
