@@ -13,7 +13,7 @@ import {
   TokenWithRate,
   TokenWithRateAndTotalSupply,
 } from '../types.js';
-import { getTokenMarketRateUsd, printSpacer } from '../utils/index.js';
+import { getTokenMarketRateUsd, printSpacer } from './index.js';
 import { LpTokenAbi } from '../abis/LpTokenAbi.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
@@ -26,6 +26,9 @@ import {
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
+const tokenAddresses: string[] = [];
+const tokens: Record<string, Token> = {};
+
 /**
  * Gather information about this specific liquidation pair
  * `tokenIn` is the token to supply (likely the prize token, which is probably WETH),
@@ -33,146 +36,107 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
  * or a straight up ERC20 token (ie. DAI, USDC)
  *
  * @param liquidationRouterContract ethers contract instance for the liquidationRouter contract
- * @param liquidationPairContract ethers contract instance for the liquidationPair contract
- * @param provider provider for the chain that will be queried
+ * @param liquidationPairContracts ethers contract instance array for all liquidationPair contracts
  * @param contracts blob of contracts to pull PrizePool abi/etc from
- * @param covalentApiKey a Covalent API key for getting USD values of tokens
  * @returns
  */
-export const getLiquidatorContextMulticall = async (
+export const getLiquidatorTokenCacheMulticall = async (
   config: LiquidatorConfig,
   liquidationRouterContract: Contract,
-  liquidationPairContract: Contract,
-  provider: Provider,
+  liquidationPairContracts: Contract[],
   relayerAddress: string,
-  covalentApiKey?: string,
-): Promise<LiquidatorContext> => {
-  const { chainId } = config;
+): Promise<Record<string, Token>> => {
+  const { chainId, provider } = config;
 
   const multicallProvider = MulticallWrapper.wrap(provider);
 
   let queries: Record<string, any> = {};
 
-  // 1. IN TOKEN
-  const tokenInAddress = await liquidationPairContract.tokenIn();
-  const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, multicallProvider);
+  for (let i = 0; i < liquidationPairContracts.length; i++) {
+    const liquidationPairContract = liquidationPairContracts[i];
 
-  queries[`tokenIn-decimals`] = tokenInContract.decimals();
-  queries[`tokenIn-name`] = tokenInContract.name();
-  queries[`tokenIn-symbol`] = tokenInContract.symbol();
+    // 1. IN TOKEN
+    const tokenInAddress = await liquidationPairContract.tokenIn();
+    tokenAddresses.push(tokenInAddress);
+    const tokenInContract = new ethers.Contract(tokenInAddress, ERC20Abi, multicallProvider);
 
-  // 2. OUT TOKEN
-  const tokenOutAddress = await liquidationPairContract.tokenOut();
-  const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, multicallProvider);
+    queries[`${tokenInAddress}-decimals`] = tokenInContract.decimals();
+    queries[`${tokenInAddress}-name`] = tokenInContract.name();
+    queries[`${tokenInAddress}-symbol`] = tokenInContract.symbol();
 
-  queries[`tokenOut-decimals`] = tokenOutContract.decimals();
-  queries[`tokenOut-name`] = tokenOutContract.name();
-  queries[`tokenOut-symbol`] = tokenOutContract.symbol();
+    // 2. OUT TOKEN
+    const tokenOutAddress = await liquidationPairContract.tokenOut();
+    tokenAddresses.push(tokenOutAddress);
+    const tokenOutContract = new ethers.Contract(tokenOutAddress, ERC20Abi, multicallProvider);
 
-  const underlyingAssetContract: Contract = await getUnderlyingAssetContract(
-    multicallProvider,
-    tokenOutAddress,
-  );
+    queries[`${tokenOutAddress}-decimals`] = tokenOutContract.decimals();
+    queries[`${tokenOutAddress}-name`] = tokenOutContract.name();
+    queries[`${tokenOutAddress}-symbol`] = tokenOutContract.symbol();
 
-  const underlyingAssetAddress: string = underlyingAssetContract.address;
-
-  queries[`underlyingAsset-decimals`] = underlyingAssetContract.decimals();
-  queries[`underlyingAsset-name`] = underlyingAssetContract.name();
-  queries[`underlyingAsset-symbol`] = underlyingAssetContract.symbol();
-
-  const lpToken: LpToken | undefined = await initLpToken(
-    config,
-    multicallProvider,
-    underlyingAssetContract,
-  );
-
-  // 3. RELAYER tokenIn BALANCE
-  queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
-  queries[`tokenIn-allowance`] = tokenInContract.allowance(
-    relayerAddress,
-    liquidationRouterContract.address,
-  );
-
-  // 4. Query to see if this LP pair is actually for an underlying LP asset that we can flash liquidate
-  const uniswapV2WethPairFlashLiquidatorContractAddress =
-    UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId];
-
-  let isValidWethFlashLiquidationPair;
-  if (uniswapV2WethPairFlashLiquidatorContractAddress) {
-    const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
-      UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId],
-      UniswapV2WethPairFlashLiquidatorAbi,
-      provider,
+    const underlyingAssetContract: Contract = await getUnderlyingAssetContract(
+      multicallProvider,
+      tokenOutAddress,
     );
-    try {
-      isValidWethFlashLiquidationPair =
-        await uniswapV2WethPairFlashLiquidatorContract.isValidLiquidationPair(
-          liquidationPairContract.address,
-        );
-    } catch (e) {}
+
+    const underlyingAssetAddress: string = underlyingAssetContract.address;
+    tokenAddresses.push(underlyingAssetAddress);
+
+    queries[`${underlyingAssetAddress}-decimals`] = underlyingAssetContract.decimals();
+    queries[`${underlyingAssetAddress}-name`] = underlyingAssetContract.name();
+    queries[`${underlyingAssetAddress}-symbol`] = underlyingAssetContract.symbol();
+
+    // const lpToken: LpToken | undefined = await initLpToken(
+    //   config,
+    //   multicallProvider,
+    //   underlyingAssetContract,
+    // );
+
+    // 3. RELAYER tokenIn BALANCE
+    // queries[`tokenIn-balanceOf`] = tokenInContract.balanceOf(relayerAddress);
+    // queries[`tokenIn-allowance`] = tokenInContract.allowance(
+    //   relayerAddress,
+    //   liquidationRouterContract.address,
+    // );
+
+    // // 4. Query to see if this LP pair is actually for an underlying LP asset that we can flash liquidate
+    // const uniswapV2WethPairFlashLiquidatorContractAddress =
+    //   UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId];
+
+    // let isValidWethFlashLiquidationPair;
+    // if (uniswapV2WethPairFlashLiquidatorContractAddress) {
+    //   const uniswapV2WethPairFlashLiquidatorContract = new ethers.Contract(
+    //     UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS[chainId],
+    //     UniswapV2WethPairFlashLiquidatorAbi,
+    //     provider,
+    //   );
+    //   try {
+    //     isValidWethFlashLiquidationPair =
+    //       await uniswapV2WethPairFlashLiquidatorContract.isValidLiquidationPair(
+    //         liquidationPairContract.address,
+    //       );
+    //   } catch (e) {}
+    // }
   }
+  console.log('queries');
+  console.log(queries);
 
   // 5. Get and process results!
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
-  // 6. tokenOut results (vault token)
-  const tokenOut: Token = {
-    address: tokenOutAddress,
-    decimals: results['tokenOut-decimals'],
-    name: results['tokenOut-name'],
-    symbol: results['tokenOut-symbol'],
-  };
+  for (let i = 0; i < tokenAddresses.length; i++) {
+    const tokenAddress = tokenAddresses[i];
 
-  const tokenOutInAllowList = tokenAllowListed(config, tokenOut.address);
+    const token: Token = {
+      address: tokenAddress,
+      decimals: results[`${tokenAddress}-decimals`],
+      name: results[`${tokenAddress}-name`],
+      symbol: results[`${tokenAddress}-symbol`],
+    };
 
-  // 7. tokenIn results
-  let tokenInAssetRateUsd;
-  if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
-    tokenInAssetRateUsd = await getTokenMarketRateUsd(tokenInAddress, config);
-  }
-  const tokenIn: TokenWithRate = {
-    address: tokenInAddress,
-    decimals: results['tokenIn-decimals'],
-    name: results['tokenIn-name'],
-    symbol: results['tokenIn-symbol'],
-    assetRateUsd: tokenInAssetRateUsd,
-  };
-
-  // 8. vault underlying asset (hard asset such as DAI or USDC) results, LP token results, etc.
-  let underlyingAssetAssetRateUsd;
-  if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
-    if (lpToken?.assetRateUsd) {
-      underlyingAssetAssetRateUsd = lpToken.assetRateUsd;
-    } else {
-      underlyingAssetAssetRateUsd = await getTokenMarketRateUsd(underlyingAssetAddress, config);
-    }
+    tokens[tokenAddress] = token;
   }
 
-  let underlyingAssetToken: TokenWithRate | TokenWithRateAndTotalSupply = {
-    address: underlyingAssetAddress,
-    decimals: results['underlyingAsset-decimals'],
-    name: results['underlyingAsset-name'],
-    symbol: results['underlyingAsset-symbol'],
-    assetRateUsd: underlyingAssetAssetRateUsd,
-  };
-
-  // 9. Relayer's balances
-  const relayerNativeTokenBalance = await provider.getBalance(relayerAddress);
-  const relayer: LiquidatorRelayerContext = {
-    nativeTokenBalance: relayerNativeTokenBalance,
-    tokenInBalance: BigNumber.from(results['tokenIn-balanceOf']),
-    tokenInAllowance: BigNumber.from(results['tokenIn-allowance']),
-  };
-
-  return {
-    tokenIn,
-    tokenOut,
-    underlyingAssetToken,
-    relayer,
-    tokenOutInAllowList,
-    isValidWethFlashLiquidationPair,
-    lpToken,
-  };
+  return tokens;
 };
 
 // Checks to see if the LiquidationPair's tokenOut() is a token we are willing to swap for, avoids

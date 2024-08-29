@@ -5,6 +5,7 @@ export * from './getProvider.js';
 export * from './getUsd.js';
 export * from './getComputeTotalClaimFeesMulticall.js';
 export * from './getFlashLiquidatorContextMulticall.js';
+export * from './getLiquidatorTokenCacheMulticall.js';
 export * from './getLiquidatorContextMulticall.js';
 export * from './getLiquidationPairsMulticall.js';
 export * from './getLiquidationPairComputeExactAmountInMulticall.js';

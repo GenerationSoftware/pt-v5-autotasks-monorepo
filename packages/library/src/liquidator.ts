@@ -4,7 +4,7 @@ import { PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { LiquidatorConfig, LiquidatorContext } from './types';
+import type { Token, LiquidatorConfig, LiquidatorContext } from './types';
 import {
   printDateTimeStr,
   logTable,
@@ -15,6 +15,7 @@ import {
   getFeesUsd,
   getNativeTokenMarketRateUsd,
   roundTwoDecimalPlaces,
+  getLiquidatorTokenCacheMulticall,
   getLiquidatorContextMulticall,
   getLiquidationPairsMulticall,
   checkOrX,
@@ -253,6 +254,15 @@ export async function runLiquidator(
   console.log(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
+
+  const tokens: Record<string, Token> = await getLiquidatorTokenCacheMulticall(
+    config,
+    liquidationRouterContract,
+    liquidationPairContracts,
+    relayerAddress,
+  );
+  console.log('tokens');
+  console.log(tokens);
 
   for (let i = 0; i < liquidationPairContracts.length; i++) {
     const liquidationPairContract = liquidationPairContracts[i];
