@@ -24,7 +24,7 @@ import {
 import {
   getComputeTotalClaimFeesMulticall,
   getFeesUsd,
-  getEthMainnetTokenMarketRateUsd,
+  getTokenMarketRateUsd,
   getNativeTokenMarketRateUsd,
   getWinnersUri,
   printDateTimeStr,
@@ -104,11 +104,10 @@ export async function runPrizeClaimer(
   printSpacer();
   console.log(chalk.dim('Starting ...'));
   const context: ClaimPrizeContext = await getContext(
-    chainId,
     contracts,
     prizePoolContract,
     provider,
-    covalentApiKey,
+    config,
   );
   printContext(context);
 
@@ -320,10 +319,10 @@ const calculateProfit = async (
   config: PrizeClaimerConfig,
   rewardRecipient: string,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, covalentApiKey, minProfitThresholdUsd } = config;
+  const { chainId, minProfitThresholdUsd } = config;
 
   printSpacer();
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(config);
   logStringValue(
     `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
     `$${nativeTokenMarketRateUsd}`,
@@ -414,11 +413,10 @@ const logClaims = (claims: Claim[]) => {
  * @returns {Promise} Promise of a ClaimPrizeContext object
  */
 const getContext = async (
-  chainId: number,
   contracts: ContractsBlob,
   prizePool: Contract,
   provider: Provider,
-  covalentApiKey?: string,
+  config: PrizeClaimerConfig,
 ): Promise<ClaimPrizeContext> => {
   const prizeTokenAddress = await prizePool.prizeToken();
 
@@ -439,14 +437,11 @@ const getContext = async (
     symbol: await prizeTokenContract.symbol(),
   };
 
+  const tokenAddress = prizeTokenBasic.address.toLowerCase();
+  const marketRates = await getTokenMarketRateUsd(tokenAddress, config);
   const prizeToken: TokenWithRate = {
     ...prizeTokenBasic,
-    assetRateUsd: await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      prizeTokenBasic.symbol,
-      prizeTokenBasic.address,
-      covalentApiKey,
-    ),
+    assetRateUsd: marketRates[tokenAddress],
   };
 
   return { prizeToken, drawId, isDrawFinalized, tiers, tierPrizeData };

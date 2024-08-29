@@ -7,6 +7,13 @@ export const CHAIN_IDS_TO_COVALENT_LOOKUP = {
   [CHAIN_IDS.base]: 'base-mainnet',
 };
 
+export const CHAIN_ID_TO_COINGECKO_LOOKUP = {
+  [CHAIN_IDS.mainnet]: 'ethereum',
+  [CHAIN_IDS.optimism]: 'optimistic-ethereum',
+  [CHAIN_IDS.arbitrum]: 'arbitrum-one',
+  [CHAIN_IDS.base]: 'base',
+};
+
 // TODO: Would be ideal to find a way to remove this:
 export const SYMBOL_TO_COINGECKO_LOOKUP = {
   POOL: 'pooltogether',

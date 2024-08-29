@@ -10,7 +10,7 @@ import {
   DrawAuctionConfig,
 } from '../types.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
-import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd.js';
+import { getTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd.js';
 import { printSpacer } from './logging.js';
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
@@ -63,11 +63,10 @@ export const getDrawAuctionContextMulticall = async (
 ): Promise<DrawAuctionContext> => {
   printSpacer();
   console.log(chalk.dim(`Gathering info on state of auctions ...`));
-  const { chainId, covalentApiKey } = config;
 
   // 1. Native tokens (gas tokens) market rates in USD
   console.log(chalk.dim(`Getting RNG token and native (gas) token market rates ...`));
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(config);
 
   // 2. Multicall data
   printSpacer();
@@ -161,12 +160,7 @@ const getContext = async (
   const prizePoolDrawClosesAt = Number(resultsTwo[QUERY_KEYS.PRIZE_POOL_DRAW_CLOSES_AT_KEY]);
 
   // 11. Results Two: Reward token
-  const rewardTokenMarketRateUsd = await getEthMainnetTokenMarketRateUsd(
-    chainId,
-    resultsTwo[QUERY_KEYS.REWARD_SYMBOL_KEY],
-    rewardTokenAddress,
-    covalentApiKey,
-  );
+  const rewardTokenMarketRateUsd = await getTokenMarketRateUsd(rewardTokenAddress, config);
   const rewardToken: TokenWithRate = {
     address: rewardTokenAddress,
     decimals: resultsTwo[QUERY_KEYS.REWARD_DECIMALS_KEY],

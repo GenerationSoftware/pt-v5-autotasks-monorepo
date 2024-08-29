@@ -32,6 +32,7 @@ if (esMain(import.meta)) {
     provider,
     minProfitThresholdUsd: Number(envVars.MIN_PROFIT_THRESHOLD_USD),
     covalentApiKey: envVars.COVALENT_API_KEY,
+    coingeckoApiKey: envVars.COINGECKO_API_KEY,
     swapRecipient: envVars.SWAP_RECIPIENT,
     envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
     pairsToLiquidate: envVars.PAIRS_TO_LIQUIDATE,

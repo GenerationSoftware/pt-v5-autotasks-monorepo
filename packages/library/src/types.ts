@@ -53,6 +53,7 @@ export interface AutotaskConfig {
   relayerAddress: string;
   signer: Signer;
   contractJsonUrl: string;
+  coingeckoApiKey?: string;
   covalentApiKey?: string;
 }
 
@@ -111,6 +112,7 @@ export interface AutotaskEnvVars {
   MIN_PROFIT_THRESHOLD_USD: string;
   CUSTOM_RELAYER_PRIVATE_KEY: string;
   CONTRACT_JSON_URL: string;
+  COINGECKO_API_KEY?: string;
   COVALENT_API_KEY?: string;
 }
 

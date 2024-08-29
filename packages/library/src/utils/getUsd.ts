@@ -1,22 +1,24 @@
 import chalk from 'chalk';
 import { ethers, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
+import debug from 'debug';
 
 import { GasPriceOracleAbi } from '../abis/GasPriceOracleAbi.js';
 import { isTestnet, CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from '../constants/network.js';
 import { ADDRESS_TO_COVALENT_LOOKUP, CHAIN_GAS_PRICE_MULTIPLIERS } from '../constants/index.js';
+import type { AutotaskConfig } from '../types';
 import {
   CHAIN_IDS_TO_COVALENT_LOOKUP,
-  SYMBOL_TO_COINGECKO_LOOKUP,
+  // SYMBOL_TO_COINGECKO_LOOKUP,
+  CHAIN_ID_TO_COINGECKO_LOOKUP,
   NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP,
 } from '../constants/usd.js';
 import { printSpacer } from './logging.js';
-import debug from 'debug';
 
 const debugPriceCache = debug('priceCache');
 
 const GAS_PRICE_ORACLE_ADDRESS = '0x420000000000000000000000000000000000000F';
-const DEXSCREENER_API_URL = 'https://api.dexscreener.com/latest/dex/tokens';
+const DEXSCREENER_API_URL = 'https://api.dexscreener.com/latest';
 const COVALENT_API_URL = 'https://api.covalenthq.com/v1';
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 
@@ -88,89 +90,98 @@ export const getFeesUsd = async (
  *
  * @returns {number} The spot price for the Native Gas Token in USD
  **/
-export const getNativeTokenMarketRateUsd = async (
-  chainId: number,
-  covalentApiKey?: string,
-): Promise<number> => {
-  const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[chainId].symbol;
+export const getNativeTokenMarketRateUsd = async (config: AutotaskConfig): Promise<number> => {
+  const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[config.chainId].symbol;
   const tokenAddress =
-    tokenSymbol === 'ETH' ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId] : '';
+    tokenSymbol === 'ETH' ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[config.chainId] : '';
 
-  return await getEthMainnetTokenMarketRateUsd(chainId, tokenSymbol, tokenAddress, covalentApiKey);
+  const lowercaseTokenAddress = tokenAddress.toLowerCase();
+  return await getTokenMarketRateUsd(lowercaseTokenAddress, config);
+};
+
+export const getTokenMarketRateUsd = async (
+  tokenAddress: string,
+  config: AutotaskConfig,
+): Promise<number> => {
+  const lowercaseTokenAddress = tokenAddress.toLowerCase();
+  const rates = await getTokenMarketRatesUsd([lowercaseTokenAddress], config);
+
+  return rates[lowercaseTokenAddress];
 };
 
 /**
- * Finds the spot price of a token in USD (from ETH Mainnet only)
+ * Finds the spot price of a token in USD
  * @returns {number} tokenRateUsd
  */
-export const getEthMainnetTokenMarketRateUsd = async (
-  chainId: number,
-  symbol: string,
-  tokenAddress: string,
-  covalentApiKey?: string,
+export const getTokenMarketRatesUsd = async (
+  tokenAddresses: string[],
+  { chainId, coingeckoApiKey, covalentApiKey }: AutotaskConfig,
 ): Promise<number> => {
-  // memoization
-  // debugPriceCache(marketRates);
   debugPriceCache('');
-  if (marketRates[tokenAddress.toLowerCase()]) {
-    debugPriceCache(
-      chalk.red('cache hit!', tokenAddress, `= $${marketRates[tokenAddress.toLowerCase()]}`),
-    );
-    return marketRates[tokenAddress.toLowerCase()];
+  // debugPriceCache(marketRates);
+
+  // memoization
+  const tokenAddressesKey = tokenAddresses
+    .map((tokenAddress) => tokenAddress.toLowerCase())
+    .join('-');
+
+  const key = `price-cache-${tokenAddressesKey}`;
+  console.log('key');
+  console.log(key);
+  if (marketRates[key]) {
+    debugPriceCache(chalk.red('cache hit!', key, `= $${marketRates[key]}`));
+    return marketRates[key];
   }
 
+  let marketRateUsd;
   // 1. DexScreener
   // Note: Currently only supports Free API
-  let marketRateUsd;
-  try {
-    marketRateUsd = await getDexscreenerMarketRateUsd(tokenAddress);
-    if (!!marketRateUsd) {
-      debugPriceCache(chalk.red(tokenAddress, 'found via DexScreener API'));
-    }
-  } catch (err) {
-    // console.log(err);
-  }
+  // let marketRateUsd;
+  // try {
+  //   marketRateUsd = await getDexscreenerMarketRateUsd(tokenAddress);
+  //   if (!!marketRateUsd) {
+  //     debugPriceCache(chalk.red(tokenAddress, 'found via DexScreener API'));
+  //   }
+  // } catch (err) {
+  //   // console.log(err);
+  // }
 
   // 2. Covalent
   // Note: Needs API key
-  try {
-    if (!marketRateUsd) {
-      if (Boolean(covalentApiKey)) {
-        if (Boolean(tokenAddress)) {
-          marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
-          if (!!marketRateUsd) {
-            debugPriceCache(chalk.red(tokenAddress, 'found via Covalent API'));
-          }
-        } else {
-          console.log(
-            chalk.yellow(
-              `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
-            ),
-          );
-        }
-      }
-    }
-  } catch (err) {
-    // console.log(err);
-  }
+  // try {
+  //   if (!marketRateUsd && Boolean(covalentApiKey)) {
+  //     if (Boolean(tokenAddress)) {
+  //       marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
+  //       if (!!marketRateUsd) {
+  //         debugPriceCache(chalk.red(tokenAddress, 'found via Covalent API'));
+  //       }
+  //     } else {
+  //       console.log(
+  //         chalk.yellow(
+  //           `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // } catch (err) {
+  //   // console.log(err);
+  // }
 
   // 3. Coingecko
-  // Note: Currently only supports rate-limited Free API
+  // Note: Needs API key, demo API key is fine
   try {
-    if (!marketRateUsd) {
-      marketRateUsd = await getCoingeckoMarketRateUsd(symbol);
+    if (!marketRateUsd && Boolean(coingeckoApiKey)) {
+      marketRateUsd = await getCoingeckoMarketRatesUsd(chainId, tokenAddresses, coingeckoApiKey);
       if (!!marketRateUsd) {
-        debugPriceCache(chalk.red(tokenAddress, 'found via Coingecko API'));
+        debugPriceCache(chalk.red(tokenAddresses, 'found via Coingecko API'));
       }
     }
   } catch (err) {
     // console.log(err);
   }
 
-  marketRates[tokenAddress.toLowerCase()] = marketRateUsd;
-  debugPriceCache(
-    chalk.red(`cache miss - storing ${marketRateUsd} for`, tokenAddress.toLowerCase()),
-  );
+  marketRates[key] = marketRateUsd;
+  debugPriceCache(chalk.red(`cache miss - storing USd prices for token addresses:`, key));
 
   return marketRateUsd;
 };
@@ -179,8 +190,8 @@ export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise
   let marketRate;
 
   try {
-    const uri = `${DEXSCREENER_API_URL}/${tokenAddress}`;
-    const response = await fetch(uri);
+    const url = new URL(`${DEXSCREENER_API_URL}/dex/tokens/${tokenAddress}`);
+    const response = await fetch(url);
     if (!response.ok) {
       console.log(
         chalk.yellow(
@@ -216,39 +227,56 @@ export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise
   return marketRate;
 };
 
-export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number> => {
-  let marketRate;
+export const getCoingeckoMarketRatesUsd = async (
+  chainId: number,
+  tokenAddresses: string[],
+  coingeckoApiKey?: string,
+): Promise<Record<string, number>> => {
+  // const coingeckoTokenApiId = SYMBOL_TO_COINGECKO_LOOKUP[symbol];
+  // if (!coingeckoTokenApiId) {
+  //   printSpacer();
+  //   console.log(chalk.yellow(`Note: No Coingecko token API ID found for symbol: '${symbol}'`));
+  //   printSpacer();
+  //   return;
+  // }
 
-  const coingeckoTokenApiId = SYMBOL_TO_COINGECKO_LOOKUP[symbol];
-  if (!coingeckoTokenApiId) {
-    printSpacer();
-    console.log(chalk.yellow(`Note: No Coingecko token API ID found for symbol: '${symbol}'`));
-    printSpacer();
-    return;
-  }
+  const coingeckoChainName = CHAIN_ID_TO_COINGECKO_LOOKUP[chainId];
 
+  let marketRates = {};
   try {
-    const uri = `${COINGECKO_API_URL}/simple/price?ids=${coingeckoTokenApiId}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=false`;
-    const response = await fetch(uri);
+    const url = new URL(`${COINGECKO_API_URL}/simple/token_price/${coingeckoChainName}`);
+    url.searchParams.set('contract_addresses', tokenAddresses.join(','));
+    url.searchParams.set('vs_currencies', 'usd');
+
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-cg-demo-api-key': coingeckoApiKey,
+      },
+    });
     if (!response.ok) {
-      console.log(
-        chalk.yellow(`Unable to fetch current USD value from Coingecko of '${symbol}' token.`),
-      );
+      console.log(chalk.yellow(`Unable to fetch current USD values from Coingecko for:`));
+      tokenAddresses.map((tokenAddress) => console.log(tokenAddress));
+
       throw new Error(response.statusText);
     }
-    marketRate = await response.json();
-    marketRate = marketRate[coingeckoTokenApiId]?.usd;
+    const marketRatesJson: Record<string, Record<string, number>> = await response.json();
+    for (let marketRateJson of Object.entries(marketRatesJson)) {
+      const tokenAddress = marketRateJson[0];
+      const result = marketRateJson[1];
+      marketRates[tokenAddress] = result.usd;
+    }
   } catch (err) {
     console.log(err);
   }
 
-  return marketRate;
+  return marketRates;
 };
 
 export const getCovalentMarketRateUsd = async (
   chainId: number,
   tokenAddress: string,
-  covalentApiKey?: string,
+  covalentApiKey: string,
 ): Promise<number> => {
   let address, covalentChainName;
 

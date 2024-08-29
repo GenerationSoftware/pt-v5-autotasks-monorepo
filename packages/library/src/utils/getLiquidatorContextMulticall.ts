@@ -13,7 +13,7 @@ import {
   TokenWithRate,
   TokenWithRateAndTotalSupply,
 } from '../types.js';
-import { getEthMainnetTokenMarketRateUsd, printSpacer } from '../utils/index.js';
+import { getTokenMarketRateUsd, printSpacer } from '../utils/index.js';
 import { LpTokenAbi } from '../abis/LpTokenAbi.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
@@ -130,12 +130,7 @@ export const getLiquidatorContextMulticall = async (
   // 7. tokenIn results
   let tokenInAssetRateUsd;
   if (tokenOutInAllowList && !isValidWethFlashLiquidationPair) {
-    tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-      chainId,
-      results['tokenIn-symbol'],
-      tokenInAddress,
-      covalentApiKey,
-    );
+    tokenInAssetRateUsd = await getTokenMarketRateUsd(tokenInAddress, config);
   }
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
@@ -151,12 +146,7 @@ export const getLiquidatorContextMulticall = async (
     if (lpToken?.assetRateUsd) {
       underlyingAssetAssetRateUsd = lpToken.assetRateUsd;
     } else {
-      underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-        chainId,
-        results['underlyingAsset-symbol'],
-        underlyingAssetAddress,
-        covalentApiKey,
-      );
+      underlyingAssetAssetRateUsd = await getTokenMarketRateUsd(underlyingAssetAddress, config);
     }
   }
 
@@ -335,12 +325,7 @@ const initLpToken = async (
     let token0AssetRateUsd;
     const token0InAllowList = tokenAllowListed(config, token0Address);
     if (token0InAllowList) {
-      token0AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-        chainId,
-        results['token0-symbol'],
-        token0Address,
-        covalentApiKey,
-      );
+      token0AssetRateUsd = await getTokenMarketRateUsd(token0Address, config);
     }
     lpToken.token0 = {
       address: token0Address,
@@ -354,12 +339,7 @@ const initLpToken = async (
     let token1AssetRateUsd;
     const token1InAllowList = tokenAllowListed(config, token1Address);
     if (token1InAllowList) {
-      token1AssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-        chainId,
-        results['token1-symbol'],
-        token1Address,
-        covalentApiKey,
-      );
+      token1AssetRateUsd = await getTokenMarketRateUsd(token1Address, config);
     }
     lpToken.token1 = {
       address: token1Address,

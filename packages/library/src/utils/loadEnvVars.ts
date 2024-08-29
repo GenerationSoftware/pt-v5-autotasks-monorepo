@@ -13,6 +13,7 @@ export const loadEnvVars = (): AutotaskEnvVars => {
   console.log('');
 
   const covalentApiKey = process.env.COVALENT_API_KEY;
+  const coingeckoApiKey = process.env.COINGECKO_API_KEY;
   const customRelayerPrivateKey = process.env.CUSTOM_RELAYER_PRIVATE_KEY;
   const jsonRpcUrl = process.env.JSON_RPC_URL;
   const contractJsonUrl = process.env.CONTRACT_JSON_URL;
@@ -35,6 +36,7 @@ export const loadEnvVars = (): AutotaskEnvVars => {
     JSON_RPC_URL: jsonRpcUrl || process.env.JSON_RPC_URL,
     MIN_PROFIT_THRESHOLD_USD: minProfitThresholdUsd,
     COVALENT_API_KEY: covalentApiKey,
+    COINGECKO_API_KEY: coingeckoApiKey,
     CUSTOM_RELAYER_PRIVATE_KEY: customRelayerPrivateKey,
     CONTRACT_JSON_URL: contractJsonUrl,
   };

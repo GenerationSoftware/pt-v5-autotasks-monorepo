@@ -3,8 +3,8 @@ import { ethers, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 
-import { FlashLiquidatorContext, Token, TokenWithRate } from '../types.js';
-import { printSpacer, getEthMainnetTokenMarketRateUsd } from './index.js';
+import { FlashLiquidatorConfig, FlashLiquidatorContext, Token, TokenWithRate } from '../types.js';
+import { printSpacer, getTokenMarketRateUsd } from './index.js';
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { ERC4626Abi } from '../abis/ERC4626Abi.js';
 
@@ -25,7 +25,7 @@ const { MulticallWrapper } = ethersMulticallProviderPkg;
 export const getFlashLiquidatorContextMulticall = async (
   liquidationPairContract: Contract,
   provider: Provider,
-  covalentApiKey?: string,
+  config: FlashLiquidatorConfig,
 ): Promise<FlashLiquidatorContext> => {
   // @ts-ignore
   const chainId = provider._network.chainId;
@@ -91,12 +91,7 @@ export const getFlashLiquidatorContextMulticall = async (
   const results = await getEthersMulticallProviderResults(multicallProvider, queries);
 
   // 1. tokenIn results
-  const tokenInAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-    chainId,
-    results['tokenIn-symbol'],
-    tokenInAddress,
-    covalentApiKey,
-  );
+  const tokenInAssetRateUsd = await getTokenMarketRateUsd(tokenInAddress, config);
   const tokenIn: TokenWithRate = {
     address: tokenInAddress,
     decimals: results['tokenIn-decimals'],
@@ -114,12 +109,7 @@ export const getFlashLiquidatorContextMulticall = async (
   };
 
   // 3. vault underlying asset (hard asset such as DAI or USDC) results
-  const underlyingAssetAssetRateUsd = await getEthMainnetTokenMarketRateUsd(
-    chainId,
-    results['underlyingAsset-symbol'],
-    underlyingAssetAddress,
-    covalentApiKey,
-  );
+  const underlyingAssetAssetRateUsd = await getTokenMarketRateUsd(underlyingAssetAddress, config);
 
   const underlyingAssetToken: TokenWithRate = {
     address: underlyingAssetAddress,

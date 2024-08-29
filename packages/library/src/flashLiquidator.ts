@@ -99,7 +99,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     const context: FlashLiquidatorContext = await getFlashLiquidatorContextMulticall(
       liquidationPairContract,
       provider,
-      covalentApiKey,
+      config,
     );
     const pair = `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
 
@@ -168,11 +168,10 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     let avgFeeUsd = 0;
     try {
       avgFeeUsd = await getGasCost(
-        chainId,
         flashLiquidationContract,
         flashLiquidateParams,
         provider,
-        covalentApiKey,
+        config,
       );
     } catch (e) {
       console.error(chalk.red(e));
@@ -319,13 +318,13 @@ const calculateProfit = async (
  * @returns {Promise} Promise with the maximum gas fee in USD
  */
 const getGasCost = async (
-  chainId: number,
   flashLiquidationContract: Contract,
   flashLiquidateParams: FlashLiquidateParams,
   provider: Provider,
-  covalentApiKey?: string,
+  config: FlashLiquidatorConfig,
 ): Promise<number> => {
-  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
+  const { chainId } = config;
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(config);
 
   printAsterisks();
   console.log(chalk.blue('4. Current gas costs for transaction:'));
