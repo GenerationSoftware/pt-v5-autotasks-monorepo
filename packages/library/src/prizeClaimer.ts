@@ -62,7 +62,7 @@ type Winner = {
   prizes: PrizeTierIndices;
 };
 
-const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 30 as const; // prevent OZ bot from running over 5-minute limit and from gas being too large
+const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 30 as const; // prevent gas from becoming too large
 const NUM_CANARY_TIERS = 2 as const;
 
 /**
@@ -133,6 +133,10 @@ export async function runPrizeClaimer(
   printSpacer();
 
   // #2. Get data from pt-v5-winners
+  printSpacer();
+  console.log(chalk.dim(`Fetching potential claims ...`));
+  printSpacer();
+
   let claims: Claim[] = await fetchClaims(
     chainId,
     prizePoolContract.address,
@@ -164,7 +168,7 @@ export async function runPrizeClaimer(
   }
 
   // #4. Sort unclaimed claims by tier so largest prizes (with the largest rewards) are first
-  unclaimedClaims = unclaimedClaims.sort((a, b) => a.tier - b.tier);
+  // unclaimedClaims = unclaimedClaims.sort((a, b) => a.tier - b.tier);
 
   // #5. Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);

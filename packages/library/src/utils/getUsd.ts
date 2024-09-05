@@ -93,8 +93,9 @@ export const getNativeTokenMarketRateUsd = async (
   covalentApiKey?: string,
 ): Promise<number> => {
   const tokenSymbol = NETWORK_NATIVE_TOKEN_INFO[chainId].symbol;
-  const tokenAddress =
-    tokenSymbol === 'ETH' ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId] : '';
+  const tokenAddress = ['ETH', 'XDAI'].includes(tokenSymbol)
+    ? NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP[chainId]
+    : '';
 
   return await getEthMainnetTokenMarketRateUsd(chainId, tokenSymbol, tokenAddress, covalentApiKey);
 };
@@ -132,22 +133,19 @@ export const getEthMainnetTokenMarketRateUsd = async (
   }
 
   // 2. Covalent
-  // Note: Needs API key
   try {
-    if (!marketRateUsd) {
-      if (Boolean(covalentApiKey)) {
-        if (Boolean(tokenAddress)) {
-          marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
-          if (!!marketRateUsd) {
-            debugPriceCache(chalk.red(tokenAddress, 'found via Covalent API'));
-          }
-        } else {
-          console.log(
-            chalk.yellow(
-              `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
-            ),
-          );
+    if (!marketRateUsd && Boolean(covalentApiKey)) {
+      if (Boolean(tokenAddress)) {
+        marketRateUsd = await getCovalentMarketRateUsd(chainId, tokenAddress, covalentApiKey);
+        if (!!marketRateUsd) {
+          debugPriceCache(chalk.red(tokenAddress, 'found via Covalent API'));
         }
+      } else {
+        console.log(
+          chalk.yellow(
+            `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
+          ),
+        );
       }
     }
   } catch (err) {
@@ -191,6 +189,10 @@ export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise
     }
     const json = await response.json();
     let pairs = json.pairs;
+
+    if (!pairs) {
+      return;
+    }
 
     // Filter out results that do not match the chains we're interested in as they can easily throw off the average
     pairs = pairs.filter((pair) =>

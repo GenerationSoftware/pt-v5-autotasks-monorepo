@@ -15,4 +15,6 @@ export const CHAIN_RNG_PAYMENT_AMOUNT_DIVISOR = {
   [CHAIN_IDS.arbitrumSepolia]: 1,
   [CHAIN_IDS.sepolia]: 1,
   [CHAIN_IDS.optimismSepolia]: 1,
+  [CHAIN_IDS.scrollSepolia]: 1,
+  [CHAIN_IDS.gnosisChiado]: 1,
 };
