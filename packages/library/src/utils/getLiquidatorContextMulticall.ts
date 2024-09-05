@@ -196,7 +196,7 @@ const tokenAllowListed = (config: LiquidatorConfig, tokenAddress: string): boole
   try {
     inAllowList =
       LIQUIDATION_TOKEN_ALLOW_LIST[chainId].includes(tokenAddress.toLowerCase()) ||
-      envTokenAllowList.includes(tokenAddress.toLowerCase());
+      envTokenAllowList?.includes(tokenAddress.toLowerCase());
   } catch (e) {
     console.error(chalk.red(e));
     console.error(

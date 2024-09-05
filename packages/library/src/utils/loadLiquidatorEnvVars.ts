@@ -12,13 +12,6 @@ export const loadLiquidatorEnvVars = (): LiquidatorEnvVars => {
     ? process.env.PAIRS_TO_LIQUIDATE.toLowerCase().split(',')
     : [];
 
-  if (envTokenAllowList.length > 0) {
-    console.log('');
-    console.log('ENV_TOKEN_ALLOW_LIST is:');
-    console.log(envTokenAllowList);
-    console.log('');
-  }
-
   return {
     ...envVars,
     SWAP_RECIPIENT: swapRecipient,

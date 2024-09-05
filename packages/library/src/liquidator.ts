@@ -226,14 +226,14 @@ export async function runLiquidator(
     chalk.yellow(config.minProfitThresholdUsd),
   );
 
-  if (config.pairsToLiquidate?.length > 0) {
-    console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellow(config.pairsToLiquidate));
-  }
-  if (config.envTokenAllowList.length > 0) {
+  if (config.envTokenAllowList?.length > 0) {
     console.log(
       chalk.dim('Config - ENV_TOKEN_ALLOW_LIST:'),
       chalk.yellow(config.envTokenAllowList),
     );
+  }
+  if (config.pairsToLiquidate?.length > 0) {
+    console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellow(config.pairsToLiquidate));
   }
 
   // 1. Get contracts
@@ -256,7 +256,7 @@ export async function runLiquidator(
 
   for (let i = 0; i < liquidationPairContracts.length; i++) {
     const liquidationPairContract = liquidationPairContracts[i];
-    if (ignorePair(pairsToLiquidate, liquidationPairContract.address)) {
+    if (ignorePair(liquidationPairContract.address, pairsToLiquidate)) {
       continue;
     }
 
@@ -1121,9 +1121,9 @@ const logNextPair = (liquidationPair, liquidationPairContracts) => {
  * Determines if the passed in `pairAddress` is in the provided list of pairs (`pairsToLiquidate`) to filter by
  * @returns {boolean}
  */
-const ignorePair = (pairsToLiquidate: string[], pairAddress: string): boolean => {
+const ignorePair = (pairAddress: string, pairsToLiquidate?: string[]): boolean => {
   return (
-    pairsToLiquidate.length > 0 &&
+    pairsToLiquidate?.length > 0 &&
     !pairsToLiquidate.map((address) => address.toLowerCase()).includes(pairAddress.toLowerCase())
   );
 };

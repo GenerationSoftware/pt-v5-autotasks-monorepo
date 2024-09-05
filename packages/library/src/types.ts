@@ -66,8 +66,8 @@ export interface SharedLiquidatorConfig extends AutotaskConfig {
 }
 
 export interface LiquidatorConfig extends SharedLiquidatorConfig {
-  envTokenAllowList: string[];
-  pairsToLiquidate: string[];
+  envTokenAllowList?: string[];
+  pairsToLiquidate?: string[];
 }
 
 export interface FlashLiquidatorConfig extends SharedLiquidatorConfig {}
