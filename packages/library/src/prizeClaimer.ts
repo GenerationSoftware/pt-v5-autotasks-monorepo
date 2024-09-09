@@ -1,4 +1,5 @@
 import nodeFetch from 'node-fetch';
+import debug from 'debug';
 import { ethers, BigNumber, Contract } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import {
@@ -39,8 +40,10 @@ import {
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { VaultAbi } from './abis/VaultAbi.js';
 import { ClaimerAbi } from './abis/ClaimerAbi.js';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
+import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
+
+const debugClaimer = debug('claimer');
 
 type ClaimPrizesParams = {
   vault: string;
@@ -64,6 +67,17 @@ type Winner = {
 
 const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 30 as const; // prevent gas from becoming too large
 const NUM_CANARY_TIERS = 2 as const;
+const GAS_LIMIT = 20_000_000 as const;
+
+// Scroll and Gnosis seem to have much smaller gas limits than Ethereum, Arbitrum, Optimism and Base
+const LOWER_GAS_LIMIT_CHAINS = [
+  CHAIN_IDS.scrollSepolia,
+  CHAIN_IDS.scroll,
+  CHAIN_IDS.gnosisChiado,
+  CHAIN_IDS.gnosis,
+] as const;
+const LOWER_GAS_LIMIT = 10_000_000 as const;
+const LOWER_TOTAL_CLAIM_COUNT_PER_TRANSACTION = 15 as const;
 
 /**
  * Finds all winners for the current draw who have unclaimed prizes and decides if it's profitable
@@ -236,25 +250,43 @@ export async function runPrizeClaimer(
     // It's profitable if there is at least 1 claim to claim
     // #7. Populate transaction
     if (claimPrizesParams.winners.length > 0) {
-      printSpacer();
-      console.log(
-        chalk.green(`Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}`),
-      );
-      printSpacer();
+      const countPerTx = LOWER_GAS_LIMIT_CHAINS.includes(chainId)
+        ? LOWER_TOTAL_CLAIM_COUNT_PER_TRANSACTION
+        : TOTAL_CLAIM_COUNT_PER_TRANSACTION;
 
-      const populatedTx = await claimerContract.populateTransaction.claimPrizes(
-        ...Object.values(claimPrizesParams),
-      );
+      for (let n = 0; n <= claimPrizesParams.winners.length; n += countPerTx) {
+        const start = n;
+        const end = n + countPerTx;
 
-      const gasLimit = 20000000;
-      const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+        const paramsClone = structuredClone(claimPrizesParams);
+        paramsClone.winners = paramsClone.winners.slice(start, end);
+        paramsClone.prizeIndices = paramsClone.prizeIndices.slice(start, end);
+        logClaims(paramsClone);
 
-      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+        printSpacer();
+        printSpacer();
+        console.log(
+          chalk.green(
+            `Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}, claims ${
+              start + 1
+            } to ${Math.min(end, claimPrizesParams.winners.length)} `,
+          ),
+        );
 
-      console.log('Waiting on transaction to be confirmed ...');
-      await provider.waitForTransaction(tx.hash);
-      console.log('Tx confirmed !');
+        const populatedTx = await claimerContract.populateTransaction.claimPrizes(
+          ...Object.values(paramsClone),
+        );
+
+        const gasLimit = LOWER_GAS_LIMIT_CHAINS.includes(chainId) ? LOWER_GAS_LIMIT : GAS_LIMIT;
+        const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+
+        console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+        console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+        console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
+        await provider.waitForTransaction(tx.hash);
+        console.log(chalk.dim('Transaction confirmed !'));
+      }
     } else {
       console.log(
         chalk.yellow(
@@ -324,7 +356,7 @@ const calculateProfit = async (
   config: PrizeClaimerConfig,
   rewardRecipient: string,
 ): Promise<ClaimPrizesParams> => {
-  const { chainId, covalentApiKey, minProfitThresholdUsd } = config;
+  const { chainId, covalentApiKey } = config;
 
   printSpacer();
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
@@ -354,7 +386,7 @@ const calculateProfit = async (
     groupedClaims,
     tierRemainingPrizeCounts,
     gasCost,
-    minProfitThresholdUsd,
+    config,
   );
 
   const claimsSlice = groupedClaims.slice(0, claimCount);
@@ -381,13 +413,13 @@ const calculateProfit = async (
     ),
     chalk.dim(`$${netProfitUsd} = ($${claimRewardUsd} - $${totalCostUsd})`),
   );
-  printSpacer();
 
   const profitable = claimCount >= 1;
 
   if (profitable) {
-    console.log(chalk.yellow(`Submitting transaction to claim ${claimCount} prize(s):`));
-    logClaims(claimsSlice);
+    printSpacer();
+    printSpacer();
+    console.log(chalk.yellow(`Submitting transaction(s) to claim ${claimCount} prize(s):`));
   } else {
     console.log(
       chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
@@ -403,13 +435,15 @@ const tierWords = (context: ClaimPrizeContext, tier: number) => {
   return `${tier}${canaryWords}`;
 };
 
-const logClaims = (claims: Claim[]) => {
-  printSpacer();
-  claims.forEach((claim) =>
-    console.log(`${claim.vault}-${claim.winner}-${claim.tier}-${claim.prizeIndex}`),
-  );
-  printSpacer();
-  printSpacer();
+const logClaims = (params: ClaimPrizesParams) => {
+  debugClaimer('claimPrizesParamsClone');
+  debugClaimer(params);
+
+  for (let x = 0; x < params.winners.length; x++) {
+    const winner = params.winners[x];
+    const prizeIndex = params.prizeIndices[x];
+    debugClaimer(`${params.vault}-${winner}-${params.tier}-${prizeIndex}`);
+  }
 };
 
 /**
@@ -648,8 +682,10 @@ const getClaimInfo = async (
   claims: Claim[],
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   gasCost: any,
-  minProfitThresholdUsd: number,
+  config: PrizeClaimerConfig,
 ): Promise<ClaimInfo> => {
+  const { chainId, minProfitThresholdUsd } = config;
+
   let claimCount = 0;
   let claimReward = BigNumber.from(0);
   let claimRewardUsd = 0;
@@ -755,11 +791,7 @@ const getClaimInfo = async (
 
     claimRewardUsd = nextClaimRewardUsd;
 
-    if (
-      netProfitUsd > previousNetProfitUsd &&
-      netProfitUsd > minProfitThresholdUsd &&
-      numClaims < TOTAL_CLAIM_COUNT_PER_TRANSACTION
-    ) {
+    if (netProfitUsd > previousNetProfitUsd && netProfitUsd > minProfitThresholdUsd) {
       tierRemainingPrizeCounts[tier.toString()]--;
 
       const claimRewardUnpacked = claimReward[0] ? claimReward[0] : claimReward;

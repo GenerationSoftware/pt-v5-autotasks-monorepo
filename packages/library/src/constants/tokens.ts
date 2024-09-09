@@ -11,6 +11,8 @@ export const KNOWN_TOKENS = {
     GUSD: '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd',
     OP: '0x2eecb20df51dc76d05afcf1270c73a2ff1035388',
     LINK: '0x514910771af9ca656af840dff83e8264ecf986ca',
+    PRZWETH: '0x3acd377da549010a197b9ed0f271e1f621e4b62e',
+    PRZUSDC: '0x96fe7b5762bd4405149a9a313473e68a8e870f6c',
   },
   [CHAIN_IDS.optimism]: {
     POOL: '0x395ae52bb17aef68c2888d941736a71dc6d4e125',
@@ -144,7 +146,11 @@ export const KNOWN_TOKENS = {
 };
 
 export const LIQUIDATION_TOKEN_ALLOW_LIST = {
-  [CHAIN_IDS.mainnet]: [],
+  [CHAIN_IDS.mainnet]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.mainnet]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
   [CHAIN_IDS.optimism]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.optimism]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
