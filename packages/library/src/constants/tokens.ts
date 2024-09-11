@@ -48,6 +48,10 @@ export const KNOWN_TOKENS = {
     PRZSAMMV2USDCERNYEARN: '0x9f4a71c262e5fe634bbe3b9b1bd5dee2bba9e441',
     PRZSAMMV2USDCERNYEARN2: '0x3a14DdB934e785Cd1e29949EA814e8090D5F8b69',
   },
+  [CHAIN_IDS.gnosis]: {
+    WXDAI: '',
+    PRZWXDAI: '',
+  },
   [CHAIN_IDS.base]: {
     POOL: '0xd652c5425aea2afd5fb142e120fecf79e18fafc3',
     WETH: '0x4200000000000000000000000000000000000006',
@@ -80,6 +84,10 @@ export const KNOWN_TOKENS = {
     PRZUSDC: '0x3c72a2a78c29d1f6454caa1bcb17a7792a180a2e',
     PRZUSDT: '0xcacba8be4bc225fb8d15a9a3b702f84ca3eba991',
     PRZUSDA: '0x8653084e01Bd8c9e24B9a8fEb2036251Ee0C16A9',
+  },
+  [CHAIN_IDS.scroll]: {
+    WETH: '0x5300000000000000000000000000000000000004',
+    PRZWETH: '0xfeb0fe9850aba3a52e72a8a694d422c2b47a5888',
   },
   [CHAIN_IDS.gnosisChiado]: {
     OFFICIAL_WXDAI: '0x18c8a7ec7897177E4529065a7E7B0878358B3BfF',
@@ -156,6 +164,11 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
       tokenAddress.toLowerCase(),
     ),
   ],
+  [CHAIN_IDS.gnosis]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.gnosis]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
   [CHAIN_IDS.base]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.base]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
@@ -163,6 +176,11 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   ],
   [CHAIN_IDS.arbitrum]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.arbitrum]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
+  [CHAIN_IDS.scroll]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.scroll]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
     ),
   ],
