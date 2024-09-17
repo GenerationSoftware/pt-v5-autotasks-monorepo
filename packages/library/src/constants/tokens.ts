@@ -49,8 +49,8 @@ export const KNOWN_TOKENS = {
     PRZSAMMV2USDCERNYEARN2: '0x3a14DdB934e785Cd1e29949EA814e8090D5F8b69',
   },
   [CHAIN_IDS.gnosis]: {
-    WXDAI: '',
-    PRZWXDAI: '',
+    WXDAI: '0xe91d153e0b41518a2ce8dd3d7944fa863463a97d',
+    PRZWXDAI: '0xbb7e99abccce01589ad464ff698ad139b0705d90',
   },
   [CHAIN_IDS.base]: {
     POOL: '0xd652c5425aea2afd5fb142e120fecf79e18fafc3',
