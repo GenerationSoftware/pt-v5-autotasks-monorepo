@@ -65,6 +65,15 @@ type Winner = {
   prizes: PrizeTierIndices;
 };
 
+const GP_BOOSTER_CONTRACT_ADDRESSES = {
+  [CHAIN_IDS.mainnet]: '0x6be9c23aa3c2cfeff92d884e20d1ec9e134ab076',
+  [CHAIN_IDS.optimism]: '0xdeef914a2ee2f2014ce401dcb4e13f6540d20ba7',
+  [CHAIN_IDS.gnosis]: '0x65f3aea2594d82024b7ee98ddcf08f991ab1c626',
+  [CHAIN_IDS.base]: '0x327b2ea9668a552fe5dec8e3c6e47e540a0a58c6',
+  [CHAIN_IDS.arbitrum]: '0x1dcfb8b47c2f05ce86c21580c167485de1202e12',
+  [CHAIN_IDS.scroll]: '0x2d3ad415198d7156e8c112a508b8306699f6e4cc',
+};
+
 const TOTAL_CLAIM_COUNT_PER_TRANSACTION = 30 as const; // prevent gas from becoming too large
 const NUM_CANARY_TIERS = 2 as const;
 const GAS_LIMIT = 20_000_000 as const;
@@ -163,6 +172,10 @@ export async function runPrizeClaimer(
 
   let unclaimedClaims = claims.filter((claim) => !claim.claimed);
   const claimedClaims = claims.filter((claim) => claim.claimed);
+
+  // Filter out any claims where the winner is a GPBoostHook contract and that prize is a grand prize
+  unclaimedClaims = unclaimedClaims.filter(noGpBoosterGrandPrizeWinners);
+
   if (claimedClaims.length === 0) {
     console.log(chalk.dim(`No claimed prizes for draw #${context.drawId}.`));
   } else {
@@ -181,14 +194,10 @@ export async function runPrizeClaimer(
     return;
   }
 
-  // #4. Sort unclaimed claims by tier so largest prizes (with the largest rewards) are first
-  // unclaimedClaims = unclaimedClaims.sort((a, b) => a.tier - b.tier);
-
-  // #5. Group claims by vault & tier
+  // #4. Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
 
   // Keep track of how many prizes we can claim per tier
-
   let tierRemainingPrizeCounts: TierRemainingPrizeCounts = {};
   let canaryTierNotProfitable = false;
   for (let vaultTier of Object.entries(unclaimedClaimsGrouped)) {
@@ -278,14 +287,30 @@ export async function runPrizeClaimer(
         );
 
         const gasLimit = LOWER_GAS_LIMIT_CHAINS.includes(chainId) ? LOWER_GAS_LIMIT : GAS_LIMIT;
-        const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
-        console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-        console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+        // Check rewards
+        let rewards: BigNumber;
+        try {
+          rewards = await claimerContract.callStatic.claimPrizes(...Object.values(paramsClone));
+        } catch (e) {
+          console.log('Error while checking rewards returned via callStatic simulation');
+          console.log(e.message);
+        }
 
-        console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
-        await provider.waitForTransaction(tx.hash);
-        console.log(chalk.dim('Transaction confirmed !'));
+        if (rewards.gt(0)) {
+          const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+
+          console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+          console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+          console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
+          await provider.waitForTransaction(tx.hash);
+          console.log(chalk.dim('Transaction confirmed !'));
+        } else {
+          console.log(
+            chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'),
+          );
+        }
       }
     } else {
       console.log(
@@ -898,3 +923,7 @@ const getClaimerContract = async (vaultAddress: string, provider: Provider): Pro
 
   return new Contract(claimerAddress, ClaimerAbi, provider);
 };
+
+function noGpBoosterGrandPrizeWinners(claim) {
+  return !Object.values(GP_BOOSTER_CONTRACT_ADDRESSES).includes(claim.winner) && claim.tier !== 0;
+}
