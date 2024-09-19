@@ -65,6 +65,8 @@ type Winner = {
   prizes: PrizeTierIndices;
 };
 
+const PT_CLASSIC_PRIZE_VAULT_ADDRESS = '0xaf2b22b7155da01230d72289dcecb7c41a5a4bd8';
+
 const GP_BOOSTER_CONTRACT_ADDRESSES = {
   [CHAIN_IDS.mainnet]: '0x6be9c23aa3c2cfeff92d884e20d1ec9e134ab076',
   [CHAIN_IDS.optimism]: '0xdeef914a2ee2f2014ce401dcb4e13f6540d20ba7',
@@ -98,7 +100,7 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   config: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, wallet, provider, subgraphUrl } = config;
+  const { chainId, covalentApiKey, provider, subgraphUrl } = config;
   printSpacer();
   printDateTimeStr('START');
   printSpacer();
@@ -123,7 +125,7 @@ export async function runPrizeClaimer(
     contractsVersion,
   );
 
-  // #1. Get context about the prize pool prize token, etc
+  // Get context about the prize pool prize token, etc
   printSpacer();
   console.log(chalk.dim('Starting ...'));
   const context: ClaimPrizeContext = await getContext(
@@ -155,7 +157,7 @@ export async function runPrizeClaimer(
   console.log(chalk.dim(`Found ${prizeVaults.length} prize vaults.`));
   printSpacer();
 
-  // #2. Get data from pt-v5-winners
+  // Get data from pt-v5-winners
   printSpacer();
   console.log(chalk.dim(`Fetching potential claims ...`));
   printSpacer();
@@ -167,7 +169,7 @@ export async function runPrizeClaimer(
     prizeVaults,
   );
 
-  // #3. Cross-reference prizes claimed to flag if a claim has been claimed or not
+  // Cross-reference prizes claimed to flag if a claim has been claimed or not
   claims = await flagClaimedRpc(provider, contracts, claims);
 
   let unclaimedClaims = claims.filter((claim) => !claim.claimed);
@@ -194,7 +196,7 @@ export async function runPrizeClaimer(
     return;
   }
 
-  // #4. Group claims by vault & tier
+  // Group claims by vault & tier
   const unclaimedClaimsGrouped = groupBy(unclaimedClaims, (item) => [item.vault, item.tier]);
 
   // Keep track of how many prizes we can claim per tier
@@ -215,6 +217,9 @@ export async function runPrizeClaimer(
     console.log(chalk.blueBright(`Tier:      #${tierWords(context, Number(tier))}`));
     console.log(chalk.blueBright(`# prizes:  ${groupedClaims.length}`));
 
+    // Dynamically find the claimer for this vault
+    const claimerContract: Contract = await getClaimerContract(vault, provider);
+
     const reserve = await prizePoolContract.reserve();
     const { enoughLiquidity } = getLiquidityInfo(context, tier, tierRemainingPrizeCounts, reserve);
     if (!enoughLiquidity) {
@@ -228,108 +233,59 @@ export async function runPrizeClaimer(
       continue;
     }
 
-    if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
-      printSpacer();
-      console.log(
-        chalk.redBright(`Tier #${tierWords(context, Number(tier))} not profitable, skipping ...`),
-      );
-      printSpacer();
-      continue;
-    }
-
-    // #5. Dynamically find the claimer for this vault
-    const claimerContract: Contract = await getClaimerContract(vault, provider);
-
-    // #6. Decide if profitable or not
-    printSpacer();
-    console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
-
-    const claimPrizesParams = await calculateProfit(
-      provider,
-      vault,
-      Number(tier),
-      claimerContract,
-      groupedClaims,
-      tierRemainingPrizeCounts,
-      context,
-      config,
-      rewardRecipient,
-    );
-
-    // It's profitable if there is at least 1 claim to claim
-    // #7. Populate transaction
-    if (claimPrizesParams.winners.length > 0) {
-      const countPerTx = LOWER_GAS_LIMIT_CHAINS.includes(chainId)
-        ? LOWER_TOTAL_CLAIM_COUNT_PER_TRANSACTION
-        : TOTAL_CLAIM_COUNT_PER_TRANSACTION;
-
-      for (let n = 0; n <= claimPrizesParams.winners.length; n += countPerTx) {
-        const start = n;
-        const end = n + countPerTx;
-
-        const paramsClone = structuredClone(claimPrizesParams);
-        paramsClone.winners = paramsClone.winners.slice(start, end);
-        paramsClone.prizeIndices = paramsClone.prizeIndices.slice(start, end);
-        logClaims(paramsClone);
-
-        printSpacer();
+    if (vaultIsPtClassic(vault)) {
+      console.log(chalk.redBright('Will process'));
+      console.log(chalk.blueBright('PT Classic'));
+      console.log(chalk.greenBright('vault differently'));
+    } else {
+      if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
         printSpacer();
         console.log(
-          chalk.green(
-            `Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}, claims ${
-              start + 1
-            } to ${Math.min(end, claimPrizesParams.winners.length)} `,
+          chalk.redBright(`Tier #${tierWords(context, Number(tier))} not profitable, skipping ...`),
+        );
+        printSpacer();
+        continue;
+      }
+
+      // Decide if profitable or not
+      printSpacer();
+      console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
+      const claimPrizesParams = await calculateProfit(
+        provider,
+        vault,
+        Number(tier),
+        claimerContract,
+        groupedClaims,
+        tierRemainingPrizeCounts,
+        context,
+        config,
+        rewardRecipient,
+      );
+
+      // It's profitable if there is at least 1 win to claim
+      if (claimPrizesParams.winners.length > 0) {
+        await processNormalVault(Number(tier), claimerContract, context, config, claimPrizesParams);
+      } else {
+        console.log(
+          chalk.yellow(
+            `Not profitable to claim for Draw #${context.drawId}, Tier: #${tierWords(
+              context,
+              Number(tier),
+            )}`,
           ),
         );
 
-        const populatedTx = await claimerContract.populateTransaction.claimPrizes(
-          ...Object.values(paramsClone),
-        );
-
-        const gasLimit = LOWER_GAS_LIMIT_CHAINS.includes(chainId) ? LOWER_GAS_LIMIT : GAS_LIMIT;
-
-        // Check rewards
-        let rewards: BigNumber;
-        try {
-          rewards = await claimerContract.callStatic.claimPrizes(...Object.values(paramsClone));
-        } catch (e) {
-          console.log('Error while checking rewards returned via callStatic simulation');
-          console.log(e.message);
-        }
-
-        if (rewards.gt(0)) {
-          const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
-
-          console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-          console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-          console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
-          await provider.waitForTransaction(tx.hash);
-          console.log(chalk.dim('Transaction confirmed !'));
+        if (isCanary(context, Number(tier))) {
+          canaryTierNotProfitable = true;
         } else {
           console.log(
-            chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'),
+            chalk.redBright(
+              `Not profitable to claim any more tiers yet for Draw #${context.drawId}`,
+            ),
           );
+
+          break;
         }
-      }
-    } else {
-      console.log(
-        chalk.yellow(
-          `Not profitable to claim for Draw #${context.drawId}, Tier: #${tierWords(
-            context,
-            Number(tier),
-          )}`,
-        ),
-      );
-
-      if (isCanary(context, Number(tier))) {
-        canaryTierNotProfitable = true;
-      } else {
-        console.log(
-          chalk.redBright(`Not profitable to claim any more tiers yet for Draw #${context.drawId}`),
-        );
-
-        break;
       }
     }
   }
@@ -338,6 +294,71 @@ export async function runPrizeClaimer(
   printDateTimeStr('END');
   printSpacer();
 }
+
+const vaultIsPtClassic = (vaultAddress: string) =>
+  vaultAddress.toLowerCase() === PT_CLASSIC_PRIZE_VAULT_ADDRESS.toLowerCase();
+
+const processNormalVault = async (
+  tier: number,
+  claimerContract: Contract,
+  context: ClaimPrizeContext,
+  config: PrizeClaimerConfig,
+  claimPrizesParams: ClaimPrizesParams,
+) => {
+  const { chainId, provider, wallet } = config;
+
+  const countPerTx = LOWER_GAS_LIMIT_CHAINS.includes(chainId)
+    ? LOWER_TOTAL_CLAIM_COUNT_PER_TRANSACTION
+    : TOTAL_CLAIM_COUNT_PER_TRANSACTION;
+
+  for (let n = 0; n <= claimPrizesParams.winners.length; n += countPerTx) {
+    const start = n;
+    const end = n + countPerTx;
+
+    const paramsClone = structuredClone(claimPrizesParams);
+    paramsClone.winners = paramsClone.winners.slice(start, end);
+    paramsClone.prizeIndices = paramsClone.prizeIndices.slice(start, end);
+    logClaims(paramsClone);
+
+    printSpacer();
+    printSpacer();
+    console.log(
+      chalk.green(
+        `Execute Claim Transaction for Tier #${tierWords(context, tier)}, claims ${
+          start + 1
+        } to ${Math.min(end, claimPrizesParams.winners.length)} `,
+      ),
+    );
+
+    const populatedTx = await claimerContract.populateTransaction.claimPrizes(
+      ...Object.values(paramsClone),
+    );
+
+    const gasLimit = LOWER_GAS_LIMIT_CHAINS.includes(chainId) ? LOWER_GAS_LIMIT : GAS_LIMIT;
+
+    // Check rewards
+    let rewards: BigNumber;
+    try {
+      rewards = await claimerContract.callStatic.claimPrizes(...Object.values(paramsClone));
+    } catch (e) {
+      console.log('Error while checking rewards returned via callStatic simulation');
+      console.log(e.message);
+    }
+
+    if (rewards.gt(0)) {
+      const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+
+      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+      console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
+      await provider.waitForTransaction(tx.hash);
+      console.log(chalk.dim('Transaction confirmed !'));
+    } else {
+      console.log(chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'));
+    }
+  }
+};
 
 const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {
   const tiersLength = context.tiers.tiersRangeArray.length;
