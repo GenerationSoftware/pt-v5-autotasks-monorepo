@@ -35,7 +35,7 @@ export interface TiersContext {
   tiersRangeArray: number[];
 }
 
-export interface ClaimPrizeContext {
+export interface PrizeClaimerContext {
   prizeToken: TokenWithRate;
   drawId: number;
   isDrawFinalized: boolean;

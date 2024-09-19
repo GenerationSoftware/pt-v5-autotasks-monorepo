@@ -16,7 +16,7 @@ import groupBy from 'lodash.groupby';
 import chalk from 'chalk';
 
 import {
-  ClaimPrizeContext,
+  PrizeClaimerContext,
   PrizeClaimerConfig,
   TiersContext,
   Token,
@@ -52,6 +52,14 @@ type ClaimPrizesParams = {
   prizeIndices: number[][];
   rewardRecipient: string;
   minVrgdaFeePerClaim: string;
+};
+
+type ClassicClaimPrizesParams = {
+  tier: number;
+  winners: string[];
+  prizeIndices: number[][];
+  rewardRecipient: string;
+  minReward: BigNumber;
 };
 
 type TierRemainingPrizeCounts = {
@@ -128,7 +136,7 @@ export async function runPrizeClaimer(
   // Get context about the prize pool prize token, etc
   printSpacer();
   console.log(chalk.dim('Starting ...'));
-  const context: ClaimPrizeContext = await getContext(
+  const context: PrizeClaimerContext = await getContext(
     chainId,
     contracts,
     prizePoolContract,
@@ -237,6 +245,16 @@ export async function runPrizeClaimer(
       console.log(chalk.redBright('Will process'));
       console.log(chalk.blueBright('PT Classic'));
       console.log(chalk.greenBright('vault differently'));
+
+      processClassicVault(
+        vault,
+        claimerContract,
+        Number(tier),
+        groupedClaims,
+        rewardRecipient,
+        context,
+        config,
+      );
     } else {
       if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
         printSpacer();
@@ -248,6 +266,7 @@ export async function runPrizeClaimer(
       }
 
       // Decide if profitable or not
+      // TODO: This is conflated, would be nice to split up the profitability calcs from the grouping of winners
       printSpacer();
       console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
       const claimPrizesParams = await calculateProfit(
@@ -295,17 +314,37 @@ export async function runPrizeClaimer(
   printSpacer();
 }
 
+const sendClaimTransaction = async (
+  claimerContract: Contract,
+  params: ClaimPrizesParams | ClassicClaimPrizesParams,
+  gasLimit: number,
+  config: PrizeClaimerConfig,
+): Promise<void> => {
+  const { provider, wallet } = config;
+  const populatedTx = await claimerContract.populateTransaction.claimPrizes(
+    ...Object.values(params),
+  );
+  const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+
+  console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+  console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
+  await provider.waitForTransaction(tx.hash);
+  console.log(chalk.dim('Transaction confirmed !'));
+};
+
 const vaultIsPtClassic = (vaultAddress: string) =>
   vaultAddress.toLowerCase() === PT_CLASSIC_PRIZE_VAULT_ADDRESS.toLowerCase();
 
 const processNormalVault = async (
   tier: number,
   claimerContract: Contract,
-  context: ClaimPrizeContext,
+  context: PrizeClaimerContext,
   config: PrizeClaimerConfig,
   claimPrizesParams: ClaimPrizesParams,
 ) => {
-  const { chainId, provider, wallet } = config;
+  const { chainId } = config;
 
   const countPerTx = LOWER_GAS_LIMIT_CHAINS.includes(chainId)
     ? LOWER_TOTAL_CLAIM_COUNT_PER_TRANSACTION
@@ -330,37 +369,87 @@ const processNormalVault = async (
       ),
     );
 
-    const populatedTx = await claimerContract.populateTransaction.claimPrizes(
-      ...Object.values(paramsClone),
-    );
-
-    const gasLimit = LOWER_GAS_LIMIT_CHAINS.includes(chainId) ? LOWER_GAS_LIMIT : GAS_LIMIT;
-
-    // Check rewards
-    let rewards: BigNumber;
-    try {
-      rewards = await claimerContract.callStatic.claimPrizes(...Object.values(paramsClone));
-    } catch (e) {
-      console.log('Error while checking rewards returned via callStatic simulation');
-      console.log(e.message);
-    }
-
+    const rewards = await getRewards(claimerContract, paramsClone);
     if (rewards.gt(0)) {
-      const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+      const gasLimit = LOWER_GAS_LIMIT_CHAINS.includes(chainId) ? LOWER_GAS_LIMIT : GAS_LIMIT;
 
-      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
-
-      console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
-      await provider.waitForTransaction(tx.hash);
-      console.log(chalk.dim('Transaction confirmed !'));
+      await sendClaimTransaction(claimerContract, paramsClone, gasLimit, config);
     } else {
       console.log(chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'));
     }
   }
 };
 
-const isCanary = (context: ClaimPrizeContext, tier: number): boolean => {
+const processClassicVault = async (
+  vault: string,
+  claimerContract: Contract,
+  tier: number,
+  groupedClaims: Claim[],
+  rewardRecipient: string,
+  context: PrizeClaimerContext,
+  config: PrizeClaimerConfig,
+) => {
+  const params = buildParams(vault, Number(tier), groupedClaims, rewardRecipient, '100');
+  const classicParams: ClassicClaimPrizesParams = {
+    winners: params.winners,
+    tier: params.tier,
+    prizeIndices: params.prizeIndices,
+    rewardRecipient: params.rewardRecipient,
+    minReward: BigNumber.from(0),
+  };
+  console.log('classicParams');
+  console.log(classicParams);
+
+  for (let n = 0; n <= classicParams.winners.length; n += TOTAL_CLAIM_COUNT_PER_TRANSACTION) {
+    const start = n;
+    const end = n + TOTAL_CLAIM_COUNT_PER_TRANSACTION;
+
+    const paramsClone = structuredClone(classicParams);
+    paramsClone.winners = paramsClone.winners.slice(start, end);
+    paramsClone.prizeIndices = paramsClone.prizeIndices.slice(start, end);
+    logClassicClaims(paramsClone);
+
+    printSpacer();
+    printSpacer();
+    console.log(
+      chalk.green(
+        `Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}, claims ${
+          start + 1
+        } to ${Math.min(end, classicParams.winners.length)} `,
+      ),
+    );
+
+    const rewards = await getRewards(claimerContract, paramsClone);
+    if (rewards.gt(0)) {
+      paramsClone.minReward = rewards.mul(90).div(100); // will accept -10% slippage
+
+      // Classic is only on Base, gas limit is normal
+      const gasLimit = GAS_LIMIT;
+
+      await sendClaimTransaction(claimerContract, paramsClone, gasLimit, config);
+    } else {
+      console.log(chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'));
+    }
+  }
+};
+
+// Test how much rewards the rewardRecipient will receive
+const getRewards = async (
+  claimerContract: Contract,
+  params: ClaimPrizesParams | ClassicClaimPrizesParams,
+): Promise<BigNumber> => {
+  let rewards: BigNumber;
+  try {
+    rewards = await claimerContract.callStatic.claimPrizes(...Object.values(params));
+  } catch (e) {
+    console.log('Error while checking rewards returned via callStatic simulation');
+    console.log(e.message);
+  }
+
+  return rewards;
+};
+
+const isCanary = (context: PrizeClaimerContext, tier: number): boolean => {
   const tiersLength = context.tiers.tiersRangeArray.length;
   return tier >= tiersLength - NUM_CANARY_TIERS;
 };
@@ -398,7 +487,7 @@ const calculateProfit = async (
   claimerContract: Contract,
   groupedClaims: any,
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
-  context: ClaimPrizeContext,
+  context: PrizeClaimerContext,
   config: PrizeClaimerConfig,
   rewardRecipient: string,
 ): Promise<ClaimPrizesParams> => {
@@ -475,7 +564,7 @@ const calculateProfit = async (
   return claimPrizesParams;
 };
 
-const tierWords = (context: ClaimPrizeContext, tier: number) => {
+const tierWords = (context: PrizeClaimerContext, tier: number) => {
   const canaryWords = isCanary(context, tier) ? ' (Canary tier)' : '';
 
   return `${tier}${canaryWords}`;
@@ -492,10 +581,21 @@ const logClaims = (params: ClaimPrizesParams) => {
   }
 };
 
+const logClassicClaims = (params: ClassicClaimPrizesParams) => {
+  debugClaimer('classicClaimPrizesParamsClone');
+  debugClaimer(params);
+
+  for (let x = 0; x < params.winners.length; x++) {
+    const winner = params.winners[x];
+    const prizeIndex = params.prizeIndices[x];
+    debugClaimer(`${winner}-${params.tier}-${prizeIndex}`);
+  }
+};
+
 /**
  * Gather information about the given prize pool's reward token price in USD
  * and the last drawId
- * @returns {Promise} Promise of a ClaimPrizeContext object
+ * @returns {Promise} Promise of a PrizeClaimerContext object
  */
 const getContext = async (
   chainId: number,
@@ -503,7 +603,7 @@ const getContext = async (
   prizePool: Contract,
   provider: Provider,
   covalentApiKey?: string,
-): Promise<ClaimPrizeContext> => {
+): Promise<PrizeClaimerContext> => {
   const prizeTokenAddress = await prizePool.prizeToken();
 
   console.log(chalk.dim('Getting prize pool info ...'));
@@ -721,7 +821,7 @@ interface ClaimInfo {
 }
 
 const getClaimInfo = async (
-  context: ClaimPrizeContext,
+  context: PrizeClaimerContext,
   provider: Provider,
   claimerContract: Contract,
   tier: number,
@@ -730,7 +830,7 @@ const getClaimInfo = async (
   gasCost: any,
   config: PrizeClaimerConfig,
 ): Promise<ClaimInfo> => {
-  const { chainId, minProfitThresholdUsd } = config;
+  const { minProfitThresholdUsd } = config;
 
   let claimCount = 0;
   let claimReward = BigNumber.from(0);
@@ -914,7 +1014,7 @@ const fetchClaims = async (
 
 // Find out max # of prizes claimable based on remaining liquidity and PrizePool reserve
 const getLiquidityInfo = (
-  context: ClaimPrizeContext,
+  context: PrizeClaimerContext,
   tier: string,
   tierRemainingPrizeCounts: TierRemainingPrizeCounts,
   reserve: BigNumber,
