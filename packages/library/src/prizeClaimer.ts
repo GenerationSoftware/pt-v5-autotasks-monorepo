@@ -222,11 +222,6 @@ export async function runPrizeClaimer(
     console.log(chalk.blueBright(`Tier:      #${tierWords(context, Number(tier))}`));
     console.log(chalk.blueBright(`# prizes:  ${groupedClaims.length}`));
 
-    if (vault.toLowerCase() !== '0xaf2b22b7155da01230d72289dcecb7c41a5a4bd8') {
-      console.log(chalk.red('skipping!'));
-      continue;
-    }
-
     // Dynamically find the claimer for this vault
     const claimerContract: Contract = await getClaimerContract(vault, provider);
 
