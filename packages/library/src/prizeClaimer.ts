@@ -108,17 +108,14 @@ export async function runPrizeClaimer(
   contracts: ContractsBlob,
   config: PrizeClaimerConfig,
 ): Promise<undefined> {
-  const { chainId, covalentApiKey, provider, subgraphUrl } = config;
+  const { chainId, covalentApiKey, provider, subgraphUrl, minProfitThresholdUsd } = config;
   printSpacer();
   printDateTimeStr('START');
   printSpacer();
 
   const rewardRecipient = findRecipient(config);
 
-  console.log(
-    chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
-    chalk.yellow(config.minProfitThresholdUsd),
-  );
+  console.log(chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'), chalk.yellow(minProfitThresholdUsd));
 
   const contractsVersion = {
     major: 1,
@@ -225,6 +222,11 @@ export async function runPrizeClaimer(
     console.log(chalk.blueBright(`Tier:      #${tierWords(context, Number(tier))}`));
     console.log(chalk.blueBright(`# prizes:  ${groupedClaims.length}`));
 
+    if (vault.toLowerCase() !== '0xaf2b22b7155da01230d72289dcecb7c41a5a4bd8') {
+      console.log(chalk.red('skipping!'));
+      continue;
+    }
+
     // Dynamically find the claimer for this vault
     const claimerContract: Contract = await getClaimerContract(vault, provider);
 
@@ -241,6 +243,15 @@ export async function runPrizeClaimer(
       continue;
     }
 
+    // if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
+    //   printSpacer();
+    //   console.log(
+    //     chalk.redBright(`Tier #${tierWords(context, Number(tier))} not profitable, skipping ...`),
+    //   );
+    //   printSpacer();
+    //   continue;
+    // }
+
     if (vaultIsPtClassic(vault)) {
       console.log(chalk.redBright('Will process'));
       console.log(chalk.blueBright('PT Classic'));
@@ -256,15 +267,6 @@ export async function runPrizeClaimer(
         config,
       );
     } else {
-      if (isCanary(context, Number(tier)) && canaryTierNotProfitable) {
-        printSpacer();
-        console.log(
-          chalk.redBright(`Tier #${tierWords(context, Number(tier))} not profitable, skipping ...`),
-        );
-        printSpacer();
-        continue;
-      }
-
       // Decide if profitable or not
       // TODO: This is conflated, would be nice to split up the profitability calcs from the grouping of winners
       printSpacer();
@@ -296,14 +298,6 @@ export async function runPrizeClaimer(
 
         if (isCanary(context, Number(tier))) {
           canaryTierNotProfitable = true;
-        } else {
-          console.log(
-            chalk.redBright(
-              `Not profitable to claim any more tiers yet for Draw #${context.drawId}`,
-            ),
-          );
-
-          break;
         }
       }
     }
@@ -389,10 +383,20 @@ const processClassicVault = async (
   context: PrizeClaimerContext,
   config: PrizeClaimerConfig,
 ) => {
+  const { chainId, minProfitThresholdUsd, covalentApiKey } = config;
+
+  printSpacer();
+  const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
+  logStringValue(
+    `Native (Gas) Token ${NETWORK_NATIVE_TOKEN_INFO[chainId].symbol} Market Rate (USD):`,
+    `$${nativeTokenMarketRateUsd}`,
+  );
+  printSpacer();
+
   const params = buildParams(vault, Number(tier), groupedClaims, rewardRecipient, '100');
   const classicParams: ClassicClaimPrizesParams = {
-    winners: params.winners,
     tier: params.tier,
+    winners: params.winners,
     prizeIndices: params.prizeIndices,
     rewardRecipient: params.rewardRecipient,
     minReward: BigNumber.from(0),
@@ -419,6 +423,13 @@ const processClassicVault = async (
       ),
     );
 
+    const gasCostUsd = await getClassicGasCostUsd(
+      claimerContract,
+      paramsClone,
+      nativeTokenMarketRateUsd,
+      config,
+    );
+
     const rewards = await getRewards(claimerContract, paramsClone);
     if (rewards.gt(0)) {
       paramsClone.minReward = rewards.mul(90).div(100); // will accept -10% slippage
@@ -426,7 +437,12 @@ const processClassicVault = async (
       // Classic is only on Base, gas limit is normal
       const gasLimit = GAS_LIMIT;
 
-      await sendClaimTransaction(claimerContract, paramsClone, gasLimit, config);
+      // assumes native token is 18 decimal precision:
+      const rewardsStr = ethers.utils.formatEther(rewards);
+      const rewardsUsd = Number(rewardsStr) * nativeTokenMarketRateUsd;
+
+      if (rewardsUsd - gasCostUsd > minProfitThresholdUsd)
+        await sendClaimTransaction(claimerContract, paramsClone, gasLimit, config);
     } else {
       console.log(chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'));
     }
@@ -461,7 +477,7 @@ const isCanary = (context: PrizeClaimerContext, tier: number): boolean => {
  */
 const getEstimatedGasLimit = async (
   claimerContract: Contract,
-  claimPrizesParams: ClaimPrizesParams,
+  claimPrizesParams: ClaimPrizesParams | ClassicClaimPrizesParams,
 ): Promise<BigNumber> => {
   let estimatedGasLimit;
   try {
@@ -502,8 +518,6 @@ const calculateProfit = async (
   printSpacer();
 
   const gasCost = await getGasCost(
-    provider,
-    chainId,
     vault,
     tier,
     claimerContract,
@@ -511,6 +525,7 @@ const calculateProfit = async (
     rewardRecipient,
     nativeTokenMarketRateUsd,
     '100',
+    config,
   );
 
   const { claimCount, claimRewardUsd, totalCostUsd, minVrgdaFeePerClaim } = await getClaimInfo(
@@ -682,16 +697,17 @@ const buildParams = (
 };
 
 const getGasCost = async (
-  provider: Provider,
-  chainId: number,
   vault: string,
   tier: number,
   claimerContract: Contract,
   claims: Claim[],
   rewardRecipient: string,
-  gasTokenMarketRateUsd: number,
+  nativeTokenMarketRateUsd: number,
   estimateMinVrgdaFeePerClaim: string,
+  config: PrizeClaimerConfig,
 ) => {
+  const { provider, chainId } = config;
+
   let claimsSlice = claims.slice(0, 1);
   let claimPrizesParams = buildParams(
     vault,
@@ -729,7 +745,7 @@ const getGasCost = async (
   const { avgFeeUsd: gasCostOneClaimUsd } = await getFeesUsd(
     chainId,
     estimatedGasLimitForOne,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
     provider,
     populatedTx.data,
   );
@@ -790,7 +806,7 @@ const getGasCost = async (
   const { avgFeeUsd: gasCostEachFollowingClaimUsd } = await getFeesUsd(
     chainId,
     gasCostEachFollowingClaim,
-    gasTokenMarketRateUsd,
+    nativeTokenMarketRateUsd,
     provider,
     populatedTx.data,
   );
@@ -811,6 +827,46 @@ const getGasCost = async (
     gasCostOneClaimUsd,
     gasCostEachFollowingClaimUsd,
   };
+};
+
+const getClassicGasCostUsd = async (
+  claimerContract: Contract,
+  classicClaimPrizesParams: ClassicClaimPrizesParams,
+  nativeTokenMarketRateUsd: number,
+  config: PrizeClaimerConfig,
+): Promise<number> => {
+  const { chainId, provider } = config;
+
+  const gasPrice = await provider.getGasPrice();
+  logBigNumber(
+    'Recent Gas Price (wei):',
+    gasPrice,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].decimals,
+    NETWORK_NATIVE_TOKEN_INFO[chainId].symbol,
+  );
+  logStringValue('Recent Gas Price (gwei):', `${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
+  printSpacer();
+
+  const estimatedGasLimit = await getEstimatedGasLimit(claimerContract, classicClaimPrizesParams);
+  const populatedTx = await claimerContract.populateTransaction.claimPrizes(
+    ...Object.values(classicClaimPrizesParams),
+  );
+  const { avgFeeUsd: gasCostUsd } = await getFeesUsd(
+    chainId,
+    estimatedGasLimit,
+    nativeTokenMarketRateUsd,
+    provider,
+    populatedTx.data,
+  );
+
+  printSpacer();
+  console.log(
+    chalk.grey(`Gas Cost (USD):`),
+    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostUsd)}`),
+    chalk.dim(`$${gasCostUsd}`),
+  );
+
+  return gasCostUsd;
 };
 
 interface ClaimInfo {
