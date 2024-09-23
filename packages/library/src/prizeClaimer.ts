@@ -248,9 +248,8 @@ export async function runPrizeClaimer(
     // }
 
     if (vaultIsPtClassic(vault)) {
-      console.log(chalk.redBright('Will process'));
-      console.log(chalk.blueBright('PT Classic'));
-      console.log(chalk.greenBright('vault differently'));
+      printSpacer();
+      console.log(chalk.blue(`5a. Processing PT Classic vault ...`));
 
       processClassicVault(
         vault,
@@ -396,8 +395,8 @@ const processClassicVault = async (
     rewardRecipient: params.rewardRecipient,
     minReward: BigNumber.from(0),
   };
-  console.log('classicParams');
-  console.log(classicParams);
+  debugClaimer('classicParams');
+  debugClaimer(classicParams);
 
   for (let n = 0; n <= classicParams.winners.length; n += TOTAL_CLAIM_COUNT_PER_TRANSACTION) {
     const start = n;
@@ -424,6 +423,8 @@ const processClassicVault = async (
       nativeTokenMarketRateUsd,
       config,
     );
+    debugClaimer('gasCostUsd');
+    debugClaimer(gasCostUsd);
 
     const rewards = await getRewards(claimerContract, paramsClone);
     if (rewards.gt(0)) {
@@ -435,9 +436,44 @@ const processClassicVault = async (
       // assumes native token is 18 decimal precision:
       const rewardsStr = ethers.utils.formatEther(rewards);
       const rewardsUsd = Number(rewardsStr) * nativeTokenMarketRateUsd;
+      debugClaimer('rewardsUsd');
+      debugClaimer(rewardsUsd);
 
-      if (rewardsUsd - gasCostUsd > minProfitThresholdUsd)
+      printAsterisks();
+      console.log(chalk.magenta('5c. Profit/Loss (USD):'));
+      printSpacer();
+
+      // FEES USD
+      const netProfitUsd = rewardsUsd - gasCostUsd;
+      console.log(chalk.magenta('Net profit = (Gross Profit - Gas Cost [Average])'));
+      console.log(
+        chalk.greenBright(
+          `$${roundTwoDecimalPlaces(netProfitUsd)} = ($${roundTwoDecimalPlaces(
+            rewardsUsd,
+          )} - $${roundTwoDecimalPlaces(gasCostUsd)})`,
+        ),
+        chalk.dim(`$${netProfitUsd} = ($${rewardsUsd} - $${gasCostUsd})`),
+      );
+
+      const profitable = netProfitUsd > minProfitThresholdUsd;
+
+      if (profitable) {
+        printSpacer();
+        printSpacer();
+        console.log(
+          chalk.green(
+            `Execute Claim Transaction for Tier #${tierWords(context, tier)}, claims ${
+              start + 1
+            } to ${Math.min(end, paramsClone.winners.length)} `,
+          ),
+        );
+
         await sendClaimTransaction(claimerContract, paramsClone, gasLimit, config);
+      } else {
+        console.log(
+          chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
+        );
+      }
     } else {
       console.log(chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'));
     }
