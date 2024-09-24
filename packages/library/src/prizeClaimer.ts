@@ -40,6 +40,7 @@ import {
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { VaultAbi } from './abis/VaultAbi.js';
 import { ClaimerAbi } from './abis/ClaimerAbi.js';
+import { PtClassicClaimerAbi } from './abis/PtClassicClaimerAbi.js';
 import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
@@ -1129,7 +1130,12 @@ const getClaimerContract = async (vaultAddress: string, provider: Provider): Pro
     throw new Error('Contract Unavailable');
   }
 
-  return new Contract(claimerAddress, ClaimerAbi, provider);
+  let claimerAbi = ClaimerAbi;
+  if (vaultAddress === PT_CLASSIC_PRIZE_VAULT_ADDRESS) {
+    claimerAbi = PtClassicClaimerAbi;
+  }
+
+  return new Contract(claimerAddress, claimerAbi, provider);
 };
 
 function noGpBoosterGrandPrizeWinners(claim) {
