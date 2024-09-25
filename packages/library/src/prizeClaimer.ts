@@ -252,7 +252,7 @@ export async function runPrizeClaimer(
       printSpacer();
       console.log(chalk.blue(`5a. Processing PT Classic vault ...`));
 
-      processClassicVault(
+      await processClassicVault(
         vault,
         claimerContract,
         Number(tier),
@@ -408,16 +408,6 @@ const processClassicVault = async (
     paramsClone.prizeIndices = paramsClone.prizeIndices.slice(start, end);
     logClassicClaims(paramsClone);
 
-    printSpacer();
-    printSpacer();
-    console.log(
-      chalk.green(
-        `Execute Claim Transaction for Tier #${tierWords(context, Number(tier))}, claims ${
-          start + 1
-        } to ${Math.min(end, classicParams.winners.length)} `,
-      ),
-    );
-
     const gasCostUsd = await getClassicGasCostUsd(
       claimerContract,
       paramsClone,
@@ -428,6 +418,8 @@ const processClassicVault = async (
     debugClaimer(gasCostUsd);
 
     const rewards = await getRewards(claimerContract, paramsClone);
+    debugClaimer('rewards');
+    debugClaimer(rewards);
     if (rewards.gt(0)) {
       paramsClone.minReward = rewards.mul(90).div(100); // will accept -10% slippage
 
