@@ -205,7 +205,9 @@ const tokenAllowListed = (config: LiquidatorConfig, tokenAddress: string): boole
   }
 
   if (!inAllowList) {
-    console.log(chalk.yellow(`token (CA: ${tokenAddress.toLowerCase()}) not in token allow list`));
+    console.log(
+      chalk.yellowBright(`token (CA: ${tokenAddress.toLowerCase()}) not in token allow list`),
+    );
   }
 
   return inAllowList;

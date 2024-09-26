@@ -10,7 +10,7 @@ export const logTable = (obj: any) => {
 };
 
 export const logStringValue = (str: string, val: any) => {
-  console.log(chalk.grey(str), chalk.yellow(val));
+  console.log(chalk.grey(str), chalk.yellowBright(val));
 };
 
 export const logBigNumber = (title, bigNumber, decimals, symbol = null) => {
@@ -28,7 +28,7 @@ export const logBigNumber = (title, bigNumber, decimals, symbol = null) => {
 
 export const printAsterisks = () => {
   printSpacer();
-  console.log(chalk.blue('******************'));
+  console.log(chalk.blueBright('******************'));
 };
 
 export const printSpacer = () => console.log('');

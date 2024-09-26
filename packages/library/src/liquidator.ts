@@ -67,7 +67,7 @@ const logAllowList = (
   const error = `tokenOut '${
     context.tokenOut.symbol
   }' (CA: ${context.tokenOut.address.toLowerCase()}) not in token allow list`;
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
 
   stats.push({
     pair,
@@ -84,7 +84,7 @@ const logAmountInEqZero = (
 ) => {
   const pair = getPairName(context);
   const error = `amountIn is 0`;
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
   stats.push({
     pair,
     estimatedProfitUsd: 0,
@@ -100,7 +100,7 @@ const logAmountOutEqZero = (
 ) => {
   const pair = getPairName(context);
   const error = `amountOut is 0`;
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
 
   stats.push({
     pair,
@@ -118,7 +118,7 @@ const logNoTokenOutAssetValue = (
   const pair = getPairName(context);
   const error = `Could not get tokenOut asset value (in $USD) to calculate profit with.`;
 
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
 
   stats.push({
     pair,
@@ -160,7 +160,7 @@ const logNoFlashSwapWeth = (
 ) => {
   const pair = getPairName(context);
   const error = `Flash swap unavailable at this time.`;
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
 
   stats.push({
     pair,
@@ -177,7 +177,7 @@ const logNoEstimateGasCost = (
 ) => {
   const pair = getPairName(context);
   const error = `Could not estimate gas cost`;
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
 
   stats.push({
     pair,
@@ -194,7 +194,7 @@ const logNotProfitableTrade = (
 ) => {
   const pair = getPairName(context);
   const error = `Liquidation Pair ${context.tokenIn.symbol}/${context.tokenOut.symbol}: currently not a profitable trade.`;
-  console.log(chalk.yellow(error));
+  console.log(chalk.yellowBright(error));
 
   stats.push({
     pair,
@@ -223,17 +223,20 @@ export async function runLiquidator(
 
   console.log(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
-    chalk.yellow(config.minProfitThresholdUsd),
+    chalk.yellowBright(config.minProfitThresholdUsd),
   );
 
   if (config.envTokenAllowList?.length > 0) {
     console.log(
       chalk.dim('Config - ENV_TOKEN_ALLOW_LIST:'),
-      chalk.yellow(config.envTokenAllowList),
+      chalk.yellowBright(config.envTokenAllowList),
     );
   }
   if (config.pairsToLiquidate?.length > 0) {
-    console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellow(config.pairsToLiquidate));
+    console.log(
+      chalk.dim('Config - PAIRS_TO_LIQUIDATE:'),
+      chalk.yellowBright(config.pairsToLiquidate),
+    );
   }
 
   // 1. Get contracts
@@ -277,7 +280,7 @@ export async function runLiquidator(
     );
 
     printSpacer();
-    console.log(chalk.blue(`Pair Address: ${liquidationPairContract.address}`));
+    console.log(chalk.blueBright(`Pair Address: ${liquidationPairContract.address}`));
     printContext(config, context);
     printSpacer();
 
@@ -290,13 +293,13 @@ export async function runLiquidator(
         continue;
       }
 
-      console.log(chalk.green(`tokenOut is in the allow list! 👍`));
+      console.log(chalk.greenBright(`tokenOut is in the allow list! 👍`));
     }
     printSpacer();
     printSpacer();
 
     // 3. Query for amounts
-    console.log(chalk.blue(`1. Amounts:`));
+    console.log(chalk.blueBright(`1. Amounts:`));
     const { amountOut } = await getAmountOut(liquidationPairContract, context);
 
     if (amountOut.eq(0)) {
@@ -454,7 +457,7 @@ const calculateAmountIn = async (
       return getAmountIn(liquidationPairContract, context, amountOut);
     } catch (e) {
       console.error(chalk.red(e));
-      console.log(chalk.yellow('Failed getting amount in!'));
+      console.log(chalk.yellowBright('Failed getting amount in!'));
     }
   };
   const { amountIn, amountInMax } = await getAmountInValues();
@@ -473,7 +476,7 @@ const isBalanceSufficient = async (
   const sufficientBalance = await checkBalance(context, amountIn);
 
   if (sufficientBalance) {
-    console.log(chalk.green('Sufficient balance ✔'));
+    console.log(chalk.greenBright('Sufficient balance ✔'));
   } else {
     console.log(chalk.red('Insufficient balance ✗'));
 
@@ -610,7 +613,7 @@ const sendPopulatedSwapExactAmountOutTransaction = async (
   const { provider, wallet } = config;
 
   let populatedTx: PopulatedTransaction | undefined;
-  console.log(chalk.blue('5. Populating swap transaction ...'));
+  console.log(chalk.blueBright('5. Populating swap transaction ...'));
 
   populatedTx = await liquidationRouterContract.populateTransaction.swapExactAmountOut(
     ...Object.values(swapExactAmountOutParams),
@@ -633,7 +636,7 @@ const sendPopulatedUniV2WethFlashSwapTransaction = async (
   const { provider, wallet } = config;
 
   let populatedTx: PopulatedTransaction | undefined;
-  console.log(chalk.blue('6. Populating swap transaction ...'));
+  console.log(chalk.blueBright('6. Populating swap transaction ...'));
 
   // Estimate gas limit from chain:
   const estimatedGasLimit =
@@ -692,7 +695,7 @@ const approve = async (
       );
       logStringValue('New allowance:', newAllowanceResult[0].toString());
     } else {
-      console.log(chalk.green('Sufficient allowance ✔'));
+      console.log(chalk.greenBright('Sufficient allowance ✔'));
     }
   } catch (error) {
     console.log(chalk.red('error: ', error));
@@ -769,7 +772,9 @@ const logLpTokenTable = (context: LiquidatorContext): void => {
 };
 
 const printContext = (config: LiquidatorConfig, context: LiquidatorContext) => {
-  console.log(chalk.blue(`Pair Symbol:  ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
+  console.log(
+    chalk.blueBright(`Pair Symbol:  ${context.tokenIn.symbol}/${context.tokenOut.symbol}`),
+  );
   printSpacer();
 
   logTable({
@@ -815,7 +820,7 @@ const checkBalance = async (
   exactAmountIn: BigNumber,
 ): Promise<boolean> => {
   printSpacer();
-  console.log(chalk.blue('2. Balance & Allowance'));
+  console.log(chalk.blueBright('2. Balance & Allowance'));
   printSpacer();
   console.log("Checking relayer 'tokenIn' balance ...");
 
@@ -837,7 +842,7 @@ const calculateSwapExactAmountOutProfit = async (
   avgFeeUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   printSpacer();
-  console.log(chalk.blue('4. Profit/Loss (USD):'));
+  console.log(chalk.blueBright('4. Profit/Loss (USD):'));
   printSpacer();
 
   console.log(chalk.blueBright('Gross profit = tokenOut - tokenIn'));
@@ -896,7 +901,7 @@ const calculateUniV2WethFlashSwapProfit = async (
   const { chainId, covalentApiKey } = config;
 
   printSpacer();
-  console.log(chalk.blue('3. Profit/Loss (USD):'));
+  console.log(chalk.blueBright('3. Profit/Loss (USD):'));
   printSpacer();
 
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
@@ -943,7 +948,7 @@ const getLiquidationRouterSwapExactAmountOutGasCost = async (
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
 
   printSpacer();
-  console.log(chalk.blue('3. Current gas costs for transaction:'));
+  console.log(chalk.blueBright('3. Current gas costs for transaction:'));
   printSpacer();
 
   // Estimate gas limit from chain:
@@ -1003,7 +1008,7 @@ const getUniV2WethFlashSwapGasCost = async (
   const { chainId, covalentApiKey } = config;
 
   printSpacer();
-  console.log(chalk.blue('2. Current gas costs for transaction:'));
+  console.log(chalk.blueBright('2. Current gas costs for transaction:'));
   printSpacer();
 
   // Estimate gas limit from chain:
@@ -1113,7 +1118,7 @@ const getAmountIn = async (
 
 const logNextPair = (liquidationPair, liquidationPairContracts) => {
   if (liquidationPair !== liquidationPairContracts[liquidationPairContracts.length - 1]) {
-    console.warn(chalk.yellow(`Moving to next pair ...`));
+    console.warn(chalk.yellowBright(`Moving to next pair ...`));
   }
 };
 

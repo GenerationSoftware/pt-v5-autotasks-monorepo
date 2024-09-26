@@ -108,7 +108,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
 
     if (!context.underlyingAssetToken.assetRateUsd) {
       console.log(
-        chalk.yellow(`Could not get underlying asset USD value to calculate profit with`),
+        chalk.yellowBright(`Could not get underlying asset USD value to calculate profit with`),
       );
       stats.push({
         pair,
@@ -142,7 +142,9 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
 
     if (!!bestQuote && !bestQuote.success) {
       console.log(
-        chalk.yellow('A flash liquidation on this pair would fail right now, try again soon.'),
+        chalk.yellowBright(
+          'A flash liquidation on this pair would fail right now, try again soon.',
+        ),
       );
       stats.push({
         pair,
@@ -176,7 +178,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
       );
     } catch (e) {
       console.error(chalk.red(e));
-      console.log(chalk.yellow('Could not estimate gas costs!'));
+      console.log(chalk.yellowBright('Could not estimate gas costs!'));
 
       stats.push({
         pair,
@@ -207,7 +209,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
     // Send tx when profitable
     try {
       let populatedTx: PopulatedTransaction | undefined;
-      console.log(chalk.blue('6. Populating swap transaction ...'));
+      console.log(chalk.blueBright('6. Populating swap transaction ...'));
       printSpacer();
 
       populatedTx = await flashLiquidationContract.populateTransaction.flashLiquidate(
@@ -255,7 +257,9 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
 
 const printContext = (context) => {
   printAsterisks();
-  console.log(chalk.blue(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`));
+  console.log(
+    chalk.blueBright(`Liquidation Pair: ${context.tokenIn.symbol}/${context.tokenOut.symbol}`),
+  );
   printSpacer();
 
   logTable({
@@ -276,7 +280,7 @@ const calculateProfit = async (
   avgFeeUsd: number,
 ): Promise<{ estimatedProfitUsd: number; profitable: boolean }> => {
   printAsterisks();
-  console.log(chalk.blue('5. Profit/Loss (USD):'));
+  console.log(chalk.blueBright('5. Profit/Loss (USD):'));
   printSpacer();
 
   console.log(chalk.blueBright('Gross profit = tokenOut - tokenIn'));
@@ -328,7 +332,7 @@ const getGasCost = async (
   const nativeTokenMarketRateUsd = await getNativeTokenMarketRateUsd(chainId, covalentApiKey);
 
   printAsterisks();
-  console.log(chalk.blue('4. Current gas costs for transaction:'));
+  console.log(chalk.blueBright('4. Current gas costs for transaction:'));
 
   // Estimate gas limit from chain:
   const estimatedGasLimit = await flashLiquidationContract.estimateGas.flashLiquidate(

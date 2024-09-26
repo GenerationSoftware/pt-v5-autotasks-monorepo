@@ -9,7 +9,7 @@ export const loadEnvVars = (): AutotaskEnvVars => {
   const minProfitThresholdUsd = process.env.MIN_PROFIT_THRESHOLD_USD;
 
   console.log('');
-  console.log(chalk.blue(`Operating on: ${chainName(chainId)}`));
+  console.log(chalk.blueBright(`Operating on: ${chainName(chainId)}`));
   console.log('');
 
   const covalentApiKey = process.env.COVALENT_API_KEY;

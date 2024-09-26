@@ -122,7 +122,10 @@ export async function runPrizeClaimer(
 
   const rewardRecipient = findRecipient(config);
 
-  console.log(chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'), chalk.yellow(minProfitThresholdUsd));
+  console.log(
+    chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
+    chalk.yellowBright(minProfitThresholdUsd),
+  );
 
   const contractsVersion = {
     major: 1,
@@ -152,7 +155,7 @@ export async function runPrizeClaimer(
   if (context.isDrawFinalized) {
     printAsterisks();
     console.log(
-      chalk.yellow(
+      chalk.yellowBright(
         `Draw is finalized. Cannot claim prizes anymore for finalized draw. Exiting ...`,
       ),
     );
@@ -202,7 +205,7 @@ export async function runPrizeClaimer(
 
   if (unclaimedClaims.length === 0) {
     printAsterisks();
-    console.log(chalk.yellow(`No prizes left to claim for current draw.`));
+    console.log(chalk.yellowBright(`No prizes left to claim for current draw.`));
   }
 
   // Group claims by vault & tier
@@ -253,7 +256,7 @@ export async function runPrizeClaimer(
 
     if (vaultIsPtClassic(vault)) {
       printSpacer();
-      console.log(chalk.blue(`5a. Processing PT Classic vault ...`));
+      console.log(chalk.blueBright(`5a. Processing PT Classic vault ...`));
 
       await processClassicVault(
         vault,
@@ -268,7 +271,7 @@ export async function runPrizeClaimer(
       // Decide if profitable or not
       // TODO: This is conflated, would be nice to split up the profitability calcs from the grouping of winners
       printSpacer();
-      console.log(chalk.blue(`5a. Calculating # of profitable claims ...`));
+      console.log(chalk.blueBright(`5a. Calculating # of profitable claims ...`));
       const claimPrizesParams = await calculateProfit(
         provider,
         vault,
@@ -286,7 +289,7 @@ export async function runPrizeClaimer(
         await processNormalVault(Number(tier), claimerContract, context, config, claimPrizesParams);
       } else {
         console.log(
-          chalk.yellow(
+          chalk.yellowBright(
             `Not profitable to claim for Draw #${context.drawId}, Tier: #${tierWords(
               context,
               Number(tier),
@@ -345,7 +348,7 @@ const sweepPreviousAutoCompoundingPrizes = async (
   printSpacer();
   printSpacer();
   printAsterisks();
-  console.log(chalk.blue(`Processing compoundAccounts() for previous draw winners:`));
+  console.log(chalk.blueBright(`Processing compoundAccounts() for previous draw winners:`));
   printSpacer();
 
   const claimerContract: Contract = await getClaimerContract(
@@ -379,7 +382,7 @@ const sweepPreviousAutoCompoundingPrizes = async (
       printSpacer();
       printSpacer();
       console.log(
-        chalk.green(
+        chalk.greenBright(
           `Execute 'Compound Accounts' Transaction for PT Classic Prize Vault, winners: ${
             start + 1
           } to ${Math.min(end, params.winners.length)} `,
@@ -451,7 +454,7 @@ const processNormalVault = async (
     printSpacer();
     printSpacer();
     console.log(
-      chalk.green(
+      chalk.greenBright(
         `Execute 'Claim Prizes' Transaction for Tier #${tierWords(context, tier)}, claims ${
           start + 1
         } to ${Math.min(end, claimPrizesParams.winners.length)} `,
@@ -554,7 +557,7 @@ const processClassicVault = async (
         printSpacer();
         printSpacer();
         console.log(
-          chalk.green(
+          chalk.greenBright(
             `Execute 'Claim Prizes' Transaction for Tier #${tierWords(context, tier)}, claims ${
               start + 1
             } to ${Math.min(end, paramsClone.winners.length)} `,
@@ -564,7 +567,9 @@ const processClassicVault = async (
         await sendClaimTransaction(claimerContract, paramsClone, gasLimit, config);
       } else {
         console.log(
-          chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
+          chalk.yellowBright(
+            `Claiming tier #${tierWords(context, tier)} currently not profitable.`,
+          ),
         );
       }
     } else {
@@ -711,10 +716,10 @@ const calculateProfit = async (
   if (profitable) {
     printSpacer();
     printSpacer();
-    console.log(chalk.yellow(`Submitting transaction(s) to claim ${claimCount} prize(s):`));
+    console.log(chalk.yellowBright(`Submitting transaction(s) to claim ${claimCount} prize(s):`));
   } else {
     console.log(
-      chalk.yellow(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
+      chalk.yellowBright(`Claiming tier #${tierWords(context, tier)} currently not profitable.`),
     );
   }
 
@@ -871,7 +876,7 @@ const getGasCost = async (
 
   let estimatedGasLimitForOne = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
   if (!estimatedGasLimitForOne || estimatedGasLimitForOne.eq(0)) {
-    console.error(chalk.yellow('Estimated gas limit is 0 ...'));
+    console.error(chalk.yellowBright('Estimated gas limit is 0 ...'));
   } else {
     logBigNumber(
       'Estimated gas limit (wei) (1 prize claim):',
@@ -906,7 +911,7 @@ const getGasCost = async (
 
     estimatedGasLimitForTwo = await getEstimatedGasLimit(claimerContract, claimPrizesParams);
     if (!estimatedGasLimitForTwo || estimatedGasLimitForTwo.eq(0)) {
-      console.error(chalk.yellow('Estimated gas limit is 0 ...'));
+      console.error(chalk.yellowBright('Estimated gas limit is 0 ...'));
     } else {
       logBigNumber(
         'Estimated gas limit (wei) (2 prize claims):',
@@ -954,13 +959,13 @@ const getGasCost = async (
   );
   console.log(
     chalk.grey(`Gas Cost: First Claim (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostOneClaimUsd)}`),
+    chalk.yellowBright(`$${roundTwoDecimalPlaces(gasCostOneClaimUsd)}`),
     chalk.dim(`$${gasCostOneClaimUsd}`),
   );
   if (claims.length > 1) {
     console.log(
       chalk.grey(`Gas Cost: Each Following Claim (USD):`),
-      chalk.yellow(`$${roundTwoDecimalPlaces(gasCostEachFollowingClaimUsd)}`),
+      chalk.yellowBright(`$${roundTwoDecimalPlaces(gasCostEachFollowingClaimUsd)}`),
       chalk.dim(`$${gasCostEachFollowingClaimUsd}`),
     );
   }
@@ -1004,7 +1009,7 @@ const getClassicGasCostUsd = async (
   printSpacer();
   console.log(
     chalk.grey(`Gas Cost (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(gasCostUsd)}`),
+    chalk.yellowBright(`$${roundTwoDecimalPlaces(gasCostUsd)}`),
     chalk.dim(`$${gasCostUsd}`),
   );
 
@@ -1074,7 +1079,7 @@ const getClaimInfo = async (
     printSpacer();
 
     console.log(
-      chalk.green(
+      chalk.greenBright(
         `Total gas cost: ${numClaims} Claim(s) (USD):`,
         `$${roundTwoDecimalPlaces(totalCostUsd)}`,
       ),
@@ -1093,7 +1098,7 @@ const getClaimInfo = async (
         context.prizeToken.symbol,
       );
       console.log(
-        chalk.green(
+        chalk.greenBright(
           `Claim Reward: ${claimCount} Claim(s) (USD):`,
           `$${roundTwoDecimalPlaces(claimRewardUsd)}`,
         ),
@@ -1113,7 +1118,7 @@ const getClaimInfo = async (
       context.prizeToken.symbol,
     );
     console.log(
-      chalk.green(
+      chalk.greenBright(
         `Next Claim Reward: ${numClaims} Claim(s) (USD):`,
         `$${roundTwoDecimalPlaces(nextClaimRewardUsd)}`,
       ),
@@ -1176,7 +1181,7 @@ const fetchClaims = async (
       if (!response.ok) {
         printSpacer();
         console.log(
-          chalk.yellow(
+          chalk.yellowBright(
             `Could not find winners for prize vault: ${prizeVaultAddress} (results not yet computed for new draw with id #${drawId}?)`,
           ),
         );

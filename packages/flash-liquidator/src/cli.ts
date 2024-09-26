@@ -15,7 +15,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
-console.log(chalk.blue(figlet.textSync('Flash Liquidator Bot')));
+console.log(chalk.blueBright(figlet.textSync('Flash Liquidator Bot')));
 
 if (esMain(import.meta)) {
   const envVars: FlashLiquidatorEnvVars = loadFlashLiquidatorEnvVars();

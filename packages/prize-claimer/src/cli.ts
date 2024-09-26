@@ -15,7 +15,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
-console.log(chalk.blue(figlet.textSync('Prize Claimer Bot')));
+console.log(chalk.blueBright(figlet.textSync('Prize Claimer Bot')));
 
 if (esMain(import.meta)) {
   const envVars: PrizeClaimerEnvVars = loadPrizeClaimerEnvVars();

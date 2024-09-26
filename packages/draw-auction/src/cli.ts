@@ -15,7 +15,7 @@ import {
 } from '@generationsoftware/pt-v5-autotasks-library';
 
 console.log(chalk.magenta(figlet.textSync('PoolTogether')));
-console.log(chalk.blue(figlet.textSync('Draw Auction Bot')));
+console.log(chalk.blueBright(figlet.textSync('Draw Auction Bot')));
 
 if (esMain(import.meta)) {
   const envVars: DrawAuctionEnvVars = loadDrawAuctionEnvVars();

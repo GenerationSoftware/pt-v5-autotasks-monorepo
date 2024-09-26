@@ -142,7 +142,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
         }
       } else {
         console.log(
-          chalk.yellow(
+          chalk.yellowBright(
             `Token with symbol ${symbol} address not found for Covalent API price lookup.`,
           ),
         );
@@ -181,7 +181,7 @@ export const getDexscreenerMarketRateUsd = async (tokenAddress: string): Promise
     const response = await fetch(uri);
     if (!response.ok) {
       console.log(
-        chalk.yellow(
+        chalk.yellowBright(
           `Unable to fetch current USD value from Dexscreener of '${tokenAddress}' token.`,
         ),
       );
@@ -224,7 +224,9 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
   const coingeckoTokenApiId = SYMBOL_TO_COINGECKO_LOOKUP[symbol];
   if (!coingeckoTokenApiId) {
     printSpacer();
-    console.log(chalk.yellow(`Note: No Coingecko token API ID found for symbol: '${symbol}'`));
+    console.log(
+      chalk.yellowBright(`Note: No Coingecko token API ID found for symbol: '${symbol}'`),
+    );
     printSpacer();
     return;
   }
@@ -234,7 +236,9 @@ export const getCoingeckoMarketRateUsd = async (symbol: string): Promise<number>
     const response = await fetch(uri);
     if (!response.ok) {
       console.log(
-        chalk.yellow(`Unable to fetch current USD value from Coingecko of '${symbol}' token.`),
+        chalk.yellowBright(
+          `Unable to fetch current USD value from Coingecko of '${symbol}' token.`,
+        ),
       );
       throw new Error(response.statusText);
     }
@@ -276,7 +280,7 @@ export const getCovalentMarketRateUsd = async (
 
       if (!response.ok) {
         console.log(
-          chalk.yellow(
+          chalk.yellowBright(
             `Error while fetching USD value from Covalent of token with CA: '${address}'.`,
           ),
         );
@@ -304,7 +308,7 @@ export const getCovalentMarketRateUsd = async (
     }
   } else {
     console.log(
-      chalk.yellow(
+      chalk.yellowBright(
         `Unable to fetch current USD value from Covalent of token: '${tokenAddress}', missing lookup contract address on ETH mainnet.`,
       ),
     );

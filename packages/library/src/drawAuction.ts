@@ -66,11 +66,11 @@ export async function runDrawAuction(
 
   console.log(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
-    chalk.yellow(config.minProfitThresholdUsd),
+    chalk.yellowBright(config.minProfitThresholdUsd),
   );
   console.log(
     chalk.dim('Config - ERROR_STATE_MAX_GAS_COST_THRESHOLD_USD:'),
-    chalk.yellow(config.errorStateMaxGasCostThresholdUsd),
+    chalk.yellowBright(config.errorStateMaxGasCostThresholdUsd),
   );
 
   const drawAuctionContracts = instantiateDrawAuctionContracts(config, contracts);
@@ -85,7 +85,7 @@ export async function runDrawAuction(
 
   if (!context.drawAuctionState) {
     printAsterisks();
-    console.log(chalk.yellow(`Currently no draw auctions to start or finish. Exiting ...`));
+    console.log(chalk.yellowBright(`Currently no draw auctions to start or finish. Exiting ...`));
     printSpacer();
     return;
   }
@@ -94,10 +94,10 @@ export async function runDrawAuction(
     context.drawAuctionState === DrawAuctionState.Start ||
     context.drawAuctionState === DrawAuctionState.Error
   ) {
-    console.log(chalk.green(`Processing 'Start Draw' for ${chainName(chainId)}:`));
+    console.log(chalk.greenBright(`Processing 'Start Draw' for ${chainName(chainId)}:`));
     await checkStartDraw(config, context, drawAuctionContracts, rewardRecipient);
   } else if (context.drawAuctionState === DrawAuctionState.Finish) {
-    console.log(chalk.green(`Processing 'Finish Draw' for ${chainName(chainId)}:`));
+    console.log(chalk.greenBright(`Processing 'Finish Draw' for ${chainName(chainId)}:`));
     await checkFinishDraw(config, context, drawAuctionContracts, rewardRecipient);
   }
 
@@ -135,12 +135,12 @@ const instantiateDrawAuctionContracts = (
   try {
     rngWitnetContract = getContract('RngWitnet', chainId, provider, contracts, version);
   } catch (e) {
-    console.warn(chalk.yellow('Unable to find RngWitnet contract. Likely uses RngBlockhash'));
+    console.warn(chalk.yellowBright('Unable to find RngWitnet contract. Likely uses RngBlockhash'));
   }
   try {
     rngBlockhashContract = getContract('RngBlockhash', chainId, provider, contracts, version);
   } catch (e) {
-    console.warn(chalk.yellow('Unable to find RngBlockhash contract. Likely uses RngWitnet'));
+    console.warn(chalk.yellowBright('Unable to find RngBlockhash contract. Likely uses RngWitnet'));
   }
 
   logTable({
@@ -193,16 +193,18 @@ const checkStartDraw = async (
 
     // This will submit a transaction for a new random number in the case of Witnet's failed RNG state
     if (gasCostUsd < config.errorStateMaxGasCostThresholdUsd) {
-      console.log(chalk.yellow('Cost within threshold, sending tx for new random number!'));
+      console.log(chalk.yellowBright('Cost within threshold, sending tx for new random number!'));
       sendTransaction = true;
     } else {
-      console.log(chalk.yellow('Cost above error state re-submit threshold, ignoring for now ...'));
+      console.log(
+        chalk.yellowBright('Cost above error state re-submit threshold, ignoring for now ...'),
+      );
     }
   } else if (profitable) {
     sendTransaction = true;
   } else {
     console.log(
-      chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
+      chalk.yellowBright(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
 
@@ -228,8 +230,8 @@ const sendPopulatedStartDrawTransaction = async (
 ) => {
   const { wallet, provider } = config;
 
-  console.log(chalk.yellow(`Start Draw Transaction:`));
-  console.log(chalk.green(`Execute rngWitnet#startDraw`));
+  console.log(chalk.yellowBright(`Start Draw Transaction:`));
+  console.log(chalk.greenBright(`Execute rngWitnet#startDraw`));
   printSpacer();
 
   let txParams;
@@ -314,7 +316,7 @@ const checkFinishDraw = async (
     await sendPopulatedFinishDrawTransaction(config, txParams, contract);
   } else {
     console.log(
-      chalk.yellow(`Completing current auction currently not profitable. Try again soon ...`),
+      chalk.yellowBright(`Completing current auction currently not profitable. Try again soon ...`),
     );
   }
 };
@@ -406,7 +408,7 @@ const calculateStartDrawProfit = async (
   printAsterisks();
   printSpacer();
   printSpacer();
-  console.log(chalk.blue(`Calculating profit ...`));
+  console.log(chalk.blueBright(`Calculating profit ...`));
   console.log(chalk.magenta('Profit/Loss (USD):'));
   printSpacer();
 
@@ -459,7 +461,7 @@ const calculateFinishDrawProfit = async (
 ): Promise<{ netProfitUsd: number; profitable: boolean }> => {
   printSpacer();
   printSpacer();
-  console.log(chalk.blue(`Calculating profit ...`));
+  console.log(chalk.blueBright(`Calculating profit ...`));
 
   printSpacer();
   console.log(chalk.magenta('Profit/Loss (USD):'));
@@ -537,7 +539,7 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   );
   console.log(
     chalk.grey(`2c. Start Draw Expected Reward (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(context.startDrawRewardUsd)}`),
+    chalk.yellowBright(`$${roundTwoDecimalPlaces(context.startDrawRewardUsd)}`),
     chalk.dim(`$${context.startDrawRewardUsd}`),
   );
   logStringValue(
@@ -559,7 +561,7 @@ const printContext = (chainId: number, context: DrawAuctionContext) => {
   );
   console.log(
     chalk.grey(`3c. Finish Draw Expected Reward (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(context.finishDrawRewardUsd)}`),
+    chalk.yellowBright(`$${roundTwoDecimalPlaces(context.finishDrawRewardUsd)}`),
     chalk.dim(`$${context.finishDrawRewardUsd}`),
   );
 
@@ -584,7 +586,7 @@ const getStartDrawGasCostUsd = async (
 ): Promise<number> => {
   const { nativeTokenMarketRateUsd } = context;
 
-  console.log(chalk.blue(`Estimating RngWitnet#startDraw() gas costs ...`));
+  console.log(chalk.blueBright(`Estimating RngWitnet#startDraw() gas costs ...`));
   printSpacer();
 
   let txParams;
@@ -694,7 +696,7 @@ const getFinishDrawGasCostUsd = async (
   config: DrawAuctionConfig,
   context: DrawAuctionContext,
 ): Promise<number> => {
-  console.log(chalk.blue(`Estimating DrawManager#finishDraw() gas costs ...`));
+  console.log(chalk.blueBright(`Estimating DrawManager#finishDraw() gas costs ...`));
   printSpacer();
 
   const { nativeTokenMarketRateUsd } = context;
@@ -737,7 +739,7 @@ const getGasCostUsd = async (
   const { chainId, provider } = config;
 
   if (!estimatedGasLimit || estimatedGasLimit.eq(0)) {
-    console.error(chalk.yellow('Estimated gas limit is 0 ...'));
+    console.error(chalk.yellowBright('Estimated gas limit is 0 ...'));
     return 0;
   } else {
     logBigNumber(
@@ -767,7 +769,7 @@ const getGasCostUsd = async (
   );
   console.log(
     chalk.grey(`Gas Cost (USD):`),
-    chalk.yellow(`$${roundTwoDecimalPlaces(avgFeeUsd)}`),
+    chalk.yellowBright(`$${roundTwoDecimalPlaces(avgFeeUsd)}`),
     chalk.dim(`$${avgFeeUsd}`),
   );
 
@@ -792,7 +794,7 @@ const sendPopulatedFinishDrawTransaction = async (
   const estimatedGasLimitWithBufferAsNumber: number =
     Number(estimatedGasLimit) + DRAW_GAS_LIMIT_BUFFER;
 
-  console.log(chalk.green(`Execute DrawManager#finishDraw`));
+  console.log(chalk.greenBright(`Execute DrawManager#finishDraw`));
   console.log(chalk.greenBright.bold(`Sending ...`));
   printSpacer();
 
@@ -835,21 +837,21 @@ const transformRngWitnetStartDrawTxParams = (
  * A note telling the bot maintainer where they can claim the rewards they earn.
  */
 const printNote = () => {
-  console.log(chalk.yellow('|*******************************************************|'));
-  console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|    Rewards accumulate post-draw on the PrizePool!     |'));
-  console.log(chalk.yellow('|  Withdraw your rewards manually from that contract.   |'));
-  console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|*******************************************************|'));
+  console.log(chalk.yellowBright('|*******************************************************|'));
+  console.log(chalk.yellowBright('|                                                       |'));
+  console.log(chalk.yellowBright('|    Rewards accumulate post-draw on the PrizePool!     |'));
+  console.log(chalk.yellowBright('|  Withdraw your rewards manually from that contract.   |'));
+  console.log(chalk.yellowBright('|                                                       |'));
+  console.log(chalk.yellowBright('|*******************************************************|'));
 };
 
 /**
  * Logs for the bot maintainer to know we were in the error state
  */
 const printErrorNote = () => {
-  console.log(chalk.yellow('|*******************************************************|'));
-  console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|    Witnet random number request returned an error!    |'));
-  console.log(chalk.yellow('|                                                       |'));
-  console.log(chalk.yellow('|*******************************************************|'));
+  console.log(chalk.yellowBright('|*******************************************************|'));
+  console.log(chalk.yellowBright('|                                                       |'));
+  console.log(chalk.yellowBright('|    Witnet random number request returned an error!    |'));
+  console.log(chalk.yellowBright('|                                                       |'));
+  console.log(chalk.yellowBright('|*******************************************************|'));
 };
