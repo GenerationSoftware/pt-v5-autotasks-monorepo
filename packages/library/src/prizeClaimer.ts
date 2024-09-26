@@ -63,6 +63,12 @@ type ClassicClaimPrizesParams = {
   minReward: BigNumber;
 };
 
+type CompoundAccountsParams = {
+  winners: string[];
+  rewardRecipient: string;
+  minReward: BigNumber;
+};
+
 type TierRemainingPrizeCounts = {
   [tierNum: string]: number;
 };
@@ -168,11 +174,12 @@ export async function runPrizeClaimer(
   console.log(chalk.dim(`Fetching potential claims ...`));
   printSpacer();
 
+  const prizeVaultAddresses = prizeVaults.map((prizeVault) => prizeVault.id);
   let claims: Claim[] = await fetchClaims(
     chainId,
     prizePoolContract.address,
     context.drawId,
-    prizeVaults,
+    prizeVaultAddresses,
   );
 
   // Cross-reference prizes claimed to flag if a claim has been claimed or not
@@ -195,11 +202,7 @@ export async function runPrizeClaimer(
 
   if (unclaimedClaims.length === 0) {
     printAsterisks();
-    console.log(chalk.yellow(`No prizes left to claim. Exiting ...`));
-    printSpacer();
-    printDateTimeStr('END');
-    printSpacer();
-    return;
+    console.log(chalk.yellow(`No prizes left to claim for current draw.`));
   }
 
   // Group claims by vault & tier
@@ -298,10 +301,107 @@ export async function runPrizeClaimer(
     }
   }
 
+  await sweepPreviousAutoCompoundingPrizes(
+    prizePoolContract.address,
+    rewardRecipient,
+    context,
+    config,
+  );
+
   printSpacer();
   printDateTimeStr('END');
   printSpacer();
 }
+
+const getLastPrizeWinners = async (
+  prizePoolAddress: string,
+  context: PrizeClaimerContext,
+): Promise<string[]> => {
+  // Get the previous draw's winners
+  const claims: Claim[] = await fetchClaims(CHAIN_IDS.base, prizePoolAddress, context.drawId - 1, [
+    PT_CLASSIC_PRIZE_VAULT_ADDRESS,
+  ]);
+
+  const winners = claims.map((claim) => claim.winner);
+
+  return winners.filter(function (v, i) {
+    return winners.indexOf(v) == i;
+  });
+};
+
+const sweepPreviousAutoCompoundingPrizes = async (
+  prizePoolAddress: string,
+  rewardRecipient: string,
+  context: PrizeClaimerContext,
+  config: PrizeClaimerConfig,
+): Promise<void> => {
+  const { chainId, provider, wallet } = config;
+
+  // Compounding only occurs for the PT Classic Vault & Claimer on Base
+  if (chainId !== CHAIN_IDS.base) {
+    return;
+  }
+
+  printSpacer();
+  printSpacer();
+  printAsterisks();
+  console.log(chalk.blue(`Processing compoundAccounts() for previous draw winners:`));
+  printSpacer();
+
+  const claimerContract: Contract = await getClaimerContract(
+    PT_CLASSIC_PRIZE_VAULT_ADDRESS,
+    provider,
+  );
+
+  const lastPrizeWinners: string[] = await getLastPrizeWinners(prizePoolAddress, context);
+  debugClaimer('lastPrizeWinners');
+  debugClaimer(lastPrizeWinners);
+
+  // Classic is only on Base, gas limit is normal
+  const gasLimit = GAS_LIMIT;
+
+  for (let n = 0; n <= lastPrizeWinners.length; n += TOTAL_CLAIM_COUNT_PER_TRANSACTION) {
+    const start = n;
+    const end = n + TOTAL_CLAIM_COUNT_PER_TRANSACTION;
+
+    let params = {
+      winners: lastPrizeWinners.slice(start, end),
+      rewardRecipient,
+      minReward: BigNumber.from(0),
+    };
+
+    params.minReward = await getCompoundingRewards(claimerContract, params);
+    debugClaimer('minReward');
+    debugClaimer(params.minReward);
+    if (params.minReward.gt(0)) {
+      params.minReward = params.minReward.mul(90).div(100); // will accept -10% slippage
+
+      printSpacer();
+      printSpacer();
+      console.log(
+        chalk.green(
+          `Execute 'Compound Accounts' Transaction for PT Classic Prize Vault, winners: ${
+            start + 1
+          } to ${Math.min(end, params.winners.length)} `,
+        ),
+      );
+
+      const populatedTx = await claimerContract.populateTransaction.compoundAccounts(
+        ...Object.values(params),
+      );
+      const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
+
+      console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+
+      console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
+      await provider.waitForTransaction(tx.hash);
+      console.log(chalk.dim('Transaction confirmed !'));
+    } else {
+      console.log(chalk.yellowBright.bold('Skipping transaction as rewards from simulation are 0'));
+    }
+  }
+};
 
 const sendClaimTransaction = async (
   claimerContract: Contract,
@@ -352,7 +452,7 @@ const processNormalVault = async (
     printSpacer();
     console.log(
       chalk.green(
-        `Execute Claim Transaction for Tier #${tierWords(context, tier)}, claims ${
+        `Execute 'Claim Prizes' Transaction for Tier #${tierWords(context, tier)}, claims ${
           start + 1
         } to ${Math.min(end, claimPrizesParams.winners.length)} `,
       ),
@@ -455,7 +555,7 @@ const processClassicVault = async (
         printSpacer();
         console.log(
           chalk.green(
-            `Execute Claim Transaction for Tier #${tierWords(context, tier)}, claims ${
+            `Execute 'Claim Prizes' Transaction for Tier #${tierWords(context, tier)}, claims ${
               start + 1
             } to ${Math.min(end, paramsClone.winners.length)} `,
           ),
@@ -483,6 +583,24 @@ const getRewards = async (
     rewards = await claimerContract.callStatic.claimPrizes(...Object.values(params));
   } catch (e) {
     console.log('Error while checking rewards returned via callStatic simulation');
+    console.log(e.message);
+  }
+
+  return rewards;
+};
+
+// Test how much rewards the rewardRecipient will receive for compounding previous prizes
+const getCompoundingRewards = async (
+  claimerContract: Contract,
+  params: CompoundAccountsParams,
+): Promise<BigNumber> => {
+  let rewards: BigNumber = BigNumber.from(0);
+  try {
+    rewards = await claimerContract.callStatic.compoundAccounts(...Object.values(params));
+  } catch (e) {
+    console.log(
+      'Error while checking rewards for compounding previous account prizes returned via callStatic simulation',
+    );
     console.log(e.message);
   }
 
@@ -1045,12 +1163,12 @@ const fetchClaims = async (
   chainId: number,
   prizePoolAddress: string,
   drawId: number,
-  prizeVaults: PrizeVault[],
+  prizeVaultAddresses: string[],
 ): Promise<Claim[]> => {
   let claims: Claim[] = [];
 
-  for (let prizeVault of prizeVaults) {
-    const winnersUri = getWinnersUri(chainId, prizePoolAddress, drawId, prizeVault.id);
+  for (let prizeVaultAddress of prizeVaultAddresses) {
+    const winnersUri = getWinnersUri(chainId, prizePoolAddress, drawId, prizeVaultAddress);
 
     let winners: Winner[] = [];
     try {
@@ -1059,7 +1177,7 @@ const fetchClaims = async (
         printSpacer();
         console.log(
           chalk.yellow(
-            `Could not find winners for prize vault: ${prizeVault.id} (results not yet computed for new draw with id #${drawId}?)`,
+            `Could not find winners for prize vault: ${prizeVaultAddress} (results not yet computed for new draw with id #${drawId}?)`,
           ),
         );
         console.log(chalk.dim(winnersUri));
@@ -1076,7 +1194,7 @@ const fetchClaims = async (
 
           for (let prizeIndex of prizeIndices)
             claims.push({
-              vault: prizeVault.id,
+              vault: prizeVaultAddress,
               winner: winner.user,
               tier: Number(tier),
               prizeIndex,
