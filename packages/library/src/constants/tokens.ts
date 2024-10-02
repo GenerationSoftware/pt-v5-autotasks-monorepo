@@ -56,6 +56,11 @@ export const KNOWN_TOKENS = {
     WXDAI: '0xe91d153e0b41518a2ce8dd3d7944fa863463a97d',
     PRZWXDAI: '0xbb7e99abccce01589ad464ff698ad139b0705d90',
   },
+  [CHAIN_IDS.world]: {
+    WLD: '',
+    PRZWLD: '',
+    PRZWETH: '',
+  },
   [CHAIN_IDS.base]: {
     POOL: '0xd652c5425aea2afd5fb142e120fecf79e18fafc3',
     WETH: '0x4200000000000000000000000000000000000006',
@@ -98,6 +103,11 @@ export const KNOWN_TOKENS = {
   [CHAIN_IDS.scroll]: {
     WETH: '0x5300000000000000000000000000000000000004',
     PRZWETH: '0xfeb0fe9850aba3a52e72a8a694d422c2b47a5888',
+  },
+  [CHAIN_IDS.worldSepolia]: {
+    WLD: '0x8803e47fD253915F9c860837f391Aa71B3e03c5A',
+    PRZWLD: '0xaaf954c54fae10877bf0a0ba9f5ca6129e13e450',
+    PRZWETH: '0xd262c57B43b9198e5375dD28fB6bCFE86557b4e6',
   },
   [CHAIN_IDS.gnosisChiado]: {
     OFFICIAL_WXDAI: '0x18c8a7ec7897177E4529065a7E7B0878358B3BfF',
@@ -179,6 +189,11 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
       tokenAddress.toLowerCase(),
     ),
   ],
+  [CHAIN_IDS.world]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.world]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
   [CHAIN_IDS.base]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.base]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
@@ -194,6 +209,16 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
       tokenAddress.toLowerCase(),
     ),
   ],
+  [CHAIN_IDS.worldSepolia]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.worldSepolia]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
+  [CHAIN_IDS.gnosisChiado]: [
+    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.gnosisChiado]).map((tokenAddress) =>
+      tokenAddress.toLowerCase(),
+    ),
+  ],
   [CHAIN_IDS.scrollSepolia]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.scrollSepolia]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
@@ -206,11 +231,6 @@ export const LIQUIDATION_TOKEN_ALLOW_LIST = {
   ],
   [CHAIN_IDS.arbitrumSepolia]: [
     ...Object.values(KNOWN_TOKENS[CHAIN_IDS.arbitrumSepolia]).map((tokenAddress) =>
-      tokenAddress.toLowerCase(),
-    ),
-  ],
-  [CHAIN_IDS.gnosisChiado]: [
-    ...Object.values(KNOWN_TOKENS[CHAIN_IDS.gnosisChiado]).map((tokenAddress) =>
       tokenAddress.toLowerCase(),
     ),
   ],
