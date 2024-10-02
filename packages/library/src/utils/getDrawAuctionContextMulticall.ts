@@ -1,4 +1,3 @@
-import debug from 'debug';
 import chalk from 'chalk';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import { ethers } from 'ethers';
@@ -13,8 +12,6 @@ import {
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd.js';
 import { printSpacer } from './logging.js';
-
-const debugDrawAuction = debug('drawAuction');
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
