@@ -1,6 +1,6 @@
-import { ethers } from 'ethers';
-import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
+import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import { ethers } from 'ethers';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 
 import {
@@ -140,8 +140,9 @@ const getContext = async (
 
   // This can happen when Witnet fails to deliver the random number, we'll need to manually request a new
   // random number to 'unstick' the last rng request and properly start & finish the draw
-  const closedDrawId = drawId - 1;
-  const startDrawError = canStartDraw && closedDrawId === lastStartDrawAuction.rngRequestId;
+  const lastRngRequestDiffSeconds = Math.floor(Date.now() / 1000) - lastStartDrawAuction.closedAt;
+  const lastRngRequestIsRecent = lastRngRequestDiffSeconds / 3600 < 12; // Last RNG request was made in past 12 hours
+  const startDrawError = canStartDraw && lastRngRequestIsRecent;
 
   let queriesTwo: Record<string, any> = {};
 
