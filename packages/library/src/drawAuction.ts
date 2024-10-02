@@ -188,20 +188,22 @@ const checkStartDraw = async (
   const profitable = await calculateStartDrawProfit(config, context, gasCostUsd);
 
   let sendTransaction;
+  console.log('context.drawAuctionState');
+  console.log(context.drawAuctionState);
   if (context.drawAuctionState === DrawAuctionState.Error) {
     printErrorNote();
 
     // This will submit a transaction for a new random number in the case of Witnet's failed RNG state
     if (gasCostUsd < config.errorStateMaxGasCostThresholdUsd) {
       console.log(chalk.yellowBright('Cost within threshold, sending tx for new random number!'));
-      sendTransaction = true;
+      // sendTransaction = true;
     } else {
       console.log(
         chalk.yellowBright('Cost above error state re-submit threshold, ignoring for now ...'),
       );
     }
   } else if (profitable) {
-    sendTransaction = true;
+    // sendTransaction = true;
   } else {
     console.log(
       chalk.yellowBright(`Completing current auction currently not profitable. Try again soon ...`),

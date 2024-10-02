@@ -1,6 +1,7 @@
-import { ethers } from 'ethers';
-import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import debug from 'debug';
 import chalk from 'chalk';
+import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import { ethers } from 'ethers';
 import ethersMulticallProviderPkg from 'ethers-multicall-provider';
 
 import {
@@ -12,6 +13,8 @@ import {
 import { ERC20Abi } from '../abis/ERC20Abi.js';
 import { getEthMainnetTokenMarketRateUsd, getNativeTokenMarketRateUsd } from './getUsd.js';
 import { printSpacer } from './logging.js';
+
+const debugDrawAuction = debug('drawAuction');
 
 const { MulticallWrapper } = ethersMulticallProviderPkg;
 
@@ -141,6 +144,14 @@ const getContext = async (
   // This can happen when Witnet fails to deliver the random number, we'll need to manually request a new
   // random number to 'unstick' the last rng request and properly start & finish the draw
   const closedDrawId = drawId - 1;
+  debugDrawAuction('drawId');
+  debugDrawAuction(drawId);
+  debugDrawAuction('canStartDraw');
+  debugDrawAuction(canStartDraw);
+  debugDrawAuction('closedDrawId');
+  debugDrawAuction(closedDrawId);
+  debugDrawAuction('lastStartDrawAuction.rngRequestId');
+  debugDrawAuction(lastStartDrawAuction.rngRequestId);
   const startDrawError = canStartDraw && closedDrawId === lastStartDrawAuction.rngRequestId;
 
   let queriesTwo: Record<string, any> = {};
