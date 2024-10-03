@@ -30,6 +30,7 @@ export const SYMBOL_TO_COINGECKO_LOOKUP = {
   WELL: 'moonwell',
   AERO: 'aerodrome-finance',
   cbETH: 'coinbase-wrapped-staked-eth',
+  WLD: 'worldcoin-wld',
 };
 
 export const NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP = {
@@ -43,6 +44,7 @@ export const NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP = {
   [CHAIN_IDS.arbitrumSepolia]: '',
   [CHAIN_IDS.optimismSepolia]: '',
   [CHAIN_IDS.baseSepolia]: '',
+  [CHAIN_IDS.worldSepolia]: '0x211db8fbdc34982654e39b1b3a8ca3ef5c7826ea',
   [CHAIN_IDS.gnosisChiado]: '0x18c8a7ec7897177e4529065a7e7b0878358b3bff',
   [CHAIN_IDS.scrollSepolia]: '0xba4cec9b8137ddf02546534f14e438940ba58af6',
 };
