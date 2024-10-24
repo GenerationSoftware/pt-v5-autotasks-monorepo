@@ -31,6 +31,7 @@ export const SYMBOL_TO_COINGECKO_LOOKUP = {
   AERO: 'aerodrome-finance',
   cbETH: 'coinbase-wrapped-staked-eth',
   WLD: 'worldcoin-wld',
+  aEthLidoWETH: 'ethereum',
 };
 
 export const NETWORK_NATIVE_TOKEN_ADDRESS_TO_ERC20_LOOKUP = {
