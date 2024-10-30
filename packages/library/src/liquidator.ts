@@ -4,7 +4,7 @@ import { PopulatedTransaction } from '@ethersproject/contracts';
 import { ContractsBlob, getContract } from '@generationsoftware/pt-v5-utils-js';
 import chalk from 'chalk';
 
-import { LiquidatorConfig, LiquidatorContext } from './types';
+import { LiquidationPair, LiquidatorConfig, LiquidatorContext } from './types';
 import {
   printDateTimeStr,
   logTable,
@@ -20,9 +20,12 @@ import {
   checkOrX,
   findRecipient,
 } from './utils/index.js';
+import { FixedPriceLiquidationPairFactoryAbi } from './abis/FixedPriceLiquidationPairFactoryAbi.js';
+import { FixedPriceLiquidationRouterAbi } from './abis/FixedPriceLiquidationRouterAbi.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from './abis/UniswapV2WethPairFlashLiquidatorAbi.js';
 import {
+  CHAIN_IDS,
   UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
   NETWORK_NATIVE_TOKEN_INFO,
 } from './constants/index.js';
@@ -53,6 +56,13 @@ interface Stat {
 const stats: Stat[] = [];
 
 const LIQUIDATOR_GAS_LIMIT: number = 1200000 as const;
+
+export const FIXED_PRICE_CONTRACT_ADDRESS = {
+  [CHAIN_IDS.mainnet]: {
+    factory: '0xa1739ece7a90243443543ea57eb5bfb5f4f8e606',
+    router: '0x91b718f250a74ad80da828d7d60b13993275d43c',
+  },
+};
 
 const getPairName = (context: LiquidatorContext) => {
   return `${context.tokenIn.symbol}/${context.tokenOut.symbol}`;
@@ -215,28 +225,21 @@ export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {
-  const { provider, relayerAddress, covalentApiKey, pairsToLiquidate } = config;
+  const { provider, chainId, minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate, signer } =
+    config;
   printDateTimeStr('START');
   printSpacer();
 
   const swapRecipient = findRecipient(config);
-
   console.log(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
-    chalk.yellowBright(config.minProfitThresholdUsd),
+    chalk.yellowBright(minProfitThresholdUsd),
   );
-
-  if (config.envTokenAllowList?.length > 0) {
-    console.log(
-      chalk.dim('Config - ENV_TOKEN_ALLOW_LIST:'),
-      chalk.yellowBright(config.envTokenAllowList),
-    );
+  if (envTokenAllowList?.length > 0) {
+    console.log(chalk.dim('Config - ENV_TOKEN_ALLOW_LIST:'), chalk.yellowBright(envTokenAllowList));
   }
-  if (config.pairsToLiquidate?.length > 0) {
-    console.log(
-      chalk.dim('Config - PAIRS_TO_LIQUIDATE:'),
-      chalk.yellowBright(config.pairsToLiquidate),
-    );
+  if (pairsToLiquidate?.length > 0) {
+    console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellowBright(pairsToLiquidate));
   }
 
   // 1. Get contracts
@@ -251,11 +254,100 @@ export async function runLiquidator(
 
   console.log(chalk.dim('Collecting information about vaults ...'));
 
-  // 2. Loop through all liquidation pairs
+  // 2. Loop through all liquidation pairs found via `contracts.json`
   printSpacer();
   console.log(
     chalk.white.bgBlack(` # of Liquidation Pairs (RPC): ${liquidationPairContracts.length} `),
   );
+
+  await loopLiquidationPairs(
+    config,
+    swapRecipient,
+    liquidationPairContracts,
+    liquidationRouterContract,
+    uniswapV2WethPairFlashLiquidatorContract,
+  );
+
+  // 3. Loop through all fixed price liquidation pairs used to liquidate yield from v3 & v4
+  const { fixedPriceLiquidationRouterContract, fixedPriceLiquidationPairContracts } =
+    await getFixedPriceLiquidationContracts(config, contracts);
+  if (fixedPriceLiquidationPairContracts.length > 0) {
+    printSpacer();
+    console.log(
+      chalk.white.bgBlack(
+        ` # of Fixed Price Liquidation Pairs (RPC): ${liquidationPairContracts.length} `,
+      ),
+    );
+    await loopLiquidationPairs(
+      config,
+      swapRecipient,
+      fixedPriceLiquidationPairContracts,
+      fixedPriceLiquidationRouterContract,
+      uniswapV2WethPairFlashLiquidatorContract,
+    );
+  }
+
+  // 4. Run Summary of all potential trades
+  printSpacer();
+  printSpacer();
+  console.log(chalk.greenBright.bold(`SUMMARY`));
+  console.table(stats);
+  const estimatedProfitUsdTotal = stats.reduce((accumulator, stat) => {
+    return accumulator + stat.estimatedProfitUsd;
+  }, 0);
+  console.log(
+    chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
+  );
+
+  printSpacer();
+  printDateTimeStr('END');
+  printSpacer();
+}
+
+const getFixedPriceLiquidationContracts = async (
+  config: LiquidatorConfig,
+  contracts: ContractsBlob,
+): Promise<{
+  fixedPriceLiquidationRouterContract: Contract;
+  fixedPriceLiquidationPairContracts: Contract[];
+}> => {
+  const { chainId, signer, provider } = config;
+
+  let fixedPriceLiquidationRouterContract: Contract;
+  let fixedPriceLiquidationPairContracts: Contract[] = [];
+  if (FIXED_PRICE_CONTRACT_ADDRESS[chainId] !== undefined) {
+    const fixedPriceLiquidationPairFactoryContract = new ethers.Contract(
+      FIXED_PRICE_CONTRACT_ADDRESS[chainId].factory,
+      FixedPriceLiquidationPairFactoryAbi,
+      signer,
+    );
+
+    fixedPriceLiquidationRouterContract = new ethers.Contract(
+      FIXED_PRICE_CONTRACT_ADDRESS[chainId].router,
+      FixedPriceLiquidationRouterAbi,
+      signer,
+    );
+    fixedPriceLiquidationPairContracts = await getLiquidationPairsMulticall(
+      fixedPriceLiquidationPairFactoryContract,
+      contracts,
+      provider,
+    );
+  }
+
+  return {
+    fixedPriceLiquidationRouterContract,
+    fixedPriceLiquidationPairContracts,
+  };
+};
+
+const loopLiquidationPairs = async (
+  config: LiquidatorConfig,
+  swapRecipient: string,
+  liquidationPairContracts: Contract[],
+  liquidationRouterContract: Contract,
+  uniswapV2WethPairFlashLiquidatorContract: Contract,
+) => {
+  const { provider, relayerAddress, covalentApiKey, pairsToLiquidate } = config;
 
   for (let i = 0; i < liquidationPairContracts.length; i++) {
     const liquidationPairContract = liquidationPairContracts[i];
@@ -330,23 +422,7 @@ export async function runLiquidator(
       );
     }
   }
-
-  // 5. Run Summary of all trades and potential trades
-  printSpacer();
-  printSpacer();
-  console.log(chalk.greenBright.bold(`SUMMARY`));
-  console.table(stats);
-  const estimatedProfitUsdTotal = stats.reduce((accumulator, stat) => {
-    return accumulator + stat.estimatedProfitUsd;
-  }, 0);
-  console.log(
-    chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
-  );
-
-  printSpacer();
-  printDateTimeStr('END');
-  printSpacer();
-}
+};
 
 const processUniV2WethLPPair = async (
   config: LiquidatorConfig,
