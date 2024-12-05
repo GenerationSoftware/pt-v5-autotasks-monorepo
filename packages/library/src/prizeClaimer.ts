@@ -5,7 +5,6 @@ import { Provider } from '@ethersproject/providers';
 import {
   ContractsBlob,
   Claim,
-  PrizeVault,
   PrizePoolInfo,
   getPrizePoolInfo,
   getContract,
