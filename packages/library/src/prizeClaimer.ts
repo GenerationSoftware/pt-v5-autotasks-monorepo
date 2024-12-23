@@ -218,6 +218,13 @@ export async function runPrizeClaimer(
     const [vault, tier] = key.split(',');
     const groupedClaims: any = value;
 
+    if (isCanary(context, Number(tier))) {
+      printSpacer();
+      console.log(chalk.redBright(`Skipping canary ...`));
+      printSpacer();
+      continue;
+    }
+
     printSpacer();
     printSpacer();
     printSpacer();
@@ -1038,7 +1045,7 @@ const getClaimInfo = async (
   let claimReward = BigNumber.from(0);
   let claimRewardUsd = 0;
   let totalCostUsd = 0;
-  let previousNetProfitUsd = 0;
+  let previousNetProfitUsd;
   let minVrgdaFeePerClaim = BigNumber.from(0);
 
   printSpacer();
@@ -1139,7 +1146,7 @@ const getClaimInfo = async (
 
     claimRewardUsd = nextClaimRewardUsd;
 
-    if (netProfitUsd > previousNetProfitUsd && netProfitUsd > minProfitThresholdUsd) {
+    if (netProfitUsd > minProfitThresholdUsd) {
       tierRemainingPrizeCounts[tier.toString()]--;
 
       const claimRewardUnpacked = claimReward[0] ? claimReward[0] : claimReward;

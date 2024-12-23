@@ -382,6 +382,11 @@ const getFinishDrawEstimatedGasLimit = async (
   try {
     estimatedGasLimit = await contract.estimateGas.finishDraw(...Object.values(finishDrawTxParams));
   } catch (e) {
+    console.log(
+      chalk.yellowBright(
+        `Could not get estimated gas limit, transaction may fail or may require manual gas limit`,
+      ),
+    );
     console.log(chalk.red(e));
   }
 
@@ -701,12 +706,15 @@ const getFinishDrawGasCostUsd = async (
 
   const { nativeTokenMarketRateUsd } = context;
 
-  const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
+  const estimatedGasLimit = BigNumber.from(1000000);
+  // const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
 
   const populatedTx: PopulatedTransaction = await contract.populateTransaction.finishDraw(
     ...Object.values(txParams),
   );
 
+  console.log('estimatedGasLimit');
+  console.log(estimatedGasLimit);
   // Add extra buffer space on the estimate because estimates are typically too low and cause tx's to fail
   const estimatedGasLimitWithBuffer: BigNumber = estimatedGasLimit.add(DRAW_GAS_LIMIT_BUFFER);
 
@@ -790,7 +798,8 @@ const sendPopulatedFinishDrawTransaction = async (
 ) => {
   const { wallet, provider } = config;
 
-  const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
+  // const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
+  const estimatedGasLimit = BigNumber.from(1000000);
   const estimatedGasLimitWithBufferAsNumber: number =
     Number(estimatedGasLimit) + DRAW_GAS_LIMIT_BUFFER;
 
