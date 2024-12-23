@@ -40,6 +40,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@flashbots/ethers-provider-bundle": "^1.0.0",
     "debug": "^4.3.6"
   }
 }

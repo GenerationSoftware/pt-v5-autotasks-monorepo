@@ -1,5 +1,6 @@
-import { ethers, PopulatedTransaction, Wallet } from 'ethers';
+import { providers,ethers, PopulatedTransaction, Wallet } from 'ethers';
 import { Provider } from '@ethersproject/providers';
+import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 
 import { SendTransactionArgs } from '../types.js';
 import { printSpacer } from '../utils/index.js';
@@ -36,7 +37,35 @@ export const sendPopulatedTx = async (
   if (txParams && txParams.value) {
     sendTransactionArgs.value = txParams.value;
   }
-  const tx = await wallet.sendTransaction(sendTransactionArgs);
+
+  let tx
+  console.log(provider)
+  console.log(provider._chainId)
+  console.log(provider.chainId)
+  if (provider._chainId === CHAIN_IDS.mainnet) {
+    // Standard json rpc provider directly from ethers.js (NOT Flashbots)
+const provider = new providers.JsonRpcProvider({ url: ETHEREUM_RPC_URL }, 1)
+
+// `authSigner` is an Ethereum private key that does NOT store funds and is NOT your bot's primary key.
+// This is an identifying key for signing payloads to establish reputation and whitelisting
+// In production, this should be used across multiple bundles to build relationship. In this example, we generate a new wallet each time
+const authSigner = Wallet.createRandom();
+
+// Flashbots provider requires passing in a standard provider
+const flashbotsProvider = await FlashbotsBundleProvider.create(
+  provider, // a normal ethers.js provider, to perform gas estimiations and nonce lookups
+  authSigner // ethers.js signer wallet, only for signing request payloads, not transactions
+)
+
+    const privateTx = {
+      transaction: ...sendTransactionArgs,
+      signer: wallet,
+    };
+
+    tx = await flashbotsProvider.sendPrivateTransaction(privateTx);
+  } else {
+    tx = await wallet.sendTransaction(sendTransactionArgs);
+  }
 
   return tx;
 };
