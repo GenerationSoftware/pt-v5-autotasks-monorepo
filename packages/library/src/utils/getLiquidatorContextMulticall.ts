@@ -2,6 +2,7 @@ import { ethers, Contract, BigNumber } from 'ethers';
 import { parseUnits, formatUnits } from '@ethersproject/units';
 import { Provider } from '@ethersproject/providers';
 import { getEthersMulticallProviderResults } from '@generationsoftware/pt-v5-utils-js';
+import { normalizeBigNumber } from './index.js';
 import chalk from 'chalk';
 
 import {
@@ -379,28 +380,36 @@ const initLpToken = async (
   }
 };
 
-// TODO: This will likely only work for lpTokens where token0 and token1's decimals are
-// equal (ie. 6 and 6, 18 and 18). Otherwise the reserve amounts will need to be normalized
-// to the same precision
-const EXPONENT = 18;
+const MAX_DECIMALS = 18;
 const calculateLpTokenPrice = (lpToken): number => {
   // If we don't have a price for token0 and for token1 we can't calculate LP token price
   if (!lpToken.token0.assetRateUsd || !lpToken.token1.assetRateUsd) {
     return 0;
   }
 
-  // Convert USD prices from floats into BigNumber's using EXPONENT
-  const price0 = parseUnits(lpToken.token0.assetRateUsd.toString(), EXPONENT);
-  const price1 = parseUnits(lpToken.token1.assetRateUsd.toString(), EXPONENT);
-
+  // Convert USD prices from floats into BigNumber's using MAX_DECIMALS
+  const price0 = parseUnits(lpToken.token0.assetRateUsd.toString(), MAX_DECIMALS);
+  const price1 = parseUnits(lpToken.token1.assetRateUsd.toString(), MAX_DECIMALS);
   const tokenPriceCumulative = sqrt(price0.mul(price1));
-  const tokenReserveCumulative = sqrt(lpToken.reserves[0].mul(lpToken.reserves[1]));
+
+  const lpToken0Reserves = normalizeBigNumber(
+    lpToken.reserves[0],
+    lpToken.token0.decimals,
+    MAX_DECIMALS,
+  );
+  const lpToken1Reserves = normalizeBigNumber(
+    lpToken.reserves[1],
+    lpToken.token1.decimals,
+    MAX_DECIMALS,
+  );
+
+  const tokenReserveCumulative = sqrt(lpToken0Reserves.mul(lpToken1Reserves));
 
   const totalSupply = lpToken.totalSupply;
   const lpTokenPriceBN = tokenReserveCumulative.mul(tokenPriceCumulative).mul(2).div(totalSupply);
 
   // Convert from BigNumber back to float / decimal
-  return Number(formatUnits(lpTokenPriceBN, EXPONENT));
+  return Number(formatUnits(lpTokenPriceBN, MAX_DECIMALS));
 };
 
 const ONE = ethers.BigNumber.from(1);
