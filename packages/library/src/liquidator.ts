@@ -57,6 +57,14 @@ const stats: Stat[] = [];
 
 const LIQUIDATOR_GAS_LIMIT: number = 1200000 as const;
 
+// Maps LiquidationPair addresses to their SimpleVaultBooster conterparts, which allows for
+// claiming of Morpho rewards if profitable prior to making liquidations on that pair
+const MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP = {
+  '0x7de170fd9f9ab6b0472670e3bc0203d837d2b168': '0xa7ed0503649c367e48df8c2abea171f495c5754e',
+  '0xd05955ab0daf79a1d7c47b52205e46fd3a5041cc': '0xd96e5d5b67c7eae5554f0d4b96a2088274c103fa',
+  '0x1099c6d86012bda5e60355d9307cb0c36e1aa56d': '0x7b3d452d23846244fea4e2dcb4ea4b63528d6029',
+};
+
 export const FIXED_PRICE_CONTRACT_ADDRESS = {
   [CHAIN_IDS.mainnet]: {
     factory: '0xa1739ece7a90243443543ea57eb5bfb5f4f8e606',
