@@ -23,6 +23,7 @@ import {
   FLASH_LIQUIDATION_PAIRS,
   FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
   NETWORK_NATIVE_TOKEN_INFO,
+  BLOCK_EXPLORER_URLS,
 } from './constants/index.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
@@ -221,7 +222,7 @@ export async function runFlashLiquidator(config: FlashLiquidatorConfig): Promise
       const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit, gasPrice);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+      console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
 
       stats.push({
         pair,

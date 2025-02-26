@@ -62,3 +62,20 @@ const TESTNET_CHAIN_IDS = [
 export const isTestnet = (chainId: number): boolean => {
   return TESTNET_CHAIN_IDS.includes(chainId);
 };
+
+export const BLOCK_EXPLORER_URLS = {
+  [CHAIN_IDS.mainnet]: 'https://etherscan.io',
+  [CHAIN_IDS.optimism]: 'https://optimistic.etherscan.io',
+  [CHAIN_IDS.gnosis]: 'https://gnosisscan.io',
+  [CHAIN_IDS.world]: 'https://worldscan.org',
+  [CHAIN_IDS.base]: 'https://basescan.org',
+  [CHAIN_IDS.arbitrum]: 'https://arbiscan.io',
+  [CHAIN_IDS.scroll]: 'https://scrollscan.com',
+  [CHAIN_IDS.worldSepolia]: 'https://sepolia.worldscan.org',
+  [CHAIN_IDS.gnosisChiado]: 'https://gnosis-chiado.blockscout.com',
+  [CHAIN_IDS.baseSepolia]: 'https://sepolia.basescan.org',
+  [CHAIN_IDS.arbitrumSepolia]: 'https://sepolia.arbiscan.io',
+  [CHAIN_IDS.scrollSepolia]: 'https://sepolia.scrollscan.com',
+  [CHAIN_IDS.sepolia]: 'https://sepolia.etherscan.io',
+  [CHAIN_IDS.optimismSepolia]: 'https://sepolia-optimism.etherscan.io',
+};

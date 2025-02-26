@@ -16,7 +16,7 @@ import {
   checkOrX,
   findRecipient,
 } from './utils/index.js';
-import { NETWORK_NATIVE_TOKEN_INFO } from './constants/index.js';
+import { NETWORK_NATIVE_TOKEN_INFO, BLOCK_EXPLORER_URLS } from './constants/index.js';
 import {
   getDrawAuctionContextMulticall,
   DrawAuctionState,
@@ -271,7 +271,8 @@ const sendPopulatedStartDrawTransaction = async (
   );
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
+
   printSpacer();
 
   // We don't receive a reward for re-submitting for a new random number in the case of a Witnet failure
@@ -809,7 +810,8 @@ const sendPopulatedFinishDrawTransaction = async (
   );
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
+
   printSpacer();
   printNote();
 };
