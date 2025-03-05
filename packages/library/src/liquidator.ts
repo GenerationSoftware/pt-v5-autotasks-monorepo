@@ -298,6 +298,8 @@ export async function runLiquidator(
   console.log(
     chalk.greenBright.bold(`ESTIMATED PROFIT: $${roundTwoDecimalPlaces(estimatedProfitUsdTotal)}`),
   );
+  // Empty stats array now that we're done with it for any subsequent loops of runLiquidator()
+  stats.length = 0;
 
   printSpacer();
   printDateTimeStr('END');
