@@ -237,8 +237,7 @@ export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {
-  const { provider, chainId, minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate, signer } =
-    config;
+  const { minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate } = config;
   printDateTimeStr('START');
   printSpacer();
 
@@ -403,7 +402,7 @@ const loopLiquidationPairs = async (
     printSpacer();
 
     // 1. Check for rewards (Currently only applies to Morpho vaults on Base)
-    await claimRewards(provider, liquidationPairContract);
+    await claimRewards(config, liquidationPairContract);
 
     // 2. Query for amounts
     console.log(chalk.blueBright(`1. Amounts:`));
@@ -1224,7 +1223,7 @@ const ignorePair = (pairAddress: string, pairsToLiquidate?: string[]): boolean =
   );
 };
 
-const claimRewards = async (provider: Provider, liquidationPairContract: Contract) => {
+const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: Contract) => {
   const lpAddress = liquidationPairContract.address.toLowerCase();
   if (!Object.keys(MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP).includes(lpAddress)) {
     return;
@@ -1249,7 +1248,7 @@ const claimRewards = async (provider: Provider, liquidationPairContract: Contrac
           const distributorContract = new Contract(
             distribution.distributor.address,
             MorphoDistributorAbi,
-            provider,
+            config.signer,
           );
 
           const tx = await distributorContract.claim(
@@ -1258,12 +1257,18 @@ const claimRewards = async (provider: Provider, liquidationPairContract: Contrac
             BigNumber.from(distribution.claimable),
             distribution.proof,
           );
-          console.log('tx');
-          console.log(tx);
-          console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+
+          printSpacer();
           console.log(
             `Sending claim tx for ${distribution.claimable} of token ${distribution.asset.address} on ${chainId}: ${BLOCK_EXPLORER_URLS[chainId]}/tx/${tx.hash}`,
           );
+          console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+          console.log(chalk.yellowBright.bold('Waiting for receipt ...'));
+
+          await tx.wait();
+          console.log(chalk.yellowBright.bold('Done!'));
+          printSpacer();
+          printSpacer();
         } catch (err) {
           console.error(err);
           console.log(
