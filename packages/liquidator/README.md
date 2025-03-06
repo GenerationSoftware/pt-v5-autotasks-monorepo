@@ -61,6 +61,9 @@ ENV_TOKEN_ALLOW_LIST: List of addresses that will be added to the token allowlis
 # OPTIONAL, comma-seperated:
 PAIRS_TO_LIQUIDATE: List of LiquidationPair addresses to filter by
 
+# OPTIONAL, comma-seperated:
+CLAIM_REWARDS: Claims rewards on behalf of SimpleVaultBooster contracts, rewards can then be liquidated by bots
+
 ```
 
 ### 2. Start liquidating

@@ -68,6 +68,7 @@ export interface SharedLiquidatorConfig extends AutotaskConfig {
 export interface LiquidatorConfig extends SharedLiquidatorConfig {
   envTokenAllowList?: string[];
   pairsToLiquidate?: string[];
+  claimRewards?: boolean;
 }
 
 export interface FlashLiquidatorConfig extends SharedLiquidatorConfig {}
@@ -126,6 +127,7 @@ export interface SharedLiquidatorEnvVars extends AutotaskEnvVars {
 export interface LiquidatorEnvVars extends SharedLiquidatorEnvVars {
   ENV_TOKEN_ALLOW_LIST?: string[];
   PAIRS_TO_LIQUIDATE?: string[];
+  CLAIM_REWARDS?: boolean;
 }
 
 export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}

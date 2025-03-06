@@ -35,6 +35,7 @@ if (esMain(import.meta)) {
     swapRecipient: envVars.SWAP_RECIPIENT,
     envTokenAllowList: envVars.ENV_TOKEN_ALLOW_LIST,
     pairsToLiquidate: envVars.PAIRS_TO_LIQUIDATE,
+    claimRewards: envVars.CLAIM_REWARDS,
     contractJsonUrl: envVars.CONTRACT_JSON_URL,
   };
 

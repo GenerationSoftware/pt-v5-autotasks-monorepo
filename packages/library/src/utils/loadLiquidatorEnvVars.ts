@@ -11,11 +11,13 @@ export const loadLiquidatorEnvVars = (): LiquidatorEnvVars => {
   const pairsToLiquidate = !!process.env.PAIRS_TO_LIQUIDATE
     ? process.env.PAIRS_TO_LIQUIDATE.toLowerCase().split(',')
     : [];
+  const claimRewards = !!process.env.CLAIM_REWARDS;
 
   return {
     ...envVars,
     SWAP_RECIPIENT: swapRecipient,
     ENV_TOKEN_ALLOW_LIST: envTokenAllowList,
     PAIRS_TO_LIQUIDATE: pairsToLiquidate,
+    CLAIM_REWARDS: claimRewards,
   };
 };

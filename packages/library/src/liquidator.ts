@@ -22,12 +22,14 @@ import {
 } from './utils/index.js';
 import { FixedPriceLiquidationPairFactoryAbi } from './abis/FixedPriceLiquidationPairFactoryAbi.js';
 import { FixedPriceLiquidationRouterAbi } from './abis/FixedPriceLiquidationRouterAbi.js';
+import { MorphoDistributorAbi } from './abis/MorphoDistributorAbi.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from './abis/UniswapV2WethPairFlashLiquidatorAbi.js';
 import {
   CHAIN_IDS,
   UNISWAP_V2_WETH_PAIR_FLASH_LIQUIDATOR_CONTRACT_ADDRESS,
   NETWORK_NATIVE_TOKEN_INFO,
+  BLOCK_EXPLORER_URLS,
 } from './constants/index.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
@@ -56,6 +58,16 @@ interface Stat {
 const stats: Stat[] = [];
 
 const LIQUIDATOR_GAS_LIMIT: number = 1200000 as const;
+
+// Maps LiquidationPair addresses to their SimpleVaultBooster conterparts, which allows for
+// claiming of Morpho rewards if profitable prior to making liquidations on that pair
+const MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP = {
+  '0x7de170fd9f9ab6b0472670e3bc0203d837d2b168': '0xa7ed0503649c367e48df8c2abea171f495c5754e',
+  '0xd05955ab0daf79a1d7c47b52205e46fd3a5041cc': '0xd96e5d5b67c7eae5554f0d4b96a2088274c103fa',
+  '0x1099c6d86012bda5e60355d9307cb0c36e1aa56d': '0x7b3d452d23846244fea4e2dcb4ea4b63528d6029',
+};
+
+const MORPHO_REWARD_API_URL = 'https://rewards.morpho.org/v1';
 
 export const FIXED_PRICE_CONTRACT_ADDRESS = {
   [CHAIN_IDS.mainnet]: {
@@ -225,8 +237,7 @@ export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {
-  const { provider, chainId, minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate, signer } =
-    config;
+  const { claimRewards, minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate } = config;
   printDateTimeStr('START');
   printSpacer();
 
@@ -240,6 +251,9 @@ export async function runLiquidator(
   }
   if (pairsToLiquidate?.length > 0) {
     console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellowBright(pairsToLiquidate));
+  }
+  if (claimRewards) {
+    console.log(chalk.dim('Config - CLAIM_REWARDS:'), chalk.yellowBright('true'));
   }
 
   // 1. Get contracts
@@ -392,7 +406,10 @@ const loopLiquidationPairs = async (
     printSpacer();
     printSpacer();
 
-    // 3. Query for amounts
+    // 1. Check for rewards (Currently only applies to Morpho vaults on Base)
+    await claimRewards(config, liquidationPairContract);
+
+    // 2. Query for amounts
     console.log(chalk.blueBright(`1. Amounts:`));
     const { amountOut } = await getAmountOut(liquidationPairContract, context);
 
@@ -401,7 +418,7 @@ const loopLiquidationPairs = async (
       continue;
     }
 
-    // 4. Continue for each type to see if a transaction should be sent
+    // 3. Continue for each type to see if a transaction should be sent
     if (isValidWethFlashLiquidationPair) {
       await processUniV2WethLPPair(
         config,
@@ -701,7 +718,7 @@ const sendPopulatedSwapExactAmountOutTransaction = async (
   const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
 
   return tx;
 };
@@ -730,7 +747,7 @@ const sendPopulatedUniV2WethFlashSwapTransaction = async (
   const tx = await sendPopulatedTx(provider, wallet, populatedTx, Number(estimatedGasLimit));
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
 
   return tx;
 };
@@ -1209,4 +1226,67 @@ const ignorePair = (pairAddress: string, pairsToLiquidate?: string[]): boolean =
     pairsToLiquidate?.length > 0 &&
     !pairsToLiquidate.map((address) => address.toLowerCase()).includes(pairAddress.toLowerCase())
   );
+};
+
+const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: Contract) => {
+  if (!config.claimRewards) {
+    return;
+  }
+
+  const lpAddress = liquidationPairContract.address.toLowerCase();
+  if (!Object.keys(MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP).includes(lpAddress)) {
+    return;
+  }
+
+  const prizeVaultBoosterAddress = MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP[lpAddress];
+  const distributionEndpoint = `${MORPHO_REWARD_API_URL}/users/${prizeVaultBoosterAddress}/distributions`;
+  console.log(chalk.blueBright(`0. Rewards:`));
+  printSpacer();
+  console.log(
+    `Fetching reward distributions for booster ${prizeVaultBoosterAddress} via ${distributionEndpoint}...`,
+  );
+  try {
+    const distributions = await (await fetch(distributionEndpoint)).json();
+    if (distributions.data) {
+      console.log(`${distributions.data.length} distributions found!`);
+      printSpacer();
+      for (const distribution of distributions.data) {
+        try {
+          const chainId = distribution.distributor.chain_id;
+
+          const distributorContract = new Contract(
+            distribution.distributor.address,
+            MorphoDistributorAbi,
+            config.signer,
+          );
+
+          const tx = await distributorContract.claim(
+            prizeVaultBoosterAddress,
+            distribution.asset.address,
+            BigNumber.from(distribution.claimable),
+            distribution.proof,
+          );
+
+          printSpacer();
+          console.log(
+            `Sending claim tx for ${distribution.claimable} of token ${distribution.asset.address} on ${chainId}: ${BLOCK_EXPLORER_URLS[chainId]}/tx/${tx.hash}`,
+          );
+          console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+          console.log(chalk.yellowBright.bold('Waiting for receipt ...'));
+
+          await tx.wait();
+          console.log(chalk.yellowBright.bold('Done!'));
+          printSpacer();
+        } catch (err) {
+          console.error(err);
+          console.log(
+            `[Error] Failed to claim rewards for distribution: ${JSON.stringify(distribution)}`,
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    console.log(`[Error] Failed to fetch distributions for ${prizeVaultBoosterAddress}.`);
+  }
 };

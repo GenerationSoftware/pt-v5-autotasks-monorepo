@@ -41,7 +41,7 @@ import { ERC20Abi } from './abis/ERC20Abi.js';
 import { VaultAbi } from './abis/VaultAbi.js';
 import { ClaimerAbi } from './abis/ClaimerAbi.js';
 import { PtClassicClaimerAbi } from './abis/PtClassicClaimerAbi.js';
-import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO } from './constants/network.js';
+import { CHAIN_IDS, NETWORK_NATIVE_TOKEN_INFO, BLOCK_EXPLORER_URLS } from './constants/network.js';
 import { sendPopulatedTx } from './helpers/sendPopulatedTx.js';
 
 const debugClaimer = debug('claimer');
@@ -395,7 +395,7 @@ const sweepPreviousAutoCompoundingPrizes = async (
       const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
       console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-      console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+      console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
 
       console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
       await provider.waitForTransaction(tx.hash);
@@ -419,7 +419,7 @@ const sendClaimTransaction = async (
   const tx = await sendPopulatedTx(provider, wallet, populatedTx, gasLimit);
 
   console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-  console.log(chalk.blueBright.bold('Transaction hash:', tx.hash));
+  console.log(chalk.blueBright.bold(`${BLOCK_EXPLORER_URLS[config.chainId]}/tx/${tx.hash}`));
 
   console.log(chalk.dim('Waiting on transaction to be confirmed ...'));
   await provider.waitForTransaction(tx.hash);
