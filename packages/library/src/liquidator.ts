@@ -237,7 +237,7 @@ export async function runLiquidator(
   contracts: ContractsBlob,
   config: LiquidatorConfig,
 ): Promise<void> {
-  const { minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate } = config;
+  const { claimRewards, minProfitThresholdUsd, envTokenAllowList, pairsToLiquidate } = config;
   printDateTimeStr('START');
   printSpacer();
 
@@ -251,6 +251,9 @@ export async function runLiquidator(
   }
   if (pairsToLiquidate?.length > 0) {
     console.log(chalk.dim('Config - PAIRS_TO_LIQUIDATE:'), chalk.yellowBright(pairsToLiquidate));
+  }
+  if (claimRewards) {
+    console.log(chalk.dim('Config - CLAIM_REWARDS:'), chalk.yellowBright('true'));
   }
 
   // 1. Get contracts
@@ -1224,6 +1227,10 @@ const ignorePair = (pairAddress: string, pairsToLiquidate?: string[]): boolean =
 };
 
 const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: Contract) => {
+  if (!config.claimRewards) {
+    return;
+  }
+
   const lpAddress = liquidationPairContract.address.toLowerCase();
   if (!Object.keys(MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP).includes(lpAddress)) {
     return;
@@ -1267,7 +1274,6 @@ const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: C
 
           await tx.wait();
           console.log(chalk.yellowBright.bold('Done!'));
-          printSpacer();
           printSpacer();
         } catch (err) {
           console.error(err);
