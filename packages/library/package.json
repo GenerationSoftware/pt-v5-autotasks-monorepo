@@ -1,6 +1,6 @@
 {
   "name": "@generationsoftware/pt-v5-autotasks-library",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "Library of shared utils to run PoolTogether v5 hyperstructure autotasks.",
   "author": {
     "name": "G9 Software Inc.",

@@ -1165,20 +1165,25 @@ const getAmountOut = async (
 }> => {
   printSpacer();
 
-  const amountOut = await liquidationPair.callStatic.maxAmountOut();
-  logBigNumber(
-    `Max amount out available:`,
-    amountOut,
-    context.tokenOut.decimals,
-    context.tokenOut.symbol,
-  );
-
-  if (amountOut.eq(0)) {
-    console.warn(
-      chalk.bgBlack.yellowBright(
-        `Max amount out available is 0: (Not enough interest accrued ... Is enough deposited to generate yield?)`,
-      ),
+  let amountOut = BigNumber.from(0);
+  try {
+    amountOut = await liquidationPair.callStatic.maxAmountOut();
+    logBigNumber(
+      `Max amount out available:`,
+      amountOut,
+      context.tokenOut.decimals,
+      context.tokenOut.symbol,
     );
+
+    if (amountOut.eq(0)) {
+      console.warn(
+        chalk.bgBlack.yellowBright(
+          `Max amount out available is 0: (Not enough interest accrued ... Is enough deposited to generate yield?)`,
+        ),
+      );
+    }
+  } catch (e) {
+    console.warn(chalk.bgBlack.yellowBright(`Max amount out reverted (broken contract?)`));
   }
 
   return {
