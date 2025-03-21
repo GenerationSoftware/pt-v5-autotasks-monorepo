@@ -27,6 +27,7 @@ const DEXSCREENER_SUPPORTED_CHAIN_NAME_ALLOWLIST = [
   'base',
   'scroll',
   'gnosischain',
+  'worldchain',
 ];
 
 const DEXSCREENER_SUPPORTED_DEX_NAME_ALLOWLIST = [
@@ -113,6 +114,7 @@ export const getEthMainnetTokenMarketRateUsd = async (
   // memoization
   // debugPriceCache(marketRates);
   debugPriceCache('');
+
   if (marketRates[tokenAddress.toLowerCase()]) {
     debugPriceCache(
       chalk.red('cache hit!', tokenAddress, `= $${marketRates[tokenAddress.toLowerCase()]}`),

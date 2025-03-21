@@ -45,7 +45,8 @@ type StartDrawTransformedTxParams = {
 };
 
 const DRAW_GAS_LIMIT_BUFFER: number = 100000 as const;
-const DRAW_AUCTION_GAS_LIMIT: number = 1200000 as const;
+const RNG_WITNET_START_DRAW_AUCTION_GAS_LIMIT: number = 1200000 as const;
+const RNG_WITNET_FINISH_DRAW_AUCTION_GAS_LIMIT: number = 1000000 as const;
 
 /**
  * Main entry function - gets the current state of the DrawManager/RngWitnet
@@ -243,7 +244,7 @@ const sendPopulatedStartDrawTransaction = async (
 
     // Witnet contracts on Optimism Mainnet do not work if you attempt to use estimate gas - You will
     // get back 'too much reward' revert errors from the WitnetOracleV2 contract
-    estimatedGasLimit = BigNumber.from(DRAW_AUCTION_GAS_LIMIT);
+    estimatedGasLimit = BigNumber.from(RNG_WITNET_START_DRAW_AUCTION_GAS_LIMIT);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -259,7 +260,8 @@ const sendPopulatedStartDrawTransaction = async (
     populatedTx = await contract.populateTransaction.startDraw(...Object.values(txParams));
   }
 
-  const estimatedGasLimitWithBufferAsNumber: number = Number(estimatedGasLimit) + 100000;
+  const estimatedGasLimitWithBufferAsNumber: number =
+    Number(estimatedGasLimit) + DRAW_GAS_LIMIT_BUFFER;
   console.log(chalk.greenBright.bold(`Sending ...`));
 
   const tx = await sendPopulatedTx(
@@ -323,33 +325,6 @@ const checkFinishDraw = async (
 };
 
 /**
- * Figures out how much gas is required to run the RngWitnet#startDraw() payable function
- *
- * @returns {Promise<BigNumber>} Promise object of the gas limit in wei as a BigNumber
- */
-const getRngWitnetStartDrawEstimatedGasLimit = async (
-  contract: Contract,
-  rngWitnetStartDrawTxParams: RngWitnetStartDrawTxParams,
-): Promise<BigNumber> => {
-  let estimatedGasLimit;
-  try {
-    const { value, transformedTxParams }: StartDrawTransformedTxParams =
-      transformRngWitnetStartDrawTxParams(rngWitnetStartDrawTxParams);
-
-    estimatedGasLimit = await contract.estimateGas.startDraw(
-      ...Object.values(transformedTxParams),
-      {
-        value,
-      },
-    );
-  } catch (e) {
-    console.log(chalk.red(e));
-  }
-
-  return estimatedGasLimit;
-};
-
-/**
  * Figures out how much gas is required to run the DrawManager#startDraw() payable function
  *
  * @returns {Promise<BigNumber>} Promise object of the gas limit in wei as a BigNumber
@@ -363,25 +338,6 @@ const getRngBlockhashStartDrawEstimatedGasLimit = async (
     estimatedGasLimit = await contract.estimateGas.startDraw(
       ...Object.values(rngBlockhashStartDrawTxParams),
     );
-  } catch (e) {
-    console.log(chalk.red(e));
-  }
-
-  return estimatedGasLimit;
-};
-
-/**
- * Figures out how much gas is required to run the RngWitnet#finishDraw() function
- *
- * @returns {Promise<BigNumber>} Promise object of the gas limit in wei as a BigNumber
- */
-const getFinishDrawEstimatedGasLimit = async (
-  contract: Contract,
-  finishDrawTxParams: FinishDrawTxParams,
-): Promise<BigNumber> => {
-  let estimatedGasLimit;
-  try {
-    estimatedGasLimit = await contract.estimateGas.finishDraw(...Object.values(finishDrawTxParams));
   } catch (e) {
     console.log(chalk.red(e));
   }
@@ -599,7 +555,7 @@ const getStartDrawGasCostUsd = async (
 
     // Witnet contracts on Optimism Mainnet do not work if you attempt to use estimate gas - You will
     // get back 'too much reward' revert errors from the WitnetOracleV2 contract
-    estimatedGasLimit = BigNumber.from(DRAW_AUCTION_GAS_LIMIT);
+    estimatedGasLimit = BigNumber.from(RNG_WITNET_START_DRAW_AUCTION_GAS_LIMIT);
 
     const { value, transformedTxParams }: StartDrawTransformedTxParams =
       transformRngWitnetStartDrawTxParams(txParams);
@@ -702,12 +658,11 @@ const getFinishDrawGasCostUsd = async (
 
   const { nativeTokenMarketRateUsd } = context;
 
-  const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
-
   const populatedTx: PopulatedTransaction = await contract.populateTransaction.finishDraw(
     ...Object.values(txParams),
   );
 
+  const estimatedGasLimit = BigNumber.from(RNG_WITNET_FINISH_DRAW_AUCTION_GAS_LIMIT);
   // Add extra buffer space on the estimate because estimates are typically too low and cause tx's to fail
   const estimatedGasLimitWithBuffer: BigNumber = estimatedGasLimit.add(DRAW_GAS_LIMIT_BUFFER);
 
@@ -791,7 +746,7 @@ const sendPopulatedFinishDrawTransaction = async (
 ) => {
   const { wallet, provider } = config;
 
-  const estimatedGasLimit: BigNumber = await getFinishDrawEstimatedGasLimit(contract, txParams);
+  const estimatedGasLimit = BigNumber.from(RNG_WITNET_FINISH_DRAW_AUCTION_GAS_LIMIT);
   const estimatedGasLimitWithBufferAsNumber: number =
     Number(estimatedGasLimit) + DRAW_GAS_LIMIT_BUFFER;
 
