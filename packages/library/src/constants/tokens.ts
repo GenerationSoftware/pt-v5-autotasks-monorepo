@@ -59,7 +59,7 @@ export const KNOWN_TOKENS = {
   },
   [CHAIN_IDS.world]: {
     WLD: '0x2cfc85d8e48f8eab294be644d9e25c3030863003',
-    PRZWLD: '0x687e7a63e12401f35213b39b3c59ec275f593754',
+    PRZWLD: '0x8ad5959c9245b64173d4c0c3cd3ff66dac3cab0e',
   },
   [CHAIN_IDS.base]: {
     POOL: '0xd652c5425aea2afd5fb142e120fecf79e18fafc3',
