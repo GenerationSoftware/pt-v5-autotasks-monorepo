@@ -12,6 +12,8 @@
 
 PoolTogether hyperstructure (v5) bot to find arbitrage opportunities and liquidate the prize token (likely WETH) for yield.
 
+**NOTE ON NODE VERSIONS: Requires Node v20 or greater**
+
 ## 📖 Liquidator Example:
 
 ### [PoolTogether Liquidator GitHub Action bot](https://github.com/GenerationSoftware/pt-v5-liquidator-gh-action-bot)

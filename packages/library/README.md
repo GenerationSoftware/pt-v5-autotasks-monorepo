@@ -10,6 +10,8 @@
 
 PoolTogether hyperstructure (v5) supporting functions for the bots.
 
+**NOTE ON NODE VERSIONS: Requires Node v20 or greater**
+
 ## Install
 
 ```

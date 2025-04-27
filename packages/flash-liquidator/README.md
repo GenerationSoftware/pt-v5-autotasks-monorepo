@@ -10,6 +10,8 @@
 
 PoolTogether hyperstructure (v5) bot to find arbitrage opportunities and only pay for gas (in ETH) in exchange for yield.
 
+**NOTE ON NODE VERSIONS: Requires Node v20 or greater**
+
 ## 🖥️ Usage
 
 This package is helpful for working on the bot locally.

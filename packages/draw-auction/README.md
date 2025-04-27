@@ -12,6 +12,8 @@
 
 PoolTogether hyperstructure (v5) bot to start the RNG (random number generator) process and complete draws using the resulting winning random number.
 
+**NOTE ON NODE VERSIONS: Requires Node v20 or greater**
+
 ## 📖 Draw Auction Example:
 
 ### [PoolTogether Draw Auction GitHub Action bot](https://github.com/GenerationSoftware/pt-v5-draw-auction-gh-action-bot)

@@ -10,6 +10,8 @@
 
 Monorepo grouping together the latest PoolTogether v5 hyperstructure bots.
 
+**NOTE ON NODE VERSIONS: Requires Node v20 or greater**
+
 ## 📖 Examples
 
 1. [Creating a PoolTogether Liquidator bot](https://github.com/GenerationSoftware/pt-v5-liquidator-gh-action-bot)
@@ -25,4 +27,4 @@ Monorepo grouping together the latest PoolTogether v5 hyperstructure bots.
 
 ## 🖥️ Development
 
-1. Run `npm run install` in the root of this package - if all goes well you should be able to run `npm run start` in any of the subpackages.
+Run `npm run install` in the root of this package - if all goes well you should be able to run `npm run start` in any of the subpackages.

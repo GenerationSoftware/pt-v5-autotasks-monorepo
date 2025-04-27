@@ -12,6 +12,8 @@
 
 PoolTogether hyperstructure (v5) to claim prizes on behalf of depositors.
 
+**NOTE ON NODE VERSIONS: Requires Node v20 or greater**
+
 ## 📖 Prize Claimer Example:
 
 ### [PoolTogether Prize Claimer GitHub Action bot](https://github.com/GenerationSoftware/pt-v5-prize-claimer-gh-action-bot)
