@@ -59,6 +59,7 @@ export interface AutotaskConfig {
 export interface PrizeClaimerConfig extends AutotaskConfig {
   subgraphUrl: string;
   rewardRecipient?: string;
+  extendedFlags?: string[];
 }
 
 export interface SharedLiquidatorConfig extends AutotaskConfig {
@@ -135,6 +136,7 @@ export interface FlashLiquidatorEnvVars extends SharedLiquidatorEnvVars {}
 export interface PrizeClaimerEnvVars extends AutotaskEnvVars {
   SUBGRAPH_URL: string;
   REWARD_RECIPIENT: string;
+  EXTENDED_FLAGS?: string[];
 }
 
 export interface DrawAuctionContext {

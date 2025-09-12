@@ -125,6 +125,7 @@ export async function runPrizeClaimer(
     chalk.dim('Config - MIN_PROFIT_THRESHOLD_USD:'),
     chalk.yellowBright(minProfitThresholdUsd),
   );
+  console.log(chalk.dim('Config - EXTENDED_FLAGS:'), chalk.yellowBright(config.extendedFlags));
 
   const contractsVersion = {
     major: 1,
@@ -192,6 +193,7 @@ export async function runPrizeClaimer(
 
   // Filter out any claims where the winner is a GPBoostHook contract and that prize is a grand prize
   unclaimedClaims = unclaimedClaims.filter(noGpBoosterGrandPrizeWinners);
+  unclaimedClaims = unclaimedClaims.filter(createExtendedFlagsFilterFn(config));
 
   if (claimedClaims.length === 0) {
     console.log(chalk.dim(`No claimed prizes for draw #${context.drawId}.`));
@@ -1254,4 +1256,12 @@ const getClaimerContract = async (vaultAddress: string, provider: Provider): Pro
 
 function noGpBoosterGrandPrizeWinners(claim) {
   return !Object.values(GP_BOOSTER_CONTRACT_ADDRESSES).includes(claim.winner) && claim.tier !== 0;
+}
+
+function createExtendedFlagsFilterFn(config: PrizeClaimerConfig) {
+  const { extendedFlags } = config;
+
+  return (claim): boolean => {
+    return !extendedFlags.includes(claim.winner) && claim.tier !== 0;
+  };
 }

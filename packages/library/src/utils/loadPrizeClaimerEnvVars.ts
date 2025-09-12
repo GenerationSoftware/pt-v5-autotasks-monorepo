@@ -8,6 +8,9 @@ export const loadPrizeClaimerEnvVars = (): PrizeClaimerEnvVars => {
 
   const rewardRecipient = process.env.REWARD_RECIPIENT;
   const subgraphUrl = process.env.SUBGRAPH_URL;
+  const extendedFlags = !!process.env.EXTENDED_FLAGS
+    ? process.env.EXTENDED_FLAGS.toLowerCase().split(',')
+    : [];
 
   if (!subgraphUrl) {
     const message =
@@ -20,5 +23,6 @@ export const loadPrizeClaimerEnvVars = (): PrizeClaimerEnvVars => {
     ...envVars,
     SUBGRAPH_URL: subgraphUrl,
     REWARD_RECIPIENT: rewardRecipient,
+    EXTENDED_FLAGS: extendedFlags,
   };
 };

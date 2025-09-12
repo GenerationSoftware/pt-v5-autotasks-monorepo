@@ -56,6 +56,7 @@ COVALENT_API_KEY: Your Covalent API key for getting USD values of tokens (option
 
 SUBGRAPH_URL: the Subgraph API URL to use for gathering prize vaults and depositors data
 REWARD_RECIPIENT: Address of the account that will receive the profit for claiming prizes on other's behalf, can be any other contract/EOA address or if blank sets recipient to be the relayer address
+EXTENDED_FLAGS: extended flags that can be passed in for custom control of how the prize claimer performs
 
 ```
 

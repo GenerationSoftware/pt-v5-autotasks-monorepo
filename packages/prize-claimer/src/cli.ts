@@ -36,6 +36,7 @@ if (esMain(import.meta)) {
     rewardRecipient: envVars.REWARD_RECIPIENT,
     subgraphUrl: envVars.SUBGRAPH_URL,
     contractJsonUrl: envVars.CONTRACT_JSON_URL,
+    extendedFlags: envVars.EXTENDED_FLAGS,
   };
 
   const contracts: ContractsBlob = await downloadContractsBlob(
