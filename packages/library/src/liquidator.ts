@@ -1242,26 +1242,19 @@ const ignorePair = (pairAddress: string, pairsToLiquidate?: string[]): boolean =
 const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: Contract) => {
   const { chainId } = config;
 
-  console.log('in claim');
   if (!config.claimRewards) {
     return;
   }
 
-  console.log('check');
-
   const lpAddress = liquidationPairContract.address.toLowerCase();
-  console.log('lpAddress');
-  console.log(lpAddress);
 
   if (!Object.keys(MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP).includes(lpAddress)) {
     return;
   }
 
-  console.log('lp map!');
-
   const prizeVaultBoosterAddress = MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP[lpAddress];
   const distributionEndpoint = `${MERKL_REWARD_API_URL}/users/${prizeVaultBoosterAddress}/rewards?chainId=${chainId}`;
-  console.log(chalk.blueBright(`0. Rewards:`));
+  console.log(chalk.blueBright(`0a. Rewards:`));
   printSpacer();
   console.log(
     `Fetching reward distributions for booster ${prizeVaultBoosterAddress} via ${distributionEndpoint} ...`,
@@ -1270,14 +1263,10 @@ const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: C
     const distributions = await (await fetch(distributionEndpoint)).json();
 
     for (const distribution of distributions) {
-      // console.log('distribution.rewards');
-      // console.log(distribution.rewards);
       if (distribution.rewards) {
         console.log(`${distribution.rewards.length} distributions found!`);
         printSpacer();
         for (const reward of distribution.rewards) {
-          console.log(`reward`);
-          console.log(reward);
           try {
             const distributorContract = new Contract(
               MERKL_DISTRIBUTOR_ADDRESSES[chainId],
@@ -1287,21 +1276,31 @@ const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: C
 
             const users = [reward.recipient];
             const tokens = [reward.token.address];
-            const amounts = [reward.amount];
+            const amounts = [BigNumber.from(reward.amount)];
             const proofs = [reward.proofs];
 
-            console.log(users);
-            console.log(tokens);
-            console.log(amounts);
-            console.log(proofs);
+            let populatedTx: PopulatedTransaction | undefined;
+            console.log(chalk.blueBright('0b. Populating reward claim transaction ...'));
 
-            const tx = await distributorContract.claim(users, tokens, amounts, proofs);
-            console.log('tx');
-            console.log(tx);
+            populatedTx = await distributorContract.populateTransaction.claim(
+              users,
+              tokens,
+              amounts,
+              proofs,
+            );
 
-            printSpacer();
+            const gasLimit = 205000;
+            const gasPrice = await config.provider.getGasPrice();
+            const tx = await sendPopulatedTx(
+              config.provider,
+              config.wallet,
+              populatedTx,
+              gasLimit,
+              gasPrice,
+            );
+
             console.log(
-              `Sending claim tx for ${reward.claimable} of token ${reward.asset.address} on ${chainId}: ${BLOCK_EXPLORER_URLS[chainId]}/tx/${tx.hash}`,
+              `Sending claim tx for ${reward.claimable} of token ${reward.token.address} on ${chainId}: ${BLOCK_EXPLORER_URLS[chainId]}/tx/${tx.hash}`,
             );
             console.log(chalk.greenBright.bold('Transaction sent! ✔'));
             console.log(chalk.yellowBright.bold('Waiting for receipt ...'));
