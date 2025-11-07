@@ -22,7 +22,7 @@ import {
 } from './utils/index.js';
 import { FixedPriceLiquidationPairFactoryAbi } from './abis/FixedPriceLiquidationPairFactoryAbi.js';
 import { FixedPriceLiquidationRouterAbi } from './abis/FixedPriceLiquidationRouterAbi.js';
-import { MorphoDistributorAbi } from './abis/MorphoDistributorAbi.js';
+import { MerklDistributorAbi } from './abis/MerklDistributorAbi.js';
 import { ERC20Abi } from './abis/ERC20Abi.js';
 import { UniswapV2WethPairFlashLiquidatorAbi } from './abis/UniswapV2WethPairFlashLiquidatorAbi.js';
 import {
@@ -62,12 +62,18 @@ const LIQUIDATOR_GAS_LIMIT: number = 1200000 as const;
 // Maps LiquidationPair addresses to their SimpleVaultBooster conterparts, which allows for
 // claiming of Morpho rewards if profitable prior to making liquidations on that pair
 const MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP = {
-  '0x7de170fd9f9ab6b0472670e3bc0203d837d2b168': '0xa7ed0503649c367e48df8c2abea171f495c5754e',
-  '0xd05955ab0daf79a1d7c47b52205e46fd3a5041cc': '0xd96e5d5b67c7eae5554f0d4b96a2088274c103fa',
-  '0x1099c6d86012bda5e60355d9307cb0c36e1aa56d': '0x7b3d452d23846244fea4e2dcb4ea4b63528d6029',
+  '0x7c167758af56a622706f8e67397a97661ffce3e4': '0x4c7e1f64a4b121d2f10d6fbca0db143787bf64bb', // WLD world-chain
+  '0x7de170fd9f9ab6b0472670e3bc0203d837d2b168': '0xa7ed0503649c367e48df8c2abea171f495c5754e', // base1
+  '0xd05955ab0daf79a1d7c47b52205e46fd3a5041cc': '0xd96e5d5b67c7eae5554f0d4b96a2088274c103fa', // base2
+  '0x1099c6d86012bda5e60355d9307cb0c36e1aa56d': '0x7b3d452d23846244fea4e2dcb4ea4b63528d6029', // base3
 };
 
-const MORPHO_REWARD_API_URL = 'https://rewards.morpho.org/v1';
+const MERKL_REWARD_API_URL = 'https://api.merkl.xyz/v4';
+
+const MERKL_DISTRIBUTOR_ADDRESSES = {
+  480: '0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae',
+  8453: '0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae',
+};
 
 export const FIXED_PRICE_CONTRACT_ADDRESS = {
   [CHAIN_IDS.mainnet]: {
@@ -1234,59 +1240,80 @@ const ignorePair = (pairAddress: string, pairsToLiquidate?: string[]): boolean =
 };
 
 const claimRewards = async (config: LiquidatorConfig, liquidationPairContract: Contract) => {
+  const { chainId } = config;
+
   if (!config.claimRewards) {
     return;
   }
 
   const lpAddress = liquidationPairContract.address.toLowerCase();
+
   if (!Object.keys(MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP).includes(lpAddress)) {
     return;
   }
 
   const prizeVaultBoosterAddress = MORPHO_SIMPLE_VAULT_BOOSTER_LIQUIDATION_PAIR_MAP[lpAddress];
-  const distributionEndpoint = `${MORPHO_REWARD_API_URL}/users/${prizeVaultBoosterAddress}/distributions`;
-  console.log(chalk.blueBright(`0. Rewards:`));
+  const distributionEndpoint = `${MERKL_REWARD_API_URL}/users/${prizeVaultBoosterAddress}/rewards?chainId=${chainId}`;
+  console.log(chalk.blueBright(`0a. Rewards:`));
   printSpacer();
   console.log(
-    `Fetching reward distributions for booster ${prizeVaultBoosterAddress} via ${distributionEndpoint}...`,
+    `Fetching reward distributions for booster ${prizeVaultBoosterAddress} via ${distributionEndpoint} ...`,
   );
   try {
     const distributions = await (await fetch(distributionEndpoint)).json();
-    if (distributions.data) {
-      console.log(`${distributions.data.length} distributions found!`);
-      printSpacer();
-      for (const distribution of distributions.data) {
-        try {
-          const chainId = distribution.distributor.chain_id;
 
-          const distributorContract = new Contract(
-            distribution.distributor.address,
-            MorphoDistributorAbi,
-            config.signer,
-          );
+    for (const distribution of distributions) {
+      if (distribution.rewards) {
+        console.log(`${distribution.rewards.length} distributions found!`);
+        printSpacer();
+        for (const reward of distribution.rewards) {
+          try {
+            const distributorContract = new Contract(
+              MERKL_DISTRIBUTOR_ADDRESSES[chainId],
+              MerklDistributorAbi,
+              config.signer,
+            );
 
-          const tx = await distributorContract.claim(
-            prizeVaultBoosterAddress,
-            distribution.asset.address,
-            BigNumber.from(distribution.claimable),
-            distribution.proof,
-          );
+            const users = [reward.recipient];
+            const tokens = [reward.token.address];
+            const amounts = [BigNumber.from(reward.amount)];
+            const proofs = [reward.proofs];
 
-          printSpacer();
-          console.log(
-            `Sending claim tx for ${distribution.claimable} of token ${distribution.asset.address} on ${chainId}: ${BLOCK_EXPLORER_URLS[chainId]}/tx/${tx.hash}`,
-          );
-          console.log(chalk.greenBright.bold('Transaction sent! ✔'));
-          console.log(chalk.yellowBright.bold('Waiting for receipt ...'));
+            let populatedTx: PopulatedTransaction | undefined;
+            console.log(chalk.blueBright('0b. Populating reward claim transaction ...'));
 
-          await tx.wait();
-          console.log(chalk.yellowBright.bold('Done!'));
-          printSpacer();
-        } catch (err) {
-          console.error(err);
-          console.log(
-            `[Error] Failed to claim rewards for distribution: ${JSON.stringify(distribution)}`,
-          );
+            populatedTx = await distributorContract.populateTransaction.claim(
+              users,
+              tokens,
+              amounts,
+              proofs,
+            );
+
+            const gasLimit = 205000;
+            const gasPrice = await config.provider.getGasPrice();
+            const tx = await sendPopulatedTx(
+              config.provider,
+              config.wallet,
+              populatedTx,
+              gasLimit,
+              gasPrice,
+            );
+
+            console.log(
+              `Sending claim tx for ${reward.claimable} of token ${reward.token.address} on ${chainId}: ${BLOCK_EXPLORER_URLS[chainId]}/tx/${tx.hash}`,
+            );
+            console.log(chalk.greenBright.bold('Transaction sent! ✔'));
+            console.log(chalk.yellowBright.bold('Waiting for receipt ...'));
+
+            await tx.wait();
+            console.log(chalk.yellowBright.bold('Done!'));
+            printSpacer();
+          } catch (err) {
+            console.error(err);
+            console.log(
+              `[Error] Failed to claim rewards for distribution: ${JSON.stringify(reward)}`,
+            );
+          }
         }
       }
     }
